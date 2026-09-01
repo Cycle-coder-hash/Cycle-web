@@ -65,15 +65,25 @@ async function startServer() {
   }
 
   const preferredPort = parseInt(process.env.PORT || "3000");
-  const port = await findAvailablePort(preferredPort);
-
-  if (port !== preferredPort) {
-    console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
+  if (!process.env.VERCEL) {
+    const port = await findAvailablePort(preferredPort);
+    if (port !== preferredPort) {
+      console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
+    }
+    server.listen(port, () => {
+      console.log(`Server running on http://localhost:${port}/`);
+    });
   }
 
-  server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
-  });
+  return app;
 }
 
-startServer().catch(console.error);
+export const appPromise = startServer().catch(console.error);
+export default async function handler(req: any, res: any) {
+  const app = await appPromise;
+  if (app) {
+    return app(req, res);
+  }
+  res.status(500).send("Server initialization failed");
+}
+

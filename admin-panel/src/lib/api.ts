@@ -1,6 +1,10 @@
 import { Order, Student, SupportTicket, AuditEvent } from "./types";
 
-const API_BASE = "http://localhost:3000/api/admin";
+const rawApiUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+const API_BASE = rawApiUrl.endsWith("/api/admin") 
+  ? rawApiUrl 
+  : `${rawApiUrl.replace(/\/+$/, "")}/api/admin`;
+
 
 export async function fetchAdminStats() {
   const res = await fetch(`${API_BASE}/stats`);
