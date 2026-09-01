@@ -1,0 +1,85 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@custom-variant dark (&:is(.dark *));
+@theme inline { --radius-sm:calc(var(--radius) - 4px); --radius-md:calc(var(--radius) - 2px); --radius-lg:var(--radius); --radius-xl:calc(var(--radius) + 4px); --color-background:var(--background); --color-foreground:var(--foreground); --color-card:var(--card); --color-card-foreground:var(--card-foreground); --color-popover:var(--popover); --color-popover-foreground:var(--popover-foreground); --color-primary:var(--primary); --color-primary-foreground:var(--primary-foreground); --color-secondary:var(--secondary); --color-secondary-foreground:var(--secondary-foreground); --color-muted:var(--muted); --color-muted-foreground:var(--muted-foreground); --color-accent:var(--accent); --color-accent-foreground:var(--accent-foreground); --color-destructive:var(--destructive); --color-destructive-foreground:var(--destructive-foreground); --color-border:var(--border); --color-input:var(--input); --color-ring:var(--ring); }
+:root { --radius:.7rem; --background:oklch(1 0 0); --foreground:oklch(.18 .02 250); --card:oklch(1 0 0); --card-foreground:oklch(.18 .02 250); --popover:oklch(1 0 0); --popover-foreground:oklch(.18 .02 250); --primary:oklch(.25 .045 250); --primary-foreground:oklch(.98 .01 250); --secondary:oklch(.96 .015 220); --secondary-foreground:oklch(.25 .045 250); --muted:oklch(.95 .01 240); --muted-foreground:oklch(.5 .025 245); --accent:oklch(.9 .18 115); --accent-foreground:oklch(.2 .04 115); --destructive:oklch(.58 .2 25); --destructive-foreground:oklch(.98 0 0); --border:oklch(.9 .015 240); --input:oklch(.9 .015 240); --ring:oklch(.5 .08 240); }
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html {
+    scroll-behavior: smooth;
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+    overflow-x: clip;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    overflow-x: clip;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    touch-action: manipulation;
+  }
+  html[lang="bn"], .font-bangla {
+    font-family: 'Hind Siliguri', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+  }
+  button:not(:disabled), a[href] {
+    @apply cursor-pointer;
+    touch-action: manipulation;
+  }
+}
+@layer components {
+  .container { width:100%; margin-inline:auto; padding-inline:1rem; }
+  .eyebrow { font-size:.75rem; line-height:1rem; font-weight:600; text-transform:uppercase; letter-spacing:.2em; color:#51708f; }
+  .terminal-card { animation: float 7s ease-in-out infinite; }
+  .preserve-3d { transform-style: preserve-3d; }
+  .perspective-1000 { perspective: 1000px; }
+  .perspective-1200 { perspective: 1200px; }
+  .backface-hidden { backface-visibility: hidden; }
+  
+  /* High performance hardware-accelerated GPU layer */
+  .gpu-layer {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: transform;
+  }
+
+  /* Defer off-screen rendering for ultra-smooth mobile scrolling */
+  .content-auto {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 600px;
+  }
+}
+
+/* Animations */
+@keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
+@keyframes float-subtle { 0%,100% { transform:translateY(0) rotate(0deg); } 50% { transform:translateY(-12px) rotate(1deg); } }
+@keyframes pulse-glow { 0%,100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 0.85; transform: scale(1.08); } }
+@keyframes shine-sweep { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+/* Low-End Mobile Optimization: disable expensive GPU raster filters on narrow screens */
+@media (max-width: 768px) {
+  .ambient-blur-blob {
+    display: none !important;
+  }
+  .mobile-optimized-blur {
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+  }
+  .terminal-card {
+    animation: none !important;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion:reduce) {
+  html { scroll-behavior:auto; }
+  *, *::before, *::after {
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+  }
+}
+

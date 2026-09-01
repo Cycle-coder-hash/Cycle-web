@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+@layer base {
+  * {
+    border-color: var(--border, rgba(255, 255, 255, 0.1));
+  }
+  body {
+    background-color: #060d19;
+    color: #f1f5f9;
+  }
+}
