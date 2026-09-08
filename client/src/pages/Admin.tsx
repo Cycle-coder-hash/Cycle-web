@@ -30,6 +30,10 @@ import {
   TrendingUp,
   UserCheck,
   UserPlus,
+  MessageSquare,
+  Paperclip,
+  Send,
+  Ticket,
   Users,
   X,
   XCircle,
@@ -51,7 +55,14 @@ export default function Admin() {
   const [orderMethodFilter, setOrderMethodFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [studentSearch, setStudentSearch] = useState("");
-  const [ticketFilter, setTicketFilter] = useState<"all" | "open" | "in_progress" | "resolved">("all");
+  const [ticketFilter, setTicketFilter] = useState<"all" | "open" | "in_progress" | "waiting_user" | "resolved" | "closed">("all");
+  const [ticketCategoryFilter, setTicketCategoryFilter] = useState<string>("all");
+  const [ticketSearch, setTicketSearch] = useState<string>("");
+  const [selectedTicketForModal, setSelectedTicketForModal] = useState<any | null>(null);
+  const [staffReplyText, setStaffReplyText] = useState("");
+  const [staffReplyStatus, setStaffReplyStatus] = useState<"open" | "in_progress" | "waiting_user" | "resolved" | "closed">("waiting_user");
+  const [staffReplyAttachment, setStaffReplyAttachment] = useState<string | null>(null);
+  const [staffReplyAttachmentName, setStaffReplyAttachmentName] = useState<string | null>(null);
 
   // Modals & form state
   const [rejectModalOrder, setRejectModalOrder] = useState<any | null>(null);
@@ -84,6 +95,14 @@ export default function Admin() {
   const { data: auditLogs, refetch: refetchAudit } = trpc.admin.auditLogs.useQuery(undefined, {
     enabled: user?.role === "admin" || user?.role === "support",
   });
+  const {
+    data: ticketModalData,
+    refetch: refetchTicketModalData,
+    isLoading: isLoadingTicketModalData,
+  } = trpc.admin.ticketDetails.useQuery(
+    { ticketId: (selectedTicketForModal?.id as number) || 0 },
+    { enabled: !!selectedTicketForModal?.id }
+  );
 
   // Mutations
   const approveMutation = trpc.admin.approveOrder.useMutation({
@@ -129,7 +148,22 @@ export default function Admin() {
   const updateTicketMutation = trpc.admin.updateTicket.useMutation({
     onSuccess: () => {
       refetchTickets();
+      refetchStats();
+      if (selectedTicketForModal) refetchTicketModalData();
       setActionSuccess("Ticket status updated.");
+      setTimeout(() => setActionSuccess(null), 4000);
+    },
+  });
+
+  const staffReplyMutation = trpc.admin.replyTicket.useMutation({
+    onSuccess: () => {
+      refetchTickets();
+      refetchStats();
+      refetchTicketModalData();
+      setStaffReplyText("");
+      setStaffReplyAttachment(null);
+      setStaffReplyAttachmentName(null);
+      setActionSuccess("Staff reply sent and ticket status updated!");
       setTimeout(() => setActionSuccess(null), 4000);
     },
   });
@@ -214,6 +248,17 @@ export default function Admin() {
   // Filtered Tickets
   const filteredTickets = (tickets || []).filter((t: any) => {
     if (ticketFilter !== "all" && t.status !== ticketFilter) return false;
+    if (ticketCategoryFilter !== "all" && t.category !== ticketCategoryFilter) return false;
+    if (ticketSearch.trim()) {
+      const q = ticketSearch.toLowerCase();
+      return (
+        t.ticketCode?.toLowerCase().includes(q) ||
+        t.userName?.toLowerCase().includes(q) ||
+        t.userEmail?.toLowerCase().includes(q) ||
+        t.subject?.toLowerCase().includes(q) ||
+        t.message?.toLowerCase().includes(q)
+      );
+    }
     return true;
   });
 
@@ -757,72 +802,168 @@ export default function Admin() {
               <div>
                 <h2 className="text-2xl font-black tracking-tight">Student Support Desk</h2>
                 <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                  Review and resolve student inquiries regarding payments, access codes, and mentorship.
+                  Review, assign, and resolve student inquiries regarding courses, payments, eBooks, and access.
                 </p>
               </div>
             </div>
 
-            {/* Filter */}
-            <div className="flex gap-2">
-              {(["all", "open", "in_progress", "resolved"] as const).map((st) => (
-                <button
-                  key={st}
-                  onClick={() => setTicketFilter(st)}
-                  className={`rounded-xl px-3.5 py-1.5 text-xs font-bold capitalize transition ${
-                    ticketFilter === st
-                      ? "bg-[#081833] text-white dark:bg-sky-500 dark:text-slate-950"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400"
-                  }`}
-                >
-                  {st.replace("_", " ")}
-                </button>
+            {/* Metrics Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              {[
+                { label: "Total Tickets", val: (tickets || []).length, color: "text-slate-900 dark:text-white" },
+                { label: "Open", val: (tickets || []).filter((t: any) => t.status === "open").length, color: "text-sky-600 dark:text-sky-400" },
+                { label: "In Progress", val: (tickets || []).filter((t: any) => t.status === "in_progress").length, color: "text-amber-600 dark:text-amber-400" },
+                { label: "Waiting for User", val: (tickets || []).filter((t: any) => t.status === "waiting_user").length, color: "text-purple-600 dark:text-purple-400" },
+                { label: "Resolved", val: (tickets || []).filter((t: any) => t.status === "resolved").length, color: "text-emerald-600 dark:text-emerald-400" },
+                { label: "Closed", val: (tickets || []).filter((t: any) => t.status === "closed").length, color: "text-slate-500" },
+              ].map((m, idx) => (
+                <div key={idx} className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                  <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">{m.label}</div>
+                  <div className={`mt-1 text-xl font-black ${m.color}`}>{m.val}</div>
+                </div>
               ))}
             </div>
 
+            {/* Filter and Search Controls */}
+            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+              {/* Status Chips */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {[
+                  { id: "all", label: "All" },
+                  { id: "open", label: "Open" },
+                  { id: "in_progress", label: "In Progress" },
+                  { id: "waiting_user", label: "Waiting for User" },
+                  { id: "resolved", label: "Resolved" },
+                  { id: "closed", label: "Closed" },
+                ].map((st) => (
+                  <button
+                    key={st.id}
+                    onClick={() => setTicketFilter(st.id as any)}
+                    className={`rounded-xl px-3 py-1.5 text-xs font-bold capitalize transition ${
+                      ticketFilter === st.id
+                        ? "bg-[#081833] text-white dark:bg-sky-500 dark:text-slate-950 shadow-sm"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400"
+                    }`}
+                  >
+                    {st.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Category & Search */}
+              <div className="flex flex-col sm:flex-row items-center gap-2.5">
+                <select
+                  value={ticketCategoryFilter}
+                  onChange={(e) => setTicketCategoryFilter(e.target.value)}
+                  className="w-full sm:w-auto rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold outline-none dark:border-slate-800 dark:bg-slate-950"
+                >
+                  <option value="all">All Categories</option>
+                  <option value="Course Problem">Course Problem</option>
+                  <option value="Payment Problem">Payment Problem</option>
+                  <option value="Account Problem">Account Problem</option>
+                  <option value="Technical Problem">Technical Problem</option>
+                  <option value="eBook Problem">eBook Problem</option>
+                  <option value="Other">Other</option>
+                </select>
+
+                <div className="relative w-full sm:w-60">
+                  <Search size={14} className="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search #TKT, name, email..."
+                    value={ticketSearch}
+                    onChange={(e) => setTicketSearch(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-1.5 pr-3 pl-8 text-xs font-medium outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Tickets Grid / List */}
             <div className="space-y-3">
               {filteredTickets.length ? (
                 filteredTickets.map((t: any) => (
-                  <div key={t.id} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                  <div
+                    key={t.id}
+                    className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 transition hover:border-sky-300 dark:hover:border-sky-800"
+                  >
                     <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                       <div>
-                        <div className="flex items-center gap-2">
-                          <span className="font-extrabold text-base">{t.subject}</span>
-                          <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase ${
-                            t.status === "resolved" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400" : t.status === "in_progress" ? "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-400" : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
-                          }`}>
-                            {t.status}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-mono text-xs font-black text-sky-600 dark:text-sky-400">
+                            {t.ticketCode || `#TKT-${t.id}`}
+                          </span>
+                          <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                            {t.category || "General"}
+                          </span>
+                          <span
+                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase ${
+                              t.status === "resolved"
+                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
+                                : t.status === "in_progress"
+                                ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
+                                : t.status === "waiting_user"
+                                ? "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-400"
+                                : t.status === "closed"
+                                ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                                : "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-400"
+                            }`}
+                          >
+                            {t.status.replace("_", " ")}
                           </span>
                         </div>
-                        <div className="mt-1 text-[11px] text-slate-400">
-                          From Student #{t.userId} · Created: {new Date(t.createdAt).toLocaleString()}
+
+                        <h3 className="mt-1 text-base font-extrabold text-slate-900 dark:text-white">
+                          {t.subject}
+                        </h3>
+
+                        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                          <span className="font-bold text-slate-700 dark:text-slate-300">{t.userName}</span>
+                          <span>•</span>
+                          <span>{t.userEmail}</span>
+                          <span>•</span>
+                          <span>Created: {new Date(t.createdAt).toLocaleString()}</span>
+                          {t.assignedStaff && (
+                            <>
+                              <span>•</span>
+                              <span className="font-bold text-sky-600 dark:text-sky-400">Assigned: {t.assignedStaff}</span>
+                            </>
+                          )}
                         </div>
                       </div>
 
-                      {/* Status Update Actions */}
+                      {/* Action Buttons */}
                       <div className="flex items-center gap-2">
-                        {t.status !== "resolved" && (
-                          <Button
-                            size="sm"
-                            onClick={() => updateTicketMutation.mutate({ ticketId: t.id, status: "resolved" })}
-                            className="bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-700"
-                          >
-                            <Check size={13} className="mr-1" /> Mark Resolved
-                          </Button>
-                        )}
-                        {t.status === "open" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateTicketMutation.mutate({ ticketId: t.id, status: "in_progress" })}
-                            className="text-xs font-bold border-slate-300 dark:border-slate-700"
-                          >
-                            In Progress
-                          </Button>
-                        )}
+                        <Button
+                          size="sm"
+                          onClick={() => setSelectedTicketForModal(t)}
+                          className="bg-[#081833] text-xs font-bold text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950"
+                        >
+                          <MessageSquare size={13} className="mr-1.5" />
+                          <span>View & Reply</span>
+                        </Button>
+
+                        <select
+                          value={t.status}
+                          onChange={(e) =>
+                            updateTicketMutation.mutate({
+                              ticketId: t.id,
+                              status: e.target.value as any,
+                              assignedStaff: user.name || "Staff",
+                            })
+                          }
+                          className="rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-bold outline-none dark:border-slate-800 dark:bg-slate-950"
+                        >
+                          <option value="open">Status: Open</option>
+                          <option value="in_progress">Status: In Progress</option>
+                          <option value="waiting_user">Status: Waiting for User</option>
+                          <option value="resolved">Status: Resolved</option>
+                          <option value="closed">Status: Closed</option>
+                        </select>
                       </div>
                     </div>
 
-                    <p className="mt-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/50 p-3.5 rounded-2xl">
+                    <p className="mt-3 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl line-clamp-2">
                       {t.message}
                     </p>
                   </div>
@@ -831,9 +972,174 @@ export default function Admin() {
                 <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center text-slate-500 dark:border-slate-800 dark:bg-slate-900">
                   <ShieldCheck size={36} className="mx-auto text-slate-400 mb-2" />
                   <div className="font-bold">No tickets found</div>
+                  <div className="text-xs text-slate-400 mt-1">Try adjusting the status or category filter.</div>
                 </div>
               )}
             </div>
+
+            {/* ========================================================================= */}
+            {/* STAFF CONVERSATION THREAD MODAL */}
+            {/* ========================================================================= */}
+            {selectedTicketForModal && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in"
+                onClick={() => setSelectedTicketForModal(null)}
+              >
+                <div
+                  className="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-3xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900 overflow-hidden"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Modal Header */}
+                  <div className="flex items-center justify-between border-b border-slate-200 p-5 dark:border-slate-800">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-black text-sky-600 dark:text-sky-400">
+                          {selectedTicketForModal.ticketCode || `#TKT-${selectedTicketForModal.id}`}
+                        </span>
+                        <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                          {selectedTicketForModal.category || "General"}
+                        </span>
+                      </div>
+                      <h3 className="mt-1 text-base font-extrabold text-slate-900 dark:text-white">
+                        {selectedTicketForModal.subject}
+                      </h3>
+                      <div className="text-[11px] text-slate-400 mt-0.5">
+                        Student: <span className="font-bold text-slate-700 dark:text-slate-300">{selectedTicketForModal.userName}</span> ({selectedTicketForModal.userEmail})
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => setSelectedTicketForModal(null)}
+                      className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  {/* Scrollable Conversation Stream */}
+                  <div className="flex-1 overflow-y-auto p-5 space-y-4">
+                    {/* Original Student Issue */}
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                      <div className="flex items-center justify-between text-xs mb-1.5">
+                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                          {selectedTicketForModal.userName} (Original Inquiry)
+                        </span>
+                        <span className="text-[11px] text-slate-400">
+                          {new Date(selectedTicketForModal.createdAt).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+                        {selectedTicketForModal.message}
+                      </p>
+                      {selectedTicketForModal.attachmentUrl && (
+                        <div className="mt-2.5">
+                          <a
+                            href={selectedTicketForModal.attachmentUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-sky-600 hover:underline dark:text-sky-400"
+                          >
+                            <Paperclip size={13} /> View Attached Screenshot / File
+                          </a>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Replies Stream */}
+                    {isLoadingTicketModalData ? (
+                      <div className="flex items-center justify-center p-8 text-slate-400">
+                        <RefreshCw size={20} className="animate-spin mr-2" />
+                        <span>Loading conversation...</span>
+                      </div>
+                    ) : (ticketModalData?.replies || []).map((r: any) => {
+                      const isStaff = r.senderRole === "support" || r.senderRole === "admin";
+                      return (
+                        <div
+                          key={r.id}
+                          className={`rounded-2xl border p-4 ${
+                            isStaff
+                              ? "border-sky-300 bg-sky-50/60 dark:border-sky-900/60 dark:bg-sky-950/25"
+                              : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between text-xs mb-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-slate-900 dark:text-white">{r.senderName}</span>
+                              {isStaff && (
+                                <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-black text-sky-700 dark:bg-sky-950 dark:text-sky-300">
+                                  Support Team
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[11px] text-slate-400">
+                              {new Date(r.createdAt).toLocaleString()}
+                            </span>
+                          </div>
+                          <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">
+                            {r.message}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Staff Reply Box */}
+                  <div className="border-t border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (!staffReplyText.trim()) return;
+                        staffReplyMutation.mutate({
+                          ticketId: selectedTicketForModal.id,
+                          message: staffReplyText.trim(),
+                          status: staffReplyStatus,
+                        });
+                      }}
+                      className="space-y-3"
+                    >
+                      <textarea
+                        rows={3}
+                        required
+                        placeholder="Write support response to student..."
+                        value={staffReplyText}
+                        onChange={(e) => setStaffReplyText(e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs sm:text-sm font-medium outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                      />
+
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 w-full sm:w-auto">
+                          <label className="text-xs font-bold text-slate-500 shrink-0">Status after reply:</label>
+                          <select
+                            value={staffReplyStatus}
+                            onChange={(e) => setStaffReplyStatus(e.target.value as any)}
+                            className="rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold outline-none dark:border-slate-800 dark:bg-slate-900"
+                          >
+                            <option value="waiting_user">Waiting for User</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="resolved">Mark Resolved</option>
+                            <option value="closed">Close Ticket</option>
+                            <option value="open">Keep Open</option>
+                          </select>
+                        </div>
+
+                        <Button
+                          type="submit"
+                          disabled={staffReplyMutation.isPending || !staffReplyText.trim()}
+                          className="w-full sm:w-auto bg-[#081833] text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 font-bold text-xs"
+                        >
+                          {staffReplyMutation.isPending ? (
+                            <RefreshCw size={13} className="animate-spin mr-1.5" />
+                          ) : (
+                            <Send size={13} className="mr-1.5" />
+                          )}
+                          <span>Send Reply</span>
+                        </Button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 

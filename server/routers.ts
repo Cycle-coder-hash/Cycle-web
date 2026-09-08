@@ -17,6 +17,11 @@ import {
   deleteJournal,
   listHabits,
   listTickets,
+  createSupportTicket,
+  getTicketById,
+  getTicketByCode,
+  getTicketReplies,
+  addTicketReply,
   listAllUsers,
   updateUserRole,
   grantManualEntitlement,
@@ -40,6 +45,7 @@ import {
   disciplineEntries,
   journalEntries,
   supportTickets,
+  ticketReplies,
   notifications,
   settings,
   auditEvents,
@@ -505,27 +511,25 @@ export const appRouter = router({
         return { success: true };
       }),
     createTicket: protectedProcedure
-      .input(z.object({ subject: z.string().min(1), message: z.string().min(1) }))
+      .input(
+        z.object({
+          category: z.string().optional(),
+          subject: z.string().min(1),
+          message: z.string().min(1),
+          attachmentUrl: z.string().optional(),
+        })
+      )
       .mutation(async ({ ctx, input }) => {
-        const db = await getDb();
-        if (!db) {
-          // fallback to memory
-          const allT = await listTickets();
-          allT.push({
-            id: allT.length + 1,
-            userId: ctx.user.id,
-            subject: input.subject,
-            message: input.message,
-            status: "open",
-            createdAt: new Date(),
-          });
-          return { success: true };
-        }
-        await db.insert(supportTickets).values({
+        const ticket = await createSupportTicket({
           userId: ctx.user.id,
-          ...input,
+          userName: ctx.user.name || "Student",
+          userEmail: ctx.user.email || "student@cycleofchart.com",
+          category: input.category || "General",
+          subject: input.subject,
+          message: input.message,
+          attachmentUrl: input.attachmentUrl,
         });
-        return { success: true };
+        return { success: true, ticket };
       }),
     submitOrder: protectedProcedure
       .input(
@@ -585,6 +589,152 @@ export const appRouter = router({
       }),
   }),
 
+  support: router({
+    createTicket: publicProcedure
+      .input(
+        z.object({
+          name: z.string().min(2, "Name must be at least 2 characters"),
+          email: z.string().email("Valid email is required"),
+          category: z.string().min(1, "Please select a category"),
+          subject: z.string().min(3, "Subject must be at least 3 characters"),
+          message: z.string().min(10, "Message must be at least 10 characters"),
+          attachmentUrl: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const ticket = await createSupportTicket({
+          userId: ctx.user ? ctx.user.id : null,
+          userName: input.name.trim(),
+          userEmail: input.email.trim().toLowerCase(),
+          category: input.category,
+          subject: input.subject.trim(),
+          message: input.message.trim(),
+          attachmentUrl: input.attachmentUrl,
+        });
+
+        return { success: true, ticket };
+      }),
+
+    myTickets: protectedProcedure.query(async ({ ctx }) => {
+      return await listTickets({ userId: ctx.user.id });
+    }),
+
+    trackTicket: publicProcedure
+      .input(
+        z.object({
+          ticketCode: z.string().min(1, "Ticket ID is required"),
+          email: z.string().email("Valid email is required"),
+        })
+      )
+      .query(async ({ input }) => {
+        const ticket = await getTicketByCode(input.ticketCode);
+        if (!ticket) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "No support ticket found with this Ticket ID.",
+          });
+        }
+        if (ticket.userEmail?.toLowerCase() !== input.email.trim().toLowerCase()) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "The email address provided does not match this ticket record.",
+          });
+        }
+        const replies = await getTicketReplies(ticket.id);
+        return { ticket, replies };
+      }),
+
+    getTicket: publicProcedure
+      .input(
+        z.object({
+          ticketId: z.number(),
+          email: z.string().email().optional(),
+        })
+      )
+      .query(async ({ ctx, input }) => {
+        const ticket = await getTicketById(input.ticketId);
+        if (!ticket) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Ticket not found",
+          });
+        }
+
+        const isStaff = ctx.user?.role === "admin" || ctx.user?.role === "support";
+        const isOwner =
+          (ctx.user && (ticket.userId === ctx.user.id || ticket.userEmail.toLowerCase() === ctx.user.email?.toLowerCase())) ||
+          (input.email && ticket.userEmail.toLowerCase() === input.email.trim().toLowerCase());
+
+        if (!isStaff && !isOwner) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You are not authorized to view this ticket.",
+          });
+        }
+
+        const replies = await getTicketReplies(ticket.id);
+        return { ticket, replies };
+      }),
+
+    reply: publicProcedure
+      .input(
+        z.object({
+          ticketId: z.number(),
+          message: z.string().min(1, "Reply message cannot be empty"),
+          senderName: z.string().optional(),
+          senderEmail: z.string().email().optional(),
+          attachmentUrl: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const ticket = await getTicketById(input.ticketId);
+        if (!ticket) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Ticket not found",
+          });
+        }
+
+        const isStaff = ctx.user?.role === "admin" || ctx.user?.role === "support";
+        const isOwner =
+          (ctx.user && (ticket.userId === ctx.user.id || ticket.userEmail.toLowerCase() === ctx.user.email?.toLowerCase())) ||
+          (input.senderEmail && ticket.userEmail.toLowerCase() === input.senderEmail.trim().toLowerCase());
+
+        if (!isStaff && !isOwner) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You are not authorized to reply to this ticket.",
+          });
+        }
+
+        const senderRole = isStaff ? ("support" as const) : ("user" as const);
+        const senderName = isStaff
+          ? ctx.user?.name || "Support Specialist"
+          : input.senderName || ctx.user?.name || ticket.userName;
+        const senderEmail = isStaff
+          ? ctx.user?.email || "support@cycleofchart.com"
+          : input.senderEmail || ctx.user?.email || ticket.userEmail;
+
+        const reply = await addTicketReply({
+          ticketId: input.ticketId,
+          senderRole,
+          senderName,
+          senderEmail,
+          message: input.message.trim(),
+          attachmentUrl: input.attachmentUrl,
+        });
+
+        // Automatic status transition if user replies to waiting ticket
+        if (!isStaff) {
+          if (ticket.status === "waiting_user" || ticket.status === "closed" || ticket.status === "resolved") {
+            await updateTicketStatus(input.ticketId, "in_progress");
+          }
+        }
+
+        return { success: true, reply };
+      }),
+  }),
+
   admin: router({
     stats: supportProcedure.query(async () => {
       const allOrders = await listAllOrders();
@@ -598,6 +748,12 @@ export const appRouter = router({
       const totalRevenue = approvedOrders.reduce((sum: number, o: any) => sum + parseFloat(o.amount || "0"), 0);
       const pendingRevenue = pendingOrders.reduce((sum: number, o: any) => sum + parseFloat(o.amount || "0"), 0);
 
+      const openTicketsCount = allTickets.filter((t: any) => t.status === "open").length;
+      const inProgressTicketsCount = allTickets.filter((t: any) => t.status === "in_progress").length;
+      const waitingUserTicketsCount = allTickets.filter((t: any) => t.status === "waiting_user").length;
+      const resolvedTicketsCount = allTickets.filter((t: any) => t.status === "resolved").length;
+      const closedTicketsCount = allTickets.filter((t: any) => t.status === "closed").length;
+
       return {
         totalRevenue,
         pendingRevenue,
@@ -606,13 +762,59 @@ export const appRouter = router({
         pendingOrdersCount: pendingOrders.length,
         rejectedOrdersCount: rejectedOrders.length,
         totalStudents: allUsers.length,
-        openTicketsCount: allTickets.filter((t: any) => t.status === "open").length,
-        resolvedTicketsCount: allTickets.filter((t: any) => t.status === "resolved").length,
+        totalTicketsCount: allTickets.length,
+        openTicketsCount,
+        inProgressTicketsCount,
+        waitingUserTicketsCount,
+        resolvedTicketsCount,
+        closedTicketsCount,
       };
     }),
 
     orders: supportProcedure.query(() => listAllOrders()),
-    tickets: supportProcedure.query(() => listTickets()),
+    tickets: supportProcedure
+      .input(
+        z
+          .object({
+            status: z.string().optional(),
+            category: z.string().optional(),
+            search: z.string().optional(),
+          })
+          .optional()
+      )
+      .query(async ({ input }) => {
+        return await listTickets(input || {});
+      }),
+    ticketDetails: supportProcedure
+      .input(z.object({ ticketId: z.number() }))
+      .query(async ({ input }) => {
+        const ticket = await getTicketById(input.ticketId);
+        if (!ticket) throw new TRPCError({ code: "NOT_FOUND", message: "Ticket not found" });
+        const replies = await getTicketReplies(input.ticketId);
+        return { ticket, replies };
+      }),
+    replyTicket: supportProcedure
+      .input(
+        z.object({
+          ticketId: z.number(),
+          message: z.string().min(1),
+          status: z.enum(["open", "in_progress", "waiting_user", "resolved", "closed"]).optional(),
+          attachmentUrl: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const reply = await addTicketReply({
+          ticketId: input.ticketId,
+          senderRole: "support",
+          senderName: ctx.user.name || "Support Specialist",
+          senderEmail: ctx.user.email,
+          message: input.message.trim(),
+          attachmentUrl: input.attachmentUrl,
+        });
+        const targetStatus = input.status || "waiting_user";
+        await updateTicketStatus(input.ticketId, targetStatus, ctx.user.name || "Staff");
+        return { success: true, reply };
+      }),
     users: supportProcedure.query(async () => {
       const usersList = await listAllUsers();
       const ordersList = await listAllOrders();
@@ -652,9 +854,15 @@ export const appRouter = router({
       }),
 
     updateTicket: supportProcedure
-      .input(z.object({ ticketId: z.number(), status: z.enum(["open", "in_progress", "resolved"]) }))
-      .mutation(async ({ input }) => {
-        await updateTicketStatus(input.ticketId, input.status);
+      .input(
+        z.object({
+          ticketId: z.number(),
+          status: z.enum(["open", "in_progress", "waiting_user", "resolved", "closed"]),
+          assignedStaff: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        await updateTicketStatus(input.ticketId, input.status, input.assignedStaff || ctx.user.name || "Staff");
         return { success: true };
       }),
 

@@ -26,7 +26,7 @@ export default function Checkout() {
   });
 
   const chosen = bundles?.find((b: any) => b.id === selected);
-  const price = chosen?.price || (selected === 1 ? "199" : selected === 2 ? "399" : "799");
+  const price = chosen?.price || (selected === 1 ? "00" : selected === 2 ? "1999.00" : "2499.00");
 
   if (!user) {
     return (
@@ -71,9 +71,9 @@ export default function Checkout() {
   const bundlesList = bundles?.length
     ? bundles
     : [
-        { id: 1, titleEn: "PDF Package", descriptionEn: "15 PDFs · fixed package price", price: "199" },
-        { id: 2, titleEn: "Course + eBook", descriptionEn: "Structured course · eBook included", price: "399" },
-        { id: 3, titleEn: "Full Bundle", descriptionEn: "15 PDFs · course · eBook", price: "799" },
+        { id: 1, titleEn: "Free eBook Package", descriptionEn: "15 PDFs · fixed package price", price: "00" },
+        { id: 2, titleEn: "CYCLE OF CHART BASIC TO ADVANCE COURSE", descriptionEn: "Structured course · eBook included", price: "1999.00" },
+        { id: 3, titleEn: "CANDLE KING A TO Z FULL COURSE", descriptionEn: "15 PDFs · course · eBook", price: "2499.00" },
       ];
 
   return (
@@ -261,7 +261,7 @@ export default function Checkout() {
             <div className="mt-6 flex items-start justify-between gap-4">
               <div>
                 <div className="text-lg sm:text-xl font-bold">
-                  {chosen?.titleEn || (selected === 1 ? "PDF Package" : selected === 2 ? "Course + eBook" : "Full Bundle")}
+                  {chosen?.titleEn || (selected === 1 ? "Free eBook Package" : selected === 2 ? "CYCLE OF CHART BASIC TO ADVANCE COURSE" : "CANDLE KING A TO Z FULL COURSE")}
                 </div>
                 <div className="mt-1 text-xs text-slate-400">BDT · Manual Verification</div>
               </div>

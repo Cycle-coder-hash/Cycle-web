@@ -654,7 +654,7 @@ export default function Auth() {
 
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                    {isBn ? "ফোন / হোয়াটসঅ্যাপ (ঐচ্ছিক)" : "Phone / WhatsApp (Optional)"}
+                    {isBn ? "ফোন নম্বর (ঐচ্ছিক)" : "Phone Number (Optional)"}
                   </label>
                   <div className="relative mt-1.5">
                     <Phone size={17} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" />

@@ -43,301 +43,91 @@ export type StageDetail = {
   edge: string;
 };
 
+const ROADMAP_CARD_FLOAT_DELAYS = [
+  "0s",
+  "0.4s",
+  "0.8s",
+  "1.2s",
+  "1.6s",
+  "2.0s",
+  "2.4s",
+  "2.8s",
+  "3.2s",
+  "3.6s",
+  "4.0s",
+  "4.4s",
+];
+
 const STAGES_DETAILS_EN: StageDetail[] = [
   {
     num: "01",
-    title: "Trading Foundation",
+    title: "BASIC TRADING UNDERSTANDING",
     category: "MARKET ESSENTIALS",
     summary:
-      "Before risking a single dollar, master how financial markets operate, the mechanics of Forex and Crypto, and why strict risk-to-reward ratio dictates long-term survival.",
-    keyPoints: [
-      "Market participants: Central Banks & Institutions vs Retail traders",
-      "Pip value, leverage, spread and margin calculations",
-      "Risk-to-Reward Ratio (1:2 and 1:3 minimum setup rule)",
-      "Drawdown mathematics & true capital preservation principles",
-    ],
-    exercise: "Open a demo chart and calculate exact 1% account risk sizing across 3 different currency/crypto pairs.",
-    edge: "Traders who master foundational risk calculations survive the first 6 months while 90% blow their capital.",
+      "Trading কী? কোথা থেকে এসেছে? এবং একজন Beginner-এর কোথা থেকে শুরু করা উচিত?\n\n“আগে MARKET থেকে শেখো, তারপর MARKET থেকে আয় করো।”\n\nTrading-এর শুরু কোথা থেকে?\nTrading-এর Market কত প্রকার?\nTrading শুরু করার আগে কী কী জানতে হয় বা শিখতে হয়?",
+    keyPoints: [],
+    exercise: "",
+    edge: "",
   },
   {
     num: "02",
-    title: "Candlesticks & Price Action",
+    title: "CANDLESTICKS",
     category: "CHART ANATOMY",
     summary:
-      "Read the raw order flow battle between buyers and sellers behind every candle, moving far beyond superficial pattern names to understand real momentum.",
+      "Market-এর price movement বুঝতে Candlestick হলো অন্যতম গুরুত্বপূর্ণ foundation। একটি candle কীভাবে তৈরি হয়, তার bullish ও bearish behaviour কীভাবে বুঝতে হয় এবং বিভিন্ন candlestick pattern কীভাবে market-এর সম্ভাব্য movement সম্পর্কে ধারণা দেয়—এসব এখান থেকেই শেখা হবে।",
     keyPoints: [
-      "Candle anatomy: Open, High, Low, Close and Body-to-Wick ratio dynamics",
-      "High momentum institutional bars vs exhaustion rejection wicks",
-      "Displacement candles indicating smart money participation",
-      "Multi-timeframe story correlation (Monthly down to 5-Minute)",
+      "Candlestick কীভাবে তৈরি হয়?",
+      "BULLISH VS BEARISH",
+      "Candlestick Pattern-এর ধরন",
+      "01 — SINGLE CANDLE",
+      "02 — TWO-CANDLE",
+      "03 — MULTI-CANDLE",
+      "REVERSAL-TYPE",
     ],
-    exercise: "Spot 5 high-volume displacement candles on a 1H chart and note where price consolidated next.",
-    edge: "Candles don't predict the future; they reveal where institutions entered with high volume.",
+    exercise: "",
+    edge: "",
   },
   {
     num: "03",
-    title: "Chart Patterns & Market Context",
+    title: "BASIC MARKET STRUCTURE",
     category: "STRUCTURE CONTEXT",
     summary:
-      "Understand chart patterns strictly inside market context. Discover why standard textbook retail patterns fail when institutional liquidity sweeps them.",
-    keyPoints: [
-      "High-probability Reversal patterns (Quasimodo, Double Top/Bottom sweeps)",
-      "Trend Continuation patterns (Bull/Bear flags, ascending compression)",
-      "Engineered false breakout traps designed to harvest retail stop losses",
-      "Confluence with higher timeframe institutional trend direction",
-    ],
-    exercise: "Locate 3 failed head & shoulders or trendline breaks and observe where the trapped liquidity went.",
-    edge: "Retail traders trade pattern shapes; institutional traders trade the liquidity resting beyond the pattern.",
+      "Market কীভাবে move করে এবং price movement-এর মধ্যে থাকা basic structure কীভাবে বুঝতে হয়—এই section-এ সেটাই শেখা হবে। Market-এর direction, swing এবং price-এর গুরুত্বপূর্ণ movement বুঝে chart পড়ার foundation তৈরি করা হবে।",
+    keyPoints: [],
+    exercise: "",
+    edge: "",
   },
   {
     num: "04",
-    title: "Market Structure",
-    category: "THE COMPASS",
-    summary:
-      "The definitive framework of technical analysis. Map the true trend direction through validated Higher Highs, Lower Lows, Break of Structure (BOS), and Change of Character (CHoCH).",
-    keyPoints: [
-      "Strict validation rules for genuine swing highs and swing lows",
-      "Break of Structure (BOS) indicating genuine trend continuation",
-      "Change of Character (CHoCH) as the earliest structural reversal warning",
-      "Internal intraday structure vs External higher-timeframe swing structure",
-    ],
-    exercise: "Map the Daily and 4-Hour market structure on EUR/USD or BTC without any indicator overlays.",
-    edge: "When your intraday entries align with higher timeframe structure, trade win-rate and RR skyrocket.",
-  },
-  {
-    num: "05",
-    title: "Support & Resistance",
+    title: "SUPPORT & RESISTANCE",
     category: "KEY REACTION ZONES",
     summary:
-      "Stop drawing random horizontal lines across your chart. Learn structural support and resistance levels that institutional order flow actually respects.",
+      "চার্টজুড়ে এলোমেলো লাইন টানা বন্ধ করে ইন্সটিটিউশনাল স্ট্রাকচার-ভিত্তিক রিয়েল সাপোর্ট ও রেজিস্ট্যান্স লেভেল চিহ্নিত করুন।",
     keyPoints: [
-      "Major swing highs/lows vs minor intraday noise levels",
-      "Polarity flip zones (Previous resistance turning into institutional support)",
-      "Clean Break & Retest execution rules with volume confirmation",
-      "Psychological whole numbers & institutional reaction zones",
-    ],
-    exercise: "Mark 3 key weekly support/resistance levels and observe the exact price behavior upon touch.",
-    edge: "True support/resistance isn't a single line; it is an institutional pricing zone of supply and demand.",
-  },
-  {
-    num: "06",
-    title: "Liquidity Concepts",
-    category: "MARKET FUEL",
-    summary:
-      "Liquidity is the fuel of financial markets. Learn where retail stop-losses sit (Buy-Side & Sell-Side Liquidity) and how smart money engineers liquidity sweeps.",
-    keyPoints: [
-      "Buy-Side Liquidity (BSL) resting above obvious swing highs and double tops",
-      "Sell-Side Liquidity (SSL) resting below obvious swing lows and double bottoms",
-      "Engineered Equal Highs (EQH) and Equal Lows (EQL) manipulation",
-      "Recognizing a liquidity sweep (stop hunt) vs a genuine market breakout",
-    ],
-    exercise: "Identify 3 recent 15-minute liquidity sweeps and observe the explosive reversal that followed.",
-    edge: "Once you know where retail stop losses rest, you stop becoming the liquidity and start trading with institutions.",
-  },
-  {
-    num: "07",
-    title: "Smart Money Concepts (SMC)",
-    category: "INSTITUTIONAL FOOTPRINT",
-    summary:
-      "Decode how bank algorithms accumulate and distribute massive volume using Order Blocks, Imbalances, and Fair Value Gaps (FVG).",
-    keyPoints: [
-      "High-probability Bullish & Bearish Order Blocks (OB) with displacement",
-      "Fair Value Gaps (FVG) and institutional liquidity imbalances",
-      "Breaker blocks, Mitigation blocks & dynamic premium/discount pricing",
-      "High Risk-to-Reward entry optimization using institutional footprints",
-    ],
-    exercise: "Find 3 unmitigated Fair Value Gaps on a 1-Hour chart and track price reaction when returning to fill them.",
-    edge: "Order blocks represent institutional sponsorship. Entering at mitigated OBs delivers sniper precision.",
-  },
-  {
-    num: "08",
-    title: "ICT Algorithmic Models",
-    category: "TIME & PRICE THEORY",
-    summary:
-      "Master Inner Circle Trader (ICT) concepts, London & New York session timings, algorithmic killzones, and high-probability Optimal Trade Entries (OTE).",
-    keyPoints: [
-      "The Judas Swing: Session opening false manipulations",
-      "London Open Killzone & New York Open Killzone timings",
-      "Optimal Trade Entry (OTE) utilizing the 62% - 79% Fibonacci retracement",
-      "Power of 3 (AMD: Accumulation, Manipulation, Distribution) model",
-    ],
-    exercise: "Track the London session high/low sweep during the New York Open killzone for 5 consecutive days.",
-    edge: "Timing is everything. High-probability setups happen at specific times of the day, not randomly.",
-  },
-  {
-    num: "09",
-    title: "CRT Range Model",
-    category: "CYCLE SIGNATURE",
-    summary:
-      "Cycle of Chart's proprietary Candle Range Theory (CRT). Decode how weekly and daily candles open, manipulate, expand, and deliver precision targets.",
-    keyPoints: [
-      "Candle Open manipulation mechanics (Daily / Weekly opening range)",
-      "Expansion phase forecasting and precision target projection",
-      "Lower timeframe structural confirmation inside higher timeframe CRT",
-      "Fast invalidation rules and objective stop-loss placement",
-    ],
-    exercise: "Backtest 10 weekly CRT candle expansions and document their target hit rate.",
-    edge: "CRT provides a visual blueprint of the next expected candle movement before it unfolds.",
-  },
-  {
-    num: "10",
-    title: "Money & Risk Management",
-    category: "SURVIVAL MATHEMATICS",
-    summary:
-      "The only mathematical framework that guarantees long-term survival. Protect your capital with fixed percentage risk models and strict drawdown limits.",
-    keyPoints: [
-      "The Golden 1% account risk per trade rule (Never deviate)",
-      "Dynamic position size calculation based on exact stop-loss distance",
-      "Max daily drawdown caps to completely prevent revenge trading",
-      "Scaling out partial profits and systematic trailing stop strategies",
-    ],
-    exercise: "Create a risk calculator spreadsheet customized to your exact account size and stop-loss pips.",
-    edge: "With a 1:3 RR model, you only need a 35% win rate to be consistently profitable.",
-  },
-  {
-    num: "11",
-    title: "Trading Psychology",
-    category: "EMOTIONAL MASTERY",
-    summary:
-      "Master your mind. Eliminate FOMO, fear of losing, greed, and revenge trading. Build an unshakeable probability-based trading mindset.",
-    keyPoints: [
-      "Accepting losses as standard, unavoidable operating business costs",
-      "Eliminating execution fear, hesitation, and second-guessing",
-      "Staying emotionally neutral during winning streaks and losing streaks",
-      "Mark Douglas's disciplined trader mindset principles",
-    ],
-    exercise: "Write down your top 3 emotional trading impulses and establish concrete rules to neutralize them.",
-    edge: "Your technical analysis gets you into the trade; your emotional discipline determines your final P&L.",
-  },
-  {
-    num: "12",
-    title: "Execution & Routine",
-    category: "THE REPEATABLE LOOP",
-    summary:
-      "Transform your knowledge into an institutional daily routine. Analysis → Setup Selection → Risk Check → Execution → Journaling → Weekly Review.",
-    keyPoints: [
-      "Pre-market checklist: High-impact economic news filter & macro bias",
-      "Strict trade execution rules without emotional overrides",
-      "The Trading Journal: Capturing setup screenshots, emotional state & metrics",
-      "Weekly performance audits to continuously refine your edge",
-    ],
-    exercise: "Maintain a comprehensive trading journal for 20 consecutive trades before increasing capital size.",
-    edge: "Professional traders do not gamble; they execute a boring, repeatable, highly disciplined business process.",
-  },
-];
-
-const STAGES_DETAILS_BN: StageDetail[] = [
-  {
-    num: "০১",
-    title: "ট্রেডিং ফাউন্ডেশন",
-    category: "মার্কেট বেসিকস",
-    summary:
-      "বাস্তব মূলধন ঝুঁকিতে ফেলার আগে গ্লোবাল ফিন্যান্সিয়াল মার্কেট কিভাবে কাজ করে, ফরেক্স ও ক্রিপ্টোর মেকানিক্স এবং কেন রিস্ক-টু-রিওয়ার্ড রেশিও দীর্ঘমেয়াদে টিকে থাকার প্রধান চাবিকাঠি তা জানুন।",
-    keyPoints: [
-      "মার্কেট পার্টিসিপেন্টস: সেন্ট্রাল ব্যাংক ও ইন্সটিটিউশন বনাম রিটেইল ট্রেডার্স",
-      "পিপ ভ্যালু, লেভারেজ, স্প্রেড ও মার্জিনের নির্ভুল হিসাব পদ্ধতি",
-      "রিস্ক-টু-রিওয়ার্ড রেশিও (১:২ এবং ১:৩ মিনিমাম সেটআপ রুল)",
-      "ড্রডাউন ম্যাথমেটিক্স এবং মূলধন বাঁচিয়ে রাখার মূলনীতি",
-    ],
-    exercise: "একটি ডেমো চার্ট ওপেন করে ৩টি ভিন্ন কারেন্সি পেয়ারে ১% একাউন্ট রিস্ক ও লট সাইজ হিসাব করুন।",
-    edge: "ফাউন্ডেশনাল রিস্ক কন্ট্রোল জানা ট্রেডাররা প্রথম ৬ মাসে টিকে থাকে, যেখানে ৯০% মানুষ ভুল রিস্কে একাউন্ট জিরো করে।",
-  },
-  {
-    num: "০২",
-    title: "ক্যান্ডেলস্টিক ও প্রাইস অ্যাকশন",
-    category: "চার্ট অ্যানাটমি",
-    summary:
-      "শুধুমাত্র মুখস্থ নাম না শিখে প্রতিটি ক্যান্ডেলের পেছনের বায়ার্স ও সেলার্সের আসল অর্ডার ফ্লো মোমেন্টাম এবং শক্তির লড়াই বুঝতে শিখুন।",
-    keyPoints: [
-      "ক্যান্ডেল অ্যানাটমি: Open, High, Low, Close এবং বডি বনাম উইক রেশিও",
-      "মোমেন্টাম ক্যান্ডেল বনাম রিজেকশন উইকের শক্তি অ্যানালাইসিস",
-      "ইন্সটিটিউশনাল ডিসপ্লেসমেন্ট ক্যান্ডেল চেনার কৌশল",
-      "হায়ার টাইমফ্রেম থেকে লোয়ার টাইমফ্রেম ক্যান্ডেলস্টিক স্টোরিটেলিং",
-    ],
-    exercise: "১ ঘণ্টার চার্টে ৫টি স্ট্রং ডিসপ্লেসমেন্ট ক্যান্ডেল শনাক্ত করে প্রাইসের পরবর্তী মুভমেন্ট পর্যবেক্ষণ করুন।",
-    edge: "ক্যান্ডেলস্টিক ভবিষ্যৎ বলে না; এটি দেখায় বড় ব্যাংক ও ইন্সটিটিউশন কোন প্রাইসে ভলিউম প্রবেশ করিয়েছে।",
-  },
-  {
-    num: "০৩",
-    title: "চার্ট প্যাটার্নস ও মার্কেট কনটেক্সট",
-    category: "স্ট্রাকচার কনটেক্সট",
-    summary:
-      "অন্ধভাবে প্যাটার্ন ট্রেড না করে মার্কেট কনটেক্সটের সাথে প্যাটার্ন বুঝতে শিখুন। কেন বেশিরভাগ রিটেইল চার্ট প্যাটার্ন ফেইল করে তা আবিষ্কার করুন।",
-    keyPoints: [
-      "হাই-প্রবাবিলিটি রিভার্সাল প্যাটার্নস (কোয়াসিমোডো, ডাবল টপ/বটম সুইপ)",
-      "ট্রেন্ড কন্টিনিউয়েশন প্যাটার্নস (বুল/বেয়ার ফ্ল্যাগ, অ্যাসেন্ডিং ট্রায়াঙ্গেল)",
-      "ফলস ব্রেকআউট ট্র্যাপ যা রিটেইলদের ফাঁদে ফেলতে তৈরি করা হয়",
-      "হায়ার টাইমফ্রেম মূল ট্রেন্ডের সাথে কনফ্লুয়েন্স নেওয়া",
-    ],
-    exercise: "৩টি ফেইলড চার্ট প্যাটার্ন খুঁজে বের করে দেখুন কীভাবে রিটেইল স্টপলস শিকার করা হয়েছে।",
-    edge: "সাধারণ মানুষ শুধু প্যাটার্নের ছবি দেখে ট্রেড করে, আর প্রফেশনালরা দেখে প্যাটার্নের পেছনের লিকুইডিটি কোথায় আছে।",
-  },
-  {
-    num: "০৪",
-    title: "মার্কেট স্ট্রাকচার",
-    category: "প্রধান কম্পাস",
-    summary:
-      "টেকনিক্যাল অ্যানালাইসিসের প্রধান ভিত্তি। Higher High, Lower Low, Break of Structure (BOS) এবং Change of Character (CHoCH) দিয়ে মার্কেটের আসল ডিরেকশন ধরুন।",
-    keyPoints: [
-      "ভ্যালিড সুইং হাই ও সুইং লো যাচাই করার অকাট্য নিয়ম",
-      "Break of Structure (BOS) বনাম লিকুইডিটি সুইপের পার্থক্য",
-      "Change of Character (CHoCH) রিভার্সাল সিগন্যাল বোঝা",
-      "ইন্টারনাল ইন্ট্রাডে স্ট্রাকচার বনাম এক্সটারনাল সুইং স্ট্রাকচার",
-    ],
-    exercise: "কোনো ইন্ডিকেটর ছাড়া EUR/USD বা ক্রিপ্টো চার্টে Daily ও 4-Hour মার্কেট স্ট্রাকচার ড্র করুন।",
-    edge: "যখন আপনার এন্ট্রি হায়ার টাইমফ্রেম স্ট্রাকচারের সাথে মিলে যাবে, আপনার উইন-রেট বহুগুণ বেড়ে যাবে।",
-  },
-  {
-    num: "০৫",
-    title: "সাপোর্ট ও রেজিস্ট্যান্স",
-    category: "কি রিঅ্যাকশন জোন",
-    summary:
-      "চার্টজুড়ে এলোমেলো লাইন টানা বন্ধ করে ইন্সটিটিউশনাল স্ট্রাকচার-ভিত্তিক রিয়েল সাপোর্ট ও রেজিস্ট্যান্স লেভেল চিহ্নিত করুন।",
-    keyPoints: [
-      "মেজর সুইং লেভেলস বনাম মাইনর ইন্ট্রাডে নয়েজ লেভেল",
+      "মেজর সুইং লেভেলস বনাম মাইনর ইন্ট্রাডে নয়েজ লেভেল",
       "পোলারিটি ফ্লিপ জোন (পূর্ববর্তী রেজিস্ট্যান্স সাপোর্টে রূপান্তর)",
       "ব্রেক অ্যান্ড রিটেস্টের সুনির্দিষ্ট কনফার্মেশন রুলস",
       "সাইকোলজিক্যাল হোল নাম্বার ও ইন্সটিটিউশনাল রিঅ্যাকশন জোন",
     ],
     exercise: "উইকলি চার্টে ৩টি মেজর লেভেল চিহ্নিত করে প্রাইস সেখানে পৌঁছালে কেমন আচরণ করে তা দেখুন।",
-    edge: "সাপোর্ট ও রেজিস্ট্যান্স কোনো একক লাইন নয়; এটি হলো সাপ্লাই ও ডিমান্ডের ইন্সটিটিউশনাল জোন।",
+    edge: "সাপোর্ট ও রেজিস্ট্যান্স কোনো একক লাইন নয়; এটি হলো সাপ্লাই ও ডিমান্ডের ইন্সটিটিউশনাল জোন।",
   },
   {
-    num: "০৬",
-    title: "লিকুইডিটি কনসেপ্টস",
-    category: "মার্কেট ফুয়েল",
+    num: "05",
+    title: "SMART MONEY CONCEPT (SMC) — A TO Z",
+    category: "INSTITUTIONAL FOOTPRINT",
     summary:
-      "লিকুইডিটি হলো মার্কেটের আসল জ্বালানি। রিটেইল ট্রেডারদের স্টপলস কোথায় জমা থাকে (BSL ও SSL) এবং স্মার্ট মানি কীভাবে তা সুইপ করে তা বুঝুন।",
-    keyPoints: [
-      "সুইং হাইয়ের ওপর Buy-Side Liquidity (BSL) পুল বিশ্লেষণ",
-      "সুইং লোয়ের নিচে Sell-Side Liquidity (SSL) পুল বিশ্লেষণ",
-      "ইকুয়াল হাই (EQH) ও ইকুয়াল লো (EQL) ম্যানিপুলেশন",
-      "লিকুইডিটি সুইপ (স্টপ হান্ট) বনাম আসল ব্রেকআউট চেনার উপায়",
-    ],
-    exercise: "১৫ মিনিটের চার্টে ৩টি সাম্প্রতিক লিকুইডিটি সুইপ আইডেন্টিফাই করে রিভার্সাল মুভ নোট করুন।",
-    edge: "স্টপলস কোথায় জমা থাকে তা জানলে আপনি নিজে লিকুইডিটি না হয়ে স্মার্ট মানির সাথে ট্রেড করতে পারবেন।",
+      "Market-এর Smart Money Concepts একদম basic থেকে advanced level পর্যন্ত A to Z শেখানো হবে, যাতে একজন trader chart-এর structure, liquidity এবং price movement আরও ভালোভাবে বুঝতে পারে।",
+    keyPoints: ["A TO Z SMC"],
+    exercise: "",
+    edge: "",
   },
   {
-    num: "০৭",
-    title: "স্মার্ট মানি কনসেপ্ট (SMC)",
-    category: "ইন্সটিটিউশনাল ফুটপ্রিন্ট",
-    summary:
-      "ইন্সটিটিউশনাল অ্যালগরিদম কীভাবে অর্ডার ব্লক ও ফেয়ার ভ্যালু গ্যাপ (FVG) দিয়ে মার্কেট নিয়ন্ত্রণ করে তা ডিকোড করুন।",
-    keyPoints: [
-      "হাই-প্রবাবিলিটি বুলিশ ও বেয়ারিশ অর্ডার ব্লক (OB) নির্ণয়",
-      "ফেয়ার ভ্যালু গ্যাপ (FVG) এবং ইমব্যালেন্স থিওরি",
-      "ব্রেকার ব্লক ও প্রিমিয়াম/ডিসকাউন্ট প্রাইসিং মডেল",
-      "স্মার্ট মানি ফুটপ্রিন্ট দিয়ে হাই রিস্ক-টু-রিওয়ার্ড সেটআপ গঠন",
-    ],
-    exercise: "চার্টে ৩টি আনমিটিগেটেড FVG চিহ্নিত করে প্রাইস সেটা ফিল করার পর কেমন আচরণ করে তা ব্যাকটেস্ট করুন।",
-    edge: "অর্ডার ব্লক হলো বড় ব্যাংকের এন্ট্রির প্রমাণ। এটি জেনে ট্রেড করলে স্নাইপার এন্ট্রি পাওয়া যায়।",
-  },
-  {
-    num: "০৮",
+    num: "06",
     title: "আইসিটি (ICT) মডেলস",
-    category: "টাইম ও প্রাইস থিওরি",
+    category: "TIME & PRICE THEORY",
     summary:
-      "ইনার সার্কেল ট্রেডার (ICT) টাইম ও প্রাইস থিওরি, লন্ডন ও নিউইয়র্ক সেশন টাইমিং এবং অ্যালগরিদমিক কিলজোন মাস্টার করুন।",
+      "ইনার সার্কেল ট্রেডার (ICT) টাইম ও প্রাইস থিওরি, লন্ডন ও নিউইয়র্ক সেশন টাইমিং এবং অ্যালগরিদমিক কিলজোন মাস্টার করুন।",
     keyPoints: [
       "জুডাস সুইং (Judas Swing) ও সেশন ওপেনিং ম্যানিপুলেশন",
       "লন্ডন ওপেন এবং নিউ ইয়র্ক ওপেন কিলজোন টাইমিং",
@@ -348,7 +138,188 @@ const STAGES_DETAILS_BN: StageDetail[] = [
     edge: "ট্রেডিংয়ে টাইমিং সবচেয়ে গুরুত্বপূর্ণ। সেরা সেটআপগুলো দিনের নির্দিষ্ট কিলজোনেই তৈরি হয়।",
   },
   {
-    num: "০৯",
+    num: "07",
+    title: "সিআরটি (CRT) মডেল",
+    category: "CYCLE SIGNATURE",
+    summary:
+      "সাইকেল অব চার্টের স্পেশালাইজড ক্যান্ডেল রেঞ্জ থিওরি (CRT)। ডেইলি ও উইকলি ক্যান্ডেলের এক্সপ্যানশন এবং প্রেসিসন এন্ট্রি মেকানিক্স।",
+    keyPoints: [
+      "ক্যান্ডেল ওপেনিং ম্যানিপুলেশন মেকানিক্স (Daily / Weekly Open)",
+      "এক্সপ্যানশন ফেজ ও টার্গেট প্রজেকশন কৌশল",
+      "হায়ার টাইমফ্রেম CRT-র ভেতর লোয়ার টাইমফ্রেম কনফার্মেশন",
+      "ইনভ্যালিডেশন পয়েন্ট ও দ্রুত রিস্ক এক্সিট প্ল্যান",
+    ],
+    exercise: "১০টি উইকলি CRT ক্যান্ডেল সেটআপ ব্যাকটেস্ট করে টার্গেট হিট রেট রেকর্ড করুন।",
+    edge: "CRT মডেল ক্যান্ডেলটি তৈরি হওয়ার আগেই তার সম্ভাব্য মুভমেন্টের একটি পরিষ্কার রোডম্যাপ দেয়।",
+  },
+  {
+    num: "08",
+    title: "TIME, SESSION & NEWS",
+    category: "TIME & SESSION",
+    summary:
+      "Trading-এ শুধু price action বুঝলেই হবে না—কখন market active থাকে, কোন session-এ কোন ধরনের movement তৈরি হয় এবং গুরুত্বপূর্ণ news কীভাবে market-এর volatility ও price movement-কে প্রভাবিত করে সেটাও জানা জরুরি। সঠিক timing ও market context বুঝে better trading decisions নেওয়ার foundation তৈরি করুন।",
+    keyPoints: [
+      "TRADING TIME — Market কখন open, active ও slow থাকে এবং timing কেন গুরুত্বপূর্ণ",
+      "MARKET SESSIONS — Asian, London ও New York Session কী এবং প্রতিটি session-এর characteristics",
+      "SESSION OVERLAP — London–New York overlap কেন গুরুত্বপূর্ণ এবং liquidity কীভাবে বাড়ে",
+      "SESSION HIGH & LOW — Previous session-এর High/Low কীভাবে identify ও monitor করতে হয়",
+      "ECONOMIC NEWS — High-impact ও low-impact news কী এবং news-এর গুরুত্ব কীভাবে বুঝতে হয়",
+      "NEWS & VOLATILITY — News release-এর আগে ও পরে market volatility কীভাবে পরিবর্তিত হতে পারে",
+      "TRADING AROUND NEWS — গুরুত্বপূর্ণ news-এর সময় কখন trade avoid বা সতর্কভাবে manage করতে হয়",
+    ],
+    exercise: "টানা ৫ দিন Asian, London ও New York Session-এর High/Low mark করুন এবং session change ও গুরুত্বপূর্ণ news release-এর সময় price movement কীভাবে পরিবর্তিত হয় তা chart-এ track করুন।",
+    edge: "Price কোথায় যাচ্ছে তার পাশাপাশি কখন move করছে সেটাও গুরুত্বপূর্ণ। Session timing, liquidity এবং high-impact news-এর context বুঝতে পারলে market-এর সম্ভাব্য volatility ও movement সম্পর্কে আরও structured ধারণা পাওয়া যায়।",
+  },
+  {
+    num: "09",
+    title: "LOT & LEVERAGE",
+    category: "POSITION SIZING",
+    summary:
+      "Trading-এ কতটুকু position নেওয়া উচিত, Lot কীভাবে কাজ করে এবং Leverage কীভাবে profit ও loss—দুটোকেই প্রভাবিত করে তা বুঝুন। সঠিক position sizing, margin এবং leverage ব্যবহার করে unnecessary risk কমিয়ে controlled trading-এর foundation তৈরি করুন।",
+    keyPoints: [
+      "LOT কী এবং Lot Size কীভাবে কাজ করে",
+      "Leverage কী এবং কেন ব্যবহার করা হয়",
+      "Margin, Position Size ও Account Balance-এর সম্পর্ক",
+      "Risk অনুযায়ী সঠিক Lot Size নির্বাচন",
+    ],
+    exercise: "একই setup-এ বিভিন্ন Lot Size ও Leverage ব্যবহার করে সম্ভাব্য Profit, Loss এবং Margin Requirement হিসাব করুন।",
+    edge: "ভালো setup থাকলেই যথেষ্ট নয়—সঠিক position size ও controlled leverage-ই একজন trader-এর capital দীর্ঘসময় ধরে টিকিয়ে রাখতে সাহায্য করে।",
+  },
+  {
+    num: "10",
+    title: "RISK & MONEY MANAGEMENT",
+    category: "SURVIVAL MATHEMATICS",
+    summary:
+      "একজন trader-এর সবচেয়ে গুরুত্বপূর্ণ skill হলো নিজের capital protect করা। Risk কীভাবে calculate করতে হয়, প্রতি trade-এ কতটুকু risk নেওয়া উচিত এবং account-এর capital কীভাবে দীর্ঘমেয়াদে manage করতে হয়—এসবের মাধ্যমে disciplined money management system তৈরি করুন।",
+    keyPoints: [
+      "Risk Per Trade ও Risk-to-Reward Ratio",
+      "Stop Loss ও Position Size-এর সঠিক ব্যবহার",
+      "Drawdown ও Capital Protection",
+      "Consistent Risk Management Rules তৈরি",
+    ],
+    exercise: "একটি নির্দিষ্ট account balance ধরে বিভিন্ন setup-এর জন্য Risk %, Stop Loss এবং Position Size calculate করে একটি consistent risk plan তৈরি করুন।",
+    edge: "Profit করা trader হওয়ার চেয়েও গুরুত্বপূর্ণ হলো capital ধরে রাখা। Proper risk management একটি losing streak-এর মধ্যেও account-কে survive করার সুযোগ দেয় এবং long-term consistency তৈরি করে।",
+  },
+  {
+    num: "11",
+    title: "BUILD YOUR OWN EDGE, SYSTEM & STRATEGY",
+    category: "SYSTEM & STRATEGY",
+    summary:
+      "অন্যের strategy কপি না করে নিজের knowledge, market understanding এবং trading experience-এর ওপর ভিত্তি করে একটি unique trading edge তৈরি করুন। Market selection থেকে শুরু করে setup, entry, confirmation, stop loss, take profit, risk management, backtesting এবং execution—সবকিছু মিলিয়ে কীভাবে একটি complete, rule-based এবং repeatable trading system তৈরি করতে হয় তা A to Z শেখানো হবে।",
+    keyPoints: [
+      "FIND YOUR EDGE — কোন Market, Timeframe ও Setup-এ আপনার advantage তৈরি হচ্ছে তা identify করা",
+      "BUILD YOUR SYSTEM — Market condition, setup, confirmation ও execution-এর clear rules তৈরি করা",
+      "CREATE YOUR STRATEGY — Entry, Stop Loss, Take Profit ও Risk Management-এর complete framework তৈরি করা",
+      "BACKTEST & OPTIMIZE — Historical chart-এ strategy test করে Win Rate, R:R, Drawdown ও Expectancy analyse করা",
+      "TRADING PLAYBOOK — সব rules এক জায়গায় লিখে একটি repeatable trading plan তৈরি করা",
+      "FORWARD TESTING — Live market-এ controlled risk নিয়ে system-এর real performance যাচাই করা",
+      "REFINE & EXECUTE — Data ও performance অনুযায়ী system improve করে consistent execution তৈরি করা",
+    ],
+    exercise: "নিজের পছন্দের একটি market ও setup নির্বাচন করে complete trading strategy তৈরি করুন। কমপক্ষে 50–100টি historical setup backtest করে Entry, Stop Loss, Take Profit, Win Rate, Risk-to-Reward এবং Drawdown record করুন।",
+    edge: "একজন trader-এর আসল advantage কোনো single indicator বা secret setup নয়। নিজের data, rules এবং repeatable process থেকে তৈরি করা measurable edge-ই long-term trading system-এর foundation।",
+  },
+  {
+    num: "12",
+    title: "FROM BEGINNER TO PROFESSIONAL TRADER",
+    category: "COMPLETE ROADMAP",
+    summary:
+      "একজন Beginner কীভাবে সঠিকভাবে Market শিখবে, নিজের learning process তৈরি করবে, Trading Journal-এর মাধ্যমে নিজের performance analyse করবে এবং ধাপে ধাপে একজন disciplined, professional ও profitable trader হয়ে উঠবে—এই section-এ সেই complete journey দেখানো হবে। শুধু strategy শেখা নয়, knowledge, practice, execution, review এবং mindset—সবকিছুকে একসাথে নিয়ে একজন complete trader তৈরি করার framework।",
+    keyPoints: [
+      "MARKET OF LEARNING — Market থেকে কীভাবে শেখা যায়, কী শিখতে হবে এবং কোন knowledge আগে ও কোনটা পরে শেখা উচিত",
+      "LEARNING PROCESS — Beginner থেকে advanced level পর্যন্ত structuredভাবে শেখার সঠিক process তৈরি করা",
+      "TRADING JOURNAL — প্রতিটি trade কীভাবে journal করতে হয় এবং Entry, Exit, Setup, Risk, Emotion ও Result কীভাবে record করতে হয়",
+      "JOURNAL ANALYSIS — নিজের winning ও losing trades review করে ভুল, weakness এবং improvement area identify করা",
+      "BUILD TRADING DISCIPLINE — Rules follow করা, patience রাখা এবং emotion-এর পরিবর্তে process অনুযায়ী decision নেওয়া",
+      "PROFITABLE TRADER MINDSET — একজন profitable trader-এর thinking, patience, consistency, discipline এবং risk-focused mindset কেমন হওয়া উচিত",
+      "FROM BEGINNER TO PROFESSIONAL — Knowledge → Practice → Backtesting → Execution → Journaling → Review → Improvement—এই complete cycle-এর মাধ্যমে professional trading skill তৈরি করা",
+      "BECOME CONSISTENT — Profit-এর পেছনে না ছুটে একটি repeatable process ও long-term consistency তৈরি করা",
+    ],
+    exercise: "একটি complete Trading Journal তৈরি করুন এবং নিয়মিত নিজের trades record করুন। প্রতি সপ্তাহে Journal review করে ভুল, ভালো execution, emotional decisions, risk management এবং overall performance analyse করে পরবর্তী সপ্তাহের জন্য improvement plan তৈরি করুন।",
+    edge: "Profitable trader হওয়া মানে শুধু বেশি trade জেতা নয়। একজন professional trader নিজের process, risk, emotion এবং performance নিয়ন্ত্রণ করতে পারে। শেখা → প্রয়োগ → journal → review → improvement—এই continuous cycle-ই একজন Beginner-কে ধীরে ধীরে consistent ও professional trader-এ পরিণত করে।",
+  },
+];
+
+const STAGES_DETAILS_BN: StageDetail[] = [
+  {
+    num: "০১",
+    title: "BASIC TRADING UNDERSTANDING",
+    category: "মার্কেট বেসিকস",
+    summary:
+      "Trading কী? কোথা থেকে এসেছে? এবং একজন Beginner-এর কোথা থেকে শুরু করা উচিত?\n\n“আগে MARKET থেকে শেখো, তারপর MARKET থেকে আয় করো।”\n\nTrading-এর শুরু কোথা থেকে?\nTrading-এর Market কত প্রকার?\nTrading শুরু করার আগে কী কী জানতে হয় বা শিখতে হয়?",
+    keyPoints: [],
+    exercise: "",
+    edge: "",
+  },
+  {
+    num: "০২",
+    title: "CANDLESTICKS",
+    category: "চার্ট অ্যানাটমি",
+    summary:
+      "Market-এর price movement বুঝতে Candlestick হলো অন্যতম গুরুত্বপূর্ণ foundation। একটি candle কীভাবে তৈরি হয়, তার bullish ও bearish behaviour কীভাবে বুঝতে হয় এবং বিভিন্ন candlestick pattern কীভাবে market-এর সম্ভাব্য movement সম্পর্কে ধারণা দেয়—এসব এখান থেকেই শেখা হবে।",
+    keyPoints: [
+      "Candlestick কীভাবে তৈরি হয়?",
+      "BULLISH VS BEARISH",
+      "Candlestick Pattern-এর ধরন",
+      "01 — SINGLE CANDLE",
+      "02 — TWO-CANDLE",
+      "03 — MULTI-CANDLE",
+      "REVERSAL-TYPE",
+    ],
+    exercise: "",
+    edge: "",
+  },
+  {
+    num: "০৩",
+    title: "BASIC MARKET STRUCTURE",
+    category: "স্ট্রাকচার কনটেক্সট",
+    summary:
+      "Market কীভাবে move করে এবং price movement-এর মধ্যে থাকা basic structure কীভাবে বুঝতে হয়—এই section-এ সেটাই শেখা হবে। Market-এর direction, swing এবং price-এর গুরুত্বপূর্ণ movement বুঝে chart পড়ার foundation তৈরি করা হবে।",
+    keyPoints: [],
+    exercise: "",
+    edge: "",
+  },
+  {
+    num: "০৪",
+    title: "SUPPORT & RESISTANCE",
+    category: "KEY REACTION ZONES",
+    summary:
+      "চার্টজুড়ে এলোমেলো লাইন টানা বন্ধ করে ইন্সটিটিউশনাল স্ট্রাকচার-ভিত্তিক রিয়েল সাপোর্ট ও রেজিস্ট্যান্স লেভেল চিহ্নিত করুন।",
+    keyPoints: [
+      "মেজর সুইং লেভেলস বনাম মাইনর ইন্ট্রাডে নয়েজ লেভেল",
+      "পোলারিটি ফ্লিপ জোন (পূর্ববর্তী রেজিস্ট্যান্স সাপোর্টে রূপান্তর)",
+      "ব্রেক অ্যান্ড রিটেস্টের সুনির্দিষ্ট কনফার্মেশন রুলস",
+      "সাইকোলজিক্যাল হোল নাম্বার ও ইন্সটিটিউশনাল রিঅ্যাকশন জোন",
+    ],
+    exercise: "উইকলি চার্টে ৩টি মেজর লেভেল চিহ্নিত করে প্রাইস সেখানে পৌঁছালে কেমন আচরণ করে তা দেখুন।",
+    edge: "সাপোর্ট ও রেজিস্ট্যান্স কোনো একক লাইন নয়; এটি হলো সাপ্লাই ও ডিমান্ডের ইন্সটিটিউশনাল জোন।",
+  },
+  {
+    num: "০৫",
+    title: "SMART MONEY CONCEPT (SMC) — A TO Z",
+    category: "INSTITUTIONAL FOOTPRINT",
+    summary:
+      "Market-এর Smart Money Concepts একদম basic থেকে advanced level পর্যন্ত A to Z শেখানো হবে, যাতে একজন trader chart-এর structure, liquidity এবং price movement আরও ভালোভাবে বুঝতে পারে।",
+    keyPoints: ["A TO Z SMC"],
+    exercise: "",
+    edge: "",
+  },
+  {
+    num: "০৬",
+    title: "আইসিটি (ICT) মডেলস",
+    category: "টাইম ও প্রাইস থিওরি",
+    summary:
+      "ইনার সার্কেল ট্রেডার (ICT) টাইম ও প্রাইস থিওরি, লন্ডন ও নিউইয়র্ক সেশন টাইমিং এবং অ্যালগরিদমিক কিলজোন মাস্টার করুন।",
+    keyPoints: [
+      "জুডাস সুইং (Judas Swing) ও সেশন ওপেনিং ম্যানিপুলেশন",
+      "লন্ডন ওপেন এবং নিউ ইয়র্ক ওপেন কিলজোন টাইমিং",
+      "ফিবোনাচ্চি অপটিমাল ট্রেড এন্ট্রি (OTE) মডেল (৬২% - ৭৯%)",
+      "পাওয়ার অব ৩ (AMD: Accumulation, Manipulation, Distribution)",
+    ],
+    exercise: "টানা ৫ দিন নিউ ইয়র্ক সেশনে লন্ডন সেশনের হাই/লো সুইপ কীভাবে রিঅ্যাক্ট করে তা ট্র্যাক করুন।",
+    edge: "ট্রেডিংয়ে টাইমিং সবচেয়ে গুরুত্বপূর্ণ। সেরা সেটআপগুলো দিনের নির্দিষ্ট কিলজোনেই তৈরি হয়।",
+  },
+  {
+    num: "০৭",
     title: "সিআরটি (CRT) মডেল",
     category: "সাইকেল সিগনেচার",
     summary:
@@ -363,49 +334,89 @@ const STAGES_DETAILS_BN: StageDetail[] = [
     edge: "CRT মডেল ক্যান্ডেলটি তৈরি হওয়ার আগেই তার সম্ভাব্য মুভমেন্টের একটি পরিষ্কার রোডম্যাপ দেয়।",
   },
   {
+    num: "০৮",
+    title: "TIME, SESSION & NEWS",
+    category: "টাইম ও সেশন",
+    summary:
+      "Trading-এ শুধু price action বুঝলেই হবে না—কখন market active থাকে, কোন session-এ কোন ধরনের movement তৈরি হয় এবং গুরুত্বপূর্ণ news কীভাবে market-এর volatility ও price movement-কে প্রভাবিত করে সেটাও জানা জরুরি। সঠিক timing ও market context বুঝে better trading decisions নেওয়ার foundation তৈরি করুন।",
+    keyPoints: [
+      "TRADING TIME — Market কখন open, active ও slow থাকে এবং timing কেন গুরুত্বপূর্ণ",
+      "MARKET SESSIONS — Asian, London ও New York Session কী এবং প্রতিটি session-এর characteristics",
+      "SESSION OVERLAP — London–New York overlap কেন গুরুত্বপূর্ণ এবং liquidity কীভাবে বাড়ে",
+      "SESSION HIGH & LOW — Previous session-এর High/Low কীভাবে identify ও monitor করতে হয়",
+      "ECONOMIC NEWS — High-impact ও low-impact news কী এবং news-এর গুরুত্ব কীভাবে বুঝতে হয়",
+      "NEWS & VOLATILITY — News release-এর আগে ও পরে market volatility কীভাবে পরিবর্তিত হতে পারে",
+      "TRADING AROUND NEWS — গুরুত্বপূর্ণ news-এর সময় কখন trade avoid বা সতর্কভাবে manage করতে হয়",
+    ],
+    exercise: "টানা ৫ দিন Asian, London ও New York Session-এর High/Low mark করুন এবং session change ও গুরুত্বপূর্ণ news release-এর সময় price movement কীভাবে পরিবর্তিত হয় তা chart-এ track করুন।",
+    edge: "Price কোথায় যাচ্ছে তার পাশাপাশি কখন move করছে সেটাও গুরুত্বপূর্ণ। Session timing, liquidity এবং high-impact news-এর context বুঝতে পারলে market-এর সম্ভাব্য volatility ও movement সম্পর্কে আরও structured ধারণা পাওয়া যায়।",
+  },
+  {
+    num: "০৯",
+    title: "LOT & LEVERAGE",
+    category: "পজিশন সাইজিং",
+    summary:
+      "Trading-এ কতটুকু position নেওয়া উচিত, Lot কীভাবে কাজ করে এবং Leverage কীভাবে profit ও loss—দুটোকেই প্রভাবিত করে তা বুঝুন। সঠিক position sizing, margin এবং leverage ব্যবহার করে unnecessary risk কমিয়ে controlled trading-এর foundation তৈরি করুন।",
+    keyPoints: [
+      "LOT কী এবং Lot Size কীভাবে কাজ করে",
+      "Leverage কী এবং কেন ব্যবহার করা হয়",
+      "Margin, Position Size ও Account Balance-এর সম্পর্ক",
+      "Risk অনুযায়ী সঠিক Lot Size নির্বাচন",
+    ],
+    exercise: "একই setup-এ বিভিন্ন Lot Size ও Leverage ব্যবহার করে সম্ভাব্য Profit, Loss এবং Margin Requirement হিসাব করুন।",
+    edge: "ভালো setup থাকলেই যথেষ্ট নয়—সঠিক position size ও controlled leverage-ই একজন trader-এর capital দীর্ঘসময় ধরে টিকিয়ে রাখতে সাহায্য করে।",
+  },
+  {
     num: "১০",
-    title: "মানি ও রিস্ক ম্যানেজমেন্ট",
+    title: "RISK & MONEY MANAGEMENT",
     category: "টিকে থাকার গণিত",
     summary:
-      "ট্রেডিংয়ে টিকে থাকার একমাত্র ম্যাথমেটিক্যাল অস্ত্র। ফিক্সড পার্সেন্টেজ রিস্ক মডেল দিয়ে মূলধন সুরক্ষিত রাখুন।",
+      "একজন trader-এর সবচেয়ে গুরুত্বপূর্ণ skill হলো নিজের capital protect করা। Risk কীভাবে calculate করতে হয়, প্রতি trade-এ কতটুকু risk নেওয়া উচিত এবং account-এর capital কীভাবে দীর্ঘমেয়াদে manage করতে হয়—এসবের মাধ্যমে disciplined money management system তৈরি করুন।",
     keyPoints: [
-      "প্রতি ট্রেডে সর্বোচ্চ ১% একাউন্ট রিস্কের অপরিবর্তনীয় নিয়ম",
-      "স্টপলস দূরত্বের ওপর ভিত্তি করে সঠিক লট সাইজ নির্ধারণ",
-      "রিভেঞ্জ ট্রেডিং রুখতে ম্যাক্সিমাম ডেইলি লস লিমিট রুল",
-      "স্কেলিং আউট প্রফিট বুকিং ও ট্রেইলিং স্টপলস টেকনিক",
+      "Risk Per Trade ও Risk-to-Reward Ratio",
+      "Stop Loss ও Position Size-এর সঠিক ব্যবহার",
+      "Drawdown ও Capital Protection",
+      "Consistent Risk Management Rules তৈরি",
     ],
-    exercise: "আপনার একাউন্ট সাইজ অনুযায়ী একটি কাস্টম রিস্ক ক্যালকুলেটর শিট তৈরি করুন।",
-    edge: "১:৩ রিস্ক-রিওয়ার্ডে মাত্র ৩৫% উইন-রেট থাকলেও একাউন্ট নিয়মিত গ্রো করে।",
+    exercise: "একটি নির্দিষ্ট account balance ধরে বিভিন্ন setup-এর জন্য Risk %, Stop Loss এবং Position Size calculate করে একটি consistent risk plan তৈরি করুন।",
+    edge: "Profit করা trader হওয়ার চেয়েও গুরুত্বপূর্ণ হলো capital ধরে রাখা। Proper risk management একটি losing streak-এর মধ্যেও account-কে survive করার সুযোগ দেয় এবং long-term consistency তৈরি করে।",
   },
   {
     num: "১১",
-    title: "ট্রেডিং সাইকোলজি",
-    category: "ইমোশন কন্ট্রোল",
+    title: "BUILD YOUR OWN EDGE, SYSTEM & STRATEGY",
+    category: "সিস্টেম ও স্ট্র্যাটেজি",
     summary:
-      "নিজের মনকে নিয়ন্ত্রণ করুন। ফোমো (FOMO), লস হওয়ার ভয়, রিভেঞ্জ ট্রেডিং দূর করে একজন পেশাদার প্রবাবিলিটি মাইন্ডসেট তৈরি করুন।",
+      "অন্যের strategy কপি না করে নিজের knowledge, market understanding এবং trading experience-এর ওপর ভিত্তি করে একটি unique trading edge তৈরি করুন। Market selection থেকে শুরু করে setup, entry, confirmation, stop loss, take profit, risk management, backtesting এবং execution—সবকিছু মিলিয়ে কীভাবে একটি complete, rule-based এবং repeatable trading system তৈরি করতে হয় তা A to Z শেখানো হবে।",
     keyPoints: [
-      "লসকে ব্যবসার স্বাভাবিক ইনভেস্টমেন্ট খরচ হিসেবে মেনে নেওয়া",
-      "ট্রেড নেওয়ার সময় ভয় ও দ্বিধাদ্বন্দ্ব কাটানোর সুনির্দিষ্ট নিয়ম",
-      "টানা লাভ বা লসে অতিরিক্ত আবেগ বর্জন করে নিউট্রাল থাকা",
-      "মার্ক ডগলাসের ডিসিপ্লিন্ড ট্রেডার সাইকোলজি প্রিন্সিপালস",
+      "FIND YOUR EDGE — কোন Market, Timeframe ও Setup-এ আপনার advantage তৈরি হচ্ছে তা identify করা",
+      "BUILD YOUR SYSTEM — Market condition, setup, confirmation ও execution-এর clear rules তৈরি করা",
+      "CREATE YOUR STRATEGY — Entry, Stop Loss, Take Profit ও Risk Management-এর complete framework তৈরি করা",
+      "BACKTEST & OPTIMIZE — Historical chart-এ strategy test করে Win Rate, R:R, Drawdown ও Expectancy analyse করা",
+      "TRADING PLAYBOOK — সব rules এক জায়গায় লিখে একটি repeatable trading plan তৈরি করা",
+      "FORWARD TESTING — Live market-এ controlled risk নিয়ে system-এর real performance যাচাই করা",
+      "REFINE & EXECUTE — Data ও performance অনুযায়ী system improve করে consistent execution তৈরি করা",
     ],
-    exercise: "আপনার ৩টি প্রধান আবেগীয় ভুল ও ফোমোর কারণ লিখে তা ঠেকানোর ৩টি রুল ডায়েরিতে লিখুন।",
-    edge: "অ্যানালাইসিস আপনাকে এন্ট্রি এনে দেয়, কিন্তু আপনার ডিসিপ্লিন ঠিক করে আপনি দীর্ঘমেয়াদে লাভবান হবেন কিনা।",
+    exercise: "নিজের পছন্দের একটি market ও setup নির্বাচন করে complete trading strategy তৈরি করুন। কমপক্ষে 50–100টি historical setup backtest করে Entry, Stop Loss, Take Profit, Win Rate, Risk-to-Reward এবং Drawdown record করুন।",
+    edge: "একজন trader-এর আসল advantage কোনো single indicator বা secret setup নয়। নিজের data, rules এবং repeatable process থেকে তৈরি করা measurable edge-ই long-term trading system-এর foundation।",
   },
   {
     num: "১২",
-    title: "এক্সিকিউশন, জার্নাল ও রুটিন",
-    category: "ডেইলি প্রসেস লুপ",
+    title: "FROM BEGINNER TO PROFESSIONAL TRADER",
+    category: "কমপ্লিট রোডম্যাপ",
     summary:
-      "জ্ঞানকে একটি প্রাতিষ্ঠানিক ডেইলি রুটিনে রূপান্তর করুন। অ্যানালাইসিস → প্ল্যান → এক্সিকিউশন → জার্নালিং → রিভিউ।",
+      "একজন Beginner কীভাবে সঠিকভাবে Market শিখবে, নিজের learning process তৈরি করবে, Trading Journal-এর মাধ্যমে নিজের performance analyse করবে এবং ধাপে ধাপে একজন disciplined, professional ও profitable trader হয়ে উঠবে—এই section-এ সেই complete journey দেখানো হবে। শুধু strategy শেখা নয়, knowledge, practice, execution, review এবং mindset—সবকিছুকে একসাথে নিয়ে একজন complete trader তৈরি করার framework।",
     keyPoints: [
-      "প্রি-মার্কেট রুটিন চেকলিস্ট ও হাই-ইমপ্যাক্ট নিউজ ফিল্টারিং",
-      "সুনির্দিষ্ট প্ল্যান ছাড়া মার্কেটে কোনো রেন্ডম এন্ট্রি না নেওয়া",
-      "ট্রেডিং জার্নাল: চার্টের স্ক্রিনশট, লজিক ও অনুভূতি লিখে রাখা",
-      "সাপ্তাহিক পারফরম্যান্স রিভিউ করে নিজের ভুলগুলো শুধরে নেওয়া",
+      "MARKET OF LEARNING — Market থেকে কীভাবে শেখা যায়, কী শিখতে হবে এবং কোন knowledge আগে ও কোনটা পরে শেখা উচিত",
+      "LEARNING PROCESS — Beginner থেকে advanced level পর্যন্ত structuredভাবে শেখার সঠিক process তৈরি করা",
+      "TRADING JOURNAL — প্রতিটি trade কীভাবে journal করতে হয় এবং Entry, Exit, Setup, Risk, Emotion ও Result কীভাবে record করতে হয়",
+      "JOURNAL ANALYSIS — নিজের winning ও losing trades review করে ভুল, weakness এবং improvement area identify করা",
+      "BUILD TRADING DISCIPLINE — Rules follow করা, patience রাখা এবং emotion-এর পরিবর্তে process অনুযায়ী decision নেওয়া",
+      "PROFITABLE TRADER MINDSET — একজন profitable trader-এর thinking, patience, consistency, discipline এবং risk-focused mindset কেমন হওয়া উচিত",
+      "FROM BEGINNER TO PROFESSIONAL — Knowledge → Practice → Backtesting → Execution → Journaling → Review → Improvement—এই complete cycle-এর মাধ্যমে professional trading skill তৈরি করা",
+      "BECOME CONSISTENT — Profit-এর পেছনে না ছুটে একটি repeatable process ও long-term consistency তৈরি করা",
     ],
-    exercise: "ক্যাপিটাল বাড়ানোর আগে টানা ২০টি ট্রেডের কমপ্লিট জার্নাল মেইনটেইন করুন।",
-    edge: "পেশাদার ট্রেডাররা জুয়া খেলেন না; তারা একটি সুশৃঙ্খল ও ধারাবাহিক ব্যবসায়িক প্রসেস পরিচালনা করেন।",
+    exercise: "একটি complete Trading Journal তৈরি করুন এবং নিয়মিত নিজের trades record করুন। প্রতি সপ্তাহে Journal review করে ভুল, ভালো execution, emotional decisions, risk management এবং overall performance analyse করে পরবর্তী সপ্তাহের জন্য improvement plan তৈরি করুন।",
+    edge: "Profitable trader হওয়া মানে শুধু বেশি trade জেতা নয়। একজন professional trader নিজের process, risk, emotion এবং performance নিয়ন্ত্রণ করতে পারে। শেখা → প্রয়োগ → journal → review → improvement—এই continuous cycle-ই একজন Beginner-কে ধীরে ধীরে consistent ও professional trader-এ পরিণত করে।",
   },
 ];
 
@@ -496,6 +507,7 @@ export default function Home() {
             navRoadmap: "রোডম্যাপ",
             navStore: "স্টোর",
             navFree: "ফ্রি বেসিকস",
+            navSupport: "সাপোর্ট",
             signIn: "সাইন ইন",
             dashboard: "ড্যাশবোর্ড",
             heroEyebrow: "CYCLE OF CHART • TRADING REALITY",
@@ -531,7 +543,7 @@ export default function Home() {
             ebookNotice: "eBook এক্সেস শুধুমাত্র বাণ্ডেলের সাথেই অন্তর্ভুক্ত। আলাদা কোনো eBook বিক্রি হয় না।",
             productsReady: "১৫টি ডিজিটাল লার্নিং রিসোর্স স্টোরের জন্য প্রস্তুত রয়েছে।",
             ctaEyebrow: "আপনার মূলধন, আপনার সিদ্ধান্ত",
-            ctaTitle: "আপনার অতিরিক্ত সিগন্যালের প্রয়োজন নেই।\nআপনার প্রয়োজন সঠিক বোঝার ক্ষমতা।",
+            ctaTitle: "আপনার অতিরিক্ত VIP Group বা Signal-এর প্রয়োজন নেই।\nআপনার প্রয়োজন সঠিকভাবে Market বোঝার ক্ষমতা।",
             ctaButton: "আপনার প্রসেস তৈরি করুন",
             footerDesc: "ট্রেডিং রিয়েলিটি · স্ট্রাকচার্ড ইন্সটিটিউশনাল এডুকেশন",
             footerLegal: "শুধুমাত্র শিক্ষামূলক উদ্দেশ্যে তৈরি। কোনো সিগন্যাল বিক্রি, প্রফিট গ্যারান্টি বা ফিন্যান্সিয়াল অ্যাডভাইস দেওয়া হয় না। ডিপোজিটের আগে ট্রেডিং বুঝুন।",
@@ -549,6 +561,7 @@ export default function Home() {
             navRoadmap: "Roadmap",
             navStore: "Store",
             navFree: "Free Basics",
+            navSupport: "Support",
             signIn: "Sign in",
             dashboard: "Dashboard",
             heroEyebrow: "CYCLE OF CHART • TRADING REALITY",
@@ -619,13 +632,20 @@ export default function Home() {
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-8 text-sm font-semibold text-slate-600 dark:text-slate-300 md:flex">
+          <nav className="hidden items-center gap-7 text-sm font-semibold text-slate-600 dark:text-slate-300 md:flex">
             <a href="#roadmap" className="transition hover:text-[#0284c7] dark:hover:text-sky-400">
               {copy.navRoadmap}
             </a>
             <a href="#store" className="transition hover:text-[#0284c7] dark:hover:text-sky-400">
               {copy.navStore}
             </a>
+            <Link
+              href="/support"
+              className="flex items-center gap-1.5 rounded-full px-3 py-1 bg-slate-100 text-slate-700 hover:bg-slate-200 transition dark:bg-slate-800/80 dark:text-slate-200 dark:hover:bg-slate-800 text-xs font-bold"
+            >
+              <span>🎫</span>
+              <span>{copy.navSupport}</span>
+            </Link>
           </nav>
 
           <div className="flex items-center gap-2.5">
@@ -704,6 +724,10 @@ export default function Home() {
               <a href="#store" onClick={() => setMenuOpen(false)}>
                 {copy.navStore}
               </a>
+              <Link href="/support" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 text-sky-600 dark:text-sky-400">
+                <span>🎫</span>
+                <span>{copy.navSupport}</span>
+              </Link>
             </div>
           </div>
         )}
@@ -793,11 +817,9 @@ export default function Home() {
           </div>
 
           <div className="relative mx-auto mt-16 max-w-7xl border-t border-slate-200/80 px-5 pt-8 dark:border-slate-800 lg:px-8">
-            <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-6 sm:grid-cols-2">
               <Stat value={isBn ? "১২" : "12"} label={isBn ? "লার্নিং স্টেজ" : "Learning Stages"} />
               <Stat value="A–Z" label={isBn ? "স্ট্রাকচার্ড রোডম্যাপ" : "Structured Roadmap"} />
-              <Stat value="3D" label={isBn ? "ডাইনামিক ক্যান্ডেল" : "Dynamic Candlesticks"} />
-              <Stat value={isBn ? "০" : "0"} label={isBn ? "ফলস প্রমিজ" : "False Promises"} />
             </div>
           </div>
         </section>
@@ -887,68 +909,75 @@ export default function Home() {
               {stagesData.map((stage, i) => {
                 const isActive = activeStage === i || selectedStageModal === i;
                 return (
-                  <button
+                  <div
                     key={stage.num}
-                    onClick={() => {
-                      setActiveStage(i);
-                      setSelectedStageModal(i);
+                    className="roadmap-card-float flex flex-col h-full"
+                    style={{
+                      animationDelay: ROADMAP_CARD_FLOAT_DELAYS[i] || `${(i * 0.4).toFixed(1)}s`,
                     }}
-                    className={`group relative rounded-2xl border p-6 text-left transition-all duration-200 hover:-translate-y-1 ${
-                      isActive
-                        ? "border-[#0d1a2d] bg-[#0d1a2d] text-white shadow-xl shadow-[#0d1a2d]/25 dark:border-sky-400 dark:bg-slate-800"
-                        : "border-slate-200 bg-white hover:border-[#0284c7]/50 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900/90 dark:hover:border-sky-500/50"
-                    }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        setActiveStage(i);
+                        setSelectedStageModal(i);
+                      }}
+                      className={`group relative h-full w-full rounded-2xl border p-6 text-left transition-all duration-200 hover:-translate-y-1 ${
+                        isActive
+                          ? "border-[#0d1a2d] bg-[#0d1a2d] text-white shadow-xl shadow-[#0d1a2d]/25 dark:border-sky-400 dark:bg-slate-800"
+                          : "border-slate-200 bg-white hover:border-[#0284c7]/50 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900/90 dark:hover:border-sky-500/50"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`font-mono text-xs font-bold px-2 py-0.5 rounded-md ${
+                              isActive
+                                ? "bg-white/10 text-[#38bdf8]"
+                                : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                            }`}
+                          >
+                            {stage.num}
+                          </span>
+                          <span
+                            className={`text-[10px] font-bold uppercase tracking-wider ${
+                              isActive ? "text-slate-300" : "text-[#0284c7] dark:text-sky-400"
+                            }`}
+                          >
+                            {stage.category}
+                          </span>
+                        </div>
+
                         <span
-                          className={`font-mono text-xs font-bold px-2 py-0.5 rounded-md ${
+                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-all group-hover:translate-x-0.5 ${
                             isActive
-                              ? "bg-white/10 text-[#38bdf8]"
-                              : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                              ? "bg-[#38bdf8] text-slate-950"
+                              : "bg-slate-100 text-slate-500 group-hover:bg-[#0284c7] group-hover:text-white dark:bg-slate-800 dark:text-slate-400 dark:group-hover:bg-sky-500 dark:group-hover:text-slate-950"
                           }`}
                         >
-                          {stage.num}
-                        </span>
-                        <span
-                          className={`text-[10px] font-bold uppercase tracking-wider ${
-                            isActive ? "text-slate-300" : "text-[#0284c7] dark:text-sky-400"
-                          }`}
-                        >
-                          {stage.category}
+                          <ArrowRight size={11} />
                         </span>
                       </div>
 
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-all group-hover:translate-x-0.5 ${
-                          isActive
-                            ? "bg-[#38bdf8] text-slate-950"
-                            : "bg-slate-100 text-slate-500 group-hover:bg-[#0284c7] group-hover:text-white dark:bg-slate-800 dark:text-slate-400 dark:group-hover:bg-sky-500 dark:group-hover:text-slate-950"
+                      <h3 className="mt-5 text-lg font-extrabold leading-snug dark:text-white">
+                        {stage.title}
+                      </h3>
+
+                      <p
+                        className={`mt-2 text-xs line-clamp-2 leading-relaxed ${
+                          isActive ? "text-slate-300" : "text-slate-500 dark:text-slate-400"
                         }`}
                       >
-                        <ArrowRight size={11} />
-                      </span>
-                    </div>
+                        {stage.summary}
+                      </p>
 
-                    <h3 className="mt-5 text-lg font-extrabold leading-snug dark:text-white">
-                      {stage.title}
-                    </h3>
-
-                    <p
-                      className={`mt-2 text-xs line-clamp-2 leading-relaxed ${
-                        isActive ? "text-slate-300" : "text-slate-500 dark:text-slate-400"
-                      }`}
-                    >
-                      {stage.summary}
-                    </p>
-
-                    <div className="mt-5 flex items-center gap-1.5 border-t border-slate-100 pt-3 text-[11px] font-semibold dark:border-slate-800">
-                      <span className={isActive ? "text-[#38bdf8]" : "text-[#0284c7] dark:text-sky-400"}>
-                        {copy.clickPrompt}
-                      </span>
-                      <ChevronRight size={13} className={isActive ? "text-[#38bdf8]" : "text-[#0284c7] dark:text-sky-400"} />
-                    </div>
-                  </button>
+                      <div className="mt-5 flex items-center gap-1.5 border-t border-slate-100 pt-3 text-[11px] font-semibold dark:border-slate-800">
+                        <span className={isActive ? "text-[#38bdf8]" : "text-[#0284c7] dark:text-sky-400"}>
+                          {copy.clickPrompt}
+                        </span>
+                        <ChevronRight size={13} className={isActive ? "text-[#38bdf8]" : "text-[#0284c7] dark:text-sky-400"} />
+                      </div>
+                    </button>
+                  </div>
                 );
               })}
             </div>
@@ -996,51 +1025,70 @@ export default function Home() {
                   <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                     {activeModalData.title}
                   </h2>
-                  <p className="mt-3 text-sm sm:text-base leading-relaxed text-slate-600 dark:text-slate-300">
+                  <p className="mt-3 text-sm sm:text-base leading-relaxed text-slate-600 dark:text-slate-300 whitespace-pre-line">
                     {activeModalData.summary}
                   </p>
                 </div>
 
                 {/* Key Takeaways / What You Will Master */}
-                <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-800/50">
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-                    <Target size={15} className="text-[#0284c7] dark:text-sky-400" />
-                    <span>{copy.modalKeyTakeaways}</span>
-                  </div>
+                {activeModalData.keyPoints.length > 0 && (
+                  <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-800/50">
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+                      <Target size={15} className="text-[#0284c7] dark:text-sky-400" />
+                      <span>{activeModalData.category === "GATE — COURSES" ? "GATE — COURSES" : copy.modalKeyTakeaways}</span>
+                    </div>
 
-                  <div className="mt-3.5 space-y-2.5">
-                    {activeModalData.keyPoints.map((point, idx) => (
-                      <div key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                        <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-emerald-500 dark:text-emerald-400" />
-                        <span className="leading-snug">{point}</span>
-                      </div>
-                    ))}
+                    <div className="mt-3.5 space-y-2.5">
+                      {activeModalData.keyPoints.map((point, idx) => {
+                        const [heading, ...descParts] = point.split("\n");
+                        const desc = descParts.join("\n");
+                        return (
+                          <div key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+                            <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-emerald-500 dark:text-emerald-400" />
+                            <div className="leading-snug">
+                              {desc ? (
+                                <>
+                                  <div className="font-bold text-slate-900 dark:text-white">{heading}</div>
+                                  <div className="mt-0.5 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{desc}</div>
+                                </>
+                              ) : (
+                                <span>{point}</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Practical Exercise Box */}
-                <div className="rounded-2xl border border-sky-200/80 bg-sky-50/60 p-4 sm:p-5 dark:border-sky-900/50 dark:bg-sky-950/20">
-                  <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#0369a1] dark:text-sky-400">
-                    <Lightbulb size={15} />
-                    <span>{copy.modalExercise}</span>
-                  </div>
-                  <p className="mt-2 text-xs sm:text-sm font-medium leading-relaxed text-slate-800 dark:text-slate-200">
-                    {activeModalData.exercise}
-                  </p>
-                </div>
-
-                {/* Institutional Edge Note */}
-                <div className="flex items-start gap-3 rounded-2xl bg-[#0d1a2d] p-4 text-white dark:bg-slate-800">
-                  <ShieldCheck size={18} className="mt-0.5 shrink-0 text-[#38bdf8]" />
-                  <div>
-                    <div className="text-[11px] font-bold uppercase tracking-widest text-[#38bdf8]">
-                      {copy.modalEdge}
+                {Boolean(activeModalData.exercise) && (
+                  <div className="rounded-2xl border border-sky-200/80 bg-sky-50/60 p-4 sm:p-5 dark:border-sky-900/50 dark:bg-sky-950/20">
+                    <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#0369a1] dark:text-sky-400">
+                      <Lightbulb size={15} />
+                      <span>{copy.modalExercise}</span>
                     </div>
-                    <p className="mt-1 text-xs sm:text-sm leading-relaxed text-slate-300">
-                      {activeModalData.edge}
+                    <p className="mt-2 text-xs sm:text-sm font-medium leading-relaxed text-slate-800 dark:text-slate-200">
+                      {activeModalData.exercise}
                     </p>
                   </div>
-                </div>
+                )}
+
+                {/* Institutional Edge Note */}
+                {Boolean(activeModalData.edge) && (
+                  <div className="flex items-start gap-3 rounded-2xl bg-[#0d1a2d] p-4 text-white dark:bg-slate-800">
+                    <ShieldCheck size={18} className="mt-0.5 shrink-0 text-[#38bdf8]" />
+                    <div>
+                      <div className="text-[11px] font-bold uppercase tracking-widest text-[#38bdf8]">
+                        {copy.modalEdge}
+                      </div>
+                      <p className="mt-1 text-xs sm:text-sm leading-relaxed text-slate-300">
+                        {activeModalData.edge}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Modal Navigation Footer */}
@@ -1105,11 +1153,11 @@ export default function Home() {
                 : [
                     {
                       id: 1,
-                      titleEn: "PDF Package",
-                      titleBn: "PDF প্রফেশনাল প্যাকেজ",
+                      titleEn: "Free eBook Package",
+                      titleBn: "Free eBook Package",
                       descriptionEn: "Select from 15 structured learning PDFs with complete chart breakdowns.",
                       descriptionBn: "১৫টি স্ট্রাকচার্ড চার্ট ব্রেকডাউন ও প্রাইস অ্যাকশন PDF থেকে সিলেক্ট করুন।",
-                      price: "199",
+                      price: "00",
                       badgeEn: "STARTER",
                       badgeBn: "স্টার্টার",
                       featuresEn: [
@@ -1128,11 +1176,11 @@ export default function Home() {
                     },
                     {
                       id: 2,
-                      titleEn: "Course + Free eBook",
-                      titleBn: "ফুল কোর্স + এক্সক্লুসিভ eBook",
+                      titleEn: "CYCLE OF CHART BASIC TO ADVANCE COURSE",
+                      titleBn: "CYCLE OF CHART BASIC TO ADVANCE COURSE",
                       descriptionEn: "A complete structured learning path with an included comprehensive eBook.",
                       descriptionBn: "একটি সম্পূর্ণ ভিডিও কোর্স সাথে সম্পূর্ণ ফ্রি প্রফেশনাল গাইড eBook।",
-                      price: "399",
+                      price: "1999.00",
                       badgeEn: "CORE PATH",
                       badgeBn: "কোর পাথ",
                       topRibbonEn: "★ MOST POPULAR",
@@ -1153,11 +1201,11 @@ export default function Home() {
                     },
                     {
                       id: 3,
-                      titleEn: "Master Full Bundle",
-                      titleBn: "অল-ইন-ওয়ান মাস্টার বাণ্ডেল",
+                      titleEn: "CANDLE KING A TO Z FULL COURSE",
+                      titleBn: "CANDLE KING A TO Z FULL COURSE",
                       descriptionEn: "All 15 PDFs, full video course, and complete institutional eBook in one path.",
                       descriptionBn: "১৫টি PDF, সম্পূর্ণ ভিডিও কোর্স এবং এক্সক্লুসিভ eBook এক সাথে পান।",
-                      price: "799",
+                      price: "2499.00",
                       badgeEn: "COMPLETE PASS",
                       badgeBn: "কমপ্লিট পাস",
                       featuresEn: [
@@ -1195,12 +1243,15 @@ export default function Home() {
                 return (
                   <div
                     key={item.id}
-                    className={`group relative flex flex-col justify-between rounded-3xl p-7 transition-all duration-300 ease-out cursor-pointer hover:-translate-y-3 hover:scale-[1.03] active:scale-[0.99] ${
-                      isPopular
-                        ? "bg-[#0d1a2d] text-white border-2 border-[#38bdf8] shadow-2xl shadow-sky-500/20 dark:bg-slate-800 dark:border-sky-400 dark:shadow-sky-950/60 lg:-translate-y-2 hover:border-sky-300"
-                        : "border border-slate-200 bg-white text-slate-900 shadow-lg shadow-slate-200/50 hover:border-sky-400/80 hover:shadow-2xl hover:shadow-sky-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:shadow-none dark:hover:border-sky-500/50"
-                    }`}
+                    className="bundle-card-focus-zoom flex flex-col h-full"
                   >
+                    <div
+                      className={`group relative flex flex-col justify-between rounded-3xl p-7 transition-all duration-300 ease-out cursor-pointer hover:-translate-y-3 hover:scale-[1.03] active:scale-[0.99] h-full ${
+                        isPopular
+                          ? "bg-[#0d1a2d] text-white border-2 border-[#38bdf8] shadow-2xl shadow-sky-500/20 dark:bg-slate-800 dark:border-sky-400 dark:shadow-sky-950/60 lg:-translate-y-2 hover:border-sky-300"
+                          : "border border-slate-200 bg-white text-slate-900 shadow-lg shadow-slate-200/50 hover:border-sky-400/80 hover:shadow-2xl hover:shadow-sky-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:shadow-none dark:hover:border-sky-500/50"
+                      }`}
+                    >
                     {/* Top Popular Glow Ribbon */}
                     {isPopular && (
                       <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 px-4 py-1 text-[11px] font-black uppercase tracking-wider text-slate-950 shadow-md">
@@ -1295,21 +1346,9 @@ export default function Home() {
                       </Link>
                     </div>
                   </div>
-                );
+                </div>
+              );
               })}
-            </div>
-
-            <p className="mt-5 flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-              <LockKeyhole size={14} /> {copy.ebookNotice}
-            </p>
-
-            <div className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-              <div className="flex items-center gap-3">
-                <Check className="text-[#0284c7] dark:text-sky-400" size={18} />
-                <span className="font-bold text-sm dark:text-slate-200">
-                  {copy.productsReady}
-                </span>
-              </div>
             </div>
           </div>
         </section>

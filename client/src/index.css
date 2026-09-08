@@ -59,6 +59,52 @@
 @keyframes pulse-glow { 0%,100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 0.85; transform: scale(1.08); } }
 @keyframes shine-sweep { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
+/* Roadmap Cards Subtle Floating Animation */
+@keyframes roadmap-card-float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.roadmap-card-float {
+  animation: roadmap-card-float 5s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Bundle Cards Synchronized Subtle Zoom & Focus Animation */
+@keyframes bundle-card-focus-zoom {
+  0% {
+    transform: scale(0.96);
+    filter: blur(1.2px);
+  }
+  42% {
+    transform: scale(1);
+    filter: blur(0px);
+  }
+  75% {
+    transform: scale(1);
+    filter: blur(0px);
+  }
+  100% {
+    transform: scale(0.96);
+    filter: blur(1.2px);
+  }
+}
+
+.bundle-card-focus-zoom {
+  animation: bundle-card-focus-zoom 3.5s ease-in-out infinite;
+  transform-origin: center center;
+  will-change: transform, filter;
+}
+
+.bundle-card-focus-zoom:hover {
+  filter: blur(0px) !important;
+}
+
+
 /* Low-End Mobile Optimization: disable expensive GPU raster filters on narrow screens */
 @media (max-width: 768px) {
   .ambient-blur-blob {
@@ -80,6 +126,15 @@
     animation-duration:.01ms !important;
     animation-iteration-count:1 !important;
     transition-duration:.01ms !important;
+  }
+  .roadmap-card-float {
+    animation: none !important;
+    transform: none !important;
+  }
+  .bundle-card-focus-zoom {
+    animation: none !important;
+    transform: none !important;
+    filter: none !important;
   }
 }
 

@@ -7,7 +7,10 @@ import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Checkout from "./pages/Checkout";
 import Auth from "./pages/Auth";
+import Support from "./pages/Support";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import { FloatingSupportButton } from "./components/FloatingSupportButton";
 
 function Router() {
   return (
@@ -17,6 +20,8 @@ function Router() {
       <Route path="/register" component={Auth} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/checkout" component={Checkout} />
+      <Route path="/support" component={Support} />
+      <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -29,6 +34,7 @@ export default function App() {
         <TooltipProvider>
           <Toaster position="top-right" richColors />
           <Router />
+          <FloatingSupportButton />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

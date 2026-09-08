@@ -298,19 +298,19 @@ export function HeroCandle3D({ lang = "en", className = "" }: HeroCandle3DProps)
                 <div className="flex items-start gap-1.5">
                   <CheckCircle size={12} className="mt-0.5 shrink-0 text-emerald-500" />
                   <span className="font-bold leading-tight text-emerald-900 dark:text-emerald-300">
-                    {lang === "bn" ? "প্রসেস > প্রেডিকশন" : "Process > Prediction"}
+                    {lang === "bn" ? "লার্নিং > প্রসেস" : "Learning > process"}
                   </span>
                 </div>
                 <div className="flex items-start gap-1.5">
                   <CheckCircle size={12} className="mt-0.5 shrink-0 text-emerald-500" />
-                  <span className="leading-tight text-slate-600 dark:text-slate-400">
-                    {lang === "bn" ? "১% ক্যাপিটাল প্রটেকশন" : "1% Capital Protection"}
+                  <span className="font-bold leading-tight text-emerald-900 dark:text-emerald-300">
+                    {lang === "bn" ? "স্কিল তৈরি" : "build skill"}
                   </span>
                 </div>
                 <div className="flex items-start gap-1.5">
                   <CheckCircle size={12} className="mt-0.5 shrink-0 text-emerald-500" />
-                  <span className="leading-tight text-slate-600 dark:text-slate-400">
-                    {lang === "bn" ? "মার্কেট স্ট্রাকচার & এজ" : "Structure & Edge"}
+                  <span className="font-bold leading-tight text-emerald-900 dark:text-emerald-300">
+                    {lang === "bn" ? "নিজের এজ বেছে নিন" : "choose your edge"}
                   </span>
                 </div>
               </div>
@@ -351,19 +351,19 @@ export function HeroCandle3D({ lang = "en", className = "" }: HeroCandle3DProps)
                 <div className="flex items-start gap-1.5">
                   <XCircle size={12} className="mt-0.5 shrink-0 text-rose-500" />
                   <span className="font-bold leading-tight text-rose-800 dark:text-rose-300">
-                    {lang === "bn" ? "১০০% উইন-রেট ট্র্যাপ" : "100% Win-Rate Trap"}
-                  </span>
-                </div>
-                <div className="flex items-start gap-1.5">
-                  <XCircle size={12} className="mt-0.5 shrink-0 text-rose-500" />
-                  <span className="leading-tight text-slate-600 dark:text-slate-400">
                     {lang === "bn" ? "রাতারাতি কোটিপতি স্বপ্ন" : "Overnight Rich Illusion"}
                   </span>
                 </div>
                 <div className="flex items-start gap-1.5">
                   <XCircle size={12} className="mt-0.5 shrink-0 text-rose-500" />
-                  <span className="leading-tight text-slate-600 dark:text-slate-400">
-                    {lang === "bn" ? "হাই লেভারেজ গ্যাম্বলিং" : "High Leverage Gambling"}
+                  <span className="font-bold leading-tight text-rose-800 dark:text-rose-300">
+                    {lang === "bn" ? "অ্যাকাউন্ট লিঙ্ক" : "link to account"}
+                  </span>
+                </div>
+                <div className="flex items-start gap-1.5">
+                  <XCircle size={12} className="mt-0.5 shrink-0 text-rose-500" />
+                  <span className="font-bold leading-tight text-rose-800 dark:text-rose-300">
+                    {lang === "bn" ? "সিগন্যাল" : "signal"}
                   </span>
                 </div>
               </div>

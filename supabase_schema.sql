@@ -158,15 +158,39 @@ CREATE TABLE IF NOT EXISTS "disciplineEntries" (
     CONSTRAINT unique_user_discipline_date UNIQUE ("userId", label, date)
 );
 
--- 9. SUPPORT TICKETS
+-- 9. SUPPORT TICKETS & CONVERSATION REPLIES
 CREATE TABLE IF NOT EXISTS "supportTickets" (
     id SERIAL PRIMARY KEY,
-    "userId" INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    "ticketCode" VARCHAR(32) UNIQUE NOT NULL,
+    "userId" INT REFERENCES users(id) ON DELETE SET NULL,
+    "userName" VARCHAR(255) NOT NULL,
+    "userEmail" VARCHAR(320) NOT NULL,
+    category VARCHAR(64) NOT NULL,
     subject VARCHAR(255) NOT NULL,
     message TEXT NOT NULL,
-    status VARCHAR(32) DEFAULT 'open' NOT NULL, -- 'open', 'in_progress', 'resolved'
+    "attachmentUrl" TEXT,
+    status VARCHAR(32) DEFAULT 'open' NOT NULL, -- 'open', 'in_progress', 'waiting_user', 'resolved', 'closed'
+    "assignedStaff" VARCHAR(255),
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_tickets_code ON "supportTickets"("ticketCode");
+CREATE INDEX IF NOT EXISTS idx_tickets_email ON "supportTickets"("userEmail");
+CREATE INDEX IF NOT EXISTS idx_tickets_user ON "supportTickets"("userId");
+
+CREATE TABLE IF NOT EXISTS "ticketReplies" (
+    id SERIAL PRIMARY KEY,
+    "ticketId" INT REFERENCES "supportTickets"(id) ON DELETE CASCADE NOT NULL,
+    "senderRole" VARCHAR(32) NOT NULL, -- 'user', 'support', 'admin'
+    "senderName" VARCHAR(255) NOT NULL,
+    "senderEmail" VARCHAR(320),
+    message TEXT NOT NULL,
+    "attachmentUrl" TEXT,
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_replies_ticket ON "ticketReplies"("ticketId");
 
 -- 10. NOTIFICATIONS
 CREATE TABLE IF NOT EXISTS notifications (
@@ -204,9 +228,9 @@ CREATE TABLE IF NOT EXISTS "auditEvents" (
 -- Seed 3 Bundles with exact pricing (৳199, ৳399, ৳799)
 INSERT INTO bundles (id, slug, "titleEn", "titleBn", "descriptionEn", "descriptionBn", price, currency, "includesEbook", "includesPdfPackage", "includesCourse", "isPublished")
 VALUES 
-(1, 'pdf-package', 'PDF Package', 'PDF প্রফেশনাল প্যাকেজ', 'Select from 15 structured learning PDFs with complete chart breakdowns.', '১৫টি স্ট্রাকচার্ড চার্ট ব্রেকডাউন ও প্রাইস অ্যাকশন PDF থেকে সিলেক্ট করুন।', 199.00, 'BDT', FALSE, TRUE, FALSE, TRUE),
-(2, 'course-ebook', 'Course + Free eBook', 'ফুল কোর্স + এক্সক্লুসিভ eBook', 'A complete structured learning path with an included comprehensive eBook.', 'একটি সম্পূর্ণ ভিডিও কোর্স সাথে সম্পূর্ণ ফ্রি প্রফেশনাল গাইড eBook।', 399.00, 'BDT', TRUE, FALSE, TRUE, TRUE),
-(3, 'master-bundle', 'Master Full Bundle', 'অল-ইন-ওয়ান মাস্টার বাণ্ডেল', 'All 15 PDFs, full video course, and complete institutional eBook in one path.', '১৫টি PDF, সম্পূর্ণ ভিডিও কোর্স এবং এক্সক্লুসিভ eBook এক সাথে পান।', 799.00, 'BDT', TRUE, TRUE, TRUE, TRUE)
+(1, 'pdf-package', 'Free eBook Package', 'Free eBook Package', 'Select from 15 structured learning PDFs with complete chart breakdowns.', '১৫টি স্ট্রাকচার্ড চার্ট ব্রেকডাউন ও প্রাইস অ্যাকশন PDF থেকে সিলেক্ট করুন।', 0.00, 'BDT', FALSE, TRUE, FALSE, TRUE),
+(2, 'course-ebook', 'CYCLE OF CHART BASIC TO ADVANCE COURSE', 'CYCLE OF CHART BASIC TO ADVANCE COURSE', 'A complete structured learning path with an included comprehensive eBook.', 'একটি সম্পূর্ণ ভিডিও কোর্স সাথে সম্পূর্ণ ফ্রি প্রফেশনাল গাইড eBook।', 1999.00, 'BDT', TRUE, FALSE, TRUE, TRUE),
+(3, 'master-bundle', 'CANDLE KING A TO Z FULL COURSE', 'CANDLE KING A TO Z FULL COURSE', 'All 15 PDFs, full video course, and complete institutional eBook in one path.', '১৫টি PDF, সম্পূর্ণ ভিডিও কোর্স এবং এক্সক্লুসিভ eBook এক সাথে পান।', 2499.00, 'BDT', TRUE, TRUE, TRUE, TRUE)
 ON CONFLICT (id) DO UPDATE SET
     price = EXCLUDED.price,
     "titleEn" = EXCLUDED."titleEn",

@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, or } from "drizzle-orm";
 import pg from "pg";
 import { drizzle as drizzlePg } from "drizzle-orm/node-postgres";
 import { drizzle as drizzleMysql } from "drizzle-orm/mysql2";
@@ -17,6 +17,11 @@ import {
   disciplineEntries,
   journalEntries,
   supportTickets,
+  ticketReplies,
+  SupportTicket,
+  InsertSupportTicket,
+  TicketReply,
+  InsertTicketReply,
   notifications,
   settings,
   auditEvents,
@@ -35,11 +40,13 @@ const inMemoryJournal: any[] = [];
 const inMemoryDiscipline: any[] = [];
 const inMemoryProgress: any[] = [];
 const inMemoryTickets: any[] = [];
+const inMemoryReplies: any[] = [];
 const inMemoryAuditEvents: any[] = [];
 
 let userAutoId = 1;
 let journalAutoId = 1;
-let ticketAutoId = 1;
+let ticketAutoId = 1001;
+let replyAutoId = 1;
 let orderAutoId = 1;
 let entitlementAutoId = 1;
 let auditAutoId = 1;
@@ -332,9 +339,9 @@ export async function listBundles() {
     }
   }
   return [
-    { id: 1, slug: "pdf-package", titleEn: "PDF Package", titleBn: "PDF প্রফেশনাল প্যাকেজ", price: "199.00", currency: "BDT", includesPdfPackage: true, includesEbook: false, includesCourse: false },
-    { id: 2, slug: "course-ebook", titleEn: "Course + Free eBook", titleBn: "ফুল কোর্স + এক্সক্লুসিভ eBook", price: "399.00", currency: "BDT", includesPdfPackage: false, includesEbook: true, includesCourse: true },
-    { id: 3, slug: "master-bundle", titleEn: "Master Full Bundle", titleBn: "অল-ইন-ওয়ান মাস্টার বাণ্ডেল", price: "799.00", currency: "BDT", includesPdfPackage: true, includesEbook: true, includesCourse: true },
+    { id: 1, slug: "pdf-package", titleEn: "Free eBook Package", titleBn: "Free eBook Package", price: "00", currency: "BDT", includesPdfPackage: true, includesEbook: false, includesCourse: false },
+    { id: 2, slug: "course-ebook", titleEn: "CYCLE OF CHART BASIC TO ADVANCE COURSE", titleBn: "CYCLE OF CHART BASIC TO ADVANCE COURSE", price: "1999.00", currency: "BDT", includesPdfPackage: false, includesEbook: true, includesCourse: true },
+    { id: 3, slug: "master-bundle", titleEn: "CANDLE KING A TO Z FULL COURSE", titleBn: "CANDLE KING A TO Z FULL COURSE", price: "2499.00", currency: "BDT", includesPdfPackage: true, includesEbook: true, includesCourse: true },
   ];
 }
 
@@ -465,22 +472,226 @@ export async function listHabits(userId: number, date: string) {
   return [];
 }
 
-export async function listTickets(userId?: number) {
+export interface TicketFilter {
+  userId?: number;
+  userEmail?: string;
+  status?: string;
+  category?: string;
+  search?: string;
+}
+
+export async function listTickets(filterOrUserId?: number | TicketFilter) {
+  const filter: TicketFilter =
+    typeof filterOrUserId === "number" ? { userId: filterOrUserId } : filterOrUserId || {};
+
   const db = await getDb();
   if (db) {
     try {
-      return userId
-        ? await db
-            .select()
-            .from(supportTickets)
-            .where(eq(supportTickets.userId, userId))
-            .orderBy(desc(supportTickets.createdAt))
-        : await db.select().from(supportTickets).orderBy(desc(supportTickets.createdAt));
+      let query = db.select().from(supportTickets);
+      const conditions: any[] = [];
+      if (filter.userId !== undefined && filter.userId !== null) {
+        conditions.push(eq(supportTickets.userId, filter.userId));
+      }
+      if (filter.userEmail) {
+        conditions.push(eq(supportTickets.userEmail, filter.userEmail));
+      }
+      if (filter.status && filter.status !== "all") {
+        conditions.push(eq(supportTickets.status, filter.status as any));
+      }
+      if (filter.category && filter.category !== "all") {
+        conditions.push(eq(supportTickets.category, filter.category));
+      }
+      const records =
+        conditions.length > 0
+          ? await query.where(and(...conditions)).orderBy(desc(supportTickets.createdAt))
+          : await query.orderBy(desc(supportTickets.createdAt));
+
+      if (filter.search) {
+        const q = filter.search.toLowerCase();
+        return records.filter(
+          (t: any) =>
+            t.ticketCode?.toLowerCase().includes(q) ||
+            t.subject?.toLowerCase().includes(q) ||
+            t.userName?.toLowerCase().includes(q) ||
+            t.userEmail?.toLowerCase().includes(q) ||
+            t.message?.toLowerCase().includes(q)
+        );
+      }
+      return records;
     } catch (err) {
       console.warn("[listTickets error]:", err);
     }
   }
-  return userId ? inMemoryTickets.filter((t) => t.userId === userId) : inMemoryTickets;
+
+  // In-memory fallback
+  let results = [...inMemoryTickets];
+  if (filter.userId !== undefined && filter.userId !== null) {
+    results = results.filter((t) => t.userId === filter.userId);
+  }
+  if (filter.userEmail) {
+    results = results.filter((t) => t.userEmail?.toLowerCase() === filter.userEmail?.toLowerCase());
+  }
+  if (filter.status && filter.status !== "all") {
+    results = results.filter((t) => t.status === filter.status);
+  }
+  if (filter.category && filter.category !== "all") {
+    results = results.filter((t) => t.category === filter.category);
+  }
+  if (filter.search) {
+    const q = filter.search.toLowerCase();
+    results = results.filter(
+      (t) =>
+        t.ticketCode?.toLowerCase().includes(q) ||
+        t.subject?.toLowerCase().includes(q) ||
+        t.userName?.toLowerCase().includes(q) ||
+        t.userEmail?.toLowerCase().includes(q) ||
+        t.message?.toLowerCase().includes(q)
+    );
+  }
+  return results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+export async function createSupportTicket(input: {
+  userId?: number | null;
+  userName: string;
+  userEmail: string;
+  category: string;
+  subject: string;
+  message: string;
+  attachmentUrl?: string | null;
+}) {
+  const code = `#TKT-${ticketAutoId++}`;
+  const now = new Date();
+  const db = await getDb();
+
+  const ticketObj = {
+    ticketCode: code,
+    userId: input.userId || null,
+    userName: input.userName,
+    userEmail: input.userEmail,
+    category: input.category,
+    subject: input.subject,
+    message: input.message,
+    attachmentUrl: input.attachmentUrl || null,
+    status: "open" as const,
+    assignedStaff: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  if (db) {
+    try {
+      const res = await db.insert(supportTickets).values(ticketObj);
+      const insertId = res[0]?.insertId || res[0]?.id;
+      return { id: insertId || ticketAutoId - 1, ...ticketObj };
+    } catch (err) {
+      console.warn("[createSupportTicket fallback to memory]:", err);
+    }
+  }
+
+  const inMemItem = { id: ticketAutoId - 1, ...ticketObj };
+  inMemoryTickets.unshift(inMemItem);
+  return inMemItem;
+}
+
+export async function getTicketById(ticketId: number) {
+  const db = await getDb();
+  if (db) {
+    try {
+      const rows = await db.select().from(supportTickets).where(eq(supportTickets.id, ticketId)).limit(1);
+      if (rows[0]) return rows[0];
+    } catch (err) {
+      console.warn("[getTicketById error]:", err);
+    }
+  }
+  return inMemoryTickets.find((t) => t.id === ticketId) || null;
+}
+
+export async function getTicketByCode(ticketCode: string) {
+  const cleanCode = ticketCode.trim().toUpperCase();
+  const formattedCode = cleanCode.startsWith("#") ? cleanCode : `#${cleanCode}`;
+
+  const db = await getDb();
+  if (db) {
+    try {
+      const rows = await db
+        .select()
+        .from(supportTickets)
+        .where(
+          or(
+            eq(supportTickets.ticketCode, formattedCode),
+            eq(supportTickets.ticketCode, cleanCode)
+          )
+        )
+        .limit(1);
+      if (rows[0]) return rows[0];
+    } catch (err) {
+      console.warn("[getTicketByCode error]:", err);
+    }
+  }
+  return (
+    inMemoryTickets.find(
+      (t) =>
+        t.ticketCode?.toUpperCase() === formattedCode ||
+        t.ticketCode?.toUpperCase() === cleanCode
+    ) || null
+  );
+}
+
+export async function getTicketReplies(ticketId: number) {
+  const db = await getDb();
+  if (db) {
+    try {
+      return await db
+        .select()
+        .from(ticketReplies)
+        .where(eq(ticketReplies.ticketId, ticketId))
+        .orderBy(asc(ticketReplies.createdAt));
+    } catch (err) {
+      console.warn("[getTicketReplies error]:", err);
+    }
+  }
+  return inMemoryReplies
+    .filter((r) => r.ticketId === ticketId)
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+}
+
+export async function addTicketReply(reply: {
+  ticketId: number;
+  senderRole: "user" | "support" | "admin";
+  senderName: string;
+  senderEmail?: string | null;
+  message: string;
+  attachmentUrl?: string | null;
+}) {
+  const now = new Date();
+  const db = await getDb();
+  const replyObj = {
+    ticketId: reply.ticketId,
+    senderRole: reply.senderRole,
+    senderName: reply.senderName,
+    senderEmail: reply.senderEmail || null,
+    message: reply.message,
+    attachmentUrl: reply.attachmentUrl || null,
+    createdAt: now,
+  };
+
+  if (db) {
+    try {
+      const res = await db.insert(ticketReplies).values(replyObj);
+      await db.update(supportTickets).set({ updatedAt: now }).where(eq(supportTickets.id, reply.ticketId));
+      const insertId = res[0]?.insertId || res[0]?.id;
+      return { id: insertId || replyAutoId++, ...replyObj };
+    } catch (err) {
+      console.warn("[addTicketReply error]:", err);
+    }
+  }
+
+  const createdReply = { id: replyAutoId++, ...replyObj };
+  inMemoryReplies.push(createdReply);
+  const t = inMemoryTickets.find((item) => item.id === reply.ticketId);
+  if (t) t.updatedAt = now;
+  return createdReply;
 }
 
 export async function listAllUsers() {
@@ -553,17 +764,28 @@ export async function revokeEntitlement(entitlementId: number) {
   return true;
 }
 
-export async function updateTicketStatus(ticketId: number, status: "open" | "in_progress" | "resolved") {
+export async function updateTicketStatus(
+  ticketId: number,
+  status: "open" | "in_progress" | "waiting_user" | "resolved" | "closed" | string,
+  assignedStaff?: string
+) {
+  const now = new Date();
   const db = await getDb();
   if (db) {
     try {
-      await db.update(supportTickets).set({ status }).where(eq(supportTickets.id, ticketId));
+      const updateData: any = { status, updatedAt: now };
+      if (assignedStaff !== undefined) updateData.assignedStaff = assignedStaff;
+      await db.update(supportTickets).set(updateData).where(eq(supportTickets.id, ticketId));
     } catch (err) {
       console.warn("[updateTicketStatus error]:", err);
     }
   }
   const t = inMemoryTickets.find((item) => item.id === ticketId);
-  if (t) t.status = status;
+  if (t) {
+    t.status = status;
+    t.updatedAt = now;
+    if (assignedStaff !== undefined) t.assignedStaff = assignedStaff;
+  }
   return true;
 }
 
@@ -592,6 +814,7 @@ export {
   disciplineEntries,
   journalEntries,
   supportTickets,
+  ticketReplies,
   notifications,
   settings,
   auditEvents,
