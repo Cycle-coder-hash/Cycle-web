@@ -341,7 +341,6 @@ export async function listBundles() {
   return [
     { id: 1, slug: "pdf-package", titleEn: "Free eBook Package", titleBn: "Free eBook Package", price: "00", currency: "BDT", includesPdfPackage: true, includesEbook: false, includesCourse: false },
     { id: 2, slug: "course-ebook", titleEn: "CYCLE OF CHART BASIC TO ADVANCE COURSE", titleBn: "CYCLE OF CHART BASIC TO ADVANCE COURSE", price: "1999.00", currency: "BDT", includesPdfPackage: false, includesEbook: true, includesCourse: true },
-    { id: 3, slug: "master-bundle", titleEn: "CANDLE KING A TO Z FULL COURSE", titleBn: "CANDLE KING A TO Z FULL COURSE", price: "2499.00", currency: "BDT", includesPdfPackage: true, includesEbook: true, includesCourse: true },
   ];
 }
 

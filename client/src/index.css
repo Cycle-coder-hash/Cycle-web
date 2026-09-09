@@ -74,34 +74,45 @@
   will-change: transform;
 }
 
-/* Bundle Cards Synchronized Subtle Zoom & Focus Animation */
-@keyframes bundle-card-focus-zoom {
+/* Pricing Cards One-Time Viewport Entrance Animation */
+@keyframes bundle-card-enter {
   0% {
-    transform: scale(0.96);
-    filter: blur(1.2px);
-  }
-  42% {
-    transform: scale(1);
-    filter: blur(0px);
-  }
-  75% {
-    transform: scale(1);
-    filter: blur(0px);
+    transform: scale(0.90);
+    filter: blur(1.5px);
+    opacity: 0.9;
   }
   100% {
-    transform: scale(0.96);
-    filter: blur(1.2px);
+    transform: scale(1);
+    filter: blur(0px);
+    opacity: 1;
   }
 }
 
-.bundle-card-focus-zoom {
-  animation: bundle-card-focus-zoom 3.5s ease-in-out infinite;
-  transform-origin: center center;
-  will-change: transform, filter;
+.bundle-card-initial {
+  transform: scale(0.90);
+  filter: blur(1.5px);
+  opacity: 0.9;
+  will-change: transform, filter, opacity;
 }
 
-.bundle-card-focus-zoom:hover {
+.bundle-card-enter {
+  animation: bundle-card-enter 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: center center;
+  will-change: transform, filter, opacity;
+}
+
+.bundle-card-enter:hover {
   filter: blur(0px) !important;
+}
+
+/* Card Border Continuous Neon Travel Animation */
+@keyframes card-border-highlight {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -100;
+  }
 }
 
 
@@ -131,10 +142,12 @@
     animation: none !important;
     transform: none !important;
   }
-  .bundle-card-focus-zoom {
+  .bundle-card-initial,
+  .bundle-card-enter {
     animation: none !important;
     transform: none !important;
     filter: none !important;
+    opacity: 1 !important;
   }
 }
 

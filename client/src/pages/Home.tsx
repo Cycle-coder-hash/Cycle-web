@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import {
   ArrowRight,
@@ -31,6 +31,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/BrandLogo";
 import { HeroCandle3D } from "@/components/HeroCandle3D";
+import { AnimatedCardBorder } from "@/components/AnimatedCardBorder";
 import { useTheme } from "@/contexts/ThemeContext";
 
 export type StageDetail = {
@@ -475,6 +476,28 @@ export default function Home() {
   const { data: bundles } = trpc.public.bundles.useQuery();
   const { data: products } = trpc.public.products.useQuery();
 
+  const pricingRef = useRef<HTMLDivElement>(null);
+  const [cardsVisible, setCardsVisible] = useState(false);
+
+  useEffect(() => {
+    if (!pricingRef.current) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setCardsVisible(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setCardsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1, rootMargin: "0px 0px -30px 0px" }
+    );
+    observer.observe(pricingRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     document.documentElement.lang = lang;
   }, [lang]);
@@ -843,7 +866,8 @@ export default function Home() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-3xl border border-rose-200 bg-white p-7 shadow-sm dark:border-rose-900/40 dark:bg-slate-900/90">
+              <div className="relative rounded-3xl border border-rose-200 bg-white p-7 shadow-sm dark:border-rose-900/40 dark:bg-slate-900/90">
+                <AnimatedCardBorder color="red" />
                 <div className="flex items-center justify-between">
                   <div className="text-xs font-extrabold uppercase tracking-[.18em] text-rose-600 dark:text-rose-400">
                     {copy.hypeHeader}
@@ -862,7 +886,8 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="rounded-3xl bg-[#0d1a2d] p-7 text-white shadow-xl shadow-[#0d1a2d]/25 dark:bg-slate-800 dark:shadow-slate-950/50 border border-slate-700/50">
+              <div className="relative rounded-3xl bg-[#0d1a2d] p-7 text-white shadow-xl shadow-[#0d1a2d]/25 dark:bg-slate-800 dark:shadow-slate-950/50 border border-slate-700/50">
+                <AnimatedCardBorder color="green" />
                 <div className="flex items-center justify-between">
                   <div className="text-xs font-extrabold uppercase tracking-[.18em] text-[#38bdf8]">
                     {copy.realityHeader}
@@ -1147,7 +1172,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="mt-12 grid gap-6 md:grid-cols-3 lg:gap-8 items-stretch">
+            <div ref={pricingRef} className="mt-12 grid gap-6 md:grid-cols-2 lg:gap-8 items-stretch max-w-5xl mx-auto">
               {(bundles?.length
                 ? bundles
                 : [
@@ -1199,31 +1224,10 @@ export default function Home() {
                       ],
                       highlight: true,
                     },
-                    {
-                      id: 3,
-                      titleEn: "CANDLE KING A TO Z FULL COURSE",
-                      titleBn: "CANDLE KING A TO Z FULL COURSE",
-                      descriptionEn: "All 15 PDFs, full video course, and complete institutional eBook in one path.",
-                      descriptionBn: "১৫টি PDF, সম্পূর্ণ ভিডিও কোর্স এবং এক্সক্লুসিভ eBook এক সাথে পান।",
-                      price: "2499.00",
-                      badgeEn: "COMPLETE PASS",
-                      badgeBn: "কমপ্লিট পাস",
-                      featuresEn: [
-                        "All 15 Complete PDF Guides",
-                        "Full Comprehensive Video Course",
-                        "Exclusive Institutional eBook",
-                        "All-In-One Lifetime Mastery Pass",
-                      ],
-                      featuresBn: [
-                        "১৫টি সম্পূর্ণ PDF গাইড",
-                        "ফুল ভিডিও কোর্স টিউটোরিয়াল",
-                        "এক্সক্লুসিভ প্রাতিষ্ঠানিক eBook",
-                        "অল-ইন-ওয়ান লাইফটাইম মাস্টার পাস",
-                      ],
-                      highlight: false,
-                    },
                   ]
-              ).map((item: any, i: number) => {
+              )
+                .filter((b: any) => b.id !== 3 && !b.titleEn?.includes("CANDLE KING"))
+                .map((item: any, i: number) => {
                 const isPopular = item.highlight || i === 1;
                 const topRibbonText = isBn
                   ? item.topRibbonBn || "★ সবচেয়ে জনপ্রিয় চয়েস"
@@ -1243,7 +1247,7 @@ export default function Home() {
                 return (
                   <div
                     key={item.id}
-                    className="bundle-card-focus-zoom flex flex-col h-full"
+                    className={`${cardsVisible ? "bundle-card-enter" : "bundle-card-initial"} flex flex-col h-full`}
                   >
                     <div
                       className={`group relative flex flex-col justify-between rounded-3xl p-7 transition-all duration-300 ease-out cursor-pointer hover:-translate-y-3 hover:scale-[1.03] active:scale-[0.99] h-full ${

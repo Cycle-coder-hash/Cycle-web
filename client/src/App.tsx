@@ -11,6 +11,7 @@ import Support from "./pages/Support";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 import { FloatingSupportButton } from "./components/FloatingSupportButton";
+import { CursorLightTrail } from "./components/CursorLightTrail";
 
 function Router() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
           <Toaster position="top-right" richColors />
           <Router />
           <FloatingSupportButton />
+          <CursorLightTrail />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
