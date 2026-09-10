@@ -15,6 +15,7 @@ import {
   Moon,
   CheckCircle2,
   AlertCircle,
+  ExternalLink,
   KeyRound,
   RefreshCw,
   Send,
@@ -45,6 +46,7 @@ export default function Auth() {
   const [phone, setPhone] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [otpCode, setOtpCode] = useState("");
+  const [showOtpInput, setShowOtpInput] = useState(false);
 
   // Status & Feedback
   const [loading, setLoading] = useState(false);
@@ -164,8 +166,8 @@ export default function Auth() {
           setMode("verify_otp");
           setErrorMsg(
             isBn
-              ? "আপনার ইমেইল এখনও নিশ্চিত করা হয়নি। আপনার ইনবক্স অথবা Spam ফোল্ডারে পাঠানো ৬-সংখ্যার কোডটি নিচে দিন।"
-              : "Email not confirmed. Please enter the 6-digit confirmation code sent to your email below."
+              ? "আপনার ইমেইল এখনও নিশ্চিত করা হয়নি। আপনার ইনবক্স অথবা Spam ফোল্ডার থেকে 'Confirm email address' লিঙ্কে ক্লিক করুন।"
+              : "Email not confirmed yet. Please open your Inbox or Spam folder and click the 'Confirm email address' link."
           );
           setShowResend(true);
           try {
@@ -284,8 +286,8 @@ export default function Auth() {
       setMode("verify_otp");
       setSuccessMsg(
         isBn
-          ? `রেজিস্ট্রেশন সফল হয়েছে! আমরা ${email} ঠিকানায় একটি ভেরিফিকেশন কোড ও লিঙ্ক পাঠিয়েছি। নিচে ৬-সংখ্যার কোডটি দিন অথবা লিঙ্কে ক্লিক করুন।`
-          : `Registration successful! We have sent a 6-digit confirmation code and link to ${email}. Enter the code below or click the email link.`
+          ? `রেজিস্ট্রেশন সফল হয়েছে! আমরা ${email} ঠিকানায় কনফার্মেশন লিঙ্ক পাঠিয়েছি। অনুগ্রহ করে আপনার ইনবক্স অথবা Spam ফোল্ডার থেকে 'Confirm email address' লিঙ্কে ক্লিক করুন।`
+          : `Registration successful! We have sent a confirmation link to ${email}. Please check your Inbox or Spam folder and click 'Confirm email address'.`
       );
       setShowResend(true);
       setCooldown(60);
@@ -322,8 +324,8 @@ export default function Auth() {
       setCooldown(60);
       setSuccessMsg(
         isBn
-          ? `ভেরিফিকেশন কোড ও লিঙ্ক পুনরায় পাঠানো হয়েছে (${email})। ইনবক্সে না পেলে Spam ফোল্ডার দেখুন।`
-          : `Verification code and link resent to ${email}. If not in inbox, please check your Spam folder.`
+          ? `কনফার্মেশন লিঙ্ক ও কোড পুনরায় পাঠানো হয়েছে (${email})। ইনবক্সে না পেলে Spam ফোল্ডার দেখুন।`
+          : `Confirmation link and code resent to ${email}. If not in inbox, please check your Spam folder.`
       );
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to resend");
@@ -332,7 +334,66 @@ export default function Auth() {
     }
   };
 
-  // 4. Handle OTP Code Verification
+  // 4. Handle "I Confirmed Link / Check Confirmation Status"
+  const handleCheckEmailConfirmed = async () => {
+    if (!email.trim()) return;
+    setLoading(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    try {
+      // 1. Check if Supabase session is already established
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData?.session) {
+        localStorage.setItem("cycle_session_token", sessionData.session.access_token);
+        setSuccessMsg(isBn ? "ইমেইল ভেরিফাই হয়েছে! ড্যাশবোর্ডে প্রবেশ করানো হচ্ছে..." : "Email verified! Entering dashboard...");
+        window.location.href = "/dashboard";
+        return;
+      }
+
+      // 2. If password is known in state, try signing in to test if email is now confirmed
+      if (password) {
+        const { data: signData, error: signErr } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+
+        if (signData?.session) {
+          localStorage.setItem("cycle_session_token", signData.session.access_token);
+          setSuccessMsg(isBn ? "ইমেইল ভেরিফাই হয়েছে! ড্যাশবোর্ডে প্রবেশ করানো হচ্ছে..." : "Email verified! Entering dashboard...");
+          window.location.href = "/dashboard";
+          return;
+        }
+
+        if (signErr) {
+          const msg = signErr.message.toLowerCase();
+          if (msg.includes("not confirmed") || msg.includes("email_not_confirmed")) {
+            setErrorMsg(
+              isBn
+                ? "আপনার ইমেইলটি এখনও কনফার্ম করা হয়নি। অনুগ্রহ করে জিমেইল (Inbox অথবা Spam ফোল্ডার) থেকে 'Confirm email address' লিঙ্কে ক্লিক করুন।"
+                : "Your email has not been confirmed yet. Please check your Gmail (Inbox or Spam folder) and click the 'Confirm email address' link."
+            );
+            return;
+          }
+          throw signErr;
+        }
+      } else {
+        // Switch to login with instruction
+        setMode("login");
+        setSuccessMsg(
+          isBn
+            ? "ইমেইল কনফার্ম করা হয়ে থাকলে আপনার পাসওয়ার্ড দিয়ে সাইন ইন করুন।"
+            : "If you clicked the email confirmation link, please sign in with your password."
+        );
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || (isBn ? "কনফার্মেশন পাওয়া যায়নি।" : "Confirmation not detected yet."));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 5. Handle OTP Code Verification
   const handleVerifyOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otpCode.trim() || otpCode.trim().length < 4) {
@@ -983,55 +1044,107 @@ export default function Auth() {
             )}
 
             {/* =================================================================== */}
-            {/* VIEW 5: VERIFY EMAIL OTP */}
+            {/* VIEW 5: EMAIL CONFIRMATION & VERIFY OTP */}
             {/* =================================================================== */}
             {mode === "verify_otp" && (
-              <form onSubmit={handleVerifyOtpSubmit} className="mt-6 space-y-4">
-                <div>
-                  <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                      {isBn ? "৬-সংখ্যার ভেরিফিকেশন কোড" : "6-Digit Verification Code"}
-                    </label>
-                    <span className="text-[11px] font-bold text-sky-600 dark:text-sky-400 truncate max-w-[200px]">
-                      {email}
-                    </span>
+              <div className="mt-6 space-y-4">
+                {/* Email Confirmation Instructions Card */}
+                <div className="rounded-2xl border border-sky-200/80 bg-sky-50/70 p-4 text-center dark:border-sky-800/40 dark:bg-sky-950/30">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-600 dark:bg-sky-400/10 dark:text-sky-400">
+                    <Mail size={24} />
                   </div>
-                  <div className="relative mt-1.5">
-                    <KeyRound size={17} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="text"
-                      maxLength={8}
-                      required
-                      autoFocus
-                      placeholder="123456"
-                      value={otpCode}
-                      onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9a-zA-Z]/g, ""))}
-                      className="w-full tracking-[0.3em] font-mono text-center rounded-xl border border-slate-200 bg-slate-50/50 py-3 pr-4 pl-10 text-lg font-black text-slate-900 outline-none transition focus:border-[#0284c7] focus:bg-white focus:ring-2 focus:ring-[#0284c7]/20 dark:border-slate-800 dark:bg-slate-950/50 dark:text-white dark:focus:border-sky-400"
-                    />
+                  <h3 className="mt-2.5 text-base font-extrabold text-slate-900 dark:text-white">
+                    {isBn ? "ইমেইল চেক করুন ও কনফার্ম করুন" : "Check & Confirm Your Email"}
+                  </h3>
+                  <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-sky-700 shadow-sm dark:bg-slate-900 dark:text-sky-300">
+                    <span>{email}</span>
                   </div>
-                  <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  <p className="mt-3 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
                     {isBn
-                      ? "আপনার ইমেইলে একটি ভেরিফিকেশন কোড ও লিঙ্ক পাঠানো হয়েছে। আপনি কোডটি এখানে বসিয়ে অথবা ইমেইলের লিঙ্কটিতে ক্লিক করে সরাসরি ভেরিফাই করতে পারেন।"
-                      : "We've sent a verification code and link to your email. You can enter the code here or click the link in your inbox."}
+                      ? "আমরা আপনার ইমেইলে একটি কনফার্মেশন লিঙ্ক পাঠিয়েছি। জিমেইলের ইনবক্স অথবা 'Spam' ফোল্ডার ওপেন করে 'Confirm email address' লিঙ্কে ক্লিক করুন।"
+                      : "We've sent a verification link to your email. Please open your Gmail (Inbox or Spam folder) and click the 'Confirm email address' link."}
                   </p>
                 </div>
 
+                {/* Main Action 1: Open Gmail */}
+                <a
+                  href={`https://mail.google.com/mail/u/0/#search/from%3Aofficialnijam819%40gmail.com+OR+in%3Aspam`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-sky-300 bg-white text-sm font-extrabold text-sky-700 shadow-md transition hover:bg-sky-50 active:scale-[0.99] dark:border-sky-700/60 dark:bg-slate-900 dark:text-sky-300 dark:hover:bg-slate-800"
+                >
+                  <Mail size={16} className="text-red-500" />
+                  <span>{isBn ? "জিমেইল ওপেন করুন (Open Gmail)" : "Open Gmail"}</span>
+                  <ExternalLink size={14} className="opacity-70" />
+                </a>
+
+                {/* Main Action 2: Check / I Have Confirmed */}
                 <Button
-                  type="submit"
-                  disabled={loading || !otpCode.trim()}
-                  className="mt-4 h-12 w-full gap-2 rounded-2xl bg-[#081833] text-sm font-extrabold text-white shadow-xl hover:bg-[#0c244b] active:scale-[0.99] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400"
+                  type="button"
+                  onClick={handleCheckEmailConfirmed}
+                  disabled={loading}
+                  className="h-12 w-full gap-2 rounded-2xl bg-[#081833] text-sm font-extrabold text-white shadow-xl hover:bg-[#0c244b] active:scale-[0.99] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400"
                 >
                   {loading ? (
-                    <span>{isBn ? "ভেরিফাই হচ্ছে..." : "Verifying Code..."}</span>
+                    <span className="flex items-center gap-2">
+                      <RefreshCw size={16} className="animate-spin" />
+                      {isBn ? "চেক করা হচ্ছে..." : "Checking..."}
+                    </span>
                   ) : (
                     <>
-                      <span>{isBn ? "ভেরিফাই ও প্রবেশ করুন" : "Verify & Access Dashboard"}</span>
                       <CheckCircle2 size={16} />
+                      <span>
+                        {isBn
+                          ? "আমি কনফার্ম করেছি → ড্যাশবোর্ডে প্রবেশ করুন"
+                          : "I Confirmed Link → Open Dashboard"}
+                      </span>
                     </>
                   )}
                 </Button>
 
-                <div className="flex items-center justify-between pt-3">
+                {/* Optional Manual OTP code toggle */}
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800/60 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowOtpInput(!showOtpInput)}
+                    className="text-xs font-semibold text-slate-500 hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400 transition"
+                  >
+                    {showOtpInput
+                      ? isBn
+                        ? "▲ কোড অপশন লুকান"
+                        : "▲ Hide code input"
+                      : isBn
+                        ? "কোড পেয়ে থাকলে ম্যানুয়ালি দিন (Have a 6-digit code?) →"
+                        : "Have a 6-digit code? Enter code manually →"}
+                  </button>
+                </div>
+
+                {/* Collapsible OTP Form */}
+                {showOtpInput && (
+                  <form onSubmit={handleVerifyOtpSubmit} className="space-y-3 pt-2 animate-in fade-in">
+                    <div className="relative">
+                      <KeyRound size={17} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        maxLength={8}
+                        placeholder="123456"
+                        value={otpCode}
+                        onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9a-zA-Z]/g, ""))}
+                        className="w-full tracking-[0.3em] font-mono text-center rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pr-4 pl-10 text-base font-black text-slate-900 outline-none transition focus:border-[#0284c7] focus:bg-white focus:ring-2 focus:ring-[#0284c7]/20 dark:border-slate-800 dark:bg-slate-950/50 dark:text-white dark:focus:border-sky-400"
+                      />
+                    </div>
+                    <Button
+                      type="submit"
+                      disabled={loading || !otpCode.trim()}
+                      className="h-10 w-full rounded-xl bg-slate-800 text-xs font-bold text-white hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600"
+                    >
+                      {isBn ? "কোড ভেরিফাই করুন" : "Verify Code"}
+                    </Button>
+                  </form>
+                )}
+
+                {/* Footer Navigation */}
+                <div className="flex items-center justify-between pt-2">
                   <button
                     type="button"
                     onClick={() => {
@@ -1053,10 +1166,12 @@ export default function Auth() {
                   >
                     {cooldown > 0
                       ? `${isBn ? "পুনরায় পাঠান" : "Resend"} (${cooldown}s)`
-                      : isBn ? "কোড পাননি? আবার পাঠান" : "Resend Code"}
+                      : isBn
+                        ? "ইমেইল পাননি? আবার পাঠান"
+                        : "Resend Email"}
                   </button>
                 </div>
-              </form>
+              </div>
             )}
 
             {/* Bottom Security Note */}
