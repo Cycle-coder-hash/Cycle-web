@@ -45,6 +45,18 @@ const trpcClient = trpc.createClient({
       headers() {
         try {
           let token = localStorage.getItem("cycle_session_token");
+          if (!token && typeof window !== "undefined") {
+            const hash = window.location.hash;
+            if (hash.includes("access_token=")) {
+              const params = new URLSearchParams(hash.replace(/^#/, ""));
+              token = params.get("access_token");
+              if (token) {
+                try {
+                  localStorage.setItem("cycle_session_token", token);
+                } catch {}
+              }
+            }
+          }
           if (!token) {
             const supaSession =
               localStorage.getItem("cycle_supabase_session") ||

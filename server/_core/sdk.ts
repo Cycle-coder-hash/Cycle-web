@@ -286,6 +286,9 @@ class SDKServer {
           const supaUser = supaData.user;
           const openId = supaUser.id;
           let user = await db.getUserByOpenId(openId);
+          if (!user && supaUser.email) {
+            user = await db.getUserByEmail(supaUser.email);
+          }
           if (!user) {
             await db.upsertUser({
               openId,

@@ -271,12 +271,16 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
     URL.revokeObjectURL(url);
   };
 
-  if (loading) {
+  const isHashAuthenticating = typeof window !== "undefined" && window.location.hash.includes("access_token=");
+
+  if (loading || (isHashAuthenticating && !user)) {
     return (
       <div className="grid min-h-screen place-items-center bg-[#f8fafc] text-slate-600 dark:bg-[#060d19] dark:text-slate-400">
         <div className="flex flex-col items-center gap-3">
           <BrandLogo size={64} className="animate-pulse" />
-          <div className="text-sm font-bold tracking-widest uppercase">Loading Student Portal...</div>
+          <div className="text-sm font-bold tracking-widest uppercase">
+            {isHashAuthenticating ? "Verifying Session Access..." : "Loading Student Portal..."}
+          </div>
         </div>
       </div>
     );

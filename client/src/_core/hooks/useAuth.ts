@@ -18,14 +18,36 @@ export function useAuth(options?: UseAuthOptions) {
     refetchOnWindowFocus: false,
   });
 
+  // Synchronously extract token from hash if present
+  if (typeof window !== "undefined" && !localStorage.getItem("cycle_session_token")) {
+    const hash = window.location.hash;
+    if (hash.includes("access_token=")) {
+      const params = new URLSearchParams(hash.replace(/^#/, ""));
+      const token = params.get("access_token");
+      if (token) {
+        try {
+          localStorage.setItem("cycle_session_token", token);
+        } catch {}
+      }
+    }
+  }
+
   // Sync Supabase Auth listener
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.access_token) {
         localStorage.setItem("cycle_session_token", session.access_token);
+        try {
+          await utils.auth.me.invalidate();
+          await meQuery.refetch();
+        } catch {}
       } else if (event === "SIGNED_OUT") {
         localStorage.removeItem("cycle_session_token");
         sessionStorage.removeItem("manus-cookie");
+        utils.auth.me.setData(undefined, null);
+        try {
+          await utils.auth.me.invalidate();
+        } catch {}
       }
     });
 
