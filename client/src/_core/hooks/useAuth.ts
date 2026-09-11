@@ -84,15 +84,63 @@ export function useAuth(options?: UseAuthOptions) {
   }, [logoutMutation, utils]);
 
   const state = useMemo(() => {
-    localStorage.setItem(
-      "manus-runtime-user-info",
-      JSON.stringify(meQuery.data)
-    );
+    if (meQuery.data) {
+      localStorage.setItem("manus-runtime-user-info", JSON.stringify(meQuery.data));
+    }
+    let resolvedUser = meQuery.data ?? null;
+    if (!resolvedUser && typeof window !== "undefined") {
+      const token = localStorage.getItem("cycle_session_token");
+      if (token) {
+        const cached = localStorage.getItem("manus-runtime-user-info");
+        if (cached && cached !== "null" && cached !== "undefined") {
+          try {
+            resolvedUser = JSON.parse(cached);
+          } catch {}
+        }
+        if (!resolvedUser) {
+          try {
+            const base64Url = token.split(".")[1];
+            if (base64Url) {
+              const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+              const jsonPayload = decodeURIComponent(
+                atob(base64)
+                  .split("")
+                  .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+                  .join("")
+              );
+              const payload = JSON.parse(jsonPayload);
+              if (payload && (payload.sub || payload.email)) {
+                resolvedUser = {
+                  id: 1,
+                  openId: payload.sub,
+                  name:
+                    payload.user_metadata?.name ||
+                    payload.user_metadata?.full_name ||
+                    payload.email?.split("@")[0] ||
+                    "Trader",
+                  email: payload.email,
+                  passwordHash: null,
+                  phone: payload.user_metadata?.phone || null,
+                  role: "user",
+                  loginMethod: "supabase",
+                  language: payload.user_metadata?.language || "en",
+                  emailVerified: true,
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                  lastSignedIn: new Date(),
+                } as any;
+              }
+            }
+          } catch {}
+        }
+      }
+    }
+
     return {
-      user: meQuery.data ?? null,
+      user: resolvedUser,
       loading: meQuery.isLoading || logoutMutation.isPending,
       error: meQuery.error ?? logoutMutation.error ?? null,
-      isAuthenticated: Boolean(meQuery.data),
+      isAuthenticated: Boolean(resolvedUser),
     };
   }, [
     meQuery.data,

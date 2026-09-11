@@ -8,7 +8,7 @@ import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { adminRouter } from "../adminApi";
 import { createContext } from "./context";
-import { serveStatic, setupVite } from "./vite";
+// serveStatic is loaded dynamically in production; setupVite is loaded dynamically in development
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -57,10 +57,14 @@ async function startServer() {
       createContext,
     })
   );
-  // development mode uses Vite, production mode uses static files
-  if (process.env.NODE_ENV === "production") {
-    serveStatic(app);
+  // Development mode uses Vite; production mode uses static files (only outside Vercel)
+  if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+    if (!process.env.VERCEL) {
+      const { serveStatic } = await import("./serveStatic");
+      serveStatic(app);
+    }
   } else {
+    const { setupVite } = await import("./vite");
     await setupVite(app, server);
   }
 
@@ -78,12 +82,38 @@ async function startServer() {
   return app;
 }
 
-export const appPromise = startServer().catch(console.error);
-export default async function handler(req: any, res: any) {
-  const app = await appPromise;
-  if (app) {
-    return app(req, res);
+let appInstance: any = null;
+let appInitPromise: Promise<any> | null = null;
+
+export async function getApp() {
+  if (appInstance) return appInstance;
+  if (!appInitPromise) {
+    appInitPromise = startServer()
+      .then((app) => {
+        appInstance = app;
+        return app;
+      })
+      .catch((err) => {
+        console.error("[Server start error]:", err);
+        appInitPromise = null;
+        throw err;
+      });
   }
-  res.status(500).send("Server initialization failed");
+  return appInitPromise;
+}
+
+export const appPromise = getApp();
+
+export default async function handler(req: any, res: any) {
+  try {
+    const app = await getApp();
+    if (app) {
+      return app(req, res);
+    }
+    res.status(500).send("Server initialization failed");
+  } catch (err: any) {
+    console.error("[Server handler error]:", err);
+    res.status(500).json({ error: err?.message || String(err) });
+  }
 }
 
