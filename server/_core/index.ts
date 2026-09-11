@@ -64,7 +64,8 @@ async function startServer() {
       serveStatic(app);
     }
   } else {
-    const { setupVite } = await import("./vite");
+    const viteModule = "./vite.js";
+    const { setupVite } = await import(/* @vite-ignore */ viteModule);
     await setupVite(app, server);
   }
 
