@@ -217,6 +217,12 @@ export default function Auth() {
 
       if (data.session) {
         localStorage.setItem("cycle_session_token", data.session.access_token);
+        try {
+          await supabase.auth.setSession({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+          });
+        } catch {}
         window.location.href = "/dashboard";
       }
     } catch (err: any) {
@@ -260,13 +266,52 @@ export default function Auth() {
           },
         });
 
-        if (!error && data.session) {
+        if (error) {
+          const errLower = error.message.toLowerCase();
+          if (
+            errLower.includes("already registered") ||
+            errLower.includes("already exists") ||
+            errLower.includes("user already registered")
+          ) {
+            setMode("login");
+            setErrorMsg(
+              isBn
+                ? "এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট খোলা হয়েছে। অনুগ্রহ করে আপনার পাসওয়ার্ড দিয়ে সাইন ইন করুন।"
+                : "An account with this email already exists. Please sign in with your password."
+            );
+            return;
+          }
+          throw error;
+        }
+
+        // Supabase returns an empty identities array if user already exists
+        if (data?.user?.identities && data.user.identities.length === 0) {
+          setMode("login");
+          setErrorMsg(
+            isBn
+              ? "এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট তৈরি করা হয়েছে। অনুগ্রহ করে আপনার পাসওয়ার্ড দিয়ে সাইন ইন করুন বা পাসওয়ার্ড রিসেট করুন।"
+              : "This email is already registered. Please sign in with your password or reset your password."
+          );
+          return;
+        }
+
+        if (data?.session) {
           localStorage.setItem("cycle_session_token", data.session.access_token);
+          try {
+            await supabase.auth.setSession({
+              access_token: data.session.access_token,
+              refresh_token: data.session.refresh_token,
+            });
+          } catch {}
           window.location.href = "/dashboard";
           return;
         }
-      } catch (supaErr) {
+      } catch (supaErr: any) {
         console.warn("[Supabase registration notice]:", supaErr);
+        if (supaErr?.message && !supaErr.message.toLowerCase().includes("failed to fetch")) {
+          setErrorMsg(supaErr.message);
+          return;
+        }
       }
 
       // 2. Sync / Register with native server
@@ -1048,81 +1093,43 @@ export default function Auth() {
             {/* =================================================================== */}
             {mode === "verify_otp" && (
               <div className="mt-6 space-y-4">
-                {/* Email Confirmation Instructions Card */}
+                {/* Header Card */}
                 <div className="rounded-2xl border border-sky-200/80 bg-sky-50/70 p-4 text-center dark:border-sky-800/40 dark:bg-sky-950/30">
                   <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-600 dark:bg-sky-400/10 dark:text-sky-400">
                     <Mail size={24} />
                   </div>
                   <h3 className="mt-2.5 text-base font-extrabold text-slate-900 dark:text-white">
-                    {isBn ? "ইমেইল চেক করুন ও কনফার্ম করুন" : "Check & Confirm Your Email"}
+                    {isBn ? "ইমেইল চেক ও কনফার্ম করুন" : "Check & Confirm Your Email"}
                   </h3>
                   <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-sky-700 shadow-sm dark:bg-slate-900 dark:text-sky-300">
                     <span>{email}</span>
                   </div>
                   <p className="mt-3 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
                     {isBn
-                      ? "আমরা আপনার ইমেইলে একটি কনফার্মেশন লিঙ্ক পাঠিয়েছি। জিমেইলের ইনবক্স অথবা 'Spam' ফোল্ডার ওপেন করে 'Confirm email address' লিঙ্কে ক্লিক করুন।"
-                      : "We've sent a verification link to your email. Please open your Gmail (Inbox or Spam folder) and click the 'Confirm email address' link."}
+                      ? "আপনার ইমেইলে (ইনবক্স অথবা Spam ফোল্ডারে) পাঠানো 'Confirm email address' লিঙ্কে ক্লিক করুন অথবা নিচের বক্সে ৬-সংখ্যার কোডটি দিন।"
+                      : "Click the 'Confirm email address' link sent to your email (Inbox or Spam folder), or enter the 6-digit verification code below."}
                   </p>
                 </div>
 
-                {/* Main Action 1: Open Gmail */}
+                {/* Quick Action: Open Gmail */}
                 <a
-                  href={`https://mail.google.com/mail/u/0/#search/from%3Aofficialnijam819%40gmail.com+OR+in%3Aspam`}
+                  href="https://mail.google.com/mail/u/0/#search/from%3Aofficialnijam819%40gmail.com+OR+in%3Aspam"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-sky-300 bg-white text-sm font-extrabold text-sky-700 shadow-md transition hover:bg-sky-50 active:scale-[0.99] dark:border-sky-700/60 dark:bg-slate-900 dark:text-sky-300 dark:hover:bg-slate-800"
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-sky-300 bg-white text-xs sm:text-sm font-extrabold text-sky-700 shadow-sm transition hover:bg-sky-50 active:scale-[0.99] dark:border-sky-700/60 dark:bg-slate-900 dark:text-sky-300 dark:hover:bg-slate-800"
                 >
                   <Mail size={16} className="text-red-500" />
                   <span>{isBn ? "জিমেইল ওপেন করুন (Open Gmail)" : "Open Gmail"}</span>
                   <ExternalLink size={14} className="opacity-70" />
                 </a>
 
-                {/* Main Action 2: Check / I Have Confirmed */}
-                <Button
-                  type="button"
-                  onClick={handleCheckEmailConfirmed}
-                  disabled={loading}
-                  className="h-12 w-full gap-2 rounded-2xl bg-[#081833] text-sm font-extrabold text-white shadow-xl hover:bg-[#0c244b] active:scale-[0.99] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400"
-                >
-                  {loading ? (
-                    <span className="flex items-center gap-2">
-                      <RefreshCw size={16} className="animate-spin" />
-                      {isBn ? "চেক করা হচ্ছে..." : "Checking..."}
-                    </span>
-                  ) : (
-                    <>
-                      <CheckCircle2 size={16} />
-                      <span>
-                        {isBn
-                          ? "আমি কনফার্ম করেছি → ড্যাশবোর্ডে প্রবেশ করুন"
-                          : "I Confirmed Link → Open Dashboard"}
-                      </span>
-                    </>
-                  )}
-                </Button>
-
-                {/* Optional Manual OTP code toggle */}
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-800/60 text-center">
-                  <button
-                    type="button"
-                    onClick={() => setShowOtpInput(!showOtpInput)}
-                    className="text-xs font-semibold text-slate-500 hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400 transition"
-                  >
-                    {showOtpInput
-                      ? isBn
-                        ? "▲ কোড অপশন লুকান"
-                        : "▲ Hide code input"
-                      : isBn
-                        ? "কোড পেয়ে থাকলে ম্যানুয়ালি দিন (Have a 6-digit code?) →"
-                        : "Have a 6-digit code? Enter code manually →"}
-                  </button>
-                </div>
-
-                {/* Collapsible OTP Form */}
-                {showOtpInput && (
-                  <form onSubmit={handleVerifyOtpSubmit} className="space-y-3 pt-2 animate-in fade-in">
-                    <div className="relative">
+                {/* Direct 6-Digit Code Form */}
+                <form onSubmit={handleVerifyOtpSubmit} className="space-y-3 pt-1">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                      {isBn ? "৬-সংখ্যার কোড দিন (যদি থাকে)" : "Enter 6-Digit Code (if provided)"}
+                    </label>
+                    <div className="relative mt-1">
                       <KeyRound size={17} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" />
                       <input
                         type="text"
@@ -1133,15 +1140,43 @@ export default function Auth() {
                         className="w-full tracking-[0.3em] font-mono text-center rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pr-4 pl-10 text-base font-black text-slate-900 outline-none transition focus:border-[#0284c7] focus:bg-white focus:ring-2 focus:ring-[#0284c7]/20 dark:border-slate-800 dark:bg-slate-950/50 dark:text-white dark:focus:border-sky-400"
                       />
                     </div>
-                    <Button
-                      type="submit"
-                      disabled={loading || !otpCode.trim()}
-                      className="h-10 w-full rounded-xl bg-slate-800 text-xs font-bold text-white hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600"
-                    >
-                      {isBn ? "কোড ভেরিফাই করুন" : "Verify Code"}
-                    </Button>
-                  </form>
-                )}
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={loading || !otpCode.trim()}
+                    className="h-11 w-full rounded-xl bg-slate-900 text-xs font-bold text-white shadow-md hover:bg-slate-800 dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400"
+                  >
+                    {isBn ? "কোড দিয়ে প্রবেশ করুন" : "Verify Code & Enter"}
+                  </Button>
+                </form>
+
+                {/* Direct Link Confirmation Button */}
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800/60">
+                  <Button
+                    type="button"
+                    onClick={handleCheckEmailConfirmed}
+                    disabled={loading}
+                    variant="outline"
+                    className="h-11 w-full gap-2 rounded-xl border-emerald-500/40 bg-emerald-50/50 text-xs font-bold text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
+                  >
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+                        <RefreshCw size={14} className="animate-spin" />
+                        {isBn ? "চেক করা হচ্ছে..." : "Checking..."}
+                      </span>
+                    ) : (
+                      <>
+                        <CheckCircle2 size={15} className="text-emerald-600" />
+                        <span>
+                          {isBn
+                            ? "আমি লিঙ্কে ক্লিক করেছি → ড্যাশবোর্ডে যান"
+                            : "I Clicked Email Link → Enter Dashboard"}
+                        </span>
+                      </>
+                    )}
+                  </Button>
+                </div>
 
                 {/* Footer Navigation */}
                 <div className="flex items-center justify-between pt-2">
