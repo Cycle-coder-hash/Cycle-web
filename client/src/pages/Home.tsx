@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/BrandLogo";
 import { HeroCandle3D } from "@/components/HeroCandle3D";
 import { AnimatedCardBorder } from "@/components/AnimatedCardBorder";
+import { NewsHeadlineStats } from "@/components/NewsHeadlineStats";
 import { useTheme } from "@/contexts/ThemeContext";
 
 export type StageDetail = {
@@ -457,14 +458,6 @@ const REALITY_ITEMS_BN = [
   "নিয়মিত ট্রেড জার্নালিং ও পারফরম্যান্স রিভিউ",
 ];
 
-function Stat({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="flex flex-col">
-      <div className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl">{value}</div>
-      <div className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400 font-semibold">{label}</div>
-    </div>
-  );
-}
 
 export default function Home() {
   const { user } = useAuth();
@@ -840,10 +833,7 @@ export default function Home() {
           </div>
 
           <div className="relative mx-auto mt-16 max-w-7xl border-t border-slate-200/80 px-5 pt-8 dark:border-slate-800 lg:px-8">
-            <div className="grid grid-cols-2 gap-6 sm:grid-cols-2">
-              <Stat value={isBn ? "১২" : "12"} label={isBn ? "লার্নিং স্টেজ" : "Learning Stages"} />
-              <Stat value="A–Z" label={isBn ? "স্ট্রাকচার্ড রোডম্যাপ" : "Structured Roadmap"} />
-            </div>
+            <NewsHeadlineStats isBn={isBn} />
           </div>
         </section>
 
