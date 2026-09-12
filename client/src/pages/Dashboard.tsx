@@ -8,7 +8,6 @@ import {
   Calendar,
   Check,
   CheckCircle2,
-  ChevronRight,
   Circle,
   ClipboardCheck,
   Clock,
@@ -19,7 +18,6 @@ import {
   FileText,
   Flame,
   GraduationCap,
-  Layers,
   LayoutDashboard,
   Lock,
   LogOut,
@@ -47,178 +45,6 @@ import { trpc } from "@/lib/trpc";
 import { useTheme } from "@/contexts/ThemeContext";
 import { TraderJournal } from "@/components/journal/TraderJournal";
 import { getStoredTrades } from "@/lib/traderJournalStorage";
-
-// 12 Institutional Stages Details
-const ROADMAP_STAGES_FULL = [
-  {
-    num: 1,
-    catEn: "FOUNDATION",
-    catBn: "ভিত্তি",
-    titleEn: "Market Structure & Swing Mechanics",
-    titleBn: "মার্কেট স্ট্রাকচার ও সুইং মেকানিক্স",
-    descEn: "Identify true Higher Highs, Higher Lows, and Market Structure Shifts (MSS) across multiple timeframes without false breakout traps.",
-    descBn: "মাল্টি-টাইমফ্রেমে ফেক ব্রেকআউট ফাঁদ এড়িয়ে সঠিক হায়ার হাই, হায়ার লো ও মার্কেট স্ট্রাকচার শিফট (MSS) চিহ্নিত করার নিয়ম।",
-    rules: [
-      "Always mark Swing Highs & Lows on 4H/Daily chart first.",
-      "A true break requires candle BODY closure, not just wicks.",
-      "Internal structure must align with HTF trend direction.",
-    ],
-  },
-  {
-    num: 2,
-    catEn: "INSTITUTIONAL FLOW",
-    catBn: "প্রাতিষ্ঠানিক প্রবাহ",
-    titleEn: "Institutional Order Flow & Footprint",
-    titleBn: "প্রাতিষ্ঠানিক অর্ডার ফ্লো ও ফুটপ্রিন্ট",
-    descEn: "Understand how institutional algorithms accumulate and distribute large volume orders before significant expansion moves.",
-    descBn: "বড় ব্যাংক ও অ্যালগরিদম কীভাবে মার্কেট মুভের আগে ভলিউম অ্যাকুমুলেট এবং ডিস্ট্রিবিউট করে তা চার্টে শনাক্ত করুন।",
-    rules: [
-      "Track where aggressive displacement candles originate.",
-      "Institutional orders leave footprints in high-volume inefficiencies.",
-      "Never trade against the primary 4H institutional order flow.",
-    ],
-  },
-  {
-    num: 3,
-    catEn: "LIQUIDITY",
-    catBn: "লিকুইডিটি পুল",
-    titleEn: "Liquidity Pools & Stop Hunt Sweeps",
-    titleBn: "লিকুইডিটি পুল ও স্টপ হান্ট সুইপ",
-    descEn: "Locate Buy-Side Liquidity (BSL) and Sell-Side Liquidity (SSL) resting above equal highs and below equal lows where retail stops are harvested.",
-    descBn: "রিটেল ট্রেডারদের স্টপ লস যেখানে জমা থাকে (BSL ও SSL) তা চিহ্নিত করে সুইপের পর রিভার্সাল ধরার নিয়ম।",
-    rules: [
-      "Equal Highs (EQH) = High-probability Buy-Side Liquidity pool.",
-      "Equal Lows (EQL) = High-probability Sell-Side Liquidity pool.",
-      "Wait for liquidity raid + displacement before executing.",
-    ],
-  },
-  {
-    num: 4,
-    catEn: "CORE ALGO",
-    catBn: "কোর অ্যালগরিদম",
-    titleEn: "Candle Range Theory (CRT) Models",
-    titleBn: "ক্যান্ডেল রেঞ্জ থিওরি (CRT) মডেল",
-    descEn: "Master the 4-step algorithm lifecycle: Range Initiation, Manipulation/Sweep, Expansion, and Targeted Distribution.",
-    descBn: "ক্যান্ডেলের ৪টি অ্যালগরিদমিক পর্যায়: রেঞ্জ গঠন, ম্যানিপুলেশন/সুইপ, এক্সপ্যানশন এবং টার্গেট ডিস্ট্রিবিউশন।",
-    rules: [
-      "Range high and low define the battleground.",
-      "Look for fakeouts that raid one side before expanding to the other.",
-      "Target the opposing range boundary for 1:3+ minimum RR.",
-    ],
-  },
-  {
-    num: 5,
-    catEn: "IMBALANCE",
-    catBn: "ইমব্যালেন্স",
-    titleEn: "Fair Value Gaps (FVG) & Volume Inefficiency",
-    titleBn: "ফেয়ার ভ্যালু গ্যাপ (FVG) ও ভলিউম ইমব্যালেন্স",
-    descEn: "Differentiate between high-probability institutional FVGs, Inverse FVGs, and Balanced Price Ranges (BPR) that act as market magnets.",
-    descBn: "মার্কেটের হাই-প্রোবাবিলিটি ফেয়ার ভ্যালু গ্যাপ ও ব্যালেন্সড প্রাইস রেঞ্জ চিহ্নিত করে নিখুঁত এন্ট্রি পয়েন্ট বের করা।",
-    rules: [
-      "FVG formed with displacement has 80%+ retest fill probability.",
-      "Inverse FVG (IFVG) flipped from support to resistance signals continuation.",
-      "Consequent Encroachment (50% midpoint) is the optimal entry level.",
-    ],
-  },
-  {
-    num: 6,
-    catEn: "SMC PATTERNS",
-    catBn: "এসএমসি প্যাটার্ন",
-    titleEn: "Order Blocks & Breaker Block Dynamics",
-    titleBn: "অর্ডার ব্লক ও ব্রেকার ব্লক ডায়নামিক্স",
-    descEn: "Select only high-probability Order Blocks that swept liquidity and created structural displacement, filtering out 90% of weak retail blocks.",
-    descBn: "লিকুইডিটি সুইপ করা ভ্যালিড অর্ডার ব্লক ও ফেইল্ড ওবি (ব্রেকার ব্লক) দিয়ে হাই-উইনরেট এন্ট্রি নেওয়ার নিয়ম।",
-    rules: [
-      "An Order Block without liquidity sweep is INVALID.",
-      "A failed Order Block transforms into a powerful Breaker Block.",
-      "Refine 4H/1H blocks into 15m/5m refined zones for tight stops.",
-    ],
-  },
-  {
-    num: 7,
-    catEn: "TIMING",
-    catBn: "টাইমিং ও সেশন",
-    titleEn: "Time & Price: London & New York Killzones",
-    titleBn: "টাইম অ্যান্ড প্রাইস: লন্ডন ও নিউইয়র্ক কিলজোন",
-    descEn: "Institutional setups trigger only during algorithmic timing windows. Learn the London Open (08:00-10:00 GMT) and NY Open (13:00-15:00 GMT) routines.",
-    descBn: "নির্দিষ্ট অ্যালগরিদমিক কিলজোনে মার্কেট চালিত হয়। লন্ডন ওপেন ও নিউইয়র্ক ওপেন টাইমিং ফিল্টার ব্যবহার করে ট্রেড নেওয়া।",
-    rules: [
-      "Never trade during low-volume Asian lunch lull (except for range marking).",
-      "Judas Swing occurs frequently during the first 45 minutes of London open.",
-      "High-impact news (CPI, NFP, FOMC) acts as the catalyst for macro expansion.",
-    ],
-  },
-  {
-    num: 8,
-    catEn: "BIAS",
-    catBn: "ডেইলি বায়াস",
-    titleEn: "Daily Bias & AMD Accumulation Matrix",
-    titleBn: "ডেইলি বায়াস ও AMD অ্যাকুমুলেশন ম্যাট্রিক্স",
-    descEn: "Determine whether the upcoming daily candle will expand Bullish or Bearish before the market opens using Previous Day High/Low sweeps.",
-    descBn: "পূর্ববর্তী দিনের হাই/লো এবং এএমডি ফ্রেমওয়ার্ক দিয়ে মার্কেট ওপেন হওয়ার আগেই দৈনিক ডিরেকশন নির্ভুলভাবে প্রেডিক্ট করা।",
-    rules: [
-      "Previous Day High (PDH) and Low (PDL) are primary liquidity draws.",
-      "Accumulation in Asia → Manipulation in London → Distribution in New York.",
-      "Trade with the Daily Bias for smooth runners and zero anxiety.",
-    ],
-  },
-  {
-    num: 9,
-    catEn: "PRECISION",
-    catBn: "প্রিসিশন",
-    titleEn: "Inducement vs True Break of Structure",
-    titleBn: "ইনডিউসমেন্ট বনাম ট্রু ব্রেক অব স্ট্রাকচার",
-    descEn: "Avoid the #1 trap that bankrupts SMC traders: distinguishing between internal inducement traps and genuine institutional trend continuation.",
-    descBn: "রিটেল এসএমসি ট্রেডারদের মূল ফাঁদ (ইনডিউসমেন্ট) থেকে বাঁচতে ট্রু ব্রেক অব স্ট্রাকচার সঠিকভাবে যাচাই করার ফর্মুলা।",
-    rules: [
-      "Inducement is the first internal pullback after a high/low is formed.",
-      "Do NOT enter on inducement — wait for price to take it out.",
-      "Entry occurs AFTER inducement is swept into a HTF point of interest.",
-    ],
-  },
-  {
-    num: 10,
-    catEn: "MULTI-TIMEFRAME",
-    catBn: "টপ-ডাউন অ্যানালাইসিস",
-    titleEn: "Top-Down Multi-Timeframe Alignment",
-    titleBn: "টপ-ডাউন মাল্টি-টাইমফ্রেম অ্যালাইনমেন্ট",
-    descEn: "Execute the seamless 3-timeframe sequence: Daily (Directional Bias) → 1-Hour (Setup & POI) → 5m/1m (Sniper Confirmation & Execution).",
-    descBn: "ডেইলি চার্ট দিয়ে দিক নির্ধারণ → ১-ঘণ্টা চার্টে লেভেল মার্কিং → ১/৫ মিনিট চার্টে স্নাইপার কনফার্মেশন ও এন্ট্রি।",
-    rules: [
-      "Daily frame provides the narrative and draw on liquidity.",
-      "1-Hour frame provides the institutional point of interest.",
-      "1-Minute frame provides the tight 5-10 pip stop loss entry confirmation.",
-    ],
-  },
-  {
-    num: 11,
-    catEn: "EXECUTION",
-    catBn: "এক্সিকিউশন",
-    titleEn: "High-RR Sniper Entry Models & Execution",
-    titleBn: "হাই-RR স্নাইপার এন্ট্রি মডেল ও এক্সিকিউশন",
-    descEn: "Learn the 3 proprietary entry triggers: The CRT Sweep Model, The Liquidity Void Fill Model, and The Order Flow Continuation Entry.",
-    descBn: "১:৪ থেকে ১:১০ রিস্ক-টু-রিওয়ার্ড নিশ্চিত করতে ৩টি নির্দিষ্ট এন্ট্রি ট্রিগার ও পজিশন সাইজিং রুলস।",
-    rules: [
-      "Minimum 1:3 Risk-to-Reward on every single setup.",
-      "Place Stop Loss strictly beyond the invalidation swing wick.",
-      "Scale out 50% at TP1, move SL to breakeven, and let the runner hit final liquidity.",
-    ],
-  },
-  {
-    num: 12,
-    catEn: "MASTERY",
-    catBn: "মাস্টারি ও সাইকোলজি",
-    titleEn: "Institutional Risk Matrix & Mindset Mastery",
-    titleBn: "প্রাতিষ্ঠানিক রিস্ক ম্যানেজমেন্ট ও সাইকোলজি",
-    descEn: "The mindset shift from gambler to institutional risk manager. Capital preservation, drawdown protocols, and eliminating revenge trading forever.",
-    descBn: "জুয়াড়ি মানসিকতা দূর করে একজন প্রাতিষ্ঠানিক রিস্ক ম্যানেজারের মতো সাইকোলজি ও ক্যাপিটাল প্রোটেকশন রুলস বাস্তবায়ন করা।",
-    rules: [
-      "Maximum 1% risk per trade. Never violate this rule under any emotion.",
-      "Max 2 consecutive losses in a day = shut down terminal until next session.",
-      "Focus on flawless execution of the process; profits are a mathematical byproduct.",
-    ],
-  },
-];
 
 // Daily Discipline Rules
 const DAILY_DISCIPLINE_RULES = [
@@ -325,7 +151,7 @@ export default function Dashboard() {
 
   // Active Tab
   const [tab, setTab] = useState<
-    "overview" | "roadmap" | "library" | "journal" | "discipline" | "orders" | "support"
+    "overview" | "library" | "journal" | "discipline" | "orders" | "support"
   >("overview");
   const [lang, setLang] = useState<"en" | "bn">(() => (localStorage.getItem("cycle-language") as "en" | "bn") || "en");
 
@@ -333,16 +159,6 @@ export default function Dashboard() {
   const today = useMemo(() => new Date().toISOString().split("T")[0], []);
 
   // Modals & States
-  const [selectedRoadmapStage, setSelectedRoadmapStage] = useState<any | null>(null);
-  const [roadmapFilter, setRoadmapFilter] = useState<"all" | "completed" | "todo">("all");
-  const [stageNotes, setStageNotes] = useState<Record<number, string>>(() => {
-    try {
-      return JSON.parse(localStorage.getItem("cycle_stage_notes") || "{}");
-    } catch {
-      return {};
-    }
-  });
-
   // Library Modals
   const [previewPdfModal, setPreviewPdfModal] = useState<any | null>(null);
   const [previewVideoModal, setPreviewVideoModal] = useState<any | null>(null);
@@ -381,13 +197,9 @@ export default function Dashboard() {
   const { data: journal, refetch: refetchJournal } = trpc.customer.journal.useQuery(undefined, { enabled: !!user });
   const { data: tickets, refetch: refetchTickets } = trpc.customer.tickets.useQuery(undefined, { enabled: !!user });
   const { data: notifications } = trpc.customer.notifications.useQuery(undefined, { enabled: !!user });
-  const { data: progress, refetch: refetchProgress } = trpc.customer.progress.useQuery(undefined, { enabled: !!user });
   const { data: discipline, refetch: refetchDiscipline } = trpc.customer.discipline.useQuery({ date: today }, { enabled: !!user });
 
   // Mutations
-  const toggleProgressMutation = trpc.customer.toggleProgress.useMutation({
-    onSuccess: () => refetchProgress(),
-  });
 
   const toggleDisciplineMutation = trpc.customer.toggleDiscipline.useMutation({
     onSuccess: () => refetchDiscipline(),
@@ -415,14 +227,6 @@ export default function Dashboard() {
     },
   });
 
-  // Calculate completed stages count
-  const completedStagesCount = useMemo(() => {
-    if (!progress) return 0;
-    return progress.filter((p: any) => p.completed).length;
-  }, [progress]);
-
-  const progressPercent = Math.min(100, Math.round((completedStagesCount / 12) * 100));
-
   // Stored trades from Trader Journal
   const [localTrades, setLocalTrades] = useState(() => getStoredTrades());
 
@@ -437,7 +241,6 @@ export default function Dashboard() {
       window.removeEventListener("storage", handleJournalUpdate);
     };
   }, []);
-
   // Calculate journal analytics
   const journalStats = useMemo(() => {
     if (localTrades && localTrades.length) {
@@ -466,13 +269,6 @@ export default function Dashboard() {
       bestSetup: "CRT Range Model",
     };
   }, [journal, localTrades]);
-
-  // Save personal stage note
-  const handleSaveStageNote = (stageNum: number, note: string) => {
-    const updated = { ...stageNotes, [stageNum]: note };
-    setStageNotes(updated);
-    localStorage.setItem("cycle_stage_notes", JSON.stringify(updated));
-  };
 
   // Download institutional guide
   const handleDownloadResource = (pdfItem: any) => {
@@ -503,12 +299,16 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
     URL.revokeObjectURL(url);
   };
 
-  if (loading) {
+  const isHashAuthenticating = typeof window !== "undefined" && window.location.hash.includes("access_token=");
+
+  if (loading || (isHashAuthenticating && !user)) {
     return (
       <div className="grid min-h-screen place-items-center bg-[#f8fafc] text-slate-600 dark:bg-[#060d19] dark:text-slate-400">
         <div className="flex flex-col items-center gap-3">
           <BrandLogo size={64} className="animate-pulse" />
-          <div className="text-sm font-bold tracking-widest uppercase">Loading Student Portal...</div>
+          <div className="text-sm font-bold tracking-widest uppercase">
+            {isHashAuthenticating ? "Verifying Session Access..." : "Loading Student Portal..."}
+          </div>
         </div>
       </div>
     );
@@ -521,7 +321,7 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
           <BrandLogo size={96} className="mx-auto" />
           <h1 className="mt-6 text-3xl font-extrabold tracking-tight">Student Dashboard Access</h1>
           <p className="mt-3 text-sm leading-relaxed text-slate-300">
-            Sign in to access your 12-Stage roadmap, trading journal, daily discipline routine, and unlocked bundles.
+            Sign in to access your study library, trading journal, daily discipline routine, and unlocked bundles.
           </p>
           <Link href="/login">
             <Button size="lg" className="mt-7 w-full bg-[#38bdf8] font-bold text-slate-950 hover:bg-[#7dd3fc]">
@@ -543,7 +343,7 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
   };
 
   type NavItem = {
-    id: "overview" | "roadmap" | "library" | "journal" | "discipline" | "orders" | "support";
+    id: "overview" | "library" | "journal" | "discipline" | "orders" | "support";
     labelEn: string;
     labelBn: string;
     icon: any;
@@ -552,7 +352,6 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
 
   const navItems: NavItem[] = [
     { id: "overview", labelEn: "Overview", labelBn: "ওভারভিউ", icon: LayoutDashboard },
-    { id: "roadmap", labelEn: "12-Stage Roadmap", labelBn: "১২-স্টেজ রোডম্যাপ", icon: Layers, badge: `${completedStagesCount}/12` },
     { id: "library", labelEn: "My Library & Resources", labelBn: "আমার লাইব্রেরি", icon: BookOpen, badge: entitlements?.length ? `${entitlements.length}` : undefined },
     { id: "journal", labelEn: "Trading Journal", labelBn: "ট্রেডিং জার্নাল", icon: NotebookPen, badge: (localTrades?.length || journal?.length) ? `${localTrades?.length || journal?.length}` : undefined },
     { id: "discipline", labelEn: "Daily Discipline", labelBn: "ডেইলি রুটিন", icon: ClipboardCheck },
@@ -712,7 +511,7 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
                 {isBn ? "ট্রেডিং রিয়েলিটি স্টুডেন্ট পোর্টাল" : "Institutional Trader Portal"}
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
-                {isBn ? "আপনার রোডম্যাপ, জার্নাল ও ডিসিপ্লিন ট্র্যাকার" : "Process over emotion · 12-Stage Mastery"}
+                {isBn ? "আপনার স্টাডি লাইব্রেরি, জার্নাল ও ডিসিপ্লিন ট্র্যাকার" : "Process over emotion · Institutional Trader Portal"}
               </p>
             </div>
           </div>
@@ -762,18 +561,18 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
             <div className="space-y-8 animate-in fade-in duration-300">
               {/* Top Banner KPI Grid */}
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {/* 1. Roadmap Progress */}
+                {/* 1. Total Documented Trades */}
                 <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                   <div className="flex items-center justify-between text-slate-400">
-                    <span className="text-xs font-extrabold uppercase tracking-wider">{isBn ? "রোডম্যাপ অগ্রগতি" : "Roadmap Progress"}</span>
-                    <Layers size={18} className="text-[#0284c7] dark:text-sky-400" />
+                    <span className="text-xs font-extrabold uppercase tracking-wider">{isBn ? "মোট ট্রেড জার্নাল" : "Journal Entries"}</span>
+                    <NotebookPen size={18} className="text-[#0284c7] dark:text-sky-400" />
                   </div>
                   <div className="mt-4 flex items-baseline gap-2">
-                    <span className="text-3xl font-black">{completedStagesCount}</span>
-                    <span className="text-sm font-bold text-slate-400">/ 12 {isBn ? "স্টেজ" : "Stages"}</span>
+                    <span className="text-3xl font-black">{journalStats.total}</span>
+                    <span className="text-sm font-bold text-slate-400">{isBn ? "টি ট্রেড" : "Trades"}</span>
                   </div>
-                  <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                    <div className="h-full rounded-full bg-[#0284c7] transition-all duration-500 dark:bg-sky-400" style={{ width: `${progressPercent}%` }} />
+                  <div className="mt-3 text-xs font-medium text-slate-500 dark:text-slate-400">
+                    {journalStats.wins} {isBn ? "উইন" : "Wins"} · {journalStats.losses} {isBn ? "লস" : "Losses"}
                   </div>
                 </div>
 
@@ -820,34 +619,29 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
                 </div>
               </div>
 
-              {/* Learning Roadmap Banner CTA */}
+              {/* Learning Resource Banner CTA */}
               <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#081833] via-[#0f2c59] to-[#0a1e3d] p-7 sm:p-9 text-white shadow-2xl">
                 <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
                   <div>
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-extrabold uppercase tracking-widest text-[#38bdf8]">
-                      <Sparkles size={13} /> {isBn ? "পরবর্তী ধাপ" : "NEXT STEP"}
+                      <Sparkles size={13} /> {isBn ? "প্রাতিষ্ঠানিক রিসোর্স" : "INSTITUTIONAL EDGE"}
                     </span>
                     <h2 className="mt-4 text-2xl sm:text-3xl font-extrabold tracking-tight">
-                      {isBn
-                        ? `স্টেজ ০${Math.min(12, completedStagesCount + 1)}: ${ROADMAP_STAGES_FULL[Math.min(11, completedStagesCount)].titleBn}`
-                        : `Stage 0${Math.min(12, completedStagesCount + 1)}: ${ROADMAP_STAGES_FULL[Math.min(11, completedStagesCount)].titleEn}`}
+                      {isBn ? "প্রাতিষ্ঠানিক চিট-শীট ও হাই-RR ট্রেডিং মডেল" : "Institutional Cheat-Sheets & High-RR Models"}
                     </h2>
                     <p className="mt-2 max-w-xl text-xs sm:text-sm text-slate-300 leading-relaxed">
                       {isBn
-                        ? ROADMAP_STAGES_FULL[Math.min(11, completedStagesCount)].descBn
-                        : ROADMAP_STAGES_FULL[Math.min(11, completedStagesCount)].descEn}
+                        ? "ক্যান্ডেল রেঞ্জ থিওরি (CRT), লিকুইডিটি সুইপ এবং প্রাতিষ্ঠানিক রিস্ক ম্যানেজমেন্ট গাইড অনুশীলন করে আপনার এজ তৈরি করুন।"
+                        : "Master candle range theory (CRT), liquidity sweeps, and strict risk management through curated institutional guides."}
                     </p>
                   </div>
 
                   <Button
-                    onClick={() => {
-                      setSelectedRoadmapStage(ROADMAP_STAGES_FULL[Math.min(11, completedStagesCount)]);
-                      setTab("roadmap");
-                    }}
+                    onClick={() => setTab("library")}
                     size="lg"
                     className="shrink-0 gap-2 rounded-2xl bg-[#38bdf8] font-black text-slate-950 hover:bg-[#7dd3fc] shadow-lg shadow-sky-500/20"
                   >
-                    <span>{isBn ? "স্টেজ স্টাডি শুরু করুন" : "Study Next Stage"}</span>
+                    <span>{isBn ? "লাইব্রেরি ওপেন করুন" : "Open Study Library"}</span>
                     <ArrowRight size={16} />
                   </Button>
                 </div>
@@ -961,93 +755,6 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
             </div>
           )}
 
-          {/* ========================================================================= */}
-          {/* TAB 2: 12-STAGE ROADMAP TRACKER */}
-          {/* ========================================================================= */}
-          {tab === "roadmap" && (
-            <div className="space-y-6 animate-in fade-in duration-300">
-              <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                <div>
-                  <h2 className="text-2xl font-extrabold tracking-tight">{isBn ? "১২-স্টেজ ট্রেডিং রিয়েলিটি রোডম্যাপ" : "12-Stage Institutional Roadmap"}</h2>
-                  <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                    {isBn ? "প্রতিটি স্টেজ ওপেন করে প্রাতিষ্ঠানিক রুলস পড়ুন এবং সম্পন্ন করার পর টিক দিন।" : "Master institutional concept step-by-step. Click any stage to study rules & log notes."}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {(["all", "completed", "todo"] as const).map((f) => (
-                    <button
-                      key={f}
-                      onClick={() => setRoadmapFilter(f)}
-                      className={`rounded-xl px-3 py-1.5 text-xs font-bold capitalize transition ${
-                        roadmapFilter === f
-                          ? "bg-[#081833] text-white dark:bg-sky-500 dark:text-slate-950"
-                          : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-                      }`}
-                    >
-                      {f === "all" ? (isBn ? "সকল স্টেজ" : "All Stages") : f === "completed" ? (isBn ? "সম্পন্ন" : "Completed") : (isBn ? "বাকি আছে" : "To-Do")}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {ROADMAP_STAGES_FULL.filter((stg) => {
-                  const isDone = progress?.some((p: any) => p.lessonId === stg.num && p.completed);
-                  if (roadmapFilter === "completed") return isDone;
-                  if (roadmapFilter === "todo") return !isDone;
-                  return true;
-                }).map((stg) => {
-                  const isDone = progress?.some((p: any) => p.lessonId === stg.num && p.completed);
-                  return (
-                    <div
-                      key={stg.num}
-                      onClick={() => setSelectedRoadmapStage(stg)}
-                      className={`group relative flex cursor-pointer flex-col justify-between rounded-3xl border p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl ${
-                        isDone
-                          ? "border-emerald-300 bg-emerald-50/40 dark:border-emerald-900/50 dark:bg-emerald-950/20"
-                          : "border-slate-200 bg-white hover:border-[#0284c7]/50 dark:border-slate-800 dark:bg-slate-900"
-                      }`}
-                    >
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <span className={`font-mono text-xs font-bold px-2 py-0.5 rounded-lg ${isDone ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"}`}>
-                            {isBn ? `স্টেজ ${String(stg.num).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[+d])}` : `Stage ${String(stg.num).padStart(2, "0")}`}
-                          </span>
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#0284c7] dark:text-sky-400">{isBn ? stg.catBn : stg.catEn}</span>
-                        </div>
-
-                        <h3 className="mt-4 text-base font-extrabold group-hover:text-[#0284c7] dark:group-hover:text-sky-400 transition-colors">{isBn ? stg.titleBn : stg.titleEn}</h3>
-                        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                          {isBn ? stg.descBn : stg.descEn}
-                        </p>
-                      </div>
-
-                      <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-800">
-                        <span className="text-xs font-bold text-[#0284c7] dark:text-sky-400 flex items-center gap-1">
-                          <span>{isBn ? "বিস্তারিত দেখুন" : "View Rules & Notes"}</span>
-                          <ChevronRight size={13} />
-                        </span>
-
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleProgressMutation.mutate({ lessonId: stg.num, completed: !isDone });
-                          }}
-                          className={`rounded-full p-1.5 transition ${isDone ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-400 hover:bg-slate-200 dark:bg-slate-800"}`}
-                          title={isDone ? "Mark as uncompleted" : "Mark as completed"}
-                        >
-                          <Check size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* ========================================================================= */}
           {/* TAB 3: MY LIBRARY & RESOURCES */}
           {/* ========================================================================= */}
           {tab === "library" && (
@@ -1273,80 +980,6 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
         </main>
       </div>
 
-      {/* ========================================================================= */}
-      {/* 12-STAGE ROADMAP DEEP DIVE MODAL */}
-      {/* ========================================================================= */}
-      {selectedRoadmapStage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in" onClick={() => setSelectedRoadmapStage(null)}>
-          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-2xl dark:border-slate-800 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
-              <div className="flex items-center gap-2">
-                <span className="rounded-lg bg-sky-100 px-2.5 py-0.5 text-xs font-black text-sky-800 dark:bg-sky-950 dark:text-sky-400">
-                  STAGE {String(selectedRoadmapStage.num).padStart(2, "0")}
-                </span>
-                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-                  {selectedRoadmapStage.catEn}
-                </span>
-              </div>
-              <button onClick={() => setSelectedRoadmapStage(null)} className="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="mt-5 space-y-5">
-              <div>
-                <h3 className="text-xl font-black">{isBn ? selectedRoadmapStage.titleBn : selectedRoadmapStage.titleEn}</h3>
-                <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                  {isBn ? selectedRoadmapStage.descBn : selectedRoadmapStage.descEn}
-                </p>
-              </div>
-
-              {/* Core Execution Rules */}
-              <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/60 space-y-2.5">
-                <div className="text-xs font-black uppercase tracking-wider text-[#0284c7] dark:text-sky-400">
-                  {isBn ? "কোর এক্সিকিউশন রুলস:" : "Core Institutional Rules:"}
-                </div>
-                {selectedRoadmapStage.rules.map((r: string, idx: number) => (
-                  <div key={idx} className="flex items-start gap-2 text-xs text-slate-700 dark:text-slate-300">
-                    <CheckCircle2 size={15} className="text-emerald-500 shrink-0 mt-0.5" />
-                    <span>{r}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Personal Notes Box */}
-              <div>
-                <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                  {isBn ? "এই স্টেজে আপনার ব্যক্তিগত স্টাডি নোট:" : "Personal Study Notes for this Stage:"}
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder={isBn ? "চার্ট ব্যাকটেস্টিং বা ব্যক্তিগত পর্যবেক্ষণ এখানে লিখে রাখুন..." : "Type your chart backtest observations and insights here..."}
-                  value={stageNotes[selectedRoadmapStage.num] || ""}
-                  onChange={(e) => handleSaveStageNote(selectedRoadmapStage.num, e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                />
-              </div>
-
-              <div className="flex gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <Button
-                  onClick={() => {
-                    const isDone = progress?.some((p: any) => p.lessonId === selectedRoadmapStage.num && p.completed);
-                    toggleProgressMutation.mutate({ lessonId: selectedRoadmapStage.num, completed: !isDone });
-                  }}
-                  className="w-full bg-[#081833] text-xs font-bold text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950"
-                >
-                  {progress?.some((p: any) => p.lessonId === selectedRoadmapStage.num && p.completed)
-                    ? (isBn ? "সম্পন্ন টিক তুলে নিন" : "Mark as Uncompleted")
-                    : (isBn ? "এই স্টেজ সম্পন্ন হয়েছে ✓" : "Mark Stage as Completed ✓")}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
       {/* PDF PREVIEW MODAL */}
       {/* ========================================================================= */}
       {previewPdfModal && (

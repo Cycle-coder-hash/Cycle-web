@@ -15,6 +15,7 @@ import {
   Moon,
   CheckCircle2,
   AlertCircle,
+  ExternalLink,
   KeyRound,
   RefreshCw,
   Send,
@@ -24,8 +25,9 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useTheme } from "@/contexts/ThemeContext";
+import { trpc } from "@/lib/trpc";
 
-type AuthMode = "login" | "register" | "forgot_password" | "reset_password";
+type AuthMode = "login" | "register" | "forgot_password" | "reset_password" | "verify_otp";
 
 export default function Auth() {
   const [, setLocation] = useLocation();
@@ -43,6 +45,8 @@ export default function Auth() {
   const [newPassword, setNewPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [showOtpInput, setShowOtpInput] = useState(false);
 
   // Status & Feedback
   const [loading, setLoading] = useState(false);
@@ -50,6 +54,12 @@ export default function Auth() {
   const [successMsg, setSuccessMsg] = useState("");
   const [showResend, setShowResend] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+
+  // tRPC Mutations for native auth fallback
+  const loginMutation = trpc.auth.login.useMutation();
+  const registerMutation = trpc.auth.register.useMutation();
+  const verifyOtpMutation = trpc.auth.verifyEmailOtp.useMutation();
+  const resendOtpMutation = trpc.auth.resendOtp.useMutation();
 
   const isBn = lang === "bn";
 
@@ -66,10 +76,28 @@ export default function Auth() {
     }
   }, [cooldown]);
 
-  // Check URL parameters for password recovery link (#access_token=...&type=recovery)
+  // Check URL parameters for hash tokens (#access_token=... or #error=...)
   useEffect(() => {
     const hash = window.location.hash;
     const search = window.location.search;
+
+    // 1. Check for error in hash (e.g. expired confirmation link)
+    if (hash.includes("error=") || search.includes("error=")) {
+      const params = new URLSearchParams(hash ? hash.replace(/^#/, "") : search.replace(/^\?/, ""));
+      const desc = params.get("error_description") || params.get("error");
+      setErrorMsg(
+        isBn
+          ? `ভেরিফিকেশন লিঙ্কটির মেয়াদ শেষ হয়েছে বা লিঙ্কটি সঠিক নয় (${desc || "Expired"}). অনুগ্রহ করে নিচে ইমেইল দিয়ে আবার কোড নিন।`
+          : `Verification link is expired or invalid (${desc || "Expired"}). Please enter your email below to request a new code.`
+      );
+      setShowResend(true);
+      try {
+        window.history.replaceState(null, "", window.location.pathname);
+      } catch {}
+      return;
+    }
+
+    // 2. Check for password recovery link
     if (hash.includes("type=recovery") || search.includes("type=recovery")) {
       setMode("reset_password");
       setSuccessMsg(
@@ -77,6 +105,33 @@ export default function Auth() {
           ? "ভেরিফিকেশন লিঙ্ক নিশ্চিত হয়েছে। অনুগ্রহ করে আপনার নতুন পাসওয়ার্ড দিন।"
           : "Recovery link confirmed. Please enter your new password."
       );
+      return;
+    }
+
+    // 3. Check for email verification / confirmation access_token
+    if (hash.includes("access_token=")) {
+      const params = new URLSearchParams(hash.replace(/^#/, ""));
+      const token = params.get("access_token");
+      const refreshToken = params.get("refresh_token");
+      if (token) {
+        try {
+          localStorage.setItem("cycle_session_token", token);
+          if (refreshToken) {
+            supabase.auth.setSession({ access_token: token, refresh_token: refreshToken });
+          }
+        } catch {}
+        setSuccessMsg(
+          isBn
+            ? "ইমেইল সফলভাবে ভেরিফাই হয়েছে! ড্যাশবোর্ডে প্রবেশ করানো হচ্ছে..."
+            : "Email confirmed successfully! Accessing your dashboard..."
+        );
+        try {
+          window.history.replaceState(null, "", window.location.pathname);
+        } catch {}
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 600);
+      }
     }
   }, [isBn]);
 
@@ -100,6 +155,7 @@ export default function Auth() {
 
     setLoading(true);
     try {
+      // 1. Try Supabase signInWithPassword
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
@@ -107,22 +163,66 @@ export default function Auth() {
 
       if (error) {
         if (error.message.toLowerCase().includes("email not confirmed")) {
+          setMode("verify_otp");
           setErrorMsg(
             isBn
-              ? "আপনার ইমেইল ভেরিফাই করা হয়নি। আপনার ইনবক্স অথবা Spam / Junk ফোল্ডার চেক করে ভেরিফিকেশন লিঙ্কটিতে ক্লিক করুন।"
-              : "Email not confirmed. Please check your Inbox or Spam/Junk folder and click the verification link."
+              ? "আপনার ইমেইল এখনও নিশ্চিত করা হয়নি। আপনার ইনবক্স অথবা Spam ফোল্ডার থেকে 'Confirm email address' লিঙ্কে ক্লিক করুন।"
+              : "Email not confirmed yet. Please open your Inbox or Spam folder and click the 'Confirm email address' link."
           );
           setShowResend(true);
-        } else if (error.message.toLowerCase().includes("invalid login credentials")) {
-          setErrorMsg(isBn ? "ইমেইল বা পাসওয়ার্ড সঠিক নয়।" : "Invalid email or password.");
-        } else {
-          setErrorMsg(error.message);
+          try {
+            await supabase.auth.resend({
+              type: "signup",
+              email: email.trim(),
+              options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+            });
+            await resendOtpMutation.mutateAsync({ email: email.trim(), type: "email_verify" });
+          } catch {}
+          return;
+        }
+
+        // Try local server database authentication fallback
+        try {
+          const serverRes = await loginMutation.mutateAsync({
+            email: email.trim(),
+            password,
+          });
+
+          if (serverRes?.requiresVerification) {
+            setMode("verify_otp");
+            setErrorMsg(
+              isBn
+                ? "আপনার অ্যাকাউন্ট অ্যাক্টিভ করতে ইমেইলে পাঠানো ৬-সংখ্যার কোডটি নিচে দিন।"
+                : "Please enter the 6-digit code sent to your email to activate your account."
+            );
+            setShowResend(true);
+            return;
+          }
+
+          if (serverRes?.token) {
+            localStorage.setItem("cycle_session_token", serverRes.token);
+            window.location.href = "/dashboard";
+            return;
+          }
+        } catch (serverErr: any) {
+          if (error.message.toLowerCase().includes("invalid login credentials")) {
+            setErrorMsg(isBn ? "ইমেইল বা পাসওয়ার্ড সঠিক নয়।" : "Invalid email or password.");
+          } else {
+            setErrorMsg(error.message || serverErr.message);
+          }
+          return;
         }
         return;
       }
 
       if (data.session) {
         localStorage.setItem("cycle_session_token", data.session.access_token);
+        try {
+          await supabase.auth.setSession({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+          });
+        } catch {}
         window.location.href = "/dashboard";
       }
     } catch (err: any) {
@@ -150,38 +250,92 @@ export default function Auth() {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          data: {
-            full_name: name.trim(),
-            name: name.trim(),
-            phone: phone.trim() || null,
-            language: lang,
+      // 1. Register with Supabase
+      try {
+        const { data, error } = await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: {
+            data: {
+              full_name: name.trim(),
+              name: name.trim(),
+              phone: phone.trim() || null,
+              language: lang,
+            },
+            emailRedirectTo: `${window.location.origin}/dashboard`,
           },
-          emailRedirectTo: `${window.location.origin}/dashboard`,
-        },
-      });
+        });
 
-      if (error) {
-        setErrorMsg(error.message);
-        return;
+        if (error) {
+          const errLower = error.message.toLowerCase();
+          if (
+            errLower.includes("already registered") ||
+            errLower.includes("already exists") ||
+            errLower.includes("user already registered")
+          ) {
+            setMode("login");
+            setErrorMsg(
+              isBn
+                ? "এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট খোলা হয়েছে। অনুগ্রহ করে আপনার পাসওয়ার্ড দিয়ে সাইন ইন করুন।"
+                : "An account with this email already exists. Please sign in with your password."
+            );
+            return;
+          }
+          throw error;
+        }
+
+        // Supabase returns an empty identities array if user already exists
+        if (data?.user?.identities && data.user.identities.length === 0) {
+          setMode("login");
+          setErrorMsg(
+            isBn
+              ? "এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট তৈরি করা হয়েছে। অনুগ্রহ করে আপনার পাসওয়ার্ড দিয়ে সাইন ইন করুন বা পাসওয়ার্ড রিসেট করুন।"
+              : "This email is already registered. Please sign in with your password or reset your password."
+          );
+          return;
+        }
+
+        if (data?.session) {
+          localStorage.setItem("cycle_session_token", data.session.access_token);
+          try {
+            await supabase.auth.setSession({
+              access_token: data.session.access_token,
+              refresh_token: data.session.refresh_token,
+            });
+          } catch {}
+          window.location.href = "/dashboard";
+          return;
+        }
+      } catch (supaErr: any) {
+        console.warn("[Supabase registration notice]:", supaErr);
+        if (supaErr?.message && !supaErr.message.toLowerCase().includes("failed to fetch")) {
+          setErrorMsg(supaErr.message);
+          return;
+        }
       }
 
-      // Check if user was already confirmed or needs email confirmation
-      if (data.user && !data.session) {
-        setSuccessMsg(
-          isBn
-            ? `রেজিস্ট্রেশন সফল হয়েছে! আমরা ${email} ঠিকানায় একটি ভেরিফিকেশন ইমেইল পাঠিয়েছি। অনুগ্রহ করে আপনার ইনবক্স অথবা Spam ফোল্ডার চেক করে লিঙ্কটিতে ক্লিক করুন।`
-            : `Registration successful! We have sent a confirmation link to ${email}. Please check your Inbox or Spam folder to activate your account.`
-        );
-        setShowResend(true);
-        setCooldown(60);
-      } else if (data.session) {
-        localStorage.setItem("cycle_session_token", data.session.access_token);
-        window.location.href = "/dashboard";
+      // 2. Sync / Register with native server
+      try {
+        await registerMutation.mutateAsync({
+          name: name.trim(),
+          email: email.trim(),
+          password,
+          phone: phone.trim() || undefined,
+          language: lang,
+        });
+      } catch (serverErr) {
+        console.warn("[Server registration notice]:", serverErr);
       }
+
+      // Switch to verify_otp view immediately so user has zero confusion!
+      setMode("verify_otp");
+      setSuccessMsg(
+        isBn
+          ? `রেজিস্ট্রেশন সফল হয়েছে! আমরা ${email} ঠিকানায় কনফার্মেশন লিঙ্ক পাঠিয়েছি। অনুগ্রহ করে আপনার ইনবক্স অথবা Spam ফোল্ডার থেকে 'Confirm email address' লিঙ্কে ক্লিক করুন।`
+          : `Registration successful! We have sent a confirmation link to ${email}. Please check your Inbox or Spam folder and click 'Confirm email address'.`
+      );
+      setShowResend(true);
+      setCooldown(60);
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to register");
     } finally {
@@ -189,31 +343,164 @@ export default function Auth() {
     }
   };
 
-  // 3. Handle Resend Verification Email
+  // 3. Handle Resend Verification Email & OTP
   const handleResendVerification = async () => {
     if (!email.trim() || cooldown > 0) return;
     setLoading(true);
     setErrorMsg("");
     try {
-      const { error } = await supabase.auth.resend({
-        type: "signup",
-        email: email.trim(),
-        options: {
-          emailRedirectTo: `${window.location.origin}/dashboard`,
-        },
-      });
-      if (error) {
-        setErrorMsg(error.message);
+      try {
+        await supabase.auth.resend({
+          type: "signup",
+          email: email.trim(),
+          options: {
+            emailRedirectTo: `${window.location.origin}/dashboard`,
+          },
+        });
+      } catch {}
+
+      try {
+        await resendOtpMutation.mutateAsync({
+          email: email.trim(),
+          type: "email_verify",
+        });
+      } catch {}
+
+      setCooldown(60);
+      setSuccessMsg(
+        isBn
+          ? `কনফার্মেশন লিঙ্ক ও কোড পুনরায় পাঠানো হয়েছে (${email})। ইনবক্সে না পেলে Spam ফোল্ডার দেখুন।`
+          : `Confirmation link and code resent to ${email}. If not in inbox, please check your Spam folder.`
+      );
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to resend");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 4. Handle "I Confirmed Link / Check Confirmation Status"
+  const handleCheckEmailConfirmed = async () => {
+    if (!email.trim()) return;
+    setLoading(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    try {
+      // 1. Check if Supabase session is already established
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData?.session) {
+        localStorage.setItem("cycle_session_token", sessionData.session.access_token);
+        setSuccessMsg(isBn ? "ইমেইল ভেরিফাই হয়েছে! ড্যাশবোর্ডে প্রবেশ করানো হচ্ছে..." : "Email verified! Entering dashboard...");
+        window.location.href = "/dashboard";
+        return;
+      }
+
+      // 2. If password is known in state, try signing in to test if email is now confirmed
+      if (password) {
+        const { data: signData, error: signErr } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        });
+
+        if (signData?.session) {
+          localStorage.setItem("cycle_session_token", signData.session.access_token);
+          setSuccessMsg(isBn ? "ইমেইল ভেরিফাই হয়েছে! ড্যাশবোর্ডে প্রবেশ করানো হচ্ছে..." : "Email verified! Entering dashboard...");
+          window.location.href = "/dashboard";
+          return;
+        }
+
+        if (signErr) {
+          const msg = signErr.message.toLowerCase();
+          if (msg.includes("not confirmed") || msg.includes("email_not_confirmed")) {
+            setErrorMsg(
+              isBn
+                ? "আপনার ইমেইলটি এখনও কনফার্ম করা হয়নি। অনুগ্রহ করে জিমেইল (Inbox অথবা Spam ফোল্ডার) থেকে 'Confirm email address' লিঙ্কে ক্লিক করুন।"
+                : "Your email has not been confirmed yet. Please check your Gmail (Inbox or Spam folder) and click the 'Confirm email address' link."
+            );
+            return;
+          }
+          throw signErr;
+        }
       } else {
-        setCooldown(60);
+        // Switch to login with instruction
+        setMode("login");
         setSuccessMsg(
           isBn
-            ? `ভেরিফিকেশন ইমেইল পুনরায় পাঠানো হয়েছে (${email})। ইনবক্সে না পেলে Spam ফোল্ডার দেখুন।`
-            : `Verification email resent to ${email}. If not in inbox, please check your Spam folder.`
+            ? "ইমেইল কনফার্ম করা হয়ে থাকলে আপনার পাসওয়ার্ড দিয়ে সাইন ইন করুন।"
+            : "If you clicked the email confirmation link, please sign in with your password."
         );
       }
     } catch (err: any) {
-      setErrorMsg(err.message || "Failed to resend");
+      setErrorMsg(err.message || (isBn ? "কনফার্মেশন পাওয়া যায়নি।" : "Confirmation not detected yet."));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 5. Handle OTP Code Verification
+  const handleVerifyOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpCode.trim() || otpCode.trim().length < 4) {
+      setErrorMsg(isBn ? "সঠিক ভেরিফিকেশন কোড লিখুন" : "Please enter a valid verification code");
+      return;
+    }
+
+    setLoading(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    const code = otpCode.trim();
+
+    try {
+      // 1. Try Supabase verifyOtp first
+      try {
+        const { data: supaData, error: supaErr } = await supabase.auth.verifyOtp({
+          email: email.trim(),
+          token: code,
+          type: "signup",
+        });
+
+        if (supaData?.session) {
+          localStorage.setItem("cycle_session_token", supaData.session.access_token);
+          setSuccessMsg(isBn ? "ভেরিফিকেশন সফল হয়েছে!" : "Verification successful!");
+          window.location.href = "/dashboard";
+          return;
+        }
+
+        if (supaErr) {
+          const retryRes = await supabase.auth.verifyOtp({
+            email: email.trim(),
+            token: code,
+            type: "email",
+          });
+          if (retryRes.data?.session) {
+            localStorage.setItem("cycle_session_token", retryRes.data.session.access_token);
+            setSuccessMsg(isBn ? "ভেরিফিকেশন সফল হয়েছে!" : "Verification successful!");
+            window.location.href = "/dashboard";
+            return;
+          }
+        }
+      } catch (e) {
+        console.warn("[Supabase verifyOtp fallback]:", e);
+      }
+
+      // 2. Try native server verifyEmailOtp
+      const serverRes = await verifyOtpMutation.mutateAsync({
+        email: email.trim(),
+        otp: code,
+      });
+
+      if (serverRes?.token) {
+        localStorage.setItem("cycle_session_token", serverRes.token);
+        setSuccessMsg(isBn ? "ভেরিফিকেশন সফল হয়েছে!" : "Verification successful!");
+        window.location.href = "/dashboard";
+        return;
+      }
+
+      throw new Error(isBn ? "ভেরিফিকেশন কোডটি সঠিক নয় বা মেয়াদ শেষ হয়েছে" : "Invalid or expired verification code");
+    } catch (err: any) {
+      setErrorMsg(err.message || (isBn ? "ভেরিফিকেশন কোডটি সঠিক নয়" : "Invalid verification code"));
     } finally {
       setLoading(false);
     }
@@ -382,13 +669,15 @@ export default function Auth() {
                 {mode === "register" && (isBn ? "নতুন অ্যাকাউন্ট তৈরি করুন" : "Create your student account")}
                 {mode === "forgot_password" && (isBn ? "পাসওয়ার্ড ভুলে গেছেন?" : "Forgot Password")}
                 {mode === "reset_password" && (isBn ? "নতুন পাসওয়ার্ড সেট করুন" : "Set New Password")}
+                {mode === "verify_otp" && (isBn ? "ইমেইল ভেরিফিকেশন" : "Verify Your Email")}
               </h1>
 
               <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                {mode === "login" && (isBn ? "আপনার ড্যাশবোর্ড, রোডম্যাপ ও জার্নাল অ্যাক্সেস করুন" : "Access your 12-stage roadmap, library, and trading journal")}
+                {mode === "login" && (isBn ? "আপনার ড্যাশবোর্ড, লাইব্রেরি ও জার্নাল অ্যাক্সেস করুন" : "Access your institutional library, discipline and trading journal")}
                 {mode === "register" && (isBn ? "সঠিক মার্কেট স্ট্রাকচার শিখতে আজই যোগ দিন" : "Join thousands mastering real market structure without hype")}
                 {mode === "forgot_password" && (isBn ? "আপনার ইমেইল দিলে আমরা পাসওয়ার্ড রিসেট লিঙ্ক পাঠাব" : "Enter your email to receive a password reset link")}
                 {mode === "reset_password" && (isBn ? "আপনার পছন্দের শক্তিশালী নতুন পাসওয়ার্ড দিন" : "Enter your new password below")}
+                {mode === "verify_otp" && (isBn ? "আপনার অ্যাকাউন্টে প্রবেশ করতে ইমেইলে পাঠানো কোডটি দিন" : "Enter the confirmation code sent to your email to activate your account")}
               </p>
             </div>
 
@@ -797,6 +1086,127 @@ export default function Auth() {
                   </button>
                 </div>
               </form>
+            )}
+
+            {/* =================================================================== */}
+            {/* VIEW 5: EMAIL CONFIRMATION & VERIFY OTP */}
+            {/* =================================================================== */}
+            {mode === "verify_otp" && (
+              <div className="mt-6 space-y-4">
+                {/* Header Card */}
+                <div className="rounded-2xl border border-sky-200/80 bg-sky-50/70 p-4 text-center dark:border-sky-800/40 dark:bg-sky-950/30">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-600 dark:bg-sky-400/10 dark:text-sky-400">
+                    <Mail size={24} />
+                  </div>
+                  <h3 className="mt-2.5 text-base font-extrabold text-slate-900 dark:text-white">
+                    {isBn ? "ইমেইল চেক ও কনফার্ম করুন" : "Check & Confirm Your Email"}
+                  </h3>
+                  <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-sky-700 shadow-sm dark:bg-slate-900 dark:text-sky-300">
+                    <span>{email}</span>
+                  </div>
+                  <p className="mt-3 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+                    {isBn
+                      ? "আপনার ইমেইলে (ইনবক্স অথবা Spam ফোল্ডারে) পাঠানো 'Confirm email address' লিঙ্কে ক্লিক করুন অথবা নিচের বক্সে ৬-সংখ্যার কোডটি দিন।"
+                      : "Click the 'Confirm email address' link sent to your email (Inbox or Spam folder), or enter the 6-digit verification code below."}
+                  </p>
+                </div>
+
+                {/* Quick Action: Open Gmail */}
+                <a
+                  href="https://mail.google.com/mail/u/0/#search/from%3Aofficialnijam819%40gmail.com+OR+in%3Aspam"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-sky-300 bg-white text-xs sm:text-sm font-extrabold text-sky-700 shadow-sm transition hover:bg-sky-50 active:scale-[0.99] dark:border-sky-700/60 dark:bg-slate-900 dark:text-sky-300 dark:hover:bg-slate-800"
+                >
+                  <Mail size={16} className="text-red-500" />
+                  <span>{isBn ? "জিমেইল ওপেন করুন (Open Gmail)" : "Open Gmail"}</span>
+                  <ExternalLink size={14} className="opacity-70" />
+                </a>
+
+                {/* Direct 6-Digit Code Form */}
+                <form onSubmit={handleVerifyOtpSubmit} className="space-y-3 pt-1">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                      {isBn ? "৬-সংখ্যার কোড দিন (যদি থাকে)" : "Enter 6-Digit Code (if provided)"}
+                    </label>
+                    <div className="relative mt-1">
+                      <KeyRound size={17} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        maxLength={8}
+                        placeholder="123456"
+                        value={otpCode}
+                        onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9a-zA-Z]/g, ""))}
+                        className="w-full tracking-[0.3em] font-mono text-center rounded-xl border border-slate-200 bg-slate-50/50 py-2.5 pr-4 pl-10 text-base font-black text-slate-900 outline-none transition focus:border-[#0284c7] focus:bg-white focus:ring-2 focus:ring-[#0284c7]/20 dark:border-slate-800 dark:bg-slate-950/50 dark:text-white dark:focus:border-sky-400"
+                      />
+                    </div>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={loading || !otpCode.trim()}
+                    className="h-11 w-full rounded-xl bg-slate-900 text-xs font-bold text-white shadow-md hover:bg-slate-800 dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400"
+                  >
+                    {isBn ? "কোড দিয়ে প্রবেশ করুন" : "Verify Code & Enter"}
+                  </Button>
+                </form>
+
+                {/* Direct Link Confirmation Button */}
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800/60">
+                  <Button
+                    type="button"
+                    onClick={handleCheckEmailConfirmed}
+                    disabled={loading}
+                    variant="outline"
+                    className="h-11 w-full gap-2 rounded-xl border-emerald-500/40 bg-emerald-50/50 text-xs font-bold text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-300 dark:hover:bg-emerald-950/40"
+                  >
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+                        <RefreshCw size={14} className="animate-spin" />
+                        {isBn ? "চেক করা হচ্ছে..." : "Checking..."}
+                      </span>
+                    ) : (
+                      <>
+                        <CheckCircle2 size={15} className="text-emerald-600" />
+                        <span>
+                          {isBn
+                            ? "আমি লিঙ্কে ক্লিক করেছি → ড্যাশবোর্ডে যান"
+                            : "I Clicked Email Link → Enter Dashboard"}
+                        </span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {/* Footer Navigation */}
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode("login");
+                      setErrorMsg("");
+                      setSuccessMsg("");
+                      setShowResend(false);
+                    }}
+                    className="text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                  >
+                    ← {isBn ? "লগইনে ফিরে যান" : "Back to Sign In"}
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={cooldown > 0 || loading}
+                    onClick={handleResendVerification}
+                    className="text-xs font-bold text-sky-600 hover:text-sky-700 dark:text-sky-400 underline disabled:opacity-50"
+                  >
+                    {cooldown > 0
+                      ? `${isBn ? "পুনরায় পাঠান" : "Resend"} (${cooldown}s)`
+                      : isBn
+                        ? "ইমেইল পাননি? আবার পাঠান"
+                        : "Resend Email"}
+                  </button>
+                </div>
+              </div>
             )}
 
             {/* Bottom Security Note */}
