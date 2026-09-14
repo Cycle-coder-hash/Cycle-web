@@ -123,6 +123,28 @@ export default function Auth() {
 
       if (data.session) {
         localStorage.setItem("cycle_session_token", data.session.access_token);
+        if (data.user) {
+          const uInfo = {
+            id: 1,
+            openId: data.user.id,
+            name:
+              data.user.user_metadata?.name ||
+              data.user.user_metadata?.full_name ||
+              data.user.email?.split("@")[0] ||
+              "Trader",
+            email: data.user.email,
+            passwordHash: null,
+            phone: data.user.user_metadata?.phone || null,
+            role: "user",
+            loginMethod: "supabase",
+            language: data.user.user_metadata?.language || lang,
+            emailVerified: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            lastSignedIn: new Date(),
+          };
+          localStorage.setItem("manus-runtime-user-info", JSON.stringify(uInfo));
+        }
         window.location.href = "/dashboard";
       }
     } catch (err: any) {
@@ -180,6 +202,28 @@ export default function Auth() {
         setCooldown(60);
       } else if (data.session) {
         localStorage.setItem("cycle_session_token", data.session.access_token);
+        if (data.user) {
+          const uInfo = {
+            id: 1,
+            openId: data.user.id,
+            name:
+              data.user.user_metadata?.name ||
+              data.user.user_metadata?.full_name ||
+              data.user.email?.split("@")[0] ||
+              "Trader",
+            email: data.user.email,
+            passwordHash: null,
+            phone: data.user.user_metadata?.phone || null,
+            role: "user",
+            loginMethod: "supabase",
+            language: data.user.user_metadata?.language || lang,
+            emailVerified: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            lastSignedIn: new Date(),
+          };
+          localStorage.setItem("manus-runtime-user-info", JSON.stringify(uInfo));
+        }
         window.location.href = "/dashboard";
       }
     } catch (err: any) {

@@ -7,8 +7,10 @@ import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { adminRouter } from "../adminApi";
+import fs from "fs";
+import path from "path";
 import { createContext } from "./context";
-import { serveStatic, setupVite } from "./vite";
+import { serveStatic } from "./serveStatic";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -57,11 +59,25 @@ async function startServer() {
       createContext,
     })
   );
-  // development mode uses Vite, production mode uses static files
-  if (process.env.NODE_ENV === "production") {
-    serveStatic(app);
+  // Production / built mode vs Vite dev mode
+  const isProduction =
+    process.env.NODE_ENV === "production" ||
+    Boolean(process.env.VERCEL) ||
+    !fs.existsSync(path.resolve(import.meta.dirname, "vite.ts"));
+
+  if (isProduction) {
+    if (!process.env.VERCEL) {
+      serveStatic(app);
+    }
   } else {
-    await setupVite(app, server);
+    try {
+      const viteModule = "./vite.js";
+      const { setupVite } = await import(/* @vite-ignore */ viteModule);
+      await setupVite(app, server);
+    } catch (viteErr) {
+      console.warn("[Vite dev server not available, falling back to static]:", viteErr);
+      serveStatic(app);
+    }
   }
 
   const preferredPort = parseInt(process.env.PORT || "3000");
@@ -78,12 +94,39 @@ async function startServer() {
   return app;
 }
 
-export const appPromise = startServer().catch(console.error);
-export default async function handler(req: any, res: any) {
-  const app = await appPromise;
-  if (app) {
-    return app(req, res);
+let appInstance: any = null;
+let appInitPromise: Promise<any> | null = null;
+
+export async function getApp() {
+  if (appInstance) return appInstance;
+  if (!appInitPromise) {
+    appInitPromise = startServer()
+      .then((app) => {
+        appInstance = app;
+        return app;
+      })
+      .catch((err) => {
+        console.error("[Server start error]:", err);
+        appInitPromise = null;
+        throw err;
+      });
   }
-  res.status(500).send("Server initialization failed");
+  return appInitPromise;
 }
+
+export const appPromise = getApp();
+
+export default async function handler(req: any, res: any) {
+  try {
+    const app = await getApp();
+    if (app) {
+      return app(req, res);
+    }
+    res.status(500).send("Server initialization failed");
+  } catch (err: any) {
+    console.error("[Server handler error]:", err);
+    res.status(500).json({ error: err?.message || String(err) });
+  }
+}
+
 
