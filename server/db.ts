@@ -25,6 +25,21 @@ import {
   notifications,
   settings,
   auditEvents,
+  freeEbooks,
+  FreeEbook,
+  InsertFreeEbook,
+  disciplineTasks,
+  disciplineTaskCompletions,
+  disciplineExercises,
+  disciplineWorkoutCompletions,
+  disciplineDailyJournals,
+  disciplineForexLogs,
+  disciplineSettings,
+  DisciplineTask,
+  DisciplineExercise,
+  DisciplineDailyJournal,
+  DisciplineForexLog,
+  DisciplineSetting,
 } from "../drizzle/schema";
 
 import { ENV } from "./_core/env";
@@ -32,7 +47,116 @@ import { ENV } from "./_core/env";
 let _db: any = null;
 let _pgPool: pg.Pool | null = null;
 
-// In-memory runtime fallback (strictly empty, no dummy data)
+export const DEFAULT_FREE_EBOOKS: any[] = [
+  {
+    id: 1,
+    titleEn: "1. Candle Range Theory (CRT) Master Cheat-Sheet",
+    titleBn: "১. ক্যান্ডেল রেঞ্জ থিওরি (CRT) মাস্টার চিট-শীট",
+    subtitleEn: "Complete 4-Step Algorithmic Cycle & Invalidation Points",
+    subtitleBn: "সম্পূর্ণ ৪-ধাপ অ্যালগরিদমিক সাইকেল ও ইনভ্যালিডেশন পয়েন্ট",
+    category: "Algorithm",
+    pages: 18,
+    keyConcepts: [
+      "Phase 1: Asian Session Range Initiation (00:00 - 06:00 GMT)",
+      "Phase 2: London Open Judas Sweep (07:30 - 09:00 GMT)",
+      "Phase 3: NY Open Real Institutional Expansion (13:00 - 15:30 GMT)",
+      "Phase 4: Targeted Distribution into HTF Pool",
+    ],
+    fileUrl: null,
+    fileName: "01_Candle_Range_Theory_CRT_Master_CheatSheet.pdf",
+    fileSize: "2.4 MB",
+    isPublished: true,
+    position: 1,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: 2,
+    titleEn: "2. Liquidity Engineering & Stop Hunt Identification",
+    titleBn: "২. লিকুইডিটি ইঞ্জিনিয়ারিং ও স্টপ হান্ট আইডেন্টিফিকেশন",
+    subtitleEn: "BSL, SSL, Internal vs External Liquidity Traps",
+    subtitleBn: "BSL, SSL এবং ইন্টারনাল বনাম এক্সটারনাল লিকুইডিটি ট্র্যাপ",
+    category: "Liquidity",
+    pages: 24,
+    keyConcepts: [
+      "Buy-Side Liquidity (BSL) rests above swing highs & equal highs.",
+      "Sell-Side Liquidity (SSL) rests below swing lows & trendline support.",
+      "Inducement vs Valid Breakout confirmation formula.",
+    ],
+    fileUrl: null,
+    fileName: "02_Liquidity_Engineering_Stop_Hunt.pdf",
+    fileSize: "3.1 MB",
+    isPublished: true,
+    position: 2,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: 3,
+    titleEn: "3. Institutional Order Block (OB) Validation Matrix",
+    titleBn: "৩. ইনস্টিটিউশনাল অর্ডার ব্লক (OB) ভ্যালিডেশন ম্যাট্রিক্স",
+    subtitleEn: "Distinguishing 80%+ Win Rate OBs from Fake SMC Zones",
+    subtitleBn: "৮০%+ উইন রেটের জেনুইন অর্ডার ব্লক শনাক্তকরণ পদ্ধতি",
+    category: "SMC Strategy",
+    pages: 20,
+    keyConcepts: [
+      "Rule 1: Must have swept liquidity prior to creation.",
+      "Rule 2: Must have caused a Market Structure Shift (MSS).",
+      "Rule 3: Must contain an imbalance / Fair Value Gap in the displacement.",
+    ],
+    fileUrl: null,
+    fileName: "03_Order_Block_Validation_Matrix.pdf",
+    fileSize: "2.8 MB",
+    isPublished: true,
+    position: 3,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: 4,
+    titleEn: "4. Fair Value Gap (FVG) & Volume Inefficiency Guide",
+    titleBn: "৪. ফেয়ার ভ্যালু গ্যাপ (FVG) ও ভলিউম ইনফিশিয়েন্সি গাইড",
+    subtitleEn: "Consequent Encroachment & Inverse FVG Trading Models",
+    subtitleBn: "কনসিকুয়েন্ট এনক্রোচমেন্ট ও ইনভার্স এফভিজি ট্রেডিং মডেল",
+    category: "Price Action",
+    pages: 16,
+    keyConcepts: [
+      "3-Candle Imbalance calculation formula.",
+      "Consequent Encroachment (50% midpoint) entry technique.",
+      "Inverse FVG (IFVG) as continuation confirmation.",
+    ],
+    fileUrl: null,
+    fileName: "04_Fair_Value_Gap_FVG_Guide.pdf",
+    fileSize: "1.9 MB",
+    isPublished: true,
+    position: 4,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+  {
+    id: 5,
+    titleEn: "5. Multi-Timeframe Top-Down Sniper Execution Blueprint",
+    titleBn: "৫. মাল্টি-টাইমফ্রেম টপ-ডাউন স্নাইপার এক্সিকিউশন ব্লুপ্রিন্ট",
+    subtitleEn: "Daily → 1H → 5m/1m Confirmation Sequences",
+    subtitleBn: "ডেইলি থেকে ১-ঘণ্টা এবং ৫-মিনিট / ১-মিনিট এন্ট্রি কনফার্মেশন",
+    category: "Execution",
+    pages: 22,
+    keyConcepts: [
+      "Step 1: Daily Candle Narrative & Liquidity Draw.",
+      "Step 2: 1H Point of Interest (POI) & Zone Refinement.",
+      "Step 3: 1m MSS + FVG entry for 5-10 pip stop loss.",
+    ],
+    fileUrl: null,
+    fileName: "05_Multi_Timeframe_Sniper_Execution.pdf",
+    fileSize: "2.7 MB",
+    isPublished: true,
+    position: 5,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
+];
+
+// In-memory runtime fallback (strictly initialized with seed data where appropriate)
 const inMemoryUsers: Map<string, any> = new Map();
 const inMemoryOrders: any[] = [];
 const inMemoryEntitlements: any[] = [];
@@ -42,6 +166,45 @@ const inMemoryProgress: any[] = [];
 const inMemoryTickets: any[] = [];
 const inMemoryReplies: any[] = [];
 const inMemoryAuditEvents: any[] = [];
+const inMemoryFreeEbooks: any[] = [...DEFAULT_FREE_EBOOKS];
+
+export const DEFAULT_DISCIPLINE_TASKS = [
+  { title: "Wake up at 6:00 AM & Hydrate", time: "06:00 AM", isMandatory: true, isTrackable: true, orderIndex: 1 },
+  { title: "Morning Routine & Mindset Preparation", time: "06:30 AM", isMandatory: true, isTrackable: true, orderIndex: 2 },
+  { title: "Physical Workout & Movement Routine", time: "07:30 AM", isMandatory: true, isTrackable: true, orderIndex: 3 },
+  { title: "Check Forex Factory & High-Impact News Calendar", time: "08:30 AM", isMandatory: true, isTrackable: true, orderIndex: 4 },
+  { title: "HTF Directional Bias & Liquidity Pool Markup", time: "09:00 AM", isMandatory: true, isTrackable: true, orderIndex: 5 },
+  { title: "Execute Session Rules (CRT / SMC / Invalidation)", time: "01:00 PM", isMandatory: true, isTrackable: true, orderIndex: 6 },
+  { title: "Log All Trades in Trade Journal", time: "05:00 PM", isMandatory: true, isTrackable: true, orderIndex: 7 },
+  { title: "Evening Chart Review & Forex Analysis", time: "08:00 PM", isMandatory: false, isTrackable: true, orderIndex: 8 },
+  { title: "Study Course Lessons & Playbook Notes", time: "09:30 PM", isMandatory: false, isTrackable: true, orderIndex: 9 },
+  { title: "Night Reflection & Tomorrow Execution Plan", time: "10:30 PM", isMandatory: true, isTrackable: true, orderIndex: 10 },
+];
+
+export const DEFAULT_DISCIPLINE_EXERCISES = [
+  { name: "Push-ups (3 Sets to Failure)", difficulty: "Intermediate", orderIndex: 1 },
+  { name: "Bodyweight Squats (4 Sets x 20 Reps)", difficulty: "Beginner", orderIndex: 2 },
+  { name: "Pull-ups / Inverted Rows (3 Sets)", difficulty: "Advanced", orderIndex: 3 },
+  { name: "Core Plank Hold (3 x 60 Seconds)", difficulty: "Intermediate", orderIndex: 4 },
+  { name: "Dumbbell Shoulder Press / Pike Push-ups", difficulty: "Intermediate", orderIndex: 5 },
+  { name: "Cardio & Stretching Routine (15 Mins)", difficulty: "Beginner", orderIndex: 6 },
+];
+
+const inMemoryDisciplineTasks: any[] = [];
+const inMemoryDisciplineCompletions: any[] = [];
+const inMemoryDisciplineExercises: any[] = [];
+const inMemoryDisciplineWorkoutCompletions: any[] = [];
+const inMemoryDisciplineJournals: any[] = [];
+const inMemoryDisciplineForexLogs: any[] = [];
+const inMemoryDisciplineSettings: Map<number, any> = new Map();
+
+let disciplineTaskAutoId = 1;
+let disciplineCompletionAutoId = 1;
+let disciplineExerciseAutoId = 1;
+let disciplineWorkoutAutoId = 1;
+let disciplineJournalAutoId = 1;
+let disciplineForexAutoId = 1;
+let disciplineSettingsAutoId = 1;
 
 let userAutoId = 1;
 let journalAutoId = 1;
@@ -50,6 +213,7 @@ let replyAutoId = 1;
 let orderAutoId = 1;
 let entitlementAutoId = 1;
 let auditAutoId = 1;
+let ebookAutoId = 6;
 
 
 
@@ -87,6 +251,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
         passwordHash: user.passwordHash,
         phone: user.phone,
         loginMethod: user.loginMethod,
+        avatar: user.avatar,
         lastSignedIn: user.lastSignedIn ?? new Date(),
         role: user.role ?? (user.openId === ENV.ownerOpenId ? "admin" : "user"),
         language: user.language ?? "en",
@@ -153,6 +318,7 @@ export async function createUser(data: {
   role?: "user" | "admin" | "support";
   language?: "en" | "bn";
   emailVerified?: boolean;
+  avatar?: string;
 }): Promise<User> {
   const openId = `usr_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const normalizedEmail = data.email.toLowerCase().trim();
@@ -166,6 +332,7 @@ export async function createUser(data: {
         email: normalizedEmail,
         passwordHash: data.passwordHash,
         phone: data.phone || null,
+        avatar: data.avatar || null,
         emailVerified: data.emailVerified ?? false,
         loginMethod: "password",
         role: data.role || "user",
@@ -186,6 +353,7 @@ export async function createUser(data: {
     email: normalizedEmail,
     passwordHash: data.passwordHash,
     phone: data.phone || null,
+    avatar: data.avatar || null,
     emailVerified: data.emailVerified ?? false,
     loginMethod: "password",
     role: data.role || "user",
@@ -333,14 +501,20 @@ export async function listBundles() {
   const db = await getDb();
   if (db) {
     try {
-      return await db.select().from(bundles).where(eq(bundles.isPublished, true));
+      const rows = await db.select().from(bundles).where(eq(bundles.isPublished, true));
+      return rows.map((b: any) =>
+        (b.id === 2 || b.slug === "course-ebook") && (b.price === "1999.00" || b.price === "1999" || !b.price)
+          ? { ...b, price: "2499" }
+          : b
+      );
     } catch (err) {
       console.warn("[listBundles error]:", err);
     }
   }
   return [
     { id: 1, slug: "pdf-package", titleEn: "Free eBook Package", titleBn: "Free eBook Package", price: "00", currency: "BDT", includesPdfPackage: true, includesEbook: false, includesCourse: false },
-    { id: 2, slug: "course-ebook", titleEn: "CYCLE OF CHART BASIC TO ADVANCE COURSE", titleBn: "CYCLE OF CHART BASIC TO ADVANCE COURSE", price: "1999.00", currency: "BDT", includesPdfPackage: false, includesEbook: true, includesCourse: true },
+    { id: 2, slug: "course-ebook", titleEn: "CYCLE OF CHART BASIC TO ADVANCE COURSE", titleBn: "CYCLE OF CHART BASIC TO ADVANCE COURSE", price: "2499", currency: "BDT", includesPdfPackage: false, includesEbook: true, includesCourse: true },
+    { id: 4, slug: "pro-blueprint", titleEn: "CYCLE OF CHART — PROFESSIONAL TRADING BLUEPRINT", titleBn: "CYCLE OF CHART — PROFESSIONAL TRADING BLUEPRINT", originalPrice: "5550", price: "3999", currency: "BDT", includesPdfPackage: true, includesEbook: true, includesCourse: true },
   ];
 }
 
@@ -800,6 +974,1462 @@ export async function listAuditLogs() {
   return inMemoryAuditEvents;
 }
 
+export async function listFreeEbooks(includeUnpublished = false) {
+  const db = await getDb();
+  if (db) {
+    try {
+      const query = includeUnpublished
+        ? db.select().from(freeEbooks).orderBy(asc(freeEbooks.position))
+        : db.select().from(freeEbooks).where(eq(freeEbooks.isPublished, true)).orderBy(asc(freeEbooks.position));
+      const rows = await query;
+      if (rows && rows.length > 0) return rows;
+    } catch (err) {
+      console.warn("[listFreeEbooks error, using fallback]:", err);
+    }
+  }
+  return includeUnpublished
+    ? [...inMemoryFreeEbooks]
+    : inMemoryFreeEbooks.filter((b) => b.isPublished);
+}
+
+export async function getFreeEbookById(id: number) {
+  const db = await getDb();
+  if (db) {
+    try {
+      const rows = await db.select().from(freeEbooks).where(eq(freeEbooks.id, id)).limit(1);
+      if (rows && rows[0]) return rows[0];
+    } catch (err) {
+      console.warn("[getFreeEbookById error]:", err);
+    }
+  }
+  return inMemoryFreeEbooks.find((b) => b.id === id) || null;
+}
+
+export async function createFreeEbook(data: {
+  titleEn: string;
+  titleBn?: string;
+  subtitleEn: string;
+  subtitleBn?: string;
+  category: string;
+  pages?: number;
+  keyConcepts?: string[];
+  fileUrl?: string | null;
+  fileName?: string | null;
+  fileSize?: string | null;
+  isPublished?: boolean;
+}) {
+  const newId = ebookAutoId++;
+  const record: any = {
+    id: newId,
+    titleEn: data.titleEn,
+    titleBn: data.titleBn || data.titleEn,
+    subtitleEn: data.subtitleEn,
+    subtitleBn: data.subtitleBn || data.subtitleEn,
+    category: data.category || "Institutional",
+    pages: data.pages || 10,
+    keyConcepts: data.keyConcepts || [],
+    fileUrl: data.fileUrl || null,
+    fileName: data.fileName || `${data.titleEn.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`,
+    fileSize: data.fileSize || "2.5 MB",
+    isPublished: data.isPublished !== undefined ? data.isPublished : true,
+    position: inMemoryFreeEbooks.length + 1,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
+  const db = await getDb();
+  if (db) {
+    try {
+      await db.insert(freeEbooks).values({
+        ...record,
+      });
+      return record;
+    } catch (err) {
+      console.warn("[createFreeEbook db error, stored in memory]:", err);
+    }
+  }
+
+  inMemoryFreeEbooks.push(record);
+  return record;
+}
+
+export async function updateFreeEbook(id: number, data: Partial<any>) {
+  const db = await getDb();
+  if (db) {
+    try {
+      await db
+        .update(freeEbooks)
+        .set({
+          ...data,
+          updatedAt: new Date(),
+        })
+        .where(eq(freeEbooks.id, id));
+    } catch (err) {
+      console.warn("[updateFreeEbook db error]:", err);
+    }
+  }
+
+  const item = inMemoryFreeEbooks.find((b) => b.id === id);
+  if (item) {
+    Object.assign(item, data, { updatedAt: new Date() });
+    return item;
+  }
+  return null;
+}
+
+export async function deleteFreeEbook(id: number) {
+  const db = await getDb();
+  if (db) {
+    try {
+      await db.delete(freeEbooks).where(eq(freeEbooks.id, id));
+    } catch (err) {
+      console.warn("[deleteFreeEbook db error]:", err);
+    }
+  }
+
+  const idx = inMemoryFreeEbooks.findIndex((b) => b.id === id);
+  if (idx !== -1) {
+    inMemoryFreeEbooks.splice(idx, 1);
+    return true;
+  }
+  return true;
+}
+
+// ==============================================================================
+// COMPLETE DAILY DISCIPLINE SYSTEM — BACKEND HELPER FUNCTIONS
+// ==============================================================================
+
+export async function ensureDisciplineDefaults(userId: number) {
+  const db = await getDb();
+  if (db) {
+    try {
+      // 1. Tasks
+      const existingTasks = await db.select().from(disciplineTasks).where(eq(disciplineTasks.userId, userId));
+      if (existingTasks.length === 0) {
+        for (let i = 0; i < DEFAULT_DISCIPLINE_TASKS.length; i++) {
+          await db.insert(disciplineTasks).values({
+            userId,
+            ...DEFAULT_DISCIPLINE_TASKS[i],
+            isActive: true,
+          });
+        }
+      }
+
+      // 2. Exercises
+      const existingExercises = await db.select().from(disciplineExercises).where(eq(disciplineExercises.userId, userId));
+      if (existingExercises.length === 0) {
+        for (let i = 0; i < DEFAULT_DISCIPLINE_EXERCISES.length; i++) {
+          await db.insert(disciplineExercises).values({
+            userId,
+            ...DEFAULT_DISCIPLINE_EXERCISES[i],
+            isActive: true,
+          });
+        }
+      }
+
+      // 3. Settings
+      const existingSettings = await db.select().from(disciplineSettings).where(eq(disciplineSettings.userId, userId));
+      if (existingSettings.length === 0) {
+        await db.insert(disciplineSettings).values({
+          userId,
+          dailyTargetPercent: 80,
+          dailyForexMinutesTarget: 60,
+          restTimerDefaultSeconds: 60,
+          restTimerSound: true,
+        });
+      }
+      return;
+    } catch (err) {
+      console.warn("[ensureDisciplineDefaults db error]:", err);
+    }
+  }
+
+  // In-memory fallback
+  const memTasks = inMemoryDisciplineTasks.filter((t) => t.userId === userId && t.isActive !== false);
+  if (memTasks.length === 0) {
+    DEFAULT_DISCIPLINE_TASKS.forEach((t) => {
+      inMemoryDisciplineTasks.push({
+        id: disciplineTaskAutoId++,
+        userId,
+        ...t,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    });
+  }
+
+  const memExercises = inMemoryDisciplineExercises.filter((e) => e.userId === userId && e.isActive !== false);
+  if (memExercises.length === 0) {
+    DEFAULT_DISCIPLINE_EXERCISES.forEach((e) => {
+      inMemoryDisciplineExercises.push({
+        id: disciplineExerciseAutoId++,
+        userId,
+        ...e,
+        isActive: true,
+        createdAt: new Date(),
+      });
+    });
+  }
+
+  if (!inMemoryDisciplineSettings.has(userId)) {
+    inMemoryDisciplineSettings.set(userId, {
+      id: disciplineSettingsAutoId++,
+      userId,
+      dailyTargetPercent: 80,
+      dailyForexMinutesTarget: 60,
+      restTimerDefaultSeconds: 60,
+      restTimerSound: true,
+      updatedAt: new Date(),
+    });
+  }
+}
+
+// ------------------------------------------------------------------------------
+// SCHEDULE & TASKS
+// ------------------------------------------------------------------------------
+
+export async function getDisciplineSchedule(userId: number, date: string) {
+  await ensureDisciplineDefaults(userId);
+  const db = await getDb();
+
+  if (db) {
+    try {
+      const tasks = await db
+        .select()
+        .from(disciplineTasks)
+        .where(and(eq(disciplineTasks.userId, userId), eq(disciplineTasks.isActive, true)))
+        .orderBy(asc(disciplineTasks.orderIndex), asc(disciplineTasks.id));
+
+      const completions = await db
+        .select()
+        .from(disciplineTaskCompletions)
+        .where(and(eq(disciplineTaskCompletions.userId, userId), eq(disciplineTaskCompletions.date, date)));
+
+      const mergedTasks = tasks.map((t: any) => ({
+        ...t,
+        completed: completions.some((c: any) => c.taskId === t.id && c.completed),
+      }));
+
+      return { tasks: mergedTasks, date };
+    } catch (err) {
+      console.warn("[getDisciplineSchedule db error]:", err);
+    }
+  }
+
+  // In-memory fallback
+  const tasks = inMemoryDisciplineTasks
+    .filter((t) => t.userId === userId && t.isActive !== false)
+    .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+
+  const completions = inMemoryDisciplineCompletions.filter(
+    (c) => c.userId === userId && c.date === date
+  );
+
+  const mergedTasks = tasks.map((t) => ({
+    ...t,
+    completed: completions.some((c) => c.taskId === t.id && c.completed),
+  }));
+
+  return { tasks: mergedTasks, date };
+}
+
+export async function addDisciplineTask(
+  userId: number,
+  task: { title: string; time: string; isMandatory: boolean; isTrackable: boolean }
+) {
+  const db = await getDb();
+  if (db) {
+    try {
+      const existing = await db
+        .select()
+        .from(disciplineTasks)
+        .where(and(eq(disciplineTasks.userId, userId), eq(disciplineTasks.isActive, true)));
+      const nextOrder = existing.length + 1;
+
+      const res = await db.insert(disciplineTasks).values({
+        userId,
+        title: task.title.trim(),
+        time: task.time.trim() || "08:00 AM",
+        isMandatory: task.isMandatory ?? true,
+        isTrackable: task.isTrackable ?? true,
+        orderIndex: nextOrder,
+        isActive: true,
+      });
+      const insertId = res[0]?.insertId || res[0]?.id;
+      return {
+        id: insertId || disciplineTaskAutoId++,
+        userId,
+        ...task,
+        orderIndex: nextOrder,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+    } catch (err) {
+      console.warn("[addDisciplineTask db error]:", err);
+    }
+  }
+
+  const existing = inMemoryDisciplineTasks.filter((t) => t.userId === userId && t.isActive !== false);
+  const nextOrder = existing.length + 1;
+  const created = {
+    id: disciplineTaskAutoId++,
+    userId,
+    title: task.title.trim(),
+    time: task.time.trim() || "08:00 AM",
+    isMandatory: task.isMandatory ?? true,
+    isTrackable: task.isTrackable ?? true,
+    orderIndex: nextOrder,
+    isActive: true,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+  inMemoryDisciplineTasks.push(created);
+  return created;
+}
+
+export async function updateDisciplineTask(
+  userId: number,
+  taskId: number,
+  updates: Partial<{ title: string; time: string; isMandatory: boolean; isTrackable: boolean; orderIndex: number }>
+) {
+  const db = await getDb();
+  if (db) {
+    try {
+      await db
+        .update(disciplineTasks)
+        .set({
+          ...updates,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(disciplineTasks.id, taskId), eq(disciplineTasks.userId, userId)));
+      return true;
+    } catch (err) {
+      console.warn("[updateDisciplineTask db error]:", err);
+    }
+  }
+
+  const task = inMemoryDisciplineTasks.find((t) => t.id === taskId && t.userId === userId);
+  if (task) {
+    Object.assign(task, updates, { updatedAt: new Date() });
+    return true;
+  }
+  return false;
+}
+
+export async function deleteDisciplineTask(userId: number, taskId: number) {
+  const db = await getDb();
+  if (db) {
+    try {
+      // Soft-delete task and delete completions
+      await db
+        .update(disciplineTasks)
+        .set({ isActive: false, updatedAt: new Date() })
+        .where(and(eq(disciplineTasks.id, taskId), eq(disciplineTasks.userId, userId)));
+      await db
+        .delete(disciplineTaskCompletions)
+        .where(and(eq(disciplineTaskCompletions.taskId, taskId), eq(disciplineTaskCompletions.userId, userId)));
+      return true;
+    } catch (err) {
+      console.warn("[deleteDisciplineTask db error]:", err);
+    }
+  }
+
+  const task = inMemoryDisciplineTasks.find((t) => t.id === taskId && t.userId === userId);
+  if (task) {
+    task.isActive = false;
+  }
+  return true;
+}
+
+export async function toggleDisciplineTaskCompletion(
+  userId: number,
+  taskId: number,
+  date: string,
+  completed: boolean
+) {
+  const db = await getDb();
+  if (db) {
+    try {
+      // Verify task belongs to user
+      const task = await db
+        .select()
+        .from(disciplineTasks)
+        .where(and(eq(disciplineTasks.id, taskId), eq(disciplineTasks.userId, userId)))
+        .limit(1);
+
+      if (!task.length) throw new Error("Task not found or unauthorized");
+
+      const existing = await db
+        .select()
+        .from(disciplineTaskCompletions)
+        .where(
+          and(
+            eq(disciplineTaskCompletions.userId, userId),
+            eq(disciplineTaskCompletions.taskId, taskId),
+            eq(disciplineTaskCompletions.date, date)
+          )
+        )
+        .limit(1);
+
+      if (existing.length > 0) {
+        await db
+          .update(disciplineTaskCompletions)
+          .set({
+            completed,
+            completedAt: completed ? new Date() : null,
+          })
+          .where(eq(disciplineTaskCompletions.id, existing[0].id));
+      } else {
+        await db.insert(disciplineTaskCompletions).values({
+          userId,
+          taskId,
+          date,
+          completed,
+          completedAt: completed ? new Date() : null,
+        });
+      }
+      return true;
+    } catch (err) {
+      console.warn("[toggleDisciplineTaskCompletion db error]:", err);
+    }
+  }
+
+  const existing = inMemoryDisciplineCompletions.find(
+    (c) => c.userId === userId && c.taskId === taskId && c.date === date
+  );
+  if (existing) {
+    existing.completed = completed;
+    existing.completedAt = completed ? new Date() : null;
+  } else {
+    inMemoryDisciplineCompletions.push({
+      id: disciplineCompletionAutoId++,
+      userId,
+      taskId,
+      date,
+      completed,
+      completedAt: completed ? new Date() : null,
+    });
+  }
+  return true;
+}
+
+// ------------------------------------------------------------------------------
+// WORKOUT
+// ------------------------------------------------------------------------------
+
+export async function getDisciplineWorkouts(userId: number, date: string) {
+  await ensureDisciplineDefaults(userId);
+  const db = await getDb();
+
+  if (db) {
+    try {
+      const exercises = await db
+        .select()
+        .from(disciplineExercises)
+        .where(and(eq(disciplineExercises.userId, userId), eq(disciplineExercises.isActive, true)))
+        .orderBy(asc(disciplineExercises.orderIndex), asc(disciplineExercises.id));
+
+      const completions = await db
+        .select()
+        .from(disciplineWorkoutCompletions)
+        .where(and(eq(disciplineWorkoutCompletions.userId, userId), eq(disciplineWorkoutCompletions.date, date)));
+
+      const merged = exercises.map((e: any) => ({
+        ...e,
+        completed: completions.some((c: any) => c.exerciseId === e.id && c.completed),
+      }));
+
+      const completedCount = merged.filter((e: any) => e.completed).length;
+      const progressPercent = merged.length ? Math.round((completedCount / merged.length) * 100) : 0;
+
+      return { exercises: merged, progressPercent, date };
+    } catch (err) {
+      console.warn("[getDisciplineWorkouts db error]:", err);
+    }
+  }
+
+  const exercises = inMemoryDisciplineExercises
+    .filter((e) => e.userId === userId && e.isActive !== false)
+    .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+
+  const completions = inMemoryDisciplineWorkoutCompletions.filter(
+    (c) => c.userId === userId && c.date === date
+  );
+
+  const merged = exercises.map((e) => ({
+    ...e,
+    completed: completions.some((c) => c.exerciseId === e.id && c.completed),
+  }));
+
+  const completedCount = merged.filter((e) => e.completed).length;
+  const progressPercent = merged.length ? Math.round((completedCount / merged.length) * 100) : 0;
+
+  return { exercises: merged, progressPercent, date };
+}
+
+export async function addDisciplineExercise(
+  userId: number,
+  exercise: { name: string; difficulty: string }
+) {
+  const db = await getDb();
+  if (db) {
+    try {
+      const existing = await db
+        .select()
+        .from(disciplineExercises)
+        .where(and(eq(disciplineExercises.userId, userId), eq(disciplineExercises.isActive, true)));
+      const nextOrder = existing.length + 1;
+
+      const res = await db.insert(disciplineExercises).values({
+        userId,
+        name: exercise.name.trim(),
+        difficulty: exercise.difficulty || "Intermediate",
+        orderIndex: nextOrder,
+        isActive: true,
+      });
+      const insertId = res[0]?.insertId || res[0]?.id;
+      return {
+        id: insertId || disciplineExerciseAutoId++,
+        userId,
+        ...exercise,
+        orderIndex: nextOrder,
+        isActive: true,
+        createdAt: new Date(),
+      };
+    } catch (err) {
+      console.warn("[addDisciplineExercise db error]:", err);
+    }
+  }
+
+  const existing = inMemoryDisciplineExercises.filter((e) => e.userId === userId && e.isActive !== false);
+  const nextOrder = existing.length + 1;
+  const created = {
+    id: disciplineExerciseAutoId++,
+    userId,
+    name: exercise.name.trim(),
+    difficulty: exercise.difficulty || "Intermediate",
+    orderIndex: nextOrder,
+    isActive: true,
+    createdAt: new Date(),
+  };
+  inMemoryDisciplineExercises.push(created);
+  return created;
+}
+
+export async function updateDisciplineExercise(
+  userId: number,
+  exerciseId: number,
+  updates: Partial<{ name: string; difficulty: string }>
+) {
+  const db = await getDb();
+  if (db) {
+    try {
+      await db
+        .update(disciplineExercises)
+        .set(updates)
+        .where(and(eq(disciplineExercises.id, exerciseId), eq(disciplineExercises.userId, userId)));
+      return true;
+    } catch (err) {
+      console.warn("[updateDisciplineExercise db error]:", err);
+    }
+  }
+
+  const ex = inMemoryDisciplineExercises.find((e) => e.id === exerciseId && e.userId === userId);
+  if (ex) {
+    Object.assign(ex, updates);
+    return true;
+  }
+  return false;
+}
+
+export async function deleteDisciplineExercise(userId: number, exerciseId: number) {
+  const db = await getDb();
+  if (db) {
+    try {
+      await db
+        .update(disciplineExercises)
+        .set({ isActive: false })
+        .where(and(eq(disciplineExercises.id, exerciseId), eq(disciplineExercises.userId, userId)));
+      await db
+        .delete(disciplineWorkoutCompletions)
+        .where(and(eq(disciplineWorkoutCompletions.exerciseId, exerciseId), eq(disciplineWorkoutCompletions.userId, userId)));
+      return true;
+    } catch (err) {
+      console.warn("[deleteDisciplineExercise db error]:", err);
+    }
+  }
+
+  const ex = inMemoryDisciplineExercises.find((e) => e.id === exerciseId && e.userId === userId);
+  if (ex) {
+    ex.isActive = false;
+  }
+  return true;
+}
+
+export async function toggleDisciplineWorkoutCompletion(
+  userId: number,
+  exerciseId: number,
+  date: string,
+  completed: boolean
+) {
+  const db = await getDb();
+  if (db) {
+    try {
+      const existing = await db
+        .select()
+        .from(disciplineWorkoutCompletions)
+        .where(
+          and(
+            eq(disciplineWorkoutCompletions.userId, userId),
+            eq(disciplineWorkoutCompletions.exerciseId, exerciseId),
+            eq(disciplineWorkoutCompletions.date, date)
+          )
+        )
+        .limit(1);
+
+      if (existing.length > 0) {
+        await db
+          .update(disciplineWorkoutCompletions)
+          .set({ completed })
+          .where(eq(disciplineWorkoutCompletions.id, existing[0].id));
+      } else {
+        await db.insert(disciplineWorkoutCompletions).values({
+          userId,
+          exerciseId,
+          date,
+          completed,
+        });
+      }
+      return true;
+    } catch (err) {
+      console.warn("[toggleDisciplineWorkoutCompletion db error]:", err);
+    }
+  }
+
+  const existing = inMemoryDisciplineWorkoutCompletions.find(
+    (c) => c.userId === userId && c.exerciseId === exerciseId && c.date === date
+  );
+  if (existing) {
+    existing.completed = completed;
+  } else {
+    inMemoryDisciplineWorkoutCompletions.push({
+      id: disciplineWorkoutAutoId++,
+      userId,
+      exerciseId,
+      date,
+      completed,
+    });
+  }
+  return true;
+}
+
+// ------------------------------------------------------------------------------
+// DISCIPLINE JOURNAL
+// ------------------------------------------------------------------------------
+
+export async function getDisciplineJournals(userId: number) {
+  const db = await getDb();
+  if (db) {
+    try {
+      return await db
+        .select()
+        .from(disciplineDailyJournals)
+        .where(eq(disciplineDailyJournals.userId, userId))
+        .orderBy(desc(disciplineDailyJournals.date));
+    } catch (err) {
+      console.warn("[getDisciplineJournals db error]:", err);
+    }
+  }
+
+  return inMemoryDisciplineJournals
+    .filter((j) => j.userId === userId)
+    .sort((a, b) => b.date.localeCompare(a.date));
+}
+
+export async function getDisciplineJournalByDate(userId: number, date: string) {
+  const db = await getDb();
+  if (db) {
+    try {
+      const res = await db
+        .select()
+        .from(disciplineDailyJournals)
+        .where(and(eq(disciplineDailyJournals.userId, userId), eq(disciplineDailyJournals.date, date)))
+        .limit(1);
+      return res[0] || null;
+    } catch (err) {
+      console.warn("[getDisciplineJournalByDate db error]:", err);
+    }
+  }
+
+  const j = inMemoryDisciplineJournals.find((item) => item.userId === userId && item.date === date);
+  return j || null;
+}
+
+export async function saveDisciplineJournal(userId: number, date: string, content: string) {
+  const db = await getDb();
+  if (db) {
+    try {
+      const existing = await db
+        .select()
+        .from(disciplineDailyJournals)
+        .where(and(eq(disciplineDailyJournals.userId, userId), eq(disciplineDailyJournals.date, date)))
+        .limit(1);
+
+      if (existing.length > 0) {
+        await db
+          .update(disciplineDailyJournals)
+          .set({ content, updatedAt: new Date() })
+          .where(eq(disciplineDailyJournals.id, existing[0].id));
+        return { ...existing[0], content, updatedAt: new Date() };
+      } else {
+        const res = await db.insert(disciplineDailyJournals).values({
+          userId,
+          date,
+          content,
+        });
+        const insertId = res[0]?.insertId || res[0]?.id;
+        return {
+          id: insertId || disciplineJournalAutoId++,
+          userId,
+          date,
+          content,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+      }
+    } catch (err) {
+      console.warn("[saveDisciplineJournal db error]:", err);
+    }
+  }
+
+  const existing = inMemoryDisciplineJournals.find((j) => j.userId === userId && j.date === date);
+  if (existing) {
+    existing.content = content;
+    existing.updatedAt = new Date();
+    return existing;
+  }
+  const created = {
+    id: disciplineJournalAutoId++,
+    userId,
+    date,
+    content,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+  inMemoryDisciplineJournals.push(created);
+  return created;
+}
+
+export async function deleteDisciplineJournal(userId: number, id: number) {
+  const db = await getDb();
+  if (db) {
+    try {
+      await db
+        .delete(disciplineDailyJournals)
+        .where(and(eq(disciplineDailyJournals.id, id), eq(disciplineDailyJournals.userId, userId)));
+      return true;
+    } catch (err) {
+      console.warn("[deleteDisciplineJournal db error]:", err);
+    }
+  }
+
+  const idx = inMemoryDisciplineJournals.findIndex((j) => j.id === id && j.userId === userId);
+  if (idx !== -1) {
+    inMemoryDisciplineJournals.splice(idx, 1);
+  }
+  return true;
+}
+
+// ------------------------------------------------------------------------------
+// FOREX ANALYSIS TRACKER
+// ------------------------------------------------------------------------------
+
+export async function getDisciplineForexLogs(userId: number) {
+  const db = await getDb();
+  if (db) {
+    try {
+      return await db
+        .select()
+        .from(disciplineForexLogs)
+        .where(eq(disciplineForexLogs.userId, userId))
+        .orderBy(desc(disciplineForexLogs.date));
+    } catch (err) {
+      console.warn("[getDisciplineForexLogs db error]:", err);
+    }
+  }
+
+  return inMemoryDisciplineForexLogs
+    .filter((f) => f.userId === userId)
+    .sort((a, b) => b.date.localeCompare(a.date));
+}
+
+export async function saveDisciplineForexLog(
+  userId: number,
+  date: string,
+  minutes: number,
+  pairs?: string,
+  notes?: string
+) {
+  const db = await getDb();
+  if (db) {
+    try {
+      const existing = await db
+        .select()
+        .from(disciplineForexLogs)
+        .where(and(eq(disciplineForexLogs.userId, userId), eq(disciplineForexLogs.date, date)))
+        .limit(1);
+
+      if (existing.length > 0) {
+        await db
+          .update(disciplineForexLogs)
+          .set({
+            minutes: Number(minutes) || 0,
+            pairs: pairs || "",
+            notes: notes || "",
+            updatedAt: new Date(),
+          })
+          .where(eq(disciplineForexLogs.id, existing[0].id));
+        return {
+          ...existing[0],
+          minutes: Number(minutes) || 0,
+          pairs: pairs || "",
+          notes: notes || "",
+          updatedAt: new Date(),
+        };
+      } else {
+        const res = await db.insert(disciplineForexLogs).values({
+          userId,
+          date,
+          minutes: Number(minutes) || 0,
+          pairs: pairs || "",
+          notes: notes || "",
+        });
+        const insertId = res[0]?.insertId || res[0]?.id;
+        return {
+          id: insertId || disciplineForexAutoId++,
+          userId,
+          date,
+          minutes: Number(minutes) || 0,
+          pairs: pairs || "",
+          notes: notes || "",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+      }
+    } catch (err) {
+      console.warn("[saveDisciplineForexLog db error]:", err);
+    }
+  }
+
+  const existing = inMemoryDisciplineForexLogs.find((f) => f.userId === userId && f.date === date);
+  if (existing) {
+    existing.minutes = Number(minutes) || 0;
+    existing.pairs = pairs || "";
+    existing.notes = notes || "";
+    existing.updatedAt = new Date();
+    return existing;
+  }
+
+  const created = {
+    id: disciplineForexAutoId++,
+    userId,
+    date,
+    minutes: Number(minutes) || 0,
+    pairs: pairs || "",
+    notes: notes || "",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+  inMemoryDisciplineForexLogs.push(created);
+  return created;
+}
+
+export async function deleteDisciplineForexLog(userId: number, id: number) {
+  const db = await getDb();
+  if (db) {
+    try {
+      await db
+        .delete(disciplineForexLogs)
+        .where(and(eq(disciplineForexLogs.id, id), eq(disciplineForexLogs.userId, userId)));
+      return true;
+    } catch (err) {
+      console.warn("[deleteDisciplineForexLog db error]:", err);
+    }
+  }
+
+  const idx = inMemoryDisciplineForexLogs.findIndex((f) => f.id === id && f.userId === userId);
+  if (idx !== -1) {
+    inMemoryDisciplineForexLogs.splice(idx, 1);
+  }
+  return true;
+}
+
+// ------------------------------------------------------------------------------
+// SETTINGS
+// ------------------------------------------------------------------------------
+
+export async function getDisciplineSettings(userId: number) {
+  await ensureDisciplineDefaults(userId);
+  const db = await getDb();
+  if (db) {
+    try {
+      const res = await db
+        .select()
+        .from(disciplineSettings)
+        .where(eq(disciplineSettings.userId, userId))
+        .limit(1);
+      if (res.length) return res[0];
+    } catch (err) {
+      console.warn("[getDisciplineSettings db error]:", err);
+    }
+  }
+
+  return (
+    inMemoryDisciplineSettings.get(userId) || {
+      userId,
+      dailyTargetPercent: 80,
+      dailyForexMinutesTarget: 60,
+      restTimerDefaultSeconds: 60,
+      restTimerSound: true,
+    }
+  );
+}
+
+export async function updateDisciplineSettings(
+  userId: number,
+  updates: Partial<{
+    dailyTargetPercent: number;
+    dailyForexMinutesTarget: number;
+    restTimerDefaultSeconds: number;
+    restTimerSound: boolean;
+  }>
+) {
+  const db = await getDb();
+  if (db) {
+    try {
+      const existing = await db
+        .select()
+        .from(disciplineSettings)
+        .where(eq(disciplineSettings.userId, userId))
+        .limit(1);
+
+      if (existing.length) {
+        await db
+          .update(disciplineSettings)
+          .set({ ...updates, updatedAt: new Date() })
+          .where(eq(disciplineSettings.id, existing[0].id));
+      } else {
+        await db.insert(disciplineSettings).values({
+          userId,
+          dailyTargetPercent: updates.dailyTargetPercent ?? 80,
+          dailyForexMinutesTarget: updates.dailyForexMinutesTarget ?? 60,
+          restTimerDefaultSeconds: updates.restTimerDefaultSeconds ?? 60,
+          restTimerSound: updates.restTimerSound ?? true,
+        });
+      }
+      return true;
+    } catch (err) {
+      console.warn("[updateDisciplineSettings db error]:", err);
+    }
+  }
+
+  const existing = inMemoryDisciplineSettings.get(userId) || { userId };
+  inMemoryDisciplineSettings.set(userId, {
+    ...existing,
+    ...updates,
+    updatedAt: new Date(),
+  });
+  return true;
+}
+
+// ------------------------------------------------------------------------------
+// STATS & AGGREGATE METRICS
+// ------------------------------------------------------------------------------
+
+export async function getDisciplineStats(userId: number) {
+  await ensureDisciplineDefaults(userId);
+  const db = await getDb();
+
+  let tasks: any[] = [];
+  let completions: any[] = [];
+  let workoutCompletions: any[] = [];
+  let forexLogs: any[] = [];
+  let userSettings: any = null;
+
+  if (db) {
+    try {
+      tasks = await db
+        .select()
+        .from(disciplineTasks)
+        .where(and(eq(disciplineTasks.userId, userId), eq(disciplineTasks.isActive, true)));
+
+      completions = await db
+        .select()
+        .from(disciplineTaskCompletions)
+        .where(eq(disciplineTaskCompletions.userId, userId));
+
+      workoutCompletions = await db
+        .select()
+        .from(disciplineWorkoutCompletions)
+        .where(eq(disciplineWorkoutCompletions.userId, userId));
+
+      forexLogs = await db
+        .select()
+        .from(disciplineForexLogs)
+        .where(eq(disciplineForexLogs.userId, userId));
+
+      const s = await db
+        .select()
+        .from(disciplineSettings)
+        .where(eq(disciplineSettings.userId, userId))
+        .limit(1);
+      userSettings = s[0];
+    } catch (err) {
+      console.warn("[getDisciplineStats db error]:", err);
+    }
+  } else {
+    tasks = inMemoryDisciplineTasks.filter((t) => t.userId === userId && t.isActive !== false);
+    completions = inMemoryDisciplineCompletions.filter((c) => c.userId === userId);
+    workoutCompletions = inMemoryDisciplineWorkoutCompletions.filter((w) => w.userId === userId);
+    forexLogs = inMemoryDisciplineForexLogs.filter((f) => f.userId === userId);
+    userSettings = inMemoryDisciplineSettings.get(userId);
+  }
+
+  const trackableTasks = tasks.filter((t) => t.isTrackable !== false);
+  const trackableTaskCount = trackableTasks.length || 1;
+  const trackableTaskIds = new Set(trackableTasks.map((t) => t.id));
+
+  // Date helper
+  const formatDate = (d: Date) => d.toISOString().split("T")[0];
+  const now = new Date();
+  const todayStr = formatDate(now);
+
+  const yesterdayDate = new Date(now);
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterdayStr = formatDate(yesterdayDate);
+
+  // Group completions by date
+  const completionsByDate: Record<string, number> = {};
+  completions.forEach((c) => {
+    if (c.completed && trackableTaskIds.has(c.taskId)) {
+      completionsByDate[c.date] = (completionsByDate[c.date] || 0) + 1;
+    }
+  });
+
+  const getDayPercent = (dateStr: string) => {
+    const done = completionsByDate[dateStr] || 0;
+    return Math.min(100, Math.round((done / trackableTaskCount) * 100));
+  };
+
+  const todayPercent = getDayPercent(todayStr);
+  const yesterdayPercent = getDayPercent(yesterdayStr);
+
+  const completedTasksToday = completionsByDate[todayStr] || 0;
+  const remainingTasksToday = Math.max(0, trackableTasks.length - completedTasksToday);
+
+  // Last 7 Days
+  const last7Days: any[] = [];
+  let sum7 = 0;
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const dateStr = formatDate(d);
+    const dayName = d.toLocaleDateString("en-US", { weekday: "short" });
+    const percent = getDayPercent(dateStr);
+    sum7 += percent;
+    last7Days.push({
+      date: dateStr,
+      dayName,
+      percent,
+      completedCount: completionsByDate[dateStr] || 0,
+      totalCount: trackableTasks.length,
+    });
+  }
+  const weeklyPercent = Math.round(sum7 / 7);
+
+  // Last 30 Days
+  const last30Days: any[] = [];
+  let sum30 = 0;
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const dateStr = formatDate(d);
+    const percent = getDayPercent(dateStr);
+    sum30 += percent;
+    last30Days.push({
+      date: dateStr,
+      percent,
+    });
+  }
+  const monthlyPercent = Math.round(sum30 / 30);
+
+  // Best & Worst Days from recorded history
+  const activeDates = Object.keys(completionsByDate);
+  let bestDay = { date: todayStr, percent: todayPercent };
+  let worstDay = { date: todayStr, percent: todayPercent };
+
+  if (activeDates.length > 0) {
+    let maxPct = -1;
+    let minPct = 101;
+    activeDates.forEach((d) => {
+      const p = getDayPercent(d);
+      if (p > maxPct) {
+        maxPct = p;
+        bestDay = { date: d, percent: p };
+      }
+      if (p < minPct) {
+        minPct = p;
+        worstDay = { date: d, percent: p };
+      }
+    });
+  }
+
+  // Streaks calculation (days with >= 50% task completion)
+  let currentStreak = 0;
+  let checkDate = new Date(now);
+
+  // If today hasn't hit threshold yet, check if yesterday had streak
+  if (getDayPercent(todayStr) < 50) {
+    checkDate.setDate(checkDate.getDate() - 1);
+  }
+
+  while (true) {
+    const ds = formatDate(checkDate);
+    if (getDayPercent(ds) >= 50) {
+      currentStreak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+
+  // Best streak calculation across all time
+  let bestStreak = currentStreak;
+  const sortedDates = Object.keys(completionsByDate).sort();
+  let tempStreak = 0;
+  let prevTimestamp = 0;
+
+  sortedDates.forEach((dStr) => {
+    if (getDayPercent(dStr) >= 50) {
+      const tVal = new Date(dStr).getTime();
+      if (prevTimestamp === 0 || tVal - prevTimestamp === 86400000) {
+        tempStreak++;
+      } else {
+        tempStreak = 1;
+      }
+      prevTimestamp = tVal;
+      if (tempStreak > bestStreak) bestStreak = tempStreak;
+    }
+  });
+
+  // Workout consistency
+  const workoutDates = new Set(workoutCompletions.filter((w) => w.completed).map((w) => w.date));
+  let workoutsThisWeek = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    if (workoutDates.has(formatDate(d))) workoutsThisWeek++;
+  }
+
+  let workoutsThisMonth = 0;
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    if (workoutDates.has(formatDate(d))) workoutsThisMonth++;
+  }
+
+  // Forex consistency
+  const forexMinutesToday = forexLogs.find((f) => f.date === todayStr)?.minutes || 0;
+  let forexMinutesThisWeek = 0;
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const found = forexLogs.find((f) => f.date === formatDate(d));
+    if (found) forexMinutesThisWeek += found.minutes || 0;
+  }
+  const avgForexPerDay = Math.round(forexMinutesThisWeek / 7);
+
+  const totalCompletedTasksAllTime = completions.filter((c) => c.completed).length;
+
+  return {
+    todayPercent,
+    yesterdayPercent,
+    weeklyPercent,
+    monthlyPercent,
+    currentStreak,
+    bestStreak,
+    completedTasksToday,
+    remainingTasksToday,
+    totalCompletedTasksAllTime,
+    bestDay,
+    worstDay,
+    last7Days,
+    last30Days,
+    workoutConsistency: {
+      workoutsThisWeek,
+      workoutsThisMonth,
+      totalCompleted: workoutDates.size,
+      consistencyPercent: Math.min(100, Math.round((workoutsThisWeek / 5) * 100)), // based on 5 days/wk target
+    },
+    forexConsistency: {
+      minutesToday: forexMinutesToday,
+      minutesThisWeek: forexMinutesThisWeek,
+      averageMinutesPerDay: avgForexPerDay,
+      targetMinutes: userSettings?.dailyForexMinutesTarget || 60,
+      totalSessions: forexLogs.length,
+    },
+    hasData: activeDates.length > 0 || workoutDates.size > 0 || forexLogs.length > 0,
+  };
+}
+
+// ------------------------------------------------------------------------------
+// DATA MANAGEMENT: EXPORT, IMPORT, RESET
+// ------------------------------------------------------------------------------
+
+export async function exportDisciplineData(userId: number) {
+  const db = await getDb();
+  let tasks: any[] = [];
+  let completions: any[] = [];
+  let exercises: any[] = [];
+  let workoutCompletions: any[] = [];
+  let journals: any[] = [];
+  let forexLogs: any[] = [];
+  let userSettings: any = null;
+
+  if (db) {
+    try {
+      tasks = await db.select().from(disciplineTasks).where(eq(disciplineTasks.userId, userId));
+      completions = await db.select().from(disciplineTaskCompletions).where(eq(disciplineTaskCompletions.userId, userId));
+      exercises = await db.select().from(disciplineExercises).where(eq(disciplineExercises.userId, userId));
+      workoutCompletions = await db.select().from(disciplineWorkoutCompletions).where(eq(disciplineWorkoutCompletions.userId, userId));
+      journals = await db.select().from(disciplineDailyJournals).where(eq(disciplineDailyJournals.userId, userId));
+      forexLogs = await db.select().from(disciplineForexLogs).where(eq(disciplineForexLogs.userId, userId));
+      const s = await db.select().from(disciplineSettings).where(eq(disciplineSettings.userId, userId)).limit(1);
+      userSettings = s[0] || null;
+    } catch (err) {
+      console.warn("[exportDisciplineData db error]:", err);
+    }
+  } else {
+    tasks = inMemoryDisciplineTasks.filter((t) => t.userId === userId);
+    completions = inMemoryDisciplineCompletions.filter((c) => c.userId === userId);
+    exercises = inMemoryDisciplineExercises.filter((e) => e.userId === userId);
+    workoutCompletions = inMemoryDisciplineWorkoutCompletions.filter((w) => w.userId === userId);
+    journals = inMemoryDisciplineJournals.filter((j) => j.userId === userId);
+    forexLogs = inMemoryDisciplineForexLogs.filter((f) => f.userId === userId);
+    userSettings = inMemoryDisciplineSettings.get(userId) || null;
+  }
+
+  return {
+    version: "1.0",
+    appName: "Cycle of Chart — Daily Discipline",
+    exportedAt: new Date().toISOString(),
+    tasks,
+    completions,
+    exercises,
+    workoutCompletions,
+    journals,
+    forexLogs,
+    settings: userSettings,
+  };
+}
+
+export async function importDisciplineData(userId: number, backup: any) {
+  if (!backup || typeof backup !== "object") {
+    throw new Error("Invalid backup file: Not a valid JSON object");
+  }
+
+  const db = await getDb();
+
+  // Validate tasks array
+  const tasksToImport = Array.isArray(backup.tasks) ? backup.tasks : [];
+  const completionsToImport = Array.isArray(backup.completions) ? backup.completions : [];
+  const exercisesToImport = Array.isArray(backup.exercises) ? backup.exercises : [];
+  const workoutsToImport = Array.isArray(backup.workoutCompletions) ? backup.workoutCompletions : [];
+  const journalsToImport = Array.isArray(backup.journals) ? backup.journals : [];
+  const forexLogsToImport = Array.isArray(backup.forexLogs) ? backup.forexLogs : [];
+
+  if (db) {
+    try {
+      // 1. Tasks
+      for (const t of tasksToImport) {
+        if (t.title) {
+          await db.insert(disciplineTasks).values({
+            userId,
+            title: String(t.title).trim(),
+            time: t.time || "08:00 AM",
+            isMandatory: t.isMandatory !== false,
+            isTrackable: t.isTrackable !== false,
+            orderIndex: Number(t.orderIndex) || 0,
+            isActive: t.isActive !== false,
+          });
+        }
+      }
+
+      // 2. Exercises
+      for (const e of exercisesToImport) {
+        if (e.name) {
+          await db.insert(disciplineExercises).values({
+            userId,
+            name: String(e.name).trim(),
+            difficulty: e.difficulty || "Intermediate",
+            orderIndex: Number(e.orderIndex) || 0,
+            isActive: e.isActive !== false,
+          });
+        }
+      }
+
+      // 3. Journals
+      for (const j of journalsToImport) {
+        if (j.date && j.content) {
+          await db.insert(disciplineDailyJournals).values({
+            userId,
+            date: String(j.date),
+            content: String(j.content),
+          });
+        }
+      }
+
+      // 4. Forex Logs
+      for (const f of forexLogsToImport) {
+        if (f.date) {
+          await db.insert(disciplineForexLogs).values({
+            userId,
+            date: String(f.date),
+            minutes: Number(f.minutes) || 0,
+            pairs: f.pairs ? String(f.pairs) : "",
+            notes: f.notes ? String(f.notes) : "",
+          });
+        }
+      }
+
+      // 5. Settings
+      if (backup.settings) {
+        await updateDisciplineSettings(userId, backup.settings);
+      }
+      return { success: true, count: tasksToImport.length + exercisesToImport.length + journalsToImport.length };
+    } catch (err) {
+      console.warn("[importDisciplineData db error]:", err);
+    }
+  }
+
+  // In-memory fallback
+  tasksToImport.forEach((t: any) => {
+    if (t.title) {
+      inMemoryDisciplineTasks.push({
+        id: disciplineTaskAutoId++,
+        userId,
+        title: String(t.title).trim(),
+        time: t.time || "08:00 AM",
+        isMandatory: t.isMandatory !== false,
+        isTrackable: t.isTrackable !== false,
+        orderIndex: Number(t.orderIndex) || 0,
+        isActive: t.isActive !== false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
+  });
+
+  exercisesToImport.forEach((e: any) => {
+    if (e.name) {
+      inMemoryDisciplineExercises.push({
+        id: disciplineExerciseAutoId++,
+        userId,
+        name: String(e.name).trim(),
+        difficulty: e.difficulty || "Intermediate",
+        orderIndex: Number(e.orderIndex) || 0,
+        isActive: e.isActive !== false,
+        createdAt: new Date(),
+      });
+    }
+  });
+
+  journalsToImport.forEach((j: any) => {
+    if (j.date && j.content) {
+      inMemoryDisciplineJournals.push({
+        id: disciplineJournalAutoId++,
+        userId,
+        date: String(j.date),
+        content: String(j.content),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
+  });
+
+  forexLogsToImport.forEach((f: any) => {
+    if (f.date) {
+      inMemoryDisciplineForexLogs.push({
+        id: disciplineForexAutoId++,
+        userId,
+        date: String(f.date),
+        minutes: Number(f.minutes) || 0,
+        pairs: f.pairs ? String(f.pairs) : "",
+        notes: f.notes ? String(f.notes) : "",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
+  });
+
+  if (backup.settings) {
+    inMemoryDisciplineSettings.set(userId, {
+      userId,
+      ...backup.settings,
+      updatedAt: new Date(),
+    });
+  }
+
+  return { success: true, count: tasksToImport.length + exercisesToImport.length + journalsToImport.length };
+}
+
+export async function resetDisciplineData(userId: number) {
+  const db = await getDb();
+  if (db) {
+    try {
+      await db.delete(disciplineTaskCompletions).where(eq(disciplineTaskCompletions.userId, userId));
+      await db.delete(disciplineTasks).where(eq(disciplineTasks.userId, userId));
+      await db.delete(disciplineWorkoutCompletions).where(eq(disciplineWorkoutCompletions.userId, userId));
+      await db.delete(disciplineExercises).where(eq(disciplineExercises.userId, userId));
+      await db.delete(disciplineDailyJournals).where(eq(disciplineDailyJournals.userId, userId));
+      await db.delete(disciplineForexLogs).where(eq(disciplineForexLogs.userId, userId));
+      await db.delete(disciplineSettings).where(eq(disciplineSettings.userId, userId));
+
+      // Re-seed clean defaults for user
+      await ensureDisciplineDefaults(userId);
+      return true;
+    } catch (err) {
+      console.warn("[resetDisciplineData db error]:", err);
+    }
+  }
+
+  // In-memory cleanup
+  for (let i = inMemoryDisciplineTasks.length - 1; i >= 0; i--) {
+    if (inMemoryDisciplineTasks[i].userId === userId) inMemoryDisciplineTasks.splice(i, 1);
+  }
+  for (let i = inMemoryDisciplineCompletions.length - 1; i >= 0; i--) {
+    if (inMemoryDisciplineCompletions[i].userId === userId) inMemoryDisciplineCompletions.splice(i, 1);
+  }
+  for (let i = inMemoryDisciplineExercises.length - 1; i >= 0; i--) {
+    if (inMemoryDisciplineExercises[i].userId === userId) inMemoryDisciplineExercises.splice(i, 1);
+  }
+  for (let i = inMemoryDisciplineWorkoutCompletions.length - 1; i >= 0; i--) {
+    if (inMemoryDisciplineWorkoutCompletions[i].userId === userId) inMemoryDisciplineWorkoutCompletions.splice(i, 1);
+  }
+  for (let i = inMemoryDisciplineJournals.length - 1; i >= 0; i--) {
+    if (inMemoryDisciplineJournals[i].userId === userId) inMemoryDisciplineJournals.splice(i, 1);
+  }
+  for (let i = inMemoryDisciplineForexLogs.length - 1; i >= 0; i--) {
+    if (inMemoryDisciplineForexLogs[i].userId === userId) inMemoryDisciplineForexLogs.splice(i, 1);
+  }
+  inMemoryDisciplineSettings.delete(userId);
+
+  await ensureDisciplineDefaults(userId);
+  return true;
+}
+
 export {
   users,
   verificationTokens,
@@ -817,6 +2447,15 @@ export {
   notifications,
   settings,
   auditEvents,
+  freeEbooks,
+  disciplineTasks,
+  disciplineTaskCompletions,
+  disciplineExercises,
+  disciplineWorkoutCompletions,
+  disciplineDailyJournals,
+  disciplineForexLogs,
+  disciplineSettings,
 };
+
 
 

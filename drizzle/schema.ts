@@ -9,6 +9,7 @@ export const users = mysqlTable("users", {
   phone: varchar("phone", { length: 64 }),
   emailVerified: boolean("emailVerified").default(false).notNull(),
   loginMethod: varchar("loginMethod", { length: 64 }),
+  avatar: text("avatar"),
   role: mysqlEnum("role", ["user", "admin", "support"]).default("user").notNull(),
   language: mysqlEnum("language", ["en", "bn"]).default("en").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -201,6 +202,98 @@ export const auditEvents = mysqlTable("auditEvents", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+export const freeEbooks = mysqlTable("freeEbooks", {
+  id: int("id").autoincrement().primaryKey(),
+  titleEn: varchar("titleEn", { length: 255 }).notNull(),
+  titleBn: varchar("titleBn", { length: 255 }).notNull(),
+  subtitleEn: varchar("subtitleEn", { length: 255 }).notNull(),
+  subtitleBn: varchar("subtitleBn", { length: 255 }),
+  category: varchar("category", { length: 100 }).notNull(),
+  pages: int("pages").default(10).notNull(),
+  keyConcepts: json("keyConcepts").$type<string[]>().notNull(),
+  fileUrl: text("fileUrl"),
+  fileName: varchar("fileName", { length: 255 }),
+  fileSize: varchar("fileSize", { length: 50 }),
+  isPublished: boolean("isPublished").default(true).notNull(),
+  position: int("position").default(1).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+// ==============================================================================
+// COMPLETE DAILY DISCIPLINE SYSTEM SCHEMAS
+// ==============================================================================
+
+export const disciplineTasks = mysqlTable("disciplineTasks", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  time: varchar("time", { length: 32 }).default("08:00 AM").notNull(),
+  isMandatory: boolean("isMandatory").default(true).notNull(),
+  isTrackable: boolean("isTrackable").default(true).notNull(),
+  orderIndex: int("orderIndex").default(0).notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const disciplineTaskCompletions = mysqlTable("disciplineTaskCompletions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  taskId: int("taskId").notNull(),
+  date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD
+  completed: boolean("completed").default(false).notNull(),
+  completedAt: timestamp("completedAt"),
+});
+
+export const disciplineExercises = mysqlTable("disciplineExercises", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  difficulty: varchar("difficulty", { length: 32 }).default("Intermediate").notNull(), // Beginner, Intermediate, Advanced
+  orderIndex: int("orderIndex").default(0).notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const disciplineWorkoutCompletions = mysqlTable("disciplineWorkoutCompletions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  exerciseId: int("exerciseId").notNull(),
+  date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD
+  completed: boolean("completed").default(false).notNull(),
+});
+
+export const disciplineDailyJournals = mysqlTable("disciplineDailyJournals", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD
+  content: text("content").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const disciplineForexLogs = mysqlTable("disciplineForexLogs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD
+  minutes: int("minutes").default(0).notNull(),
+  pairs: varchar("pairs", { length: 255 }),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const disciplineSettings = mysqlTable("disciplineSettings", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  dailyTargetPercent: int("dailyTargetPercent").default(80).notNull(),
+  dailyForexMinutesTarget: int("dailyForexMinutesTarget").default(60).notNull(),
+  restTimerDefaultSeconds: int("restTimerDefaultSeconds").default(60).notNull(),
+  restTimerSound: boolean("restTimerSound").default(true).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type Product = typeof products.$inferSelect;
@@ -211,3 +304,22 @@ export type SupportTicket = typeof supportTickets.$inferSelect;
 export type InsertSupportTicket = typeof supportTickets.$inferInsert;
 export type TicketReply = typeof ticketReplies.$inferSelect;
 export type InsertTicketReply = typeof ticketReplies.$inferInsert;
+export type FreeEbook = typeof freeEbooks.$inferSelect;
+export type InsertFreeEbook = typeof freeEbooks.$inferInsert;
+
+export type DisciplineTask = typeof disciplineTasks.$inferSelect;
+export type InsertDisciplineTask = typeof disciplineTasks.$inferInsert;
+export type DisciplineTaskCompletion = typeof disciplineTaskCompletions.$inferSelect;
+export type InsertDisciplineTaskCompletion = typeof disciplineTaskCompletions.$inferInsert;
+export type DisciplineExercise = typeof disciplineExercises.$inferSelect;
+export type InsertDisciplineExercise = typeof disciplineExercises.$inferInsert;
+export type DisciplineWorkoutCompletion = typeof disciplineWorkoutCompletions.$inferSelect;
+export type InsertDisciplineWorkoutCompletion = typeof disciplineWorkoutCompletions.$inferInsert;
+export type DisciplineDailyJournal = typeof disciplineDailyJournals.$inferSelect;
+export type InsertDisciplineDailyJournal = typeof disciplineDailyJournals.$inferInsert;
+export type DisciplineForexLog = typeof disciplineForexLogs.$inferSelect;
+export type InsertDisciplineForexLog = typeof disciplineForexLogs.$inferInsert;
+export type DisciplineSetting = typeof disciplineSettings.$inferSelect;
+export type InsertDisciplineSetting = typeof disciplineSettings.$inferInsert;
+
+

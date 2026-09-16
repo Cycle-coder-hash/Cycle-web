@@ -37,6 +37,11 @@ import {
   Users,
   X,
   XCircle,
+  Upload,
+  Edit,
+  Eye,
+  EyeOff,
+  ExternalLink,
 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
@@ -44,7 +49,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/BrandLogo";
 
-type AdminTab = "overview" | "orders" | "students" | "support" | "settings" | "audit";
+type AdminTab = "overview" | "orders" | "students" | "ebooks" | "support" | "settings" | "audit";
 
 export default function Admin() {
   const { user, loading: authLoading } = useAuth();
@@ -174,6 +179,160 @@ export default function Admin() {
     setTimeout(() => setCopiedTrxId(null), 2500);
   };
 
+  // eBook queries and mutations
+  const { data: ebooks, refetch: refetchEbooks, isLoading: isLoadingEbooks } = trpc.admin.freeEbooks.useQuery(undefined, {
+    enabled: user?.role === "admin" || user?.role === "support",
+  });
+
+  const [isEbookModalOpen, setIsEbookModalOpen] = useState(false);
+  const [editingEbook, setEditingEbook] = useState<any | null>(null);
+  const [deleteConfirmEbookId, setDeleteConfirmEbookId] = useState<number | null>(null);
+  const [ebookSearch, setEbookSearch] = useState("");
+  const [ebookCategoryFilter, setEbookCategoryFilter] = useState("all");
+
+  const [ebookForm, setEbookForm] = useState({
+    titleEn: "",
+    titleBn: "",
+    subtitleEn: "",
+    subtitleBn: "",
+    category: "CHART ANALYSIS",
+    pages: 15,
+    keyConceptsText: "",
+    fileUrl: null as string | null,
+    fileName: null as string | null,
+    fileSize: null as string | null,
+    isPublished: true,
+  });
+
+  const resetEbookForm = () => {
+    setEditingEbook(null);
+    setEbookForm({
+      titleEn: "",
+      titleBn: "",
+      subtitleEn: "",
+      subtitleBn: "",
+      category: "CHART ANALYSIS",
+      pages: 15,
+      keyConceptsText: "",
+      fileUrl: null,
+      fileName: null,
+      fileSize: null,
+      isPublished: true,
+    });
+  };
+
+  const openAddEbookModal = () => {
+    resetEbookForm();
+    setIsEbookModalOpen(true);
+  };
+
+  const openEditEbookModal = (item: any) => {
+    setEditingEbook(item);
+    setEbookForm({
+      titleEn: item.titleEn || "",
+      titleBn: item.titleBn || "",
+      subtitleEn: item.subtitleEn || "",
+      subtitleBn: item.subtitleBn || "",
+      category: item.category || "CHART ANALYSIS",
+      pages: item.pages || 15,
+      keyConceptsText: Array.isArray(item.keyConcepts) ? item.keyConcepts.join("\n") : "",
+      fileUrl: item.fileUrl || null,
+      fileName: item.fileName || null,
+      fileSize: item.fileSize || null,
+      isPublished: item.isPublished !== false,
+    });
+    setIsEbookModalOpen(true);
+  };
+
+  const createEbookMutation = trpc.admin.createFreeEbook.useMutation({
+    onSuccess: () => {
+      refetchEbooks();
+      setIsEbookModalOpen(false);
+      resetEbookForm();
+      setActionSuccess("Free eBook PDF added successfully!");
+      setTimeout(() => setActionSuccess(null), 4000);
+    },
+    onError: (err: any) => {
+      alert(err.message || "Failed to create eBook");
+    },
+  });
+
+  const updateEbookMutation = trpc.admin.updateFreeEbook.useMutation({
+    onSuccess: () => {
+      refetchEbooks();
+      setIsEbookModalOpen(false);
+      resetEbookForm();
+      setActionSuccess("Free eBook PDF updated successfully!");
+      setTimeout(() => setActionSuccess(null), 4000);
+    },
+    onError: (err: any) => {
+      alert(err.message || "Failed to update eBook");
+    },
+  });
+
+  const deleteEbookMutation = trpc.admin.deleteFreeEbook.useMutation({
+    onSuccess: () => {
+      refetchEbooks();
+      setDeleteConfirmEbookId(null);
+      setActionSuccess("Free eBook PDF deleted successfully!");
+      setTimeout(() => setActionSuccess(null), 4000);
+    },
+    onError: (err: any) => {
+      alert(err.message || "Failed to delete eBook");
+    },
+  });
+
+  const handlePdfFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.type !== "application/pdf" && !file.name.endsWith(".pdf")) {
+      alert("Please upload a valid PDF file (.pdf)");
+      return;
+    }
+    const sizeInMb = (file.size / (1024 * 1024)).toFixed(1) + " MB";
+    const reader = new FileReader();
+    reader.onload = () => {
+      setEbookForm((prev) => ({
+        ...prev,
+        fileUrl: reader.result as string,
+        fileName: file.name,
+        fileSize: sizeInMb,
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveEbook = (e: React.FormEvent) => {
+    e.preventDefault();
+    const keyConcepts = ebookForm.keyConceptsText
+      .split("\n")
+      .map((k) => k.trim())
+      .filter(Boolean);
+
+    const payload = {
+      titleEn: ebookForm.titleEn.trim(),
+      titleBn: ebookForm.titleBn.trim() || undefined,
+      subtitleEn: ebookForm.subtitleEn.trim(),
+      subtitleBn: ebookForm.subtitleBn.trim() || undefined,
+      category: ebookForm.category.trim(),
+      pages: Number(ebookForm.pages) || 15,
+      keyConcepts: keyConcepts.length ? keyConcepts : undefined,
+      fileUrl: ebookForm.fileUrl,
+      fileName: ebookForm.fileName,
+      fileSize: ebookForm.fileSize,
+      isPublished: ebookForm.isPublished,
+    };
+
+    if (editingEbook) {
+      updateEbookMutation.mutate({
+        id: editingEbook.id,
+        ...payload,
+      });
+    } else {
+      createEbookMutation.mutate(payload);
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="grid min-h-screen place-items-center bg-[#070e1b] text-white">
@@ -262,6 +421,21 @@ export default function Admin() {
     return true;
   });
 
+  // Filtered eBooks
+  const filteredEbooks = (ebooks || []).filter((eb: any) => {
+    if (ebookCategoryFilter !== "all" && eb.category !== ebookCategoryFilter) return false;
+    if (ebookSearch.trim()) {
+      const q = ebookSearch.toLowerCase();
+      return (
+        eb.titleEn?.toLowerCase().includes(q) ||
+        eb.titleBn?.toLowerCase().includes(q) ||
+        eb.subtitleEn?.toLowerCase().includes(q) ||
+        eb.category?.toLowerCase().includes(q)
+      );
+    }
+    return true;
+  });
+
   const pendingOrdersList = (orders || []).filter((o: any) => o.orderStatus === "pending");
 
   return (
@@ -309,6 +483,7 @@ export default function Admin() {
               { id: "overview", label: "Executive KPI", icon: LayoutDashboard, badge: undefined },
               { id: "orders", label: "Payment Verification", icon: FileCheck2, badge: pendingOrdersList.length ? `${pendingOrdersList.length}` : undefined },
               { id: "students", label: "Students & Access", icon: Users, badge: students?.length ? `${students.length}` : undefined },
+              { id: "ebooks", label: "Free eBooks & PDFs", icon: BookOpen, badge: ebooks?.length ? `${ebooks.length}` : undefined },
               { id: "support", label: "Support Tickets", icon: ShieldCheck, badge: tickets?.filter((t: any) => t.status === "open").length ? `${tickets.filter((t: any) => t.status === "open").length}` : undefined },
               { id: "settings", label: "Gateways & Notice", icon: KeyRound, badge: undefined },
               { id: "audit", label: "Audit Trail", icon: Shield, badge: undefined },
@@ -787,6 +962,254 @@ export default function Admin() {
                 <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center text-slate-500 dark:border-slate-800 dark:bg-slate-900">
                   <Users size={36} className="mx-auto text-slate-400 mb-2" />
                   <div className="font-bold">No students found</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB: FREE EBOOKS & INSTITUTIONAL PDFS MANAGEMENT */}
+        {/* ========================================================================= */}
+        {activeTab === "ebooks" && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {/* Header & Add Button */}
+            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+              <div>
+                <h2 className="text-2xl font-black tracking-tight">Free eBooks & PDFs Management</h2>
+                <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                  Manage the institutional guides and PDFs in the Free eBook Package. Upload custom PDF files, edit content, and toggle publishing.
+                </p>
+              </div>
+              <Button
+                onClick={openAddEbookModal}
+                className="gap-2 bg-[#0284c7] font-bold text-white hover:bg-sky-600 shadow-md self-start sm:self-auto"
+              >
+                <Plus size={16} />
+                <span>Add New eBook / PDF</span>
+              </Button>
+            </div>
+
+            {/* Metrics Chips */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total eBooks</div>
+                <div className="mt-1 text-2xl font-black text-slate-900 dark:text-white">
+                  {ebooks?.length || 0}
+                </div>
+              </div>
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 shadow-sm dark:border-emerald-900/40 dark:bg-emerald-950/20">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Published (Live)</div>
+                <div className="mt-1 text-2xl font-black text-emerald-800 dark:text-emerald-300">
+                  {(ebooks || []).filter((e: any) => e.isPublished).length}
+                </div>
+              </div>
+              <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 shadow-sm dark:border-amber-900/40 dark:bg-amber-950/20">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">Drafts (Hidden)</div>
+                <div className="mt-1 text-2xl font-black text-amber-800 dark:text-amber-300">
+                  {(ebooks || []).filter((e: any) => !e.isPublished).length}
+                </div>
+              </div>
+              <div className="rounded-2xl border border-sky-200 bg-sky-50/60 p-4 shadow-sm dark:border-sky-900/40 dark:bg-sky-950/20">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-sky-700 dark:text-sky-400">Custom PDF Uploads</div>
+                <div className="mt-1 text-2xl font-black text-sky-800 dark:text-sky-300">
+                  {(ebooks || []).filter((e: any) => !!e.fileUrl).length}
+                </div>
+              </div>
+            </div>
+
+            {/* Filter and Search Controls */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+              <div className="relative flex-1">
+                <Search size={15} className="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search eBooks by title, category, or concepts..."
+                  value={ebookSearch}
+                  onChange={(e) => setEbookSearch(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pr-4 pl-9 text-xs font-medium outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Filter size={14} className="text-slate-400 shrink-0" />
+                <select
+                  value={ebookCategoryFilter}
+                  onChange={(e) => setEbookCategoryFilter(e.target.value)}
+                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                >
+                  <option value="all">All Categories</option>
+                  <option value="CHART ANALYSIS">CHART ANALYSIS</option>
+                  <option value="LIQUIDITY & SMC">LIQUIDITY & SMC</option>
+                  <option value="ORDER FLOW">ORDER FLOW</option>
+                  <option value="ADVANCED PRICE ACTION">ADVANCED PRICE ACTION</option>
+                  <option value="RISK MANAGEMENT">RISK MANAGEMENT</option>
+                  <option value="MARKET PSYCHOLOGY">MARKET PSYCHOLOGY</option>
+                </select>
+              </div>
+            </div>
+
+            {/* eBooks Grid */}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {isLoadingEbooks ? (
+                <div className="col-span-full py-12 text-center text-slate-400">
+                  <RefreshCw size={24} className="animate-spin mx-auto mb-2" />
+                  <span className="text-xs font-bold">Loading eBook library...</span>
+                </div>
+              ) : filteredEbooks.length ? (
+                filteredEbooks.map((eb: any) => (
+                  <div
+                    key={eb.id}
+                    className="flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 transition-all hover:shadow-md"
+                  >
+                    <div>
+                      {/* Top Badges */}
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <span className="rounded-full bg-sky-100 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-sky-700 dark:bg-sky-950 dark:text-sky-300">
+                          {eb.category}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-bold text-slate-400">
+                            {eb.pages || 15} Pages
+                          </span>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase ${
+                              eb.isPublished
+                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+                                : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                            }`}
+                          >
+                            {eb.isPublished ? "Live" : "Draft"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Titles */}
+                      <h3 className="text-base font-extrabold text-slate-900 dark:text-white leading-snug">
+                        {eb.titleEn}
+                      </h3>
+                      {eb.titleBn && (
+                        <p className="mt-0.5 text-xs font-semibold text-slate-500 dark:text-slate-400 font-bangla">
+                          {eb.titleBn}
+                        </p>
+                      )}
+
+                      {/* Subtitle */}
+                      <p className="mt-2 text-xs text-slate-600 dark:text-slate-300 line-clamp-2">
+                        {eb.subtitleEn}
+                      </p>
+
+                      {/* Key Concepts Chips */}
+                      {Array.isArray(eb.keyConcepts) && eb.keyConcepts.length > 0 && (
+                        <div className="mt-3 flex flex-wrap gap-1">
+                          {eb.keyConcepts.slice(0, 3).map((concept: string, cIdx: number) => (
+                            <span
+                              key={cIdx}
+                              className="rounded-lg bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                            >
+                              • {concept}
+                            </span>
+                          ))}
+                          {eb.keyConcepts.length > 3 && (
+                            <span className="rounded-lg bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-400 dark:bg-slate-800">
+                              +{eb.keyConcepts.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Attachment Status */}
+                      <div className="mt-4 rounded-xl border border-dashed border-slate-200 bg-slate-50/80 p-2.5 dark:border-slate-800 dark:bg-slate-950/60">
+                        {eb.fileUrl ? (
+                          <div className="flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 truncate">
+                              <Paperclip size={13} className="text-sky-500 shrink-0" />
+                              <span className="font-bold truncate">{eb.fileName || "Uploaded PDF"}</span>
+                              <span className="text-[10px] text-slate-400 shrink-0">({eb.fileSize || "Custom"})</span>
+                            </div>
+                            <a
+                              href={eb.fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sky-600 hover:text-sky-700 dark:text-sky-400 ml-2 shrink-0"
+                              title="Preview PDF"
+                            >
+                              <ExternalLink size={13} />
+                            </a>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                            <Sparkles size={13} className="text-amber-500 shrink-0" />
+                            <span>Institutional PDF Generator (Active)</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Action Bar */}
+                    <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-800">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          updateEbookMutation.mutate({
+                            id: eb.id,
+                            isPublished: !eb.isPublished,
+                          })
+                        }
+                        className="gap-1.5 text-xs font-bold border-slate-200 dark:border-slate-700"
+                      >
+                        {eb.isPublished ? (
+                          <>
+                            <EyeOff size={13} className="text-amber-500" />
+                            <span>Hide</span>
+                          </>
+                        ) : (
+                          <>
+                            <Eye size={13} className="text-emerald-500" />
+                            <span>Publish</span>
+                          </>
+                        )}
+                      </Button>
+
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openEditEbookModal(eb)}
+                          className="gap-1 text-xs font-bold border-slate-200 dark:border-slate-700"
+                        >
+                          <Edit size={13} />
+                          <span>Edit</span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setDeleteConfirmEbookId(eb.id)}
+                          className="gap-1 text-xs font-bold border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900/50 dark:hover:bg-rose-950/30"
+                        >
+                          <Trash2 size={13} />
+                          <span>Delete</span>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center text-slate-500 dark:border-slate-800 dark:bg-slate-900">
+                  <BookOpen size={40} className="mx-auto text-slate-400 mb-3 opacity-60" />
+                  <h3 className="text-base font-bold">No eBooks found</h3>
+                  <p className="mt-1 text-xs text-slate-400">
+                    Try adjusting your search or add a new institutional PDF resource.
+                  </p>
+                  <Button
+                    onClick={openAddEbookModal}
+                    size="sm"
+                    className="mt-4 bg-[#0284c7] font-bold text-white hover:bg-sky-600"
+                  >
+                    <Plus size={14} className="mr-1" />
+                    <span>Add First eBook</span>
+                  </Button>
                 </div>
               )}
             </div>
@@ -1362,6 +1785,276 @@ export default function Admin() {
                   Grant Access
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* ADD / EDIT FREE EBOOK MODAL */}
+      {/* ========================================================================= */}
+      {isEbookModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in"
+          onClick={() => setIsEbookModalOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-2xl dark:border-slate-800 dark:bg-slate-900 animate-in zoom-in-95"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <BookOpen className="text-sky-500" size={20} />
+                <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white">
+                  {editingEbook ? "Edit Free eBook / PDF" : "Add New Free eBook / PDF"}
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsEbookModalOpen(false)}
+                className="rounded-full p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEbook} className="mt-5 space-y-4 text-xs sm:text-sm">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Title (English) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. CRT Master Cheat-Sheet"
+                    value={ebookForm.titleEn}
+                    onChange={(e) => setEbookForm({ ...ebookForm, titleEn: e.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 font-semibold outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Title (Bengali - Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. সিআরটি মাস্টার চিট-শীট"
+                    value={ebookForm.titleBn}
+                    onChange={(e) => setEbookForm({ ...ebookForm, titleBn: e.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 font-semibold outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Subtitle / Summary (English) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Candle Range Theory, liquidity sweeps, and expansion models"
+                    value={ebookForm.subtitleEn}
+                    onChange={(e) => setEbookForm({ ...ebookForm, subtitleEn: e.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 font-semibold outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Subtitle / Summary (Bengali - Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="বাংলা সারসংক্ষেপ বা বর্ণনা"
+                    value={ebookForm.subtitleBn}
+                    onChange={(e) => setEbookForm({ ...ebookForm, subtitleBn: e.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 font-semibold outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Category *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. CHART ANALYSIS or LIQUIDITY & SMC"
+                    value={ebookForm.category}
+                    onChange={(e) => setEbookForm({ ...ebookForm, category: e.target.value })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 font-semibold outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Pages Count
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={ebookForm.pages}
+                    onChange={(e) => setEbookForm({ ...ebookForm, pages: parseInt(e.target.value) || 1 })}
+                    className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 font-semibold outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Key Concepts / Learning Modules (One per line)
+                </label>
+                <textarea
+                  rows={4}
+                  placeholder="Candle Range Theory Anatomy&#10;Internal vs External Liquidity Sweeps&#10;Order Flow Directional Confirmation"
+                  value={ebookForm.keyConceptsText}
+                  onChange={(e) => setEbookForm({ ...ebookForm, keyConceptsText: e.target.value })}
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 font-medium outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                />
+              </div>
+
+              {/* Upload PDF File or Custom URL */}
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-950/40">
+                <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+                  <Upload size={15} className="text-sky-500" />
+                  <span>Custom PDF File Attachment (Optional)</span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                  Upload your own PDF file for students to download. If left empty, the institutional PDF generator will automatically format and generate a clean PDF on-the-fly.
+                </p>
+
+                {ebookForm.fileUrl ? (
+                  <div className="flex items-center justify-between rounded-xl bg-white p-3 border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+                    <div className="flex items-center gap-2 truncate">
+                      <Paperclip size={16} className="text-emerald-500 shrink-0" />
+                      <div className="truncate">
+                        <div className="font-bold text-slate-900 dark:text-white truncate">
+                          {ebookForm.fileName || "Uploaded PDF Document"}
+                        </div>
+                        <div className="text-[10px] text-slate-400">{ebookForm.fileSize || "PDF Attached"}</div>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        setEbookForm({ ...ebookForm, fileUrl: null, fileName: null, fileSize: null })
+                      }
+                      className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs font-bold"
+                    >
+                      <Trash2 size={13} className="mr-1" />
+                      Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white p-5 cursor-pointer hover:border-sky-500 hover:bg-sky-50/30 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-sky-400">
+                      <Upload size={22} className="text-slate-400 mb-1" />
+                      <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                        Click to select PDF from your device
+                      </span>
+                      <span className="text-[11px] text-slate-400">Accepts .pdf files</span>
+                      <input
+                        type="file"
+                        accept="application/pdf,.pdf"
+                        onChange={handlePdfFileUpload}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              {/* Publish Toggle */}
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="ebookPublishToggle"
+                  checked={ebookForm.isPublished}
+                  onChange={(e) => setEbookForm({ ...ebookForm, isPublished: e.target.checked })}
+                  className="size-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                />
+                <label
+                  htmlFor="ebookPublishToggle"
+                  className="text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer"
+                >
+                  Publish immediately (Visible in student Free eBook Library)
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsEbookModalOpen(false)}
+                  className="border-slate-300 dark:border-slate-700 font-bold"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={createEbookMutation.isPending || updateEbookMutation.isPending}
+                  className="bg-[#0284c7] font-bold text-white hover:bg-sky-600 shadow-md"
+                >
+                  {(createEbookMutation.isPending || updateEbookMutation.isPending) && (
+                    <RefreshCw size={13} className="animate-spin mr-1.5" />
+                  )}
+                  <span>{editingEbook ? "Save Changes" : "Create eBook"}</span>
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* DELETE CONFIRMATION MODAL */}
+      {/* ========================================================================= */}
+      {deleteConfirmEbookId !== null && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in"
+          onClick={() => setDeleteConfirmEbookId(null)}
+        >
+          <div
+            className="relative w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+              <h3 className="text-base font-extrabold text-slate-900 dark:text-white">Delete Free eBook?</h3>
+              <button
+                onClick={() => setDeleteConfirmEbookId(null)}
+                className="p-1 text-slate-400 hover:text-slate-600"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <p className="mt-3 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              Are you sure you want to delete this eBook from the library? Students will no longer be able to download it.
+            </p>
+            <div className="mt-5 flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setDeleteConfirmEbookId(null)}
+                className="w-1/2 border-slate-300 dark:border-slate-700 font-bold"
+              >
+                Cancel
+              </Button>
+              <Button
+                disabled={deleteEbookMutation.isPending}
+                onClick={() => deleteEbookMutation.mutate({ id: deleteConfirmEbookId })}
+                className="w-1/2 bg-rose-600 text-white font-bold hover:bg-rose-700"
+              >
+                {deleteEbookMutation.isPending && (
+                  <RefreshCw size={13} className="animate-spin mr-1.5" />
+                )}
+                <span>Confirm Delete</span>
+              </Button>
             </div>
           </div>
         </div>

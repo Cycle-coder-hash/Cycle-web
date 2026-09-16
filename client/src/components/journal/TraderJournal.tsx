@@ -7,6 +7,7 @@ import {
   Trash2,
   Edit,
   Printer,
+  Download,
   Eye,
   CheckCircle2,
   AlertCircle,
@@ -68,6 +69,8 @@ import {
 import { TradeModal } from "./TradeModal";
 import { TradePrintModal } from "./TradePrintModal";
 import { JournalBookModal } from "./JournalBookModal";
+import { printTrade, exportTradePdf } from "@/lib/tradePdfExport";
+import { TraderNotebook } from "@/components/notebook/TraderNotebook";
 
 interface TraderJournalProps {
   isBn?: boolean;
@@ -75,6 +78,9 @@ interface TraderJournalProps {
 }
 
 export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
+  // Navigation: Trade Journal vs Private Trader Notebook
+  const [activeSection, setActiveSection] = useState<"journal" | "notebook">("journal");
+
   // State: Journal Books & Trades
   const [books, setBooks] = useState<JournalBook[]>(() => getStoredJournalBooks());
   const [trades, setTrades] = useState<TradeEntry[]>(() => getStoredTrades());
@@ -103,6 +109,7 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
   const [editingBook, setEditingBook] = useState<JournalBook | null>(null);
   const [deleteBookConfirmId, setDeleteBookConfirmId] = useState<string | null>(null);
   const [deleteTradeConfirmId, setDeleteTradeConfirmId] = useState<string | null>(null);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   // Synchronize state on custom events
   useEffect(() => {
@@ -256,17 +263,56 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Top Header & Strategy Book Switcher */}
-      <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/20">
-              <BookOpen className="h-5 w-5" />
-            </div>
+      {/* Top Main Navigation Switcher: Trade Journal vs Private Trader Notebook */}
+      <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-slate-100/90 dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/80 w-fit">
+        <button
+          type="button"
+          onClick={() => setActiveSection("journal")}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black transition-all ${
+            activeSection === "journal"
+              ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white"
+              : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+          }`}
+        >
+          <BarChart3 className="h-4 w-4 text-cyan-500" />
+          <span>{isBn ? "ট্রেড জার্নাল ও পারফরম্যান্স" : "Trade Journal & Performance"}</span>
+          <span className="rounded-full bg-cyan-500/10 px-2 py-0.5 text-[10px] font-extrabold text-cyan-600 dark:text-cyan-400">
+            {trades.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSection("notebook")}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-black transition-all ${
+            activeSection === "notebook"
+              ? "bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-white"
+              : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+          }`}
+        >
+          <BookOpen className="h-4 w-4 text-emerald-500" />
+          <span>{isBn ? "প্রাইভেট ট্রেডার নোটবুক" : "Private Trader Notebook"}</span>
+          <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400">
+            {isBn ? "ভল্ট" : "Vault"}
+          </span>
+        </button>
+      </div>
+
+      {activeSection === "notebook" ? (
+        <TraderNotebook user={user} isBn={isBn} />
+      ) : (
+        <>
+          {/* Top Header & Strategy Book Switcher */}
+          <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-center">
             <div>
-              <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-                {isBn ? "প্রো ট্রেডার পারফরম্যান্স জার্নাল" : "Institutional Trader Journal & Performance"}
-              </h2>
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/20">
+                  <BookOpen className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                    {isBn ? "প্রো ট্রেডার পারফরম্যান্স জার্নাল" : "Institutional Trader Journal & Performance"}
+                  </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {isBn
                   ? "মাল্টি-স্ট্র্যাটেজি বুক, স্বয়ংক্রিয় ক্যাপিটাল গ্রোথ ট্র্যাকিং এবং ২১-পয়েন্ট ট্রেড অডিট"
@@ -1115,20 +1161,33 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
 
                       {/* 19. Media indicator */}
                       <td className="py-3.5 px-2">
-                        {t.mediaUrl ? (
-                          t.mediaType === "video" ? (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-purple-400">
-                              <VideoIcon className="h-3.5 w-3.5" />
-                              {t.videoDurationSeconds ? `${t.videoDurationSeconds}s` : "Video"}
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-cyan-400">
-                              <ImageIcon className="h-3.5 w-3.5" /> Image
-                            </span>
-                          )
-                        ) : (
-                          <span className="text-slate-300 dark:text-slate-700">—</span>
-                        )}
+                        {(() => {
+                          const tScreenshots = t.screenshots && t.screenshots.length > 0
+                            ? t.screenshots
+                            : (t.mediaUrl && t.mediaType !== "video" ? [t.mediaUrl] : []);
+                          const tVideo = t.videoUrl || (t.mediaType === "video" ? t.mediaUrl : undefined);
+
+                          if (tScreenshots.length === 0 && !tVideo) {
+                            return <span className="text-slate-300 dark:text-slate-700">—</span>;
+                          }
+
+                          return (
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {tScreenshots.length > 0 && (
+                                <span className="inline-flex items-center gap-1 rounded-md bg-cyan-500/10 px-1.5 py-0.5 text-[10px] font-black text-cyan-500 border border-cyan-500/20">
+                                  <ImageIcon className="h-3 w-3" />
+                                  {tScreenshots.length} {tScreenshots.length === 1 ? "Image" : "Images"}
+                                </span>
+                              )}
+                              {tVideo && (
+                                <span className="inline-flex items-center gap-1 rounded-md bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-black text-purple-400 border border-purple-500/20">
+                                  <VideoIcon className="h-3 w-3" />
+                                  {t.videoDurationSeconds ? `${t.videoDurationSeconds}s` : "Video"}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </td>
 
                       {/* 12. P&L ($) */}
@@ -1245,17 +1304,30 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
               </div>
 
               <div className="flex items-center gap-2">
+                {/* 1. Dedicated Print Button */}
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => {
-                    setPrintingTrade(viewingTrade);
-                  }}
-                  className="rounded-xl border-slate-300 dark:border-slate-700 text-xs font-bold gap-1"
+                  onClick={() => printTrade(viewingTrade, currentBook)}
+                  className="rounded-xl border-slate-300 dark:border-slate-700 text-xs font-bold gap-1 hover:border-cyan-500 hover:text-cyan-500 transition-colors"
+                  title={isBn ? "ট্রেড অডিট প্রিন্ট করুন" : "Print trade audit report"}
                 >
-                  <Printer className="h-3.5 w-3.5" />
-                  Print / PDF
+                  <Printer className="h-3.5 w-3.5 text-cyan-500" />
+                  Print
                 </Button>
+
+                {/* 2. Dedicated PDF Button */}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => exportTradePdf(viewingTrade, currentBook)}
+                  className="rounded-xl border-slate-300 dark:border-slate-700 text-xs font-bold gap-1 hover:border-cyan-500 hover:text-cyan-500 transition-colors"
+                  title={isBn ? "পিডিএফ ডাউনলোড করুন" : "Download trade audit PDF"}
+                >
+                  <Download className="h-3.5 w-3.5 text-cyan-500" />
+                  PDF
+                </Button>
+
                 <button
                   onClick={() => setViewingTrade(null)}
                   className="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
@@ -1367,34 +1439,86 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
                 </div>
               )}
 
-              {/* Media Preview (Strictly 1-min validated video or chart image) */}
-              {viewingTrade.mediaUrl && (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-800/30">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Execution Media ({viewingTrade.mediaType === "video" ? "Video Under 60s" : "Chart Screenshot"})
-                    </span>
-                    {viewingTrade.videoDurationSeconds && (
-                      <span className="rounded-md bg-purple-500/10 px-2 py-0.5 text-[10px] font-bold text-purple-400">
-                        Duration: {viewingTrade.videoDurationSeconds}s (Max 60s limit verified)
-                      </span>
+              {/* Multiple Screenshots & Video Previews */}
+              {(() => {
+                const viewScreenshots = viewingTrade.screenshots && viewingTrade.screenshots.length > 0
+                  ? viewingTrade.screenshots
+                  : (viewingTrade.mediaUrl && viewingTrade.mediaType !== "video" ? [viewingTrade.mediaUrl] : []);
+                const viewVideo = viewingTrade.videoUrl || (viewingTrade.mediaType === "video" ? viewingTrade.mediaUrl : undefined);
+
+                if (viewScreenshots.length === 0 && !viewVideo) return null;
+
+                return (
+                  <div className="space-y-4">
+                    {/* Attached Screenshots Gallery */}
+                    {viewScreenshots.length > 0 && (
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-800/30">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <ImageIcon size={15} className="text-cyan-500" />
+                            <span className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                              Attached Screenshots ({viewScreenshots.length})
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-slate-400">Click any image to enlarge</span>
+                        </div>
+
+                        <div className={`grid gap-3 ${
+                          viewScreenshots.length === 1
+                            ? "grid-cols-1"
+                            : viewScreenshots.length === 2
+                            ? "grid-cols-1 sm:grid-cols-2"
+                            : "grid-cols-2 sm:grid-cols-3"
+                        }`}>
+                          {viewScreenshots.map((src, idx) => (
+                            <div
+                              key={idx}
+                              onClick={() => setLightboxImage(src)}
+                              className="group relative aspect-video rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-950 shadow-sm cursor-pointer hover:border-cyan-500 transition-colors"
+                            >
+                              <img
+                                src={src}
+                                alt={`Trade Screenshot ${idx + 1}`}
+                                className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                              />
+                              <div className="absolute top-1.5 left-1.5 rounded-md bg-black/75 px-1.5 py-0.5 text-[9px] font-black text-cyan-400 backdrop-blur-xs border border-white/10">
+                                #{idx + 1}
+                              </div>
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <span className="inline-flex items-center gap-1 rounded-lg bg-black/80 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-xs border border-white/20">
+                                  <Eye size={13} /> View Full
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Execution Video Player */}
+                    {viewVideo && (
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-800/30">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                            <VideoIcon size={14} className="text-purple-400" />
+                            <span>Execution Video Clip</span>
+                          </span>
+                          {viewingTrade.videoDurationSeconds && (
+                            <span className="rounded-md bg-purple-500/10 px-2 py-0.5 text-[10px] font-bold text-purple-400">
+                              Duration: {viewingTrade.videoDurationSeconds}s (Max 60s limit verified)
+                            </span>
+                          )}
+                        </div>
+                        <video
+                          src={viewVideo}
+                          controls
+                          className="w-full max-h-80 rounded-xl bg-black shadow-md object-contain"
+                        />
+                      </div>
                     )}
                   </div>
-                  {viewingTrade.mediaType === "video" ? (
-                    <video
-                      src={viewingTrade.mediaUrl}
-                      controls
-                      className="w-full max-h-80 rounded-xl bg-black shadow-md object-contain"
-                    />
-                  ) : (
-                    <img
-                      src={viewingTrade.mediaUrl}
-                      alt="Trade Chart Screenshot"
-                      className="w-full max-h-80 rounded-xl object-contain bg-slate-900 shadow-md"
-                    />
-                  )}
-                </div>
-              )}
+                );
+              })()}
             </div>
 
             {/* Bottom Actions */}
@@ -1501,6 +1625,8 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
           </div>
         </div>
       )}
+        </>
+      )}
 
       {/* MOUNT MODALS */}
       {/* 1. Trade Modal (Add / Edit) */}
@@ -1538,6 +1664,30 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
         onClose={() => setPrintingTrade(null)}
         isBn={isBn}
       />
+
+      {/* 4. Lightbox Modal for Full Resolution Screenshot */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in"
+          onClick={() => setLightboxImage(null)}
+        >
+          <div className="relative max-w-5xl w-full max-h-[92vh] flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setLightboxImage(null)}
+              className="absolute -top-11 right-0 p-2 text-white/80 hover:text-white rounded-full bg-white/10 hover:bg-white/20 transition cursor-pointer"
+              title="Close Preview"
+            >
+              <X size={22} />
+            </button>
+            <img
+              src={lightboxImage}
+              alt="Screenshot High Resolution"
+              className="max-h-[85vh] max-w-full rounded-2xl object-contain shadow-2xl border border-white/10"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

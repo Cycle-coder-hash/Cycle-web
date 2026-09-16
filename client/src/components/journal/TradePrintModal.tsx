@@ -3,6 +3,7 @@ import { X, Printer, Download, CheckCircle2, AlertCircle, ShieldCheck, ArrowUpRi
 import { Button } from "@/components/ui/button";
 import { TradeEntry, JournalBook } from "@/types/journal";
 import { BrandLogo } from "@/components/BrandLogo";
+import { exportTradePdf } from "@/lib/tradePdfExport";
 
 interface TradePrintModalProps {
   trade: TradeEntry | null;
@@ -20,6 +21,11 @@ export function TradePrintModal({ trade, book, onClose, isBn = false }: TradePri
 
   const isWin = trade.pnl > 0.001;
   const isLoss = trade.pnl < -0.001;
+
+  const tradeScreenshots = trade.screenshots && trade.screenshots.length > 0
+    ? trade.screenshots
+    : (trade.mediaUrl && trade.mediaType !== "video" ? [trade.mediaUrl] : []);
+  const tradeVideo = trade.videoUrl || (trade.mediaType === "video" ? trade.mediaUrl : undefined);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/75 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200">
@@ -41,7 +47,15 @@ export function TradePrintModal({ trade, book, onClose, isBn = false }: TradePri
               size="sm"
               className="gap-1.5 bg-[#081833] text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 font-bold"
             >
-              <Printer size={15} /> {isBn ? "প্রিন্ট / PDF সংরক্ষণ" : "Print / Save PDF"}
+              <Printer size={15} /> Print
+            </Button>
+            <Button
+              onClick={() => exportTradePdf(trade, book)}
+              size="sm"
+              variant="outline"
+              className="gap-1.5 border-slate-300 dark:border-slate-700 font-bold hover:border-cyan-500 hover:text-cyan-500"
+            >
+              <Download size={15} /> PDF
             </Button>
             <button
               onClick={onClose}
@@ -192,26 +206,45 @@ export function TradePrintModal({ trade, book, onClose, isBn = false }: TradePri
             </div>
           )}
 
-          {/* Attached Media */}
-          {trade.mediaUrl && (
+          {/* Attached Screenshots */}
+          {tradeScreenshots.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
+                  Trade Screenshots ({tradeScreenshots.length})
+                </h3>
+                <span className="text-[10px] text-slate-400">Verified Evidence</span>
+              </div>
+              <div className={`grid gap-3 ${tradeScreenshots.length === 1 ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2 print:grid-cols-2"}`}>
+                {tradeScreenshots.map((imgSrc, idx) => (
+                  <div key={idx} className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-950 p-1.5 shadow-xs">
+                    <div className="text-[9px] font-mono font-bold text-slate-400 mb-1 px-1 flex items-center justify-between">
+                      <span className="text-sky-500 dark:text-sky-400">Screenshot #{idx + 1}</span>
+                      <span>Trade #{trade.tradeNumber}</span>
+                    </div>
+                    <img
+                      src={imgSrc}
+                      alt={`Trade Screenshot ${idx + 1}`}
+                      className="max-h-72 w-full object-contain rounded-lg"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Attached Video */}
+          {tradeVideo && (
             <div className="space-y-2">
               <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
-                Execution Evidence / Chart Snapshot
+                Execution Video Clip
               </h3>
               <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-950">
-                {trade.mediaType === "video" ? (
-                  <video
-                    src={trade.mediaUrl}
-                    controls
-                    className="max-h-80 w-full object-contain"
-                  />
-                ) : (
-                  <img
-                    src={trade.mediaUrl}
-                    alt="Trade Chart Snapshot"
-                    className="max-h-80 w-full object-contain"
-                  />
-                )}
+                <video
+                  src={tradeVideo}
+                  controls
+                  className="max-h-80 w-full object-contain"
+                />
               </div>
             </div>
           )}

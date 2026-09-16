@@ -20,6 +20,7 @@ function Router() {
       <Route path="/login" component={Auth} />
       <Route path="/register" component={Auth} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/discipline" component={Dashboard} />
       <Route path="/checkout" component={Checkout} />
       <Route path="/support" component={Support} />
       <Route path="/admin" component={Admin} />

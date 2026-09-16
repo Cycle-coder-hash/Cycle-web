@@ -15,6 +15,10 @@ import {
   auditEvents,
   notifications,
   settings,
+  listFreeEbooks,
+  createFreeEbook,
+  updateFreeEbook,
+  deleteFreeEbook,
 } from "./db";
 import { eq } from "drizzle-orm";
 import { sendAccessEmail } from "./email";
@@ -288,3 +292,46 @@ adminRouter.post("/update-ticket", async (req, res) => {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
+
+// GET /api/admin/ebooks
+adminRouter.get("/ebooks", async (req, res) => {
+  try {
+    const ebooks = await listFreeEbooks(true);
+    return res.json({ success: true, ebooks });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/admin/ebooks
+adminRouter.post("/ebooks", async (req, res) => {
+  try {
+    const created = await createFreeEbook(req.body);
+    return res.json({ success: true, ebook: created });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// PUT /api/admin/ebooks/:id
+adminRouter.put("/ebooks/:id", async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const updated = await updateFreeEbook(id, req.body);
+    return res.json({ success: true, ebook: updated });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /api/admin/ebooks/:id
+adminRouter.delete("/ebooks/:id", async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    await deleteFreeEbook(id);
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+

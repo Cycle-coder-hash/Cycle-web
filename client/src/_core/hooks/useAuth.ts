@@ -123,6 +123,11 @@ export function useAuth(options?: UseAuthOptions) {
                   phone: payload.user_metadata?.phone || null,
                   role: "user",
                   loginMethod: "supabase",
+                  avatar:
+                    payload.user_metadata?.avatar_url ||
+                    payload.user_metadata?.avatar ||
+                    payload.user_metadata?.picture ||
+                    null,
                   language: payload.user_metadata?.language || "en",
                   emailVerified: true,
                   createdAt: new Date(),

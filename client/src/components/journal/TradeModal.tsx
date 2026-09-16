@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X, Plus, Trash2, Upload, AlertCircle, CheckCircle2, Image, Video, Sparkles, FileText } from "lucide-react";
+import { X, Plus, Trash2, Upload, AlertCircle, CheckCircle2, Image, Video, Sparkles, FileText, Eye, Film, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TradeEntry, CustomProperty } from "@/types/journal";
 import { calculatePips, calculateEstimatedPnl, calculateRiskReward } from "@/lib/journalCalculations";
@@ -150,14 +150,27 @@ export function TradeModal({
     initialTrade?.tradeRank || "A"
   );
 
-  // 19. Screenshot / Video
-  const [mediaUrl, setMediaUrl] = useState<string | undefined>(
-    initialTrade?.mediaUrl
-  );
-  const [mediaType, setMediaType] = useState<"image" | "video" | undefined>(
-    initialTrade?.mediaType
+  // 19. Screenshots (Multiple) & Video
+  const [screenshots, setScreenshots] = useState<string[]>(() => {
+    if (initialTrade?.screenshots && initialTrade.screenshots.length > 0) {
+      return initialTrade.screenshots;
+    }
+    if (initialTrade?.mediaUrl && initialTrade?.mediaType !== "video") {
+      return [initialTrade.mediaUrl];
+    }
+    return [];
+  });
+
+  const [videoUrl, setVideoUrl] = useState<string | undefined>(() => {
+    if (initialTrade?.videoUrl) return initialTrade.videoUrl;
+    if (initialTrade?.mediaType === "video") return initialTrade.mediaUrl;
+    return undefined;
+  });
+  const [videoDurationSeconds, setVideoDurationSeconds] = useState<number | undefined>(
+    initialTrade?.videoDurationSeconds
   );
   const [videoError, setVideoError] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // 20. Update / Learning
   const [learning, setLearning] = useState<string>(
@@ -168,6 +181,74 @@ export function TradeModal({
   const [customProperties, setCustomProperties] = useState<CustomProperty[]>(
     initialTrade?.customProperties || []
   );
+
+  // Sync state when initialTrade or isOpen changes
+  useEffect(() => {
+    if (initialTrade) {
+      setDate(initialTrade.date || new Date().toISOString().slice(0, 10));
+      setEntryTime(initialTrade.entryTime || "09:30");
+      setPair(COMMON_PAIRS.includes(initialTrade.pair) ? initialTrade.pair : "Custom");
+      setIsCustomPair(!COMMON_PAIRS.includes(initialTrade.pair));
+      setCustomPairText(!COMMON_PAIRS.includes(initialTrade.pair) ? initialTrade.pair : "");
+      setTimeframe(initialTrade.timeframe || "15M");
+      setIsCustomTimeframe(!["1M", "5M", "15M", "30M", "1H", "4H", "1D", "1W"].includes(initialTrade.timeframe));
+      setCustomTimeframeText(!["1M", "5M", "15M", "30M", "1H", "4H", "1D", "1W"].includes(initialTrade.timeframe) ? initialTrade.timeframe : "");
+      setDirection(initialTrade.direction || "Buy");
+      setEntryPrice(String(initialTrade.entryPrice ?? ""));
+      setStopLoss(String(initialTrade.stopLoss ?? ""));
+      setTakeProfit(String(initialTrade.takeProfit ?? ""));
+      setExitPrice(String(initialTrade.exitPrice ?? ""));
+      setFollowedRules(initialTrade.followedRules || "Yes");
+      setPnl(String(initialTrade.pnl ?? ""));
+      setPnlManuallyEdited(true);
+      setRiskReward(initialTrade.riskReward || "1:2.0");
+      setPips(String(initialTrade.pips ?? ""));
+      setLotSize(String(initialTrade.lotSize ?? "1.00"));
+      setTradeRun(initialTrade.tradeRun || "+2R");
+      setNote(initialTrade.note || "");
+      setTradeRank(initialTrade.tradeRank || "A");
+      setLearning(initialTrade.learning || "");
+      setCustomProperties(initialTrade.customProperties || []);
+
+      const loadedScreenshots = initialTrade.screenshots && initialTrade.screenshots.length > 0
+        ? initialTrade.screenshots
+        : (initialTrade.mediaUrl && initialTrade.mediaType !== "video" ? [initialTrade.mediaUrl] : []);
+      setScreenshots(loadedScreenshots);
+
+      const loadedVideo = initialTrade.videoUrl || (initialTrade.mediaType === "video" ? initialTrade.mediaUrl : undefined);
+      setVideoUrl(loadedVideo);
+      setVideoDurationSeconds(initialTrade.videoDurationSeconds);
+    } else {
+      setDate(new Date().toISOString().slice(0, 10));
+      setEntryTime("09:30");
+      setPair("EURUSD");
+      setIsCustomPair(false);
+      setCustomPairText("");
+      setTimeframe("15M");
+      setIsCustomTimeframe(false);
+      setCustomTimeframeText("");
+      setDirection("Buy");
+      setEntryPrice("");
+      setStopLoss("");
+      setTakeProfit("");
+      setExitPrice("");
+      setFollowedRules("Yes");
+      setPnl("");
+      setPnlManuallyEdited(false);
+      setRiskReward("1:2.0");
+      setPips("");
+      setLotSize("1.00");
+      setTradeRun("+2R");
+      setNote("");
+      setTradeRank("A");
+      setLearning("");
+      setCustomProperties([]);
+      setScreenshots([]);
+      setVideoUrl(undefined);
+      setVideoDurationSeconds(undefined);
+    }
+    setVideoError(null);
+  }, [initialTrade, isOpen]);
 
   // Active pair calculation
   const activePair = isCustomPair ? customPairText.trim().toUpperCase() : pair;
@@ -197,46 +278,81 @@ export function TradeModal({
     }
   }, [entryPrice, exitPrice, stopLoss, takeProfit, lotSize, direction, activePair, pnlManuallyEdited]);
 
+  // Multiple screenshot images upload handler (No arbitrary limit)
+  const handleMultipleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const fileList = Array.from(files);
+    const validImageFiles = fileList.filter((f) => f.type.startsWith("image/"));
+
+    if (validImageFiles.length === 0) {
+      alert("Please select valid image files (PNG, JPG, WEBP, etc.).");
+      return;
+    }
+
+    const readers = validImageFiles.map(
+      (file) =>
+        new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        })
+    );
+
+    Promise.all(readers).then((newImages) => {
+      setScreenshots((prev) => [...prev, ...newImages]);
+    });
+
+    // Reset input value so same files can be re-selected if desired
+    e.target.value = "";
+  };
+
+  const handleRemoveScreenshot = (index: number) => {
+    setScreenshots((prev) => prev.filter((_, i) => i !== index));
+  };
+
   // Video duration validation handler (MAX 1 MINUTE STRICTLY ENFORCED)
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     setVideoError(null);
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.type.startsWith("video/")) {
-      const video = document.createElement("video");
-      video.preload = "metadata";
-      video.onloadedmetadata = () => {
-        window.URL.revokeObjectURL(video.src);
-        const duration = video.duration;
-        if (duration > 60) {
-          setVideoError(
-            `Video rejected: Duration is ${Math.round(duration)} seconds. Maximum allowed video length is 1 minute (60 seconds).`
-          );
-          setMediaUrl(undefined);
-          setMediaType(undefined);
-          return;
-        }
+    if (!file.type.startsWith("video/")) {
+      alert("Please upload a valid video file (MP4, WEBM, MOV).");
+      return;
+    }
 
-        // Accept video
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setMediaUrl(reader.result as string);
-          setMediaType("video");
-        };
-        reader.readAsDataURL(file);
-      };
-      video.src = URL.createObjectURL(file);
-    } else if (file.type.startsWith("image/")) {
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      window.URL.revokeObjectURL(video.src);
+      const duration = video.duration;
+      if (duration > 60) {
+        setVideoError(
+          `Video rejected: Duration is ${Math.round(duration)} seconds. Maximum allowed video length is 1 minute (60 seconds).`
+        );
+        setVideoUrl(undefined);
+        setVideoDurationSeconds(undefined);
+        return;
+      }
+
+      // Accept video under 60 seconds
       const reader = new FileReader();
       reader.onloadend = () => {
-        setMediaUrl(reader.result as string);
-        setMediaType("image");
+        setVideoUrl(reader.result as string);
+        setVideoDurationSeconds(Math.round(duration));
       };
       reader.readAsDataURL(file);
-    } else {
-      alert("Please upload a valid image or video file.");
-    }
+    };
+    video.src = URL.createObjectURL(file);
+    e.target.value = "";
+  };
+
+  const handleRemoveVideo = () => {
+    setVideoUrl(undefined);
+    setVideoDurationSeconds(undefined);
+    setVideoError(null);
   };
 
   const handleAddProperty = () => {
@@ -286,8 +402,11 @@ export function TradeModal({
       tradeRun: tradeRun.trim() || "0R",
       note: note.trim(),
       tradeRank,
-      mediaUrl,
-      mediaType,
+      screenshots,
+      videoUrl,
+      videoDurationSeconds,
+      mediaUrl: screenshots[0] || videoUrl || undefined,
+      mediaType: (videoUrl ? "video" : (screenshots.length > 0 ? "image" : undefined)) as "image" | "video" | undefined,
       learning: learning.trim(),
       customProperties: customProperties.filter((p) => p.name.trim() !== ""),
     };
@@ -666,58 +785,175 @@ export function TradeModal({
             </div>
           </div>
 
-          {/* SECTION 6: SCREENSHOT / VIDEO (MAX 1 MINUTE STRICT VALIDATION) */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-                <Image size={14} className="text-sky-500" />
-                <span>Field 19: Screenshot or Video Upload</span>
-              </label>
-              <span className="text-[10px] font-bold text-rose-500">
-                * Strict Video Limit: Max 1 Minute (60s)
+          {/* SECTION 6: MULTIPLE SCREENSHOTS & VIDEO (STRICT MAX 1 MINUTE VIDEO VALIDATION) */}
+          <div className="space-y-4 rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/60 pb-3 dark:border-slate-800">
+              <div>
+                <label className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                  <Image size={15} className="text-cyan-500" />
+                  <span>Field 19: Trade Screenshots & Media</span>
+                  <span className="ml-1 rounded-full bg-cyan-500/10 px-2 py-0.5 text-[10px] font-black text-cyan-500">
+                    {screenshots.length} {screenshots.length === 1 ? "Screenshot" : "Screenshots"}
+                  </span>
+                </label>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Attach multiple chart screenshots (HTF narrative, 1H POI, 5m/1m entry, runner, exit). No screenshot limit.
+                </p>
+              </div>
+
+              <span className="text-[10px] font-bold text-rose-500 bg-rose-500/10 px-2.5 py-1 rounded-lg border border-rose-500/20 self-start sm:self-center">
+                * Video Limit: Max 1 Minute (60s)
               </span>
             </div>
 
-            <div className="rounded-2xl border border-dashed border-slate-300 p-4 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950/50">
-              {videoError && (
-                <div className="mb-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center gap-2">
-                  <AlertCircle size={16} />
-                  <span>{videoError}</span>
-                </div>
-              )}
+            {videoError && (
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center gap-2 animate-in fade-in">
+                <AlertCircle size={16} />
+                <span>{videoError}</span>
+              </div>
+            )}
 
-              {mediaUrl ? (
+            {/* SCREENSHOTS GALLERY */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                  <span>Attached Screenshots</span>
+                  <span className="text-[10px] text-slate-400">({screenshots.length} saved with this trade)</span>
+                </span>
+
+                <label className="inline-flex items-center gap-1.5 rounded-xl border border-dashed border-cyan-500/50 bg-cyan-500/10 px-3 py-1.5 text-xs font-bold text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/20 cursor-pointer transition-all shadow-xs">
+                  <Plus size={13} />
+                  <span>{screenshots.length > 0 ? "Add More Screenshots" : "Upload Screenshots"}</span>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleMultipleImageUpload}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+              {screenshots.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {screenshots.map((src, index) => (
+                    <div
+                      key={index}
+                      className="group relative aspect-video rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-950 shadow-sm"
+                    >
+                      <img
+                        src={src}
+                        alt={`Screenshot ${index + 1}`}
+                        className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                      />
+                      {/* Screenshot Number Tag */}
+                      <div className="absolute top-1.5 left-1.5 rounded-md bg-black/75 px-1.5 py-0.5 text-[9px] font-black text-cyan-400 backdrop-blur-xs border border-white/10">
+                        #{index + 1}
+                      </div>
+
+                      {/* Hover Actions */}
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewImage(src)}
+                          className="rounded-lg bg-white/20 p-1.5 text-white hover:bg-white/30 backdrop-blur-xs transition"
+                          title="View Full Resolution"
+                        >
+                          <Eye size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveScreenshot(index)}
+                          className="rounded-lg bg-rose-600 p-1.5 text-white hover:bg-rose-700 transition shadow-md"
+                          title="Delete this screenshot"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Add more tile */}
+                  <label className="flex flex-col items-center justify-center aspect-video rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-white/40 dark:bg-slate-900/40 hover:border-cyan-500 hover:bg-cyan-500/5 cursor-pointer transition text-center p-2">
+                    <Plus size={18} className="text-cyan-500 mb-1" />
+                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Add Image</span>
+                    <span className="text-[9px] text-slate-400">Multiple allowed</span>
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleMultipleImageUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center cursor-pointer py-6 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-white/60 dark:bg-slate-900/50 hover:border-cyan-500 hover:bg-cyan-500/5 transition">
+                  <Upload size={24} className="text-cyan-500 mb-2" />
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                    Click to select multiple screenshots (or drag & drop files)
+                  </span>
+                  <span className="text-[10px] text-slate-400 mt-0.5">
+                    Supports PNG, JPG, WEBP • Select multiple images at once • Add as many as needed
+                  </span>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleMultipleImageUpload}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
+
+            {/* VIDEO ATTACHMENT SECTION (MAX 60 SECONDS) */}
+            <div className="border-t border-slate-200/60 pt-3 dark:border-slate-800 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
+                  <Video size={13} className="text-purple-400" />
+                  <span>Execution Video Clip (Optional • Strictly ≤ 60 seconds)</span>
+                </span>
+                {videoDurationSeconds && (
+                  <span className="rounded-md bg-purple-500/10 px-2 py-0.5 text-[10px] font-bold text-purple-400">
+                    {videoDurationSeconds}s verified
+                  </span>
+                )}
+              </div>
+
+              {videoUrl ? (
                 <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-black">
-                  {mediaType === "video" ? (
-                    <video src={mediaUrl} controls className="max-h-60 w-full object-contain" />
-                  ) : (
-                    <img src={mediaUrl} alt="Trade Preview" className="max-h-60 w-full object-contain" />
-                  )}
+                  <video src={videoUrl} controls className="max-h-60 w-full object-contain" />
                   <button
                     type="button"
-                    onClick={() => {
-                      setMediaUrl(undefined);
-                      setMediaType(undefined);
-                    }}
-                    className="absolute top-2 right-2 rounded-full bg-rose-600 p-1.5 text-white hover:bg-rose-700 shadow-md"
-                    title="Remove media"
+                    onClick={handleRemoveVideo}
+                    className="absolute top-2 right-2 rounded-full bg-rose-600 p-1.5 text-white hover:bg-rose-700 shadow-md transition"
+                    title="Remove video clip"
                   >
                     <Trash2 size={14} />
                   </button>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center cursor-pointer py-4">
-                  <Upload size={24} className="text-slate-400 mb-2" />
-                  <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
-                    Click to attach trade screenshot or video clip
-                  </span>
-                  <span className="text-[10px] text-slate-400 mt-0.5">
-                    Supports PNG, JPG, WEBP or MP4 (Max video length: 60 seconds)
+                <label className="flex items-center justify-between px-4 py-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-white/40 dark:bg-slate-900/40 hover:border-purple-400 cursor-pointer transition">
+                  <div className="flex items-center gap-2.5">
+                    <Video size={16} className="text-purple-400" />
+                    <div>
+                      <div className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                        Attach Execution Video Clip (MP4, WEBM)
+                      </div>
+                      <div className="text-[10px] text-slate-400">
+                        Strict maximum duration: 1 minute (60 seconds)
+                      </div>
+                    </div>
+                  </div>
+                  <span className="text-xs font-bold text-purple-500 bg-purple-500/10 px-2.5 py-1 rounded-lg">
+                    Browse Video
                   </span>
                   <input
                     type="file"
-                    accept="image/*,video/*"
-                    onChange={handleFileUpload}
+                    accept="video/*"
+                    onChange={handleVideoUpload}
                     className="hidden"
                   />
                 </label>
@@ -802,6 +1038,30 @@ export function TradeModal({
           </div>
         </form>
       </div>
+
+      {/* Lightbox Modal for Previewing Screenshot */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-in fade-in"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div className="relative max-w-5xl w-full max-h-[90vh] flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setPreviewImage(null)}
+              className="absolute -top-10 right-0 p-2 text-white/80 hover:text-white rounded-full bg-white/10 hover:bg-white/20 transition cursor-pointer"
+              title="Close Preview"
+            >
+              <X size={20} />
+            </button>
+            <img
+              src={previewImage}
+              alt="Screenshot Preview"
+              className="max-h-[85vh] max-w-full rounded-2xl object-contain shadow-2xl border border-white/10"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

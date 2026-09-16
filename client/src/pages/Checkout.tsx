@@ -12,7 +12,15 @@ export default function Checkout() {
   const { data: bundles } = trpc.public.bundles.useQuery();
   const { data: settings } = trpc.public.paymentSettings.useQuery();
 
-  const [selected, setSelected] = useState(1);
+  const [selected, setSelected] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const bundleParam = params.get("bundle");
+    if (bundleParam) {
+      const parsed = parseInt(bundleParam);
+      if (!isNaN(parsed)) return parsed;
+    }
+    return 2;
+  });
   const [error, setError] = useState("");
   const [selectedPdfIds, setSelectedPdfIds] = useState<number[]>(Array.from({ length: 15 }, (_, i) => i + 1));
   const [method, setMethod] = useState<"bkash" | "nagad" | "rocket">("bkash");
@@ -25,8 +33,19 @@ export default function Checkout() {
     onError: (e) => setError(e.message),
   });
 
-  const chosen = bundles?.find((b: any) => b.id === selected);
-  const price = chosen?.price || (selected === 1 ? "00" : selected === 2 ? "1999.00" : "2499.00");
+  const baseBundles = [
+    { id: 1, titleEn: "Free eBook Package", descriptionEn: "15 PDFs · fixed package price", price: "00" },
+    { id: 2, titleEn: "CYCLE OF CHART BASIC TO ADVANCE COURSE", descriptionEn: "Structured course · eBook included", price: "2499" },
+    { id: 4, titleEn: "CYCLE OF CHART — PROFESSIONAL TRADING BLUEPRINT", descriptionEn: "Complete A–Z Trading Blueprint", originalPrice: "5550", price: "3999" },
+  ];
+  const bundlesList = baseBundles.map((b) => {
+    const match = bundles?.find((apiB: any) => apiB.id === b.id);
+    const resolvedPrice = match?.price && match.price !== "1999.00" && match.price !== "1999" ? match.price : b.price;
+    return match ? { ...b, ...match, price: resolvedPrice } : b;
+  });
+
+  const chosen = bundlesList.find((b: any) => b.id === selected);
+  const price = chosen?.price || (selected === 1 ? "00" : selected === 2 ? "2499" : "3999");
 
   if (!user) {
     return (
@@ -67,14 +86,6 @@ export default function Checkout() {
       </div>
     );
   }
-
-  const bundlesList = bundles?.length
-    ? bundles
-    : [
-        { id: 1, titleEn: "Free eBook Package", descriptionEn: "15 PDFs · fixed package price", price: "00" },
-        { id: 2, titleEn: "CYCLE OF CHART BASIC TO ADVANCE COURSE", descriptionEn: "Structured course · eBook included", price: "1999.00" },
-        { id: 3, titleEn: "CANDLE KING A TO Z FULL COURSE", descriptionEn: "15 PDFs · course · eBook", price: "2499.00" },
-      ];
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900">
@@ -261,7 +272,7 @@ export default function Checkout() {
             <div className="mt-6 flex items-start justify-between gap-4">
               <div>
                 <div className="text-lg sm:text-xl font-bold">
-                  {chosen?.titleEn || (selected === 1 ? "Free eBook Package" : selected === 2 ? "CYCLE OF CHART BASIC TO ADVANCE COURSE" : "CANDLE KING A TO Z FULL COURSE")}
+                  {chosen?.titleEn || (selected === 1 ? "Free eBook Package" : selected === 2 ? "CYCLE OF CHART BASIC TO ADVANCE COURSE" : "CYCLE OF CHART — PROFESSIONAL TRADING BLUEPRINT")}
                 </div>
                 <div className="mt-1 text-xs text-slate-400">BDT · Manual Verification</div>
               </div>

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import {
   AlertCircle,
@@ -6,8 +6,10 @@ import {
   ArrowRight,
   BookOpen,
   Calendar,
+  Camera,
   Check,
   CheckCircle2,
+  ChevronRight,
   Circle,
   ClipboardCheck,
   Clock,
@@ -19,6 +21,7 @@ import {
   Flame,
   GraduationCap,
   LayoutDashboard,
+  Layers,
   Lock,
   LogOut,
   Moon,
@@ -45,6 +48,8 @@ import { trpc } from "@/lib/trpc";
 import { useTheme } from "@/contexts/ThemeContext";
 import { TraderJournal } from "@/components/journal/TraderJournal";
 import { getStoredTrades } from "@/lib/traderJournalStorage";
+import { getDashboardRoadmapStages, DashboardRoadmapStage } from "@/data/roadmapStages";
+import { DailyDisciplineMaster } from "@/components/discipline/DailyDisciplineMaster";
 
 // Daily Discipline Rules
 const DAILY_DISCIPLINE_RULES = [
@@ -151,12 +156,59 @@ export default function Dashboard() {
 
   // Active Tab
   const [tab, setTab] = useState<
-    "overview" | "library" | "journal" | "discipline" | "orders" | "support"
-  >("overview");
+    "overview" | "roadmap" | "library" | "journal" | "discipline" | "orders" | "support"
+  >(() => {
+    if (typeof window !== "undefined") {
+      if (window.location.pathname === "/discipline") return "discipline";
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+      if (
+        tabParam === "discipline" ||
+        tabParam === "roadmap" ||
+        tabParam === "library" ||
+        tabParam === "journal" ||
+        tabParam === "orders" ||
+        tabParam === "support"
+      ) {
+        return tabParam as any;
+      }
+    }
+    return "overview";
+  });
   const [lang, setLang] = useState<"en" | "bn">(() => (localStorage.getItem("cycle-language") as "en" | "bn") || "en");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (window.location.pathname === "/discipline") {
+        setTab("discipline");
+      }
+    }
+  }, []);
 
   // Date for discipline
   const today = useMemo(() => new Date().toISOString().split("T")[0], []);
+
+  // 12-Stage Roadmap State & Notes
+  const [roadmapFilter, setRoadmapFilter] = useState<"all" | "completed" | "todo">("all");
+  const [selectedRoadmapStage, setSelectedRoadmapStage] = useState<DashboardRoadmapStage | null>(null);
+  const [stageNotes, setStageNotes] = useState<Record<number, string>>(() => {
+    try {
+      const saved = localStorage.getItem("cycle_stage_notes");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const handleSaveStageNote = (stageNum: number, note: string) => {
+    setStageNotes((prev) => {
+      const updated = { ...prev, [stageNum]: note };
+      try {
+        localStorage.setItem("cycle_stage_notes", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
 
   // Modals & States
   // Library Modals
@@ -192,6 +244,7 @@ export default function Dashboard() {
   };
 
   // Queries
+  const { data: progress, refetch: refetchProgress } = trpc.customer.progress.useQuery(undefined, { enabled: !!user });
   const { data: orders, refetch: refetchOrders } = trpc.customer.orders.useQuery(undefined, { enabled: !!user });
   const { data: entitlements, refetch: refetchEntitlements } = trpc.customer.entitlements.useQuery(undefined, { enabled: !!user });
   const { data: journal, refetch: refetchJournal } = trpc.customer.journal.useQuery(undefined, { enabled: !!user });
@@ -200,6 +253,9 @@ export default function Dashboard() {
   const { data: discipline, refetch: refetchDiscipline } = trpc.customer.discipline.useQuery({ date: today }, { enabled: !!user });
 
   // Mutations
+  const toggleProgressMutation = trpc.customer.toggleProgress.useMutation({
+    onSuccess: () => refetchProgress(),
+  });
 
   const toggleDisciplineMutation = trpc.customer.toggleDiscipline.useMutation({
     onSuccess: () => refetchDiscipline(),
@@ -229,6 +285,94 @@ export default function Dashboard() {
 
   // Stored trades from Trader Journal
   const [localTrades, setLocalTrades] = useState(() => getStoredTrades());
+
+  // User profile photo state (strictly isolated per user)
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(() => {
+    if (!user) return null;
+    const userKey = user.openId || user.email || String(user.id);
+    return (user as any)?.avatar || (typeof window !== "undefined" ? localStorage.getItem(`cycle_user_avatar_${userKey}`) : null) || null;
+  });
+
+  // Keep profile photo in sync if user changes or session refreshes
+  useEffect(() => {
+    if (user) {
+      const userKey = user.openId || user.email || String(user.id);
+      const stored = (user as any)?.avatar || localStorage.getItem(`cycle_user_avatar_${userKey}`);
+      setProfilePhoto(stored || null);
+    } else {
+      setProfilePhoto(null);
+    }
+  }, [user]);
+
+  // trpc profile mutation to persist on backend
+  const updateProfileMutation = trpc.auth.updateProfile.useMutation({
+    onError: (err) => {
+      console.warn("[Profile update warning]:", err.message);
+    },
+  });
+
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate image format
+    if (!file.type.match(/^image\/(jpeg|jpg|png|webp)$/i)) {
+      alert(isBn ? "অনুগ্রহ করে JPG, PNG অথবা WEBP ফরম্যাটের ছবি নির্বাচন করুন।" : "Please select a valid image file (JPG, PNG, WEBP).");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        // Center-crop to a square and resize to crisp 400x400
+        const canvas = document.createElement("canvas");
+        const targetSize = 400;
+        canvas.width = targetSize;
+        canvas.height = targetSize;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        const minDim = Math.min(img.width, img.height);
+        const sx = (img.width - minDim) / 2;
+        const sy = (img.height - minDim) / 2;
+        ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, targetSize, targetSize);
+
+        const dataUrl = canvas.toDataURL("image/webp", 0.9);
+
+        // Update local state immediately for instant feedback
+        setProfilePhoto(dataUrl);
+
+        // Persist locally per current user
+        const userKey = user.openId || user.email || String(user.id);
+        try {
+          localStorage.setItem(`cycle_user_avatar_${userKey}`, dataUrl);
+          const cached = localStorage.getItem("manus-runtime-user-info");
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed) {
+              parsed.avatar = dataUrl;
+              localStorage.setItem("manus-runtime-user-info", JSON.stringify(parsed));
+            }
+          }
+        } catch (err) {
+          console.warn("Local storage write failed", err);
+        }
+
+        // Persist to backend database via trpc
+        updateProfileMutation.mutate({ avatar: dataUrl });
+
+        // Dispatch window event for other listeners
+        window.dispatchEvent(new CustomEvent("cycle_user_profile_updated", { detail: { userId: userKey, avatar: dataUrl } }));
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+
+    // Reset input so re-selecting same file triggers change
+    e.target.value = "";
+  };
 
   useEffect(() => {
     const handleJournalUpdate = () => {
@@ -342,8 +486,17 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
     window.location.href = "/login";
   };
 
+  const completedStagesCount = useMemo(() => {
+    if (!progress) return 0;
+    return progress.filter((p: any) => p.completed).length;
+  }, [progress]);
+
+  const progressPercent = Math.min(100, Math.round((completedStagesCount / 12) * 100));
+
+  const dashboardStages = useMemo(() => getDashboardRoadmapStages(isBn), [isBn]);
+
   type NavItem = {
-    id: "overview" | "library" | "journal" | "discipline" | "orders" | "support";
+    id: "overview" | "roadmap" | "library" | "journal" | "discipline" | "orders" | "support";
     labelEn: string;
     labelBn: string;
     icon: any;
@@ -352,6 +505,7 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
 
   const navItems: NavItem[] = [
     { id: "overview", labelEn: "Overview", labelBn: "ওভারভিউ", icon: LayoutDashboard },
+    { id: "roadmap", labelEn: "12-Stage Roadmap", labelBn: "১২-স্টেজ রোডম্যাপ", icon: Layers, badge: `${completedStagesCount}/12` },
     { id: "library", labelEn: "My Library & Resources", labelBn: "আমার লাইব্রেরি", icon: BookOpen, badge: entitlements?.length ? `${entitlements.length}` : undefined },
     { id: "journal", labelEn: "Trading Journal", labelBn: "ট্রেডিং জার্নাল", icon: NotebookPen, badge: (localTrades?.length || journal?.length) ? `${localTrades?.length || journal?.length}` : undefined },
     { id: "discipline", labelEn: "Daily Discipline", labelBn: "ডেইলি রুটিন", icon: ClipboardCheck },
@@ -397,8 +551,38 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
           {/* User Profile Snippet */}
           <div className="mt-8 rounded-2xl border border-slate-100 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/60">
             <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-[#081833] font-mono text-sm font-bold text-white dark:bg-sky-500 dark:text-slate-950 shadow-md">
-                {user.name ? user.name[0].toUpperCase() : "U"}
+              {/* Circular Avatar / Profile Photo Area */}
+              <div className="relative shrink-0 group">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  aria-label={isBn ? "প্রোফাইল ছবি পরিবর্তন করুন" : "Change profile photo"}
+                  className="relative flex size-10 items-center justify-center rounded-full overflow-hidden border border-slate-200/80 bg-[#081833] font-mono text-sm font-bold text-white shadow-md transition-transform active:scale-95 cursor-pointer dark:border-slate-700/80 dark:bg-sky-500 dark:text-slate-950 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  title={isBn ? "প্রোফাইল ছবি পরিবর্তন করতে ক্লিক করুন" : "Click to set or change profile photo"}
+                >
+                  {profilePhoto ? (
+                    <img
+                      src={profilePhoto}
+                      alt={user.name || "User Profile"}
+                      className="size-full object-cover rounded-full"
+                    />
+                  ) : (
+                    <span>{user.name ? user.name[0].toUpperCase() : "U"}</span>
+                  )}
+
+                  {/* Subtle hover edit/camera indicator */}
+                  <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <Camera size={14} className="text-white drop-shadow-sm" />
+                  </div>
+                </button>
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  accept="image/jpeg,image/png,image/webp,image/jpg"
+                  className="hidden"
+                  onChange={handleAvatarUpload}
+                />
               </div>
               <div className="overflow-hidden">
                 <div className="truncate text-sm font-extrabold">{user.name || "Trader"}</div>
@@ -604,7 +788,10 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
                 </div>
 
                 {/* 4. Today's Discipline */}
-                <div className="rounded-3xl bg-[#081833] p-6 text-white shadow-xl shadow-[#081833]/15 dark:bg-slate-800">
+                <button
+                  onClick={() => setTab("discipline")}
+                  className="rounded-3xl bg-[#081833] p-6 text-white shadow-xl shadow-[#081833]/15 dark:bg-slate-800 text-left transition-all hover:ring-2 hover:ring-[#38bdf8]/50 cursor-pointer"
+                >
                   <div className="flex items-center justify-between text-slate-400">
                     <span className="text-xs font-extrabold uppercase tracking-wider text-[#38bdf8]">{isBn ? "আজকের রুটিন" : "Today's Discipline"}</span>
                     <ClipboardCheck size={18} className="text-[#38bdf8]" />
@@ -613,10 +800,11 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
                     <span className="text-3xl font-black">{discipline?.filter((d: any) => d.completed).length || 0}</span>
                     <span className="text-sm font-bold text-slate-400">/ 6 {isBn ? "রুলস" : "Rules"}</span>
                   </div>
-                  <div className="mt-2 text-xs font-medium text-slate-300">
-                    {isBn ? "ডিসিপ্লিনই ট্রেডারের মূল শক্তি" : "Process over emotion"}
+                  <div className="mt-2 flex items-center justify-between text-xs font-medium text-slate-300">
+                    <span>{isBn ? "ডিসিপ্লিনই ট্রেডারের মূল শক্তি" : "Process over emotion"}</span>
+                    <ChevronRight size={14} className="text-[#38bdf8]" />
                   </div>
-                </div>
+                </button>
               </div>
 
               {/* Learning Resource Banner CTA */}
@@ -723,8 +911,17 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
                 {/* Daily Discipline Checklist */}
                 <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-base font-extrabold">{isBn ? "ডেইলি ট্রেডার চেকলিস্ট" : "Daily Discipline Checklist"}</h3>
-                    <span className="text-xs font-mono font-bold text-slate-400">{today}</span>
+                    <div>
+                      <h3 className="text-base font-extrabold">{isBn ? "ডেইলি ট্রেডার চেকলিস্ট" : "Daily Discipline Checklist"}</h3>
+                      <span className="text-xs font-mono font-bold text-slate-400">{today}</span>
+                    </div>
+                    <button
+                      onClick={() => setTab("discipline")}
+                      className="inline-flex items-center gap-1 text-xs font-extrabold text-sky-500 hover:text-sky-600 transition-colors"
+                    >
+                      <span>{isBn ? "সম্পূর্ণ সিস্টেম" : "Full System"}</span>
+                      <ChevronRight size={14} />
+                    </button>
                   </div>
 
                   <div className="mt-4 space-y-2.5">
@@ -751,6 +948,120 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
                     })}
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB 2: 12-STAGE ROADMAP TRACKER */}
+          {/* ========================================================================= */}
+          {tab === "roadmap" && (
+            <div className="space-y-6 animate-in fade-in duration-300">
+              <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                <div>
+                  <h2 className="text-2xl font-extrabold tracking-tight">
+                    {isBn ? "১২-স্টেজ ট্রেডিং রিয়েলিটি রোডম্যাপ" : "12-Stage Institutional Roadmap"}
+                  </h2>
+                  <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                    {isBn
+                      ? "প্রতিটি স্টেজ ওপেন করে প্রাতিষ্ঠানিক রুলস পড়ুন এবং সম্পন্ন করার পর টিক দিন।"
+                      : "Master institutional concepts step-by-step. Click any stage to study rules & log notes."}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {(["all", "completed", "todo"] as const).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setRoadmapFilter(f)}
+                      className={`rounded-xl px-3 py-1.5 text-xs font-bold capitalize transition ${
+                        roadmapFilter === f
+                          ? "bg-[#081833] text-white dark:bg-sky-500 dark:text-slate-950"
+                          : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                      }`}
+                    >
+                      {isBn
+                        ? f === "all"
+                          ? "সবগুলো"
+                          : f === "completed"
+                          ? "সম্পন্ন"
+                          : "বাকি আছে"
+                        : f}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 12 Stages Cards Grid */}
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {dashboardStages
+                  .filter((stg) => {
+                    const isDone = progress?.some((p: any) => p.lessonId === stg.stageNumber && p.completed);
+                    if (roadmapFilter === "completed") return isDone;
+                    if (roadmapFilter === "todo") return !isDone;
+                    return true;
+                  })
+                  .map((stg) => {
+                    const isDone = progress?.some((p: any) => p.lessonId === stg.stageNumber && p.completed);
+                    return (
+                      <div
+                        key={stg.stageNumber}
+                        onClick={() => setSelectedRoadmapStage(stg)}
+                        className={`group relative flex cursor-pointer flex-col justify-between rounded-3xl border p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl ${
+                          isDone
+                            ? "border-emerald-300 bg-emerald-50/40 dark:border-emerald-900/50 dark:bg-emerald-950/20"
+                            : "border-slate-200 bg-white hover:border-[#0284c7]/50 dark:border-slate-800 dark:bg-slate-900"
+                        }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <span
+                              className={`font-mono text-xs font-bold px-2 py-0.5 rounded-lg ${
+                                isDone
+                                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
+                                  : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                              }`}
+                            >
+                              {isBn
+                                ? `স্টেজ ${String(stg.stageNumber).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[+d])}`
+                                : `Stage ${String(stg.stageNumber).padStart(2, "0")}`}
+                            </span>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#0284c7] dark:text-sky-400">
+                              {stg.category}
+                            </span>
+                          </div>
+
+                          <h3 className="mt-4 text-base font-extrabold group-hover:text-[#0284c7] dark:group-hover:text-sky-400 transition-colors">
+                            {stg.title}
+                          </h3>
+                          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                            {stg.summary}
+                          </p>
+                        </div>
+
+                        <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-800">
+                          <span className="text-xs font-bold text-[#0284c7] dark:text-sky-400 flex items-center gap-1">
+                            <span>{isBn ? "বিস্তারিত দেখুন" : "View Rules & Notes"}</span>
+                            <ChevronRight size={13} />
+                          </span>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleProgressMutation.mutate({ lessonId: stg.stageNumber, completed: !isDone });
+                            }}
+                            className={`rounded-full p-1.5 transition ${
+                              isDone
+                                ? "bg-emerald-500 text-white"
+                                : "bg-slate-100 text-slate-400 hover:bg-slate-200 dark:bg-slate-800"
+                            }`}
+                            title={isDone ? "Mark as uncompleted" : "Mark as completed"}
+                          >
+                            <Check size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
               </div>
             </div>
           )}
@@ -827,39 +1138,7 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
           {/* TAB 5: DAILY DISCIPLINE */}
           {/* ========================================================================= */}
           {tab === "discipline" && (
-            <div className="space-y-6 animate-in fade-in duration-300">
-              <div>
-                <h2 className="text-2xl font-extrabold tracking-tight">{isBn ? "ডেইলি ডিসিপ্লিন ও রুটিন চেকলিস্ট" : "Daily Trader Discipline & Routine"}</h2>
-                <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                  {isBn ? "একজন প্রফেশনাল ট্রেডার প্রতিদিন মার্কেট ওপেন হওয়ার আগে এই রুলসগুলো মেনে চলে।" : "Execute the disciplined trading habit loop daily: Analyze → Filter Risk → Execute Rules → Journal."}
-                </p>
-              </div>
-
-              <div className="grid gap-3 max-w-2xl">
-                {DAILY_DISCIPLINE_RULES.map((rule) => {
-                  const isChecked = discipline?.some((d: any) => d.label === rule.id && d.completed);
-                  return (
-                    <button
-                      key={rule.id}
-                      onClick={() => toggleDisciplineMutation.mutate({ label: rule.id, date: today, completed: !isChecked })}
-                      className={`flex items-start gap-4 rounded-2xl border p-4 text-left transition-all ${
-                        isChecked
-                          ? "border-emerald-300 bg-emerald-50/50 text-emerald-950 dark:border-emerald-900/50 dark:bg-emerald-950/20 dark:text-emerald-200 shadow-sm"
-                          : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900"
-                      }`}
-                    >
-                      <div className="mt-0.5">
-                        {isChecked ? <CheckCircle2 size={18} className="text-emerald-500" /> : <Circle size={18} className="text-slate-300 dark:text-slate-600" />}
-                      </div>
-                      <div>
-                        <div className={`text-sm font-extrabold ${isChecked ? "line-through opacity-80" : ""}`}>{isBn ? rule.textBn : rule.textEn}</div>
-                        <div className="text-[11px] text-slate-400 mt-1">{isBn ? "দৈনিক অভ্যাস" : "Daily Habit"}</div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            <DailyDisciplineMaster user={user} isBn={isBn} />
           )}
 
           {/* ========================================================================= */}
@@ -979,6 +1258,168 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
           )}
         </main>
       </div>
+
+      {/* ========================================================================= */}
+      {/* 12-STAGE ROADMAP DEEP DIVE MODAL */}
+      {/* ========================================================================= */}
+      {selectedRoadmapStage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in"
+          onClick={() => setSelectedRoadmapStage(null)}
+        >
+          <div
+            className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-2xl dark:border-slate-800 dark:bg-slate-900"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-start justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-lg bg-[#0284c7]/10 text-[#0284c7] dark:bg-sky-500/10 dark:text-sky-400">
+                    {isBn
+                      ? `স্টেজ ${String(selectedRoadmapStage.stageNumber).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[+d])}`
+                      : `STAGE ${String(selectedRoadmapStage.stageNumber).padStart(2, "0")}`}
+                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    {selectedRoadmapStage.category}
+                  </span>
+                </div>
+                <h3 className="mt-2 text-xl font-extrabold text-slate-900 dark:text-white">
+                  {selectedRoadmapStage.title}
+                </h3>
+              </div>
+              <button
+                onClick={() => setSelectedRoadmapStage(null)}
+                className="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Content Body */}
+            <div className="mt-6 space-y-5 text-sm">
+              {/* Summary / Overview */}
+              <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/50">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#0284c7] dark:text-sky-400 mb-2">
+                  {isBn ? "ওভারভিউ ও মূল লক্ষ্য" : "Stage Overview & Objective"}
+                </h4>
+                <p className="whitespace-pre-line text-xs sm:text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                  {selectedRoadmapStage.summary}
+                </p>
+              </div>
+
+              {/* Core Topics & Rules */}
+              {selectedRoadmapStage.keyPoints && selectedRoadmapStage.keyPoints.length > 0 && (
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-1.5">
+                    <CheckCircle2 size={15} className="text-[#0284c7] dark:text-sky-400" />
+                    <span>{isBn ? "মূল বিষয়সমূহ ও প্রাতিষ্ঠানিক রুলস" : "Core Topics & Institutional Rules"}</span>
+                  </h4>
+                  <div className="space-y-2.5">
+                    {selectedRoadmapStage.keyPoints.map((pt, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-start gap-2.5 rounded-xl border border-slate-100 bg-white p-3 text-xs sm:text-sm text-slate-700 dark:border-slate-800/80 dark:bg-slate-950/40 dark:text-slate-300"
+                      >
+                        <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-sky-100 font-mono text-[10px] font-bold text-sky-800 dark:bg-sky-950 dark:text-sky-400 mt-0.5">
+                          {idx + 1}
+                        </span>
+                        <span className="leading-relaxed">{pt}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Practical Exercise (if present) */}
+              {selectedRoadmapStage.exercise && (
+                <div className="rounded-2xl border border-sky-200/60 bg-sky-50/50 p-4 dark:border-sky-900/40 dark:bg-sky-950/20">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-sky-700 dark:text-sky-400 mb-1.5 flex items-center gap-1.5">
+                    <Sparkles size={14} />
+                    <span>{isBn ? "প্র্যাকটিক্যাল এক্সারসাইজ / অ্যাসাইনমেন্ট" : "Practical Exercise & Chart Task"}</span>
+                  </h4>
+                  <p className="text-xs sm:text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                    {selectedRoadmapStage.exercise}
+                  </p>
+                </div>
+              )}
+
+              {/* Institutional Edge (if present) */}
+              {selectedRoadmapStage.edge && (
+                <div className="rounded-2xl border border-emerald-200/60 bg-emerald-50/50 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-1.5">
+                    {isBn ? "প্রাতিষ্ঠানিক ট্রেডারদের দৃষ্টিভঙ্গি (Edge)" : "Institutional Edge"}
+                  </h4>
+                  <p className="text-xs sm:text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                    {selectedRoadmapStage.edge}
+                  </p>
+                </div>
+              )}
+
+              {/* Personal Study Notes */}
+              <div className="border-t border-slate-100 pt-5 dark:border-slate-800">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                  {isBn ? "আপনার স্টাডি নোট ও ব্যক্তিগত রিমাইন্ডার" : "Your Personal Study Notes"}
+                </label>
+                <textarea
+                  rows={3}
+                  value={stageNotes[selectedRoadmapStage.stageNumber] || ""}
+                  onChange={(e) => handleSaveStageNote(selectedRoadmapStage.stageNumber, e.target.value)}
+                  placeholder={
+                    isBn
+                      ? "এই স্টেজ থেকে আপনার ব্যক্তিগত পর্যবেক্ষণ ও গুরুত্বপূর্ণ রুলস লিখে রাখুন..."
+                      : "Jot down your key takeaways, chart observations, or rules for this stage..."
+                  }
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-3.5 text-xs sm:text-sm outline-none focus:border-[#0284c7] dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                />
+              </div>
+
+              {/* Bottom Actions: Progress Completion Toggle */}
+              {(() => {
+                const isCompleted = progress?.some(
+                  (p: any) => p.lessonId === selectedRoadmapStage.stageNumber && p.completed
+                );
+                return (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+                    <Button
+                      onClick={() => {
+                        toggleProgressMutation.mutate({
+                          lessonId: selectedRoadmapStage.stageNumber,
+                          completed: !isCompleted,
+                        });
+                      }}
+                      className={`w-full sm:w-auto gap-2 font-bold ${
+                        isCompleted
+                          ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                          : "bg-[#081833] hover:bg-[#0c244b] text-white dark:bg-sky-500 dark:text-slate-950"
+                      }`}
+                    >
+                      <Check size={16} />
+                      <span>
+                        {isCompleted
+                          ? isBn
+                            ? "সম্পন্ন হয়েছে (আনচেক করতে ক্লিক করুন)"
+                            : "Completed (Click to uncheck)"
+                          : isBn
+                          ? "স্টেজ সম্পন্ন হিসেবে মার্ক করুন"
+                          : "Mark Stage as Completed"}
+                      </span>
+                    </Button>
+
+                    <Button
+                      variant="outline"
+                      onClick={() => setSelectedRoadmapStage(null)}
+                      className="w-full sm:w-auto font-bold"
+                    >
+                      {isBn ? "বন্ধ করুন" : "Close"}
+                    </Button>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* PDF PREVIEW MODAL */}
       {/* ========================================================================= */}

@@ -158,6 +158,87 @@ CREATE TABLE IF NOT EXISTS "disciplineEntries" (
     CONSTRAINT unique_user_discipline_date UNIQUE ("userId", label, date)
 );
 
+-- 8.1 COMPLETE DAILY DISCIPLINE SYSTEM
+CREATE TABLE IF NOT EXISTS "disciplineTasks" (
+    id SERIAL PRIMARY KEY,
+    "userId" INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    time VARCHAR(32) DEFAULT '08:00 AM' NOT NULL,
+    "isMandatory" BOOLEAN DEFAULT TRUE NOT NULL,
+    "isTrackable" BOOLEAN DEFAULT TRUE NOT NULL,
+    "orderIndex" INT DEFAULT 0 NOT NULL,
+    "isActive" BOOLEAN DEFAULT TRUE NOT NULL,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_discipline_tasks_user ON "disciplineTasks"("userId");
+
+CREATE TABLE IF NOT EXISTS "disciplineTaskCompletions" (
+    id SERIAL PRIMARY KEY,
+    "userId" INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    "taskId" INT REFERENCES "disciplineTasks"(id) ON DELETE CASCADE NOT NULL,
+    date VARCHAR(10) NOT NULL, -- 'YYYY-MM-DD'
+    completed BOOLEAN DEFAULT FALSE NOT NULL,
+    "completedAt" TIMESTAMP WITH TIME ZONE,
+    CONSTRAINT unique_user_task_date UNIQUE ("userId", "taskId", date)
+);
+CREATE INDEX IF NOT EXISTS idx_discipline_task_comp_date ON "disciplineTaskCompletions"("userId", date);
+
+CREATE TABLE IF NOT EXISTS "disciplineExercises" (
+    id SERIAL PRIMARY KEY,
+    "userId" INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    difficulty VARCHAR(32) DEFAULT 'Intermediate' NOT NULL, -- 'Beginner', 'Intermediate', 'Advanced'
+    "orderIndex" INT DEFAULT 0 NOT NULL,
+    "isActive" BOOLEAN DEFAULT TRUE NOT NULL,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_discipline_exercises_user ON "disciplineExercises"("userId");
+
+CREATE TABLE IF NOT EXISTS "disciplineWorkoutCompletions" (
+    id SERIAL PRIMARY KEY,
+    "userId" INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    "exerciseId" INT REFERENCES "disciplineExercises"(id) ON DELETE CASCADE NOT NULL,
+    date VARCHAR(10) NOT NULL, -- 'YYYY-MM-DD'
+    completed BOOLEAN DEFAULT FALSE NOT NULL,
+    CONSTRAINT unique_user_workout_date UNIQUE ("userId", "exerciseId", date)
+);
+CREATE INDEX IF NOT EXISTS idx_discipline_workout_comp_date ON "disciplineWorkoutCompletions"("userId", date);
+
+CREATE TABLE IF NOT EXISTS "disciplineDailyJournals" (
+    id SERIAL PRIMARY KEY,
+    "userId" INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    date VARCHAR(10) NOT NULL, -- 'YYYY-MM-DD'
+    content TEXT NOT NULL,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    CONSTRAINT unique_user_journal_date UNIQUE ("userId", date)
+);
+CREATE INDEX IF NOT EXISTS idx_discipline_journal_user ON "disciplineDailyJournals"("userId", date);
+
+CREATE TABLE IF NOT EXISTS "disciplineForexLogs" (
+    id SERIAL PRIMARY KEY,
+    "userId" INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    date VARCHAR(10) NOT NULL, -- 'YYYY-MM-DD'
+    minutes INT DEFAULT 0 NOT NULL,
+    pairs VARCHAR(255),
+    notes TEXT,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    CONSTRAINT unique_user_forex_date UNIQUE ("userId", date)
+);
+CREATE INDEX IF NOT EXISTS idx_discipline_forex_user ON "disciplineForexLogs"("userId", date);
+
+CREATE TABLE IF NOT EXISTS "disciplineSettings" (
+    id SERIAL PRIMARY KEY,
+    "userId" INT REFERENCES users(id) ON DELETE CASCADE NOT NULL UNIQUE,
+    "dailyTargetPercent" INT DEFAULT 80 NOT NULL,
+    "dailyForexMinutesTarget" INT DEFAULT 60 NOT NULL,
+    "restTimerDefaultSeconds" INT DEFAULT 60 NOT NULL,
+    "restTimerSound" BOOLEAN DEFAULT TRUE NOT NULL,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
 -- 9. SUPPORT TICKETS & CONVERSATION REPLIES
 CREATE TABLE IF NOT EXISTS "supportTickets" (
     id SERIAL PRIMARY KEY,
@@ -229,7 +310,7 @@ CREATE TABLE IF NOT EXISTS "auditEvents" (
 INSERT INTO bundles (id, slug, "titleEn", "titleBn", "descriptionEn", "descriptionBn", price, currency, "includesEbook", "includesPdfPackage", "includesCourse", "isPublished")
 VALUES 
 (1, 'pdf-package', 'Free eBook Package', 'Free eBook Package', 'Select from 15 structured learning PDFs with complete chart breakdowns.', '১৫টি স্ট্রাকচার্ড চার্ট ব্রেকডাউন ও প্রাইস অ্যাকশন PDF থেকে সিলেক্ট করুন।', 0.00, 'BDT', FALSE, TRUE, FALSE, TRUE),
-(2, 'course-ebook', 'CYCLE OF CHART BASIC TO ADVANCE COURSE', 'CYCLE OF CHART BASIC TO ADVANCE COURSE', 'A complete structured learning path with an included comprehensive eBook.', 'একটি সম্পূর্ণ ভিডিও কোর্স সাথে সম্পূর্ণ ফ্রি প্রফেশনাল গাইড eBook।', 1999.00, 'BDT', TRUE, FALSE, TRUE, TRUE),
+(2, 'course-ebook', 'CYCLE OF CHART BASIC TO ADVANCE COURSE', 'CYCLE OF CHART BASIC TO ADVANCE COURSE', 'A complete structured learning path with an included comprehensive eBook.', 'একটি সম্পূর্ণ ভিডিও কোর্স সাথে সম্পূর্ণ ফ্রি প্রফেশনাল গাইড eBook।', 2499.00, 'BDT', TRUE, FALSE, TRUE, TRUE),
 (3, 'master-bundle', 'CANDLE KING A TO Z FULL COURSE', 'CANDLE KING A TO Z FULL COURSE', 'All 15 PDFs, full video course, and complete institutional eBook in one path.', '১৫টি PDF, সম্পূর্ণ ভিডিও কোর্স এবং এক্সক্লুসিভ eBook এক সাথে পান।', 2499.00, 'BDT', TRUE, TRUE, TRUE, TRUE)
 ON CONFLICT (id) DO UPDATE SET
     price = EXCLUDED.price,

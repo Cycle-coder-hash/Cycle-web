@@ -41,8 +41,10 @@ export interface TradeEntry {
   tradeRun: string; // e.g. "+2R"
   note: string; // explanation
   tradeRank: "A+" | "A" | "A-";
-  mediaUrl?: string; // image / video data URL or URL
+  mediaUrl?: string; // legacy single image / video data URL or URL
   mediaType?: "image" | "video";
+  screenshots?: string[]; // Multiple screenshot images attached to this trade
+  videoUrl?: string; // Video URL if attached
   videoDurationSeconds?: number;
   learning: string; // update / learning text
   customProperties: CustomProperty[];

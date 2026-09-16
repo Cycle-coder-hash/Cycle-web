@@ -68,6 +68,19 @@ export default function Auth() {
     localStorage.setItem("cycle-language", next);
   };
 
+  // Helper to determine return redirect destination after authentication
+  const getRedirectUrl = () => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get("redirect") || sessionStorage.getItem("cycle_auth_redirect");
+      if (redirect && (redirect.startsWith("/") || redirect.startsWith("#"))) {
+        sessionStorage.removeItem("cycle_auth_redirect");
+        return redirect;
+      }
+    } catch {}
+    return "/dashboard";
+  };
+
   // Cooldown countdown effect
   useEffect(() => {
     if (cooldown > 0) {
@@ -76,10 +89,16 @@ export default function Auth() {
     }
   }, [cooldown]);
 
-  // Check URL parameters for hash tokens (#access_token=... or #error=...)
+  // Check URL parameters for hash tokens, redirect, or errors
   useEffect(() => {
     const hash = window.location.hash;
     const search = window.location.search;
+
+    const searchParams = new URLSearchParams(search);
+    const redirectParam = searchParams.get("redirect");
+    if (redirectParam) {
+      sessionStorage.setItem("cycle_auth_redirect", redirectParam);
+    }
 
     // 1. Check for error in hash (e.g. expired confirmation link)
     if (hash.includes("error=") || search.includes("error=")) {
@@ -122,22 +141,23 @@ export default function Auth() {
         } catch {}
         setSuccessMsg(
           isBn
-            ? "ইমেইল সফলভাবে ভেরিফাই হয়েছে! ড্যাশবোর্ডে প্রবেশ করানো হচ্ছে..."
-            : "Email confirmed successfully! Accessing your dashboard..."
+            ? "ইমেইল সফলভাবে ভেরিফাই হয়েছে! প্রবেশ করানো হচ্ছে..."
+            : "Email confirmed successfully! Accessing portal..."
         );
         try {
           window.history.replaceState(null, "", window.location.pathname);
         } catch {}
         setTimeout(() => {
-          window.location.href = "/dashboard";
+          window.location.href = getRedirectUrl();
         }, 600);
       }
     }
   }, [isBn]);
 
-  // If already logged in and not resetting password, redirect to dashboard
+  // If already logged in and not resetting password, redirect to target or dashboard
   if (user && mode !== "reset_password") {
-    setLocation("/dashboard");
+    const target = getRedirectUrl();
+    window.location.href = target;
     return null;
   }
 
@@ -201,7 +221,7 @@ export default function Auth() {
 
           if (serverRes?.token) {
             localStorage.setItem("cycle_session_token", serverRes.token);
-            window.location.href = "/dashboard";
+            window.location.href = getRedirectUrl();
             return;
           }
         } catch (serverErr: any) {
@@ -223,7 +243,7 @@ export default function Auth() {
             refresh_token: data.session.refresh_token,
           });
         } catch {}
-        window.location.href = "/dashboard";
+        window.location.href = getRedirectUrl();
       }
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to sign in");
@@ -303,7 +323,7 @@ export default function Auth() {
               refresh_token: data.session.refresh_token,
             });
           } catch {}
-          window.location.href = "/dashboard";
+          window.location.href = getRedirectUrl();
           return;
         }
       } catch (supaErr: any) {
@@ -392,7 +412,7 @@ export default function Auth() {
       if (sessionData?.session) {
         localStorage.setItem("cycle_session_token", sessionData.session.access_token);
         setSuccessMsg(isBn ? "ইমেইল ভেরিফাই হয়েছে! ড্যাশবোর্ডে প্রবেশ করানো হচ্ছে..." : "Email verified! Entering dashboard...");
-        window.location.href = "/dashboard";
+        window.location.href = getRedirectUrl();
         return;
       }
 
@@ -406,7 +426,7 @@ export default function Auth() {
         if (signData?.session) {
           localStorage.setItem("cycle_session_token", signData.session.access_token);
           setSuccessMsg(isBn ? "ইমেইল ভেরিফাই হয়েছে! ড্যাশবোর্ডে প্রবেশ করানো হচ্ছে..." : "Email verified! Entering dashboard...");
-          window.location.href = "/dashboard";
+          window.location.href = getRedirectUrl();
           return;
         }
 
@@ -464,7 +484,7 @@ export default function Auth() {
         if (supaData?.session) {
           localStorage.setItem("cycle_session_token", supaData.session.access_token);
           setSuccessMsg(isBn ? "ভেরিফিকেশন সফল হয়েছে!" : "Verification successful!");
-          window.location.href = "/dashboard";
+          window.location.href = getRedirectUrl();
           return;
         }
 
@@ -477,7 +497,7 @@ export default function Auth() {
           if (retryRes.data?.session) {
             localStorage.setItem("cycle_session_token", retryRes.data.session.access_token);
             setSuccessMsg(isBn ? "ভেরিফিকেশন সফল হয়েছে!" : "Verification successful!");
-            window.location.href = "/dashboard";
+            window.location.href = getRedirectUrl();
             return;
           }
         }
@@ -494,7 +514,7 @@ export default function Auth() {
       if (serverRes?.token) {
         localStorage.setItem("cycle_session_token", serverRes.token);
         setSuccessMsg(isBn ? "ভেরিফিকেশন সফল হয়েছে!" : "Verification successful!");
-        window.location.href = "/dashboard";
+        window.location.href = getRedirectUrl();
         return;
       }
 

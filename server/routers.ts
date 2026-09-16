@@ -50,6 +50,34 @@ import {
   settings,
   auditEvents,
   users,
+  listFreeEbooks,
+  getFreeEbookById,
+  createFreeEbook,
+  updateFreeEbook,
+  deleteFreeEbook,
+  getDisciplineSchedule,
+  addDisciplineTask,
+  updateDisciplineTask,
+  deleteDisciplineTask,
+  toggleDisciplineTaskCompletion,
+  getDisciplineWorkouts,
+  addDisciplineExercise,
+  updateDisciplineExercise,
+  deleteDisciplineExercise,
+  toggleDisciplineWorkoutCompletion,
+  getDisciplineJournals,
+  getDisciplineJournalByDate,
+  saveDisciplineJournal,
+  deleteDisciplineJournal,
+  getDisciplineForexLogs,
+  saveDisciplineForexLog,
+  deleteDisciplineForexLog,
+  getDisciplineSettings,
+  updateDisciplineSettings,
+  getDisciplineStats,
+  exportDisciplineData,
+  importDisciplineData,
+  resetDisciplineData,
 } from "./db";
 
 import { and, eq } from "drizzle-orm";
@@ -297,6 +325,7 @@ export const appRouter = router({
           name: z.string().min(2).optional(),
           phone: z.string().optional(),
           language: language.optional(),
+          avatar: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -308,6 +337,7 @@ export const appRouter = router({
             if (input.name) u.name = input.name;
             if (input.phone) u.phone = input.phone;
             if (input.language) u.language = input.language;
+            if (input.avatar !== undefined) (u as any).avatar = input.avatar;
           }
           return { success: true };
         }
@@ -317,6 +347,7 @@ export const appRouter = router({
             ...(input.name ? { name: input.name } : {}),
             ...(input.phone ? { phone: input.phone } : {}),
             ...(input.language ? { language: input.language } : {}),
+            ...(input.avatar !== undefined ? { avatar: input.avatar } : {}),
           })
           .where(eq(users.id, ctx.user.id));
         return { success: true };
@@ -355,6 +386,23 @@ export const appRouter = router({
   }),
 
   customer: router({
+    freeEbooks: protectedProcedure.query(async () => {
+      return await listFreeEbooks(false);
+    }),
+    downloadEbook: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const ebook = await getFreeEbookById(input.id);
+        if (!ebook) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Resource not found" });
+        }
+        return {
+          success: true,
+          ebook,
+          downloadUrl: ebook.fileUrl,
+          fileName: ebook.fileName || `${ebook.titleEn.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`,
+        };
+      }),
     orders: protectedProcedure.query(({ ctx }) => listOrdersForUser(ctx.user.id)),
     entitlements: protectedProcedure.query(({ ctx }) => listEntitlements(ctx.user.id)),
     notifications: protectedProcedure.query(({ ctx }) => listNotifications(ctx.user.id)),
@@ -451,6 +499,175 @@ export const appRouter = router({
         }
         return { success: true };
       }),
+
+    // --------------------------------------------------------------------------
+    // COMPLETE DAILY DISCIPLINE SYSTEM PROCEDURES
+    // --------------------------------------------------------------------------
+    disciplineSchedule: protectedProcedure
+      .input(z.object({ date: z.string() }))
+      .query(async ({ ctx, input }) => {
+        return await getDisciplineSchedule(ctx.user.id, input.date);
+      }),
+    addDisciplineTask: protectedProcedure
+      .input(
+        z.object({
+          title: z.string().min(1),
+          time: z.string().default("08:00 AM"),
+          isMandatory: z.boolean().default(true),
+          isTrackable: z.boolean().default(true),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        return await addDisciplineTask(ctx.user.id, input);
+      }),
+    updateDisciplineTask: protectedProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          updates: z.object({
+            title: z.string().optional(),
+            time: z.string().optional(),
+            isMandatory: z.boolean().optional(),
+            isTrackable: z.boolean().optional(),
+            orderIndex: z.number().optional(),
+          }),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        return await updateDisciplineTask(ctx.user.id, input.id, input.updates);
+      }),
+    deleteDisciplineTask: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        return await deleteDisciplineTask(ctx.user.id, input.id);
+      }),
+    toggleDisciplineTask: protectedProcedure
+      .input(
+        z.object({
+          taskId: z.number(),
+          date: z.string(),
+          completed: z.boolean(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        return await toggleDisciplineTaskCompletion(ctx.user.id, input.taskId, input.date, input.completed);
+      }),
+    disciplineWorkouts: protectedProcedure
+      .input(z.object({ date: z.string() }))
+      .query(async ({ ctx, input }) => {
+        return await getDisciplineWorkouts(ctx.user.id, input.date);
+      }),
+    addDisciplineExercise: protectedProcedure
+      .input(
+        z.object({
+          name: z.string().min(1),
+          difficulty: z.string().default("Intermediate"),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        return await addDisciplineExercise(ctx.user.id, input);
+      }),
+    updateDisciplineExercise: protectedProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          updates: z.object({
+            name: z.string().optional(),
+            difficulty: z.string().optional(),
+          }),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        return await updateDisciplineExercise(ctx.user.id, input.id, input.updates);
+      }),
+    deleteDisciplineExercise: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        return await deleteDisciplineExercise(ctx.user.id, input.id);
+      }),
+    toggleDisciplineWorkout: protectedProcedure
+      .input(
+        z.object({
+          exerciseId: z.number(),
+          date: z.string(),
+          completed: z.boolean(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        return await toggleDisciplineWorkoutCompletion(ctx.user.id, input.exerciseId, input.date, input.completed);
+      }),
+    disciplineJournals: protectedProcedure.query(async ({ ctx }) => {
+      return await getDisciplineJournals(ctx.user.id);
+    }),
+    disciplineJournalByDate: protectedProcedure
+      .input(z.object({ date: z.string() }))
+      .query(async ({ ctx, input }) => {
+        return await getDisciplineJournalByDate(ctx.user.id, input.date);
+      }),
+    saveDisciplineJournal: protectedProcedure
+      .input(
+        z.object({
+          date: z.string(),
+          content: z.string().min(1),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        return await saveDisciplineJournal(ctx.user.id, input.date, input.content);
+      }),
+    deleteDisciplineJournal: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        return await deleteDisciplineJournal(ctx.user.id, input.id);
+      }),
+    disciplineForexLogs: protectedProcedure.query(async ({ ctx }) => {
+      return await getDisciplineForexLogs(ctx.user.id);
+    }),
+    saveDisciplineForexLog: protectedProcedure
+      .input(
+        z.object({
+          date: z.string(),
+          minutes: z.number(),
+          pairs: z.string().optional(),
+          notes: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        return await saveDisciplineForexLog(ctx.user.id, input.date, input.minutes, input.pairs, input.notes);
+      }),
+    deleteDisciplineForexLog: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        return await deleteDisciplineForexLog(ctx.user.id, input.id);
+      }),
+    disciplineSettings: protectedProcedure.query(async ({ ctx }) => {
+      return await getDisciplineSettings(ctx.user.id);
+    }),
+    updateDisciplineSettings: protectedProcedure
+      .input(
+        z.object({
+          dailyTargetPercent: z.number().optional(),
+          dailyForexMinutesTarget: z.number().optional(),
+          restTimerDefaultSeconds: z.number().optional(),
+          restTimerSound: z.boolean().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        return await updateDisciplineSettings(ctx.user.id, input);
+      }),
+    disciplineStats: protectedProcedure.query(async ({ ctx }) => {
+      return await getDisciplineStats(ctx.user.id);
+    }),
+    exportDisciplineData: protectedProcedure.mutation(async ({ ctx }) => {
+      return await exportDisciplineData(ctx.user.id);
+    }),
+    importDisciplineData: protectedProcedure
+      .input(z.object({ data: z.any() }))
+      .mutation(async ({ ctx, input }) => {
+        return await importDisciplineData(ctx.user.id, input.data);
+      }),
+    resetDisciplineData: protectedProcedure.mutation(async ({ ctx }) => {
+      return await resetDisciplineData(ctx.user.id);
+    }),
     createJournal: protectedProcedure
       .input(
         z.object({
@@ -1008,6 +1225,59 @@ export const appRouter = router({
             .values(input)
             .onDuplicateKeyUpdate({ set: { value: input.value } });
         }
+        return { success: true };
+      }),
+
+    freeEbooks: supportProcedure.query(async () => {
+      return await listFreeEbooks(true);
+    }),
+
+    createFreeEbook: adminProcedure
+      .input(
+        z.object({
+          titleEn: z.string().min(1),
+          titleBn: z.string().optional(),
+          subtitleEn: z.string().min(1),
+          subtitleBn: z.string().optional(),
+          category: z.string().min(1),
+          pages: z.number().optional(),
+          keyConcepts: z.array(z.string()).optional(),
+          fileUrl: z.string().nullable().optional(),
+          fileName: z.string().nullable().optional(),
+          fileSize: z.string().nullable().optional(),
+          isPublished: z.boolean().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        return await createFreeEbook(input);
+      }),
+
+    updateFreeEbook: adminProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          titleEn: z.string().optional(),
+          titleBn: z.string().optional(),
+          subtitleEn: z.string().optional(),
+          subtitleBn: z.string().optional(),
+          category: z.string().optional(),
+          pages: z.number().optional(),
+          keyConcepts: z.array(z.string()).optional(),
+          fileUrl: z.string().nullable().optional(),
+          fileName: z.string().nullable().optional(),
+          fileSize: z.string().nullable().optional(),
+          isPublished: z.boolean().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        return await updateFreeEbook(id, data);
+      }),
+
+    deleteFreeEbook: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteFreeEbook(input.id);
         return { success: true };
       }),
   }),
