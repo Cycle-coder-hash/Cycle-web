@@ -7,8 +7,10 @@ import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { adminRouter } from "../adminApi";
+import fs from "fs";
+import path from "path";
 import { createContext } from "./context";
-// serveStatic is loaded dynamically in production; setupVite is loaded dynamically in development
+import { serveStatic } from "./serveStatic";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -57,16 +59,25 @@ async function startServer() {
       createContext,
     })
   );
-  // Development mode uses Vite; production mode uses static files (only outside Vercel)
-  if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+  // Production / built mode vs Vite dev mode
+  const isProduction =
+    process.env.NODE_ENV === "production" ||
+    Boolean(process.env.VERCEL) ||
+    !fs.existsSync(path.resolve(import.meta.dirname, "vite.ts"));
+
+  if (isProduction) {
     if (!process.env.VERCEL) {
-      const { serveStatic } = await import("./serveStatic");
       serveStatic(app);
     }
   } else {
-    const viteModule = "./vite.js";
-    const { setupVite } = await import(/* @vite-ignore */ viteModule);
-    await setupVite(app, server);
+    try {
+      const viteModule = "./vite.js";
+      const { setupVite } = await import(/* @vite-ignore */ viteModule);
+      await setupVite(app, server);
+    } catch (viteErr) {
+      console.warn("[Vite dev server not available, falling back to static]:", viteErr);
+      serveStatic(app);
+    }
   }
 
   const preferredPort = parseInt(process.env.PORT || "3000");
@@ -117,4 +128,5 @@ export default async function handler(req: any, res: any) {
     res.status(500).json({ error: err?.message || String(err) });
   }
 }
+
 

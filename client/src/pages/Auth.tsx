@@ -243,6 +243,33 @@ export default function Auth() {
             refresh_token: data.session.refresh_token,
           });
         } catch {}
+        if (data.user) {
+          const uInfo = {
+            id: 1,
+            openId: data.user.id,
+            name:
+              data.user.user_metadata?.name ||
+              data.user.user_metadata?.full_name ||
+              data.user.email?.split("@")[0] ||
+              "Trader",
+            email: data.user.email,
+            passwordHash: null,
+            phone: data.user.user_metadata?.phone || null,
+            role: "user",
+            loginMethod: "supabase",
+            avatar:
+              data.user.user_metadata?.avatar_url ||
+              data.user.user_metadata?.avatar ||
+              data.user.user_metadata?.picture ||
+              null,
+            language: data.user.user_metadata?.language || lang,
+            emailVerified: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            lastSignedIn: new Date(),
+          };
+          localStorage.setItem("manus-runtime-user-info", JSON.stringify(uInfo));
+        }
         window.location.href = getRedirectUrl();
       }
     } catch (err: any) {
@@ -323,6 +350,33 @@ export default function Auth() {
               refresh_token: data.session.refresh_token,
             });
           } catch {}
+          if (data.user) {
+            const uInfo = {
+              id: 1,
+              openId: data.user.id,
+              name:
+                data.user.user_metadata?.name ||
+                data.user.user_metadata?.full_name ||
+                data.user.email?.split("@")[0] ||
+                "Trader",
+              email: data.user.email,
+              passwordHash: null,
+              phone: data.user.user_metadata?.phone || null,
+              role: "user",
+              loginMethod: "supabase",
+              avatar:
+                data.user.user_metadata?.avatar_url ||
+                data.user.user_metadata?.avatar ||
+                data.user.user_metadata?.picture ||
+                null,
+              language: data.user.user_metadata?.language || lang,
+              emailVerified: true,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              lastSignedIn: new Date(),
+            };
+            localStorage.setItem("manus-runtime-user-info", JSON.stringify(uInfo));
+          }
           window.location.href = getRedirectUrl();
           return;
         }
@@ -347,7 +401,7 @@ export default function Auth() {
         console.warn("[Server registration notice]:", serverErr);
       }
 
-      // Switch to verify_otp view immediately so user has zero confusion!
+      // If no immediate session, user must verify email / OTP
       setMode("verify_otp");
       setSuccessMsg(
         isBn

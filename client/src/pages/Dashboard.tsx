@@ -480,6 +480,7 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
   const handleLogout = async () => {
     try {
       localStorage.removeItem("cycle_session_token");
+      localStorage.removeItem("manus-runtime-user-info");
       sessionStorage.removeItem("manus-cookie");
       await logout();
     } catch {}
