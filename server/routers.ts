@@ -80,7 +80,7 @@ import {
   resetDisciplineData,
 } from "./db";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 import { assertCheckoutAcknowledgement } from "@shared/commerce";
 import { sendAccessEmail } from "./email";
 import { hashPassword, verifyPassword } from "./_core/password";
@@ -330,26 +330,34 @@ export const appRouter = router({
       )
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
-        if (!db) {
-          // in memory update
-          const u = await getUserByOpenId(ctx.user.openId);
-          if (u) {
-            if (input.name) u.name = input.name;
-            if (input.phone) u.phone = input.phone;
-            if (input.language) u.language = input.language;
-            if (input.avatar !== undefined) (u as any).avatar = input.avatar;
+        if (db) {
+          try {
+            await db
+              .update(users)
+              .set({
+                ...(input.name ? { name: input.name } : {}),
+                ...(input.phone ? { phone: input.phone } : {}),
+                ...(input.language ? { language: input.language } : {}),
+                ...(input.avatar !== undefined ? { avatar: input.avatar } : {}),
+                updatedAt: new Date(),
+              })
+              .where(
+                ctx.user.openId
+                  ? or(eq(users.id, ctx.user.id), eq(users.openId, ctx.user.openId))
+                  : eq(users.id, ctx.user.id)
+              );
+          } catch (dbErr) {
+            console.warn("[Database updateProfile fallback to memory]:", dbErr);
           }
-          return { success: true };
         }
-        await db
-          .update(users)
-          .set({
-            ...(input.name ? { name: input.name } : {}),
-            ...(input.phone ? { phone: input.phone } : {}),
-            ...(input.language ? { language: input.language } : {}),
-            ...(input.avatar !== undefined ? { avatar: input.avatar } : {}),
-          })
-          .where(eq(users.id, ctx.user.id));
+        // Always sync in-memory user as well for consistent responses
+        const u = ctx.user.openId ? await getUserByOpenId(ctx.user.openId) : null;
+        if (u) {
+          if (input.name) u.name = input.name;
+          if (input.phone) u.phone = input.phone;
+          if (input.language) u.language = input.language;
+          if (input.avatar !== undefined) (u as any).avatar = input.avatar;
+        }
         return { success: true };
       }),
 
@@ -512,7 +520,9 @@ export const appRouter = router({
       .input(
         z.object({
           title: z.string().min(1),
-          time: z.string().default("08:00 AM"),
+          startTime: z.string().nullable().optional(),
+          endTime: z.string().nullable().optional(),
+          time: z.string().nullable().optional(),
           isMandatory: z.boolean().default(true),
           isTrackable: z.boolean().default(true),
         })
@@ -526,7 +536,9 @@ export const appRouter = router({
           id: z.number(),
           updates: z.object({
             title: z.string().optional(),
-            time: z.string().optional(),
+            startTime: z.string().nullable().optional(),
+            endTime: z.string().nullable().optional(),
+            time: z.string().nullable().optional(),
             isMandatory: z.boolean().optional(),
             isTrackable: z.boolean().optional(),
             orderIndex: z.number().optional(),
@@ -803,6 +815,171 @@ export const appRouter = router({
           });
         }
         return { success: true, status: "pending" as const };
+      }),
+    claimFreeProduct: protectedProcedure
+      .input(
+        z.object({
+          bundleId: z.number().optional(),
+          productId: z.number().optional(),
+          selectedPdfIds: z.array(z.number()).max(15).optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        if (!input.bundleId && !input.productId) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Select a product or bundle to claim",
+          });
+        }
+
+        // Server-Side Price Validation: Validate that this bundle or product is genuinely FREE (price = 0)
+        let isGenuinelyFree = false;
+        let bundleTitle = "Free eBook Package";
+
+        if (input.bundleId) {
+          const allBundles = await listBundles();
+          const targetBundle = allBundles.find((b: any) => b.id === input.bundleId);
+          if (!targetBundle) {
+            throw new TRPCError({ code: "NOT_FOUND", message: "Bundle not found" });
+          }
+          const priceNum = Number(targetBundle.price);
+          if (priceNum === 0 || targetBundle.price === "00" || targetBundle.price === "0") {
+            isGenuinelyFree = true;
+            bundleTitle = targetBundle.titleEn || targetBundle.titleBn || "Free eBook Package";
+          }
+        } else if (input.productId) {
+          const db = await getDb();
+          if (db) {
+            const prod = (
+              await db
+                .select()
+                .from(products)
+                .where(eq(products.id, input.productId))
+                .limit(1)
+            )[0];
+            if (prod && (Number(prod.price) === 0 || prod.price === "0" || prod.price === "00")) {
+              isGenuinelyFree = true;
+            }
+          }
+        }
+
+        if (!isGenuinelyFree) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "This product is not free. Please complete regular checkout with payment.",
+          });
+        }
+
+        const selectedPdfIds =
+          input.selectedPdfIds && input.selectedPdfIds.length > 0
+            ? input.selectedPdfIds
+            : Array.from({ length: 15 }, (_, i) => i + 1);
+
+        const db = await getDb();
+        const scope = input.bundleId ? `bundle:${input.bundleId}` : `product:${input.productId}`;
+        let orderId = 0;
+
+        if (db) {
+          // Check if user already claimed this entitlement
+          const existingEntitlement = (
+            await db
+              .select()
+              .from(entitlements)
+              .where(
+                and(
+                  eq(entitlements.userId, ctx.user.id),
+                  input.bundleId
+                    ? eq(entitlements.bundleId, input.bundleId)
+                    : eq(entitlements.productId, input.productId!)
+                )
+              )
+              .limit(1)
+          )[0];
+
+          if (existingEntitlement) {
+            return { success: true, alreadyClaimed: true, orderId: existingEntitlement.orderId };
+          }
+
+          // Insert order record with approved/free status
+          const insertedOrder = await db.insert(orders).values({
+            customerId: ctx.user.id,
+            bundleId: input.bundleId || null,
+            productId: input.productId || null,
+            selectedPdfIds,
+            amount: "0.00",
+            currency: "BDT",
+            paymentMethod: "free" as any,
+            transactionId: "FREE_ACCESS",
+            paymentStatus: "approved",
+            orderStatus: "approved",
+            noRefundAcknowledged: true,
+            approvedAt: new Date(),
+          });
+
+          orderId = (insertedOrder[0] as any)?.insertId || (insertedOrder[0] as any)?.id || 0;
+
+          // Grant entitlement immediately
+          await db.insert(entitlements).values({
+            userId: ctx.user.id,
+            orderId: orderId || 0,
+            productId: input.productId || null,
+            bundleId: input.bundleId || null,
+            scope,
+            grantedAt: new Date(),
+          });
+
+          // Audit log & notification
+          try {
+            await db.insert(auditEvents).values({
+              actorId: ctx.user.id,
+              action: "order.free_claimed",
+              entity: "order",
+              entityId: orderId,
+              metadata: { customerId: ctx.user.id, bundleId: input.bundleId },
+            });
+            await db.insert(notifications).values({
+              userId: ctx.user.id,
+              title: "Free Package Access Unlocked",
+              message: `Your access to "${bundleTitle}" is active. Visit your library to view and download all PDFs.`,
+            });
+          } catch (e) {
+            console.warn("[claimFreeProduct audit/notification error]:", e);
+          }
+        } else {
+          // In-memory fallback
+          const allEntitlements = await listEntitlements(ctx.user.id);
+          const existingEntitlement = allEntitlements.find(
+            (e: any) =>
+              (input.bundleId && e.bundleId === input.bundleId) ||
+              (input.productId && e.productId === input.productId)
+          );
+          if (existingEntitlement) {
+            return { success: true, alreadyClaimed: true, orderId: existingEntitlement.orderId };
+          }
+
+          const allOrders = await listAllOrders();
+          orderId = allOrders.length + 100;
+          allOrders.unshift({
+            id: orderId,
+            customerId: ctx.user.id,
+            bundleId: input.bundleId || null,
+            productId: input.productId || null,
+            selectedPdfIds,
+            amount: "0.00",
+            currency: "BDT",
+            paymentMethod: "free",
+            transactionId: "FREE_ACCESS",
+            paymentStatus: "approved",
+            orderStatus: "approved",
+            noRefundAcknowledged: true,
+            approvedAt: new Date(),
+            createdAt: new Date(),
+          });
+
+          await grantManualEntitlement(ctx.user.id, scope, input.bundleId, input.productId);
+        }
+
+        return { success: true, alreadyClaimed: false, orderId };
       }),
   }),
 

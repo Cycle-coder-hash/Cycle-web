@@ -176,53 +176,113 @@ export const DEFAULT_TRADES: TradeEntry[] = [
   },
 ];
 
-export function getStoredJournalBooks(): JournalBook[] {
-  if (typeof window === "undefined") return DEFAULT_JOURNAL_BOOKS;
+function getBooksKey(userId?: string): string {
+  const safe = userId?.trim();
+  return safe ? `cycle_trader_journal_books_v3_${safe}` : BOOKS_STORAGE_KEY;
+}
+
+function getTradesKey(userId?: string): string {
+  const safe = userId?.trim();
+  return safe ? `cycle_trader_journal_trades_v3_${safe}` : TRADES_STORAGE_KEY;
+}
+
+export function getStoredJournalBooks(userId?: string): JournalBook[] {
+  if (typeof window === "undefined") return [];
+  const safe = userId?.trim();
+  if (!safe) return [];
   try {
-    const raw = localStorage.getItem(BOOKS_STORAGE_KEY);
+    const key = getBooksKey(safe);
+    const raw = localStorage.getItem(key);
     if (!raw) {
-      localStorage.setItem(BOOKS_STORAGE_KEY, JSON.stringify(DEFAULT_JOURNAL_BOOKS));
-      return DEFAULT_JOURNAL_BOOKS;
+      // For existing users with custom books created prior to user-scoping:
+      const legacyRaw = localStorage.getItem(BOOKS_STORAGE_KEY);
+      if (legacyRaw) {
+        try {
+          const legacyParsed = JSON.parse(legacyRaw);
+          if (Array.isArray(legacyParsed)) {
+            const personalBooks = legacyParsed.filter(
+              (b: any) => b.id !== "book_smc_default" && b.id !== "book_ict_default"
+            );
+            if (personalBooks.length > 0) {
+              localStorage.setItem(key, JSON.stringify(personalBooks));
+              return personalBooks;
+            }
+          }
+        } catch {}
+      }
+      return [];
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length ? parsed : DEFAULT_JOURNAL_BOOKS;
+    if (!Array.isArray(parsed)) return [];
+    // Sanitize any lingering demo books from older sessions
+    return parsed.filter(
+      (b: any) => b.id !== "book_smc_default" && b.id !== "book_ict_default"
+    );
   } catch (err) {
     console.error("Failed to load journal books from localStorage", err);
-    return DEFAULT_JOURNAL_BOOKS;
+    return [];
   }
 }
 
-export function saveJournalBooks(books: JournalBook[]): void {
+export function saveJournalBooks(books: JournalBook[], userId?: string): void {
   if (typeof window === "undefined") return;
+  const safe = userId?.trim();
+  if (!safe) return;
   try {
-    localStorage.setItem(BOOKS_STORAGE_KEY, JSON.stringify(books));
-    window.dispatchEvent(new Event("cycle_journal_updated"));
+    const key = getBooksKey(safe);
+    localStorage.setItem(key, JSON.stringify(books));
+    window.dispatchEvent(new CustomEvent("cycle_journal_updated", { detail: { userId: safe } }));
   } catch (err) {
     console.error("Failed to save journal books", err);
   }
 }
 
-export function getStoredTrades(): TradeEntry[] {
-  if (typeof window === "undefined") return DEFAULT_TRADES;
+export function getStoredTrades(userId?: string): TradeEntry[] {
+  if (typeof window === "undefined") return [];
+  const safe = userId?.trim();
+  if (!safe) return [];
   try {
-    const raw = localStorage.getItem(TRADES_STORAGE_KEY);
+    const key = getTradesKey(safe);
+    const raw = localStorage.getItem(key);
     if (!raw) {
-      localStorage.setItem(TRADES_STORAGE_KEY, JSON.stringify(DEFAULT_TRADES));
-      return DEFAULT_TRADES;
+      // For existing users with custom trades created prior to user-scoping:
+      const legacyRaw = localStorage.getItem(TRADES_STORAGE_KEY);
+      if (legacyRaw) {
+        try {
+          const legacyParsed = JSON.parse(legacyRaw);
+          if (Array.isArray(legacyParsed)) {
+            const personalTrades = legacyParsed.filter(
+              (t: any) => !t.id?.startsWith("trade_smc_") && !t.id?.startsWith("trade_ict_")
+            );
+            if (personalTrades.length > 0) {
+              localStorage.setItem(key, JSON.stringify(personalTrades));
+              return personalTrades;
+            }
+          }
+        } catch {}
+      }
+      return [];
     }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length ? parsed : DEFAULT_TRADES;
+    if (!Array.isArray(parsed)) return [];
+    // Sanitize any lingering demo trades from older sessions
+    return parsed.filter(
+      (t: any) => !t.id?.startsWith("trade_smc_") && !t.id?.startsWith("trade_ict_")
+    );
   } catch (err) {
     console.error("Failed to load trades from localStorage", err);
-    return DEFAULT_TRADES;
+    return [];
   }
 }
 
-export function saveTrades(trades: TradeEntry[]): void {
+export function saveTrades(trades: TradeEntry[], userId?: string): void {
   if (typeof window === "undefined") return;
+  const safe = userId?.trim();
+  if (!safe) return;
   try {
-    localStorage.setItem(TRADES_STORAGE_KEY, JSON.stringify(trades));
-    window.dispatchEvent(new Event("cycle_journal_updated"));
+    const key = getTradesKey(safe);
+    localStorage.setItem(key, JSON.stringify(trades));
+    window.dispatchEvent(new CustomEvent("cycle_journal_updated", { detail: { userId: safe } }));
   } catch (err) {
     console.error("Failed to save trades", err);
   }
@@ -231,8 +291,8 @@ export function saveTrades(trades: TradeEntry[]): void {
 /**
  * Get the next sequential trade number for a specific journal book
  */
-export function getNextTradeNumber(journalBookId: string): number {
-  const trades = getStoredTrades().filter((t) => t.journalBookId === journalBookId);
+export function getNextTradeNumber(journalBookId: string, userId?: string): number {
+  const trades = getStoredTrades(userId).filter((t) => t.journalBookId === journalBookId);
   if (!trades.length) return 1;
   const maxNum = Math.max(...trades.map((t) => t.tradeNumber || 0));
   return maxNum + 1;
@@ -241,9 +301,12 @@ export function getNextTradeNumber(journalBookId: string): number {
 /**
  * Add a new trade entry
  */
-export function addTrade(trade: Omit<TradeEntry, "id" | "tradeNumber" | "createdAt">): TradeEntry {
-  const trades = getStoredTrades();
-  const nextNum = getNextTradeNumber(trade.journalBookId);
+export function addTrade(
+  trade: Omit<TradeEntry, "id" | "tradeNumber" | "createdAt">,
+  userId?: string
+): TradeEntry {
+  const trades = getStoredTrades(userId);
+  const nextNum = getNextTradeNumber(trade.journalBookId, userId);
   const newTrade: TradeEntry = {
     ...trade,
     id: `trade_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
@@ -252,35 +315,36 @@ export function addTrade(trade: Omit<TradeEntry, "id" | "tradeNumber" | "created
   };
 
   const updated = [newTrade, ...trades];
-  saveTrades(updated);
+  saveTrades(updated, userId);
   return newTrade;
 }
 
 /**
  * Update an existing trade entry
  */
-export function updateTrade(trade: TradeEntry): void {
-  const trades = getStoredTrades();
+export function updateTrade(trade: TradeEntry, userId?: string): void {
+  const trades = getStoredTrades(userId);
   const updated = trades.map((t) => (t.id === trade.id ? { ...trade, updatedAt: new Date().toISOString() } : t));
-  saveTrades(updated);
+  saveTrades(updated, userId);
 }
 
 /**
  * Delete a trade entry
  */
-export function deleteTrade(tradeId: string): void {
-  const trades = getStoredTrades();
+export function deleteTrade(tradeId: string, userId?: string): void {
+  const trades = getStoredTrades(userId);
   const updated = trades.filter((t) => t.id !== tradeId);
-  saveTrades(updated);
+  saveTrades(updated, userId);
 }
 
 /**
  * Create a new Journal Book
  */
 export function createJournalBook(
-  data: Omit<JournalBook, "id" | "createdAt">
+  data: Omit<JournalBook, "id" | "createdAt">,
+  userId?: string
 ): JournalBook {
-  const books = getStoredJournalBooks();
+  const books = getStoredJournalBooks(userId);
   const newBook: JournalBook = {
     ...data,
     id: `book_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
@@ -288,25 +352,25 @@ export function createJournalBook(
   };
 
   const updated = [...books, newBook];
-  saveJournalBooks(updated);
+  saveJournalBooks(updated, userId);
   return newBook;
 }
 
 /**
  * Update a Journal Book
  */
-export function updateJournalBook(book: JournalBook): void {
-  const books = getStoredJournalBooks();
+export function updateJournalBook(book: JournalBook, userId?: string): void {
+  const books = getStoredJournalBooks(userId);
   const updated = books.map((b) => (b.id === book.id ? book : b));
-  saveJournalBooks(updated);
+  saveJournalBooks(updated, userId);
 }
 
 /**
  * Delete a Journal Book and its associated trades
  */
-export function deleteJournalBook(bookId: string): void {
-  const books = getStoredJournalBooks().filter((b) => b.id !== bookId);
-  const trades = getStoredTrades().filter((t) => t.journalBookId !== bookId);
-  saveJournalBooks(books);
-  saveTrades(trades);
+export function deleteJournalBook(bookId: string, userId?: string): void {
+  const books = getStoredJournalBooks(userId).filter((b) => b.id !== bookId);
+  const trades = getStoredTrades(userId).filter((t) => t.journalBookId !== bookId);
+  saveJournalBooks(books, userId);
+  saveTrades(trades, userId);
 }

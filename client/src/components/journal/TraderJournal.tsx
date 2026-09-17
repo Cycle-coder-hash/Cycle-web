@@ -69,6 +69,7 @@ import {
 import { TradeModal } from "./TradeModal";
 import { TradePrintModal } from "./TradePrintModal";
 import { JournalBookModal } from "./JournalBookModal";
+import { JournalCalendar } from "./JournalCalendar";
 import { printTrade, exportTradePdf } from "@/lib/tradePdfExport";
 import { TraderNotebook } from "@/components/notebook/TraderNotebook";
 
@@ -81,12 +82,20 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
   // Navigation: Trade Journal vs Private Trader Notebook
   const [activeSection, setActiveSection] = useState<"journal" | "notebook">("journal");
 
-  // State: Journal Books & Trades
-  const [books, setBooks] = useState<JournalBook[]>(() => getStoredJournalBooks());
-  const [trades, setTrades] = useState<TradeEntry[]>(() => getStoredTrades());
+  const userId = useMemo(() => {
+    return user?.openId || user?.email || (user?.id ? String(user.id) : "");
+  }, [user]);
+
+  // State: Journal Books & Trades (scoped to current student)
+  const [books, setBooks] = useState<JournalBook[]>(() => getStoredJournalBooks(userId));
+  const [trades, setTrades] = useState<TradeEntry[]>(() => getStoredTrades(userId));
 
   // Selected Journal Book ID: "all" or specific book ID
   const [selectedBookId, setSelectedBookId] = useState<string>("all");
+
+  // View Mode: Table vs Dedicated Journal Calendar
+  const [journalViewMode, setJournalViewMode] = useState<"table" | "calendar">("table");
+  const [calendarPrefillDate, setCalendarPrefillDate] = useState<string | undefined>(undefined);
 
   // Filter & Search states
   const [searchTerm, setSearchTerm] = useState("");
@@ -111,11 +120,18 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
   const [deleteTradeConfirmId, setDeleteTradeConfirmId] = useState<string | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
+  // Synchronize state when user changes
+  useEffect(() => {
+    setBooks(getStoredJournalBooks(userId));
+    setTrades(getStoredTrades(userId));
+  }, [userId]);
+
   // Synchronize state on custom events
   useEffect(() => {
-    const handleStorageUpdate = () => {
-      setBooks(getStoredJournalBooks());
-      setTrades(getStoredTrades());
+    const handleStorageUpdate = (e: any) => {
+      if (e?.detail?.userId && e.detail.userId !== userId) return;
+      setBooks(getStoredJournalBooks(userId));
+      setTrades(getStoredTrades(userId));
     };
     window.addEventListener("cycle_journal_updated", handleStorageUpdate);
     window.addEventListener("storage", handleStorageUpdate);
@@ -123,7 +139,7 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
       window.removeEventListener("cycle_journal_updated", handleStorageUpdate);
       window.removeEventListener("storage", handleStorageUpdate);
     };
-  }, []);
+  }, [userId]);
 
   // Currently active book
   const currentBook = useMemo(() => {
@@ -212,51 +228,48 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
   // Next trade number for modal
   const nextNum = useMemo(() => {
     const targetBookId = selectedBookId === "all" ? (books[0]?.id || "book_default") : selectedBookId;
-    return getNextTradeNumber(targetBookId);
-  }, [books, selectedBookId]);
+    return getNextTradeNumber(targetBookId, userId);
+  }, [books, selectedBookId, userId]);
 
   // Handlers for Books
   const handleCreateBook = (bookData: Omit<JournalBook, "id" | "createdAt">) => {
-    const created = createJournalBook(bookData);
-    setBooks(getStoredJournalBooks());
+    const created = createJournalBook(bookData, userId);
+    const updated = getStoredJournalBooks(userId);
+    setBooks(updated);
     setSelectedBookId(created.id);
   };
 
   const handleUpdateBook = (book: JournalBook) => {
-    updateJournalBook(book);
-    setBooks(getStoredJournalBooks());
+    updateJournalBook(book, userId);
+    setBooks(getStoredJournalBooks(userId));
   };
 
   const handleDeleteBook = (bookId: string) => {
-    if (books.length <= 1) {
-      alert(isBn ? "অন্তত একটি জার্নাল বুক থাকতে হবে।" : "You must keep at least one Journal Book.");
-      return;
-    }
-    deleteJournalBook(bookId);
-    const remaining = getStoredJournalBooks();
+    deleteJournalBook(bookId, userId);
+    const remaining = getStoredJournalBooks(userId);
     setBooks(remaining);
-    setTrades(getStoredTrades());
+    setTrades(getStoredTrades(userId));
     setSelectedBookId(remaining[0]?.id || "all");
     setDeleteBookConfirmId(null);
   };
 
   // Handlers for Trades
   const handleSaveTrade = (tradeData: Omit<TradeEntry, "id" | "tradeNumber" | "createdAt">) => {
-    addTrade(tradeData);
-    setTrades(getStoredTrades());
+    addTrade(tradeData, userId);
+    setTrades(getStoredTrades(userId));
     setIsTradeModalOpen(false);
   };
 
   const handleUpdateTrade = (trade: TradeEntry) => {
-    updateTrade(trade);
-    setTrades(getStoredTrades());
+    updateTrade(trade, userId);
+    setTrades(getStoredTrades(userId));
     setIsTradeModalOpen(false);
     setEditingTrade(null);
   };
 
   const handleDeleteTrade = (tradeId: string) => {
-    deleteTrade(tradeId);
-    setTrades(getStoredTrades());
+    deleteTrade(tradeId, userId);
+    setTrades(getStoredTrades(userId));
     setDeleteTradeConfirmId(null);
     if (viewingTrade?.id === tradeId) setViewingTrade(null);
   };
@@ -335,20 +348,48 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
             {isBn ? "নতুন জার্নাল বুক" : "New Journal Book"}
           </Button>
 
-          <Button
-            onClick={() => {
-              setEditingTrade(null);
-              setIsTradeModalOpen(true);
-            }}
-            className="rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500 text-xs font-black gap-2 shadow-lg shadow-cyan-500/25 px-4 py-2"
-          >
-            <Plus className="h-4 w-4" />
-            {isBn ? "+ নতুন ট্রেড এন্ট্রি (২১ ফিল্ড)" : "+ Log New Trade"}
-          </Button>
+          {books.length > 0 && (
+            <Button
+              onClick={() => {
+                setEditingTrade(null);
+                setIsTradeModalOpen(true);
+              }}
+              className="rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500 text-xs font-black gap-2 shadow-lg shadow-cyan-500/25 px-4 py-2"
+            >
+              <Plus className="h-4 w-4" />
+              {isBn ? "+ নতুন ট্রেড এন্ট্রি (২১ ফিল্ড)" : "+ Log New Trade"}
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* Journal Books Selector Bar */}
+      {books.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200/80 bg-white/40 p-12 text-center dark:border-slate-800/80 dark:bg-slate-900/30 min-h-[460px] shadow-xs">
+          <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-cyan-500/10 text-cyan-500 mb-4 shadow-lg shadow-cyan-500/10">
+            <BookOpen className="h-8 w-8" />
+          </div>
+          <h4 className="text-lg font-extrabold text-slate-900 dark:text-white">
+            {isBn ? "এখনো কোনো জার্নাল বুক নেই" : "No Journal Books Yet"}
+          </h4>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mt-1.5 mb-6 leading-relaxed">
+            {isBn
+              ? "আপনার ট্রেড ট্র্যাক ও পারফরম্যান্স বিশ্লেষণ করতে প্রথম জার্নাল বুক তৈরি করুন।"
+              : "Create your first journal book to start tracking your trades."}
+          </p>
+          <Button
+            onClick={() => {
+              setEditingBook(null);
+              setIsBookModalOpen(true);
+            }}
+            className="rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500 text-xs font-black gap-2 shadow-lg shadow-cyan-500/25 px-6 py-3"
+          >
+            <Plus className="h-4 w-4" />
+            <span>{isBn ? "+ প্রথম জার্নাল বুক তৈরি করুন" : "+ Create First Journal Book"}</span>
+          </Button>
+        </div>
+      ) : (
+        <>
+          {/* Journal Books Selector Bar */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
         {/* All / Combined Option */}
         <button
@@ -423,6 +464,21 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
           </div>
 
           <div className="flex items-center gap-2 self-end sm:self-center">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setJournalViewMode(journalViewMode === "calendar" ? "table" : "calendar")}
+              className={`h-8 rounded-xl text-xs font-bold gap-1.5 transition-all ${
+                journalViewMode === "calendar"
+                  ? "border-cyan-500 bg-cyan-500/10 text-cyan-500 hover:bg-cyan-500/20"
+                  : "border-slate-300 dark:border-slate-700 hover:border-cyan-500 hover:text-cyan-500"
+              }`}
+            >
+              <Calendar className="h-3.5 w-3.5 text-cyan-500" />
+              {journalViewMode === "calendar"
+                ? (isBn ? "ট্রেড টেবিল দেখুন" : "View Table")
+                : (isBn ? "ক্যালেন্ডার ভিউ" : "Calendar View")}
+            </Button>
             <Button
               size="sm"
               variant="outline"
@@ -948,10 +1004,91 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
         </div>
       </div>
 
-      {/* TRADE HISTORY AUDIT TABLE & FILTERS */}
-      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 dark:border-slate-800">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* VIEW SWITCHER BAR */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+        <div className="flex items-center gap-2">
+          <div className="flex rounded-2xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-800 dark:bg-slate-950">
+            <button
+              type="button"
+              onClick={() => setJournalViewMode("table")}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black transition-all ${
+                journalViewMode === "table"
+                  ? "bg-white text-slate-900 shadow-xs dark:bg-slate-800 dark:text-white"
+                  : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
+              }`}
+            >
+              <SlidersHorizontal className="h-3.5 w-3.5" />
+              <span>{isBn ? "ট্রেড টেবিল (২১ ফিল্ড)" : "Audit Table (21 Fields)"}</span>
+              <span className="rounded-full bg-slate-200/60 dark:bg-slate-700/60 px-2 py-0.5 text-[10px] font-mono">
+                {bookTrades.length}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setJournalViewMode("calendar")}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-black transition-all ${
+                journalViewMode === "calendar"
+                  ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/20"
+                  : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
+              }`}
+            >
+              <Calendar className="h-3.5 w-3.5" />
+              <span>{isBn ? "বুক ক্যালেন্ডার ভিউ" : "Journal Calendar"}</span>
+              {currentBook && (
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                    journalViewMode === "calendar"
+                      ? "bg-white/20 text-white"
+                      : "bg-cyan-500/10 text-cyan-500"
+                  }`}
+                >
+                  {currentBook.name}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => {
+              setCalendarPrefillDate(undefined);
+              setEditingTrade(null);
+              setIsTradeModalOpen(true);
+            }}
+            size="sm"
+            className="rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500 text-xs font-black gap-1.5 shadow-md shadow-cyan-500/20 px-4 py-2"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            {isBn ? "+ নতুন ট্রেড এন্ট্রি" : "+ Log Trade"}
+          </Button>
+        </div>
+      </div>
+
+      {journalViewMode === "calendar" ? (
+        <JournalCalendar
+          book={currentBook}
+          trades={bookTrades}
+          currencySymbol={currencySymbol}
+          isBn={isBn}
+          onViewTrade={(t) => setViewingTrade(t)}
+          onEditTrade={(t) => {
+            setEditingTrade(t);
+            setIsTradeModalOpen(true);
+          }}
+          onDeleteTrade={(id) => setDeleteTradeConfirmId(id)}
+          onPrintTrade={(t) => setPrintingTrade(t)}
+          onLogTradeForDate={(d) => {
+            setCalendarPrefillDate(d);
+            setEditingTrade(null);
+            setIsTradeModalOpen(true);
+          }}
+        />
+      ) : (
+        /* TRADE HISTORY AUDIT TABLE & FILTERS */
+        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 dark:border-slate-800">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
                 {isBn ? "ট্রেড হিস্ট্রি ও বিশদ অডিট টেবিল" : "Trade Execution History & Audit Log"}
@@ -1259,6 +1396,7 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
           )}
         </div>
       </div>
+      )}
 
       {/* DETAILED TRADE AUDIT VIEW MODAL (ALL 21 FIELDS) */}
       {viewingTrade && (
@@ -1627,6 +1765,8 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
       )}
         </>
       )}
+        </>
+      )}
 
       {/* MOUNT MODALS */}
       {/* 1. Trade Modal (Add / Edit) */}
@@ -1635,10 +1775,18 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
         onClose={() => {
           setIsTradeModalOpen(false);
           setEditingTrade(null);
+          setCalendarPrefillDate(undefined);
         }}
-        onSave={handleSaveTrade}
-        onUpdate={handleUpdateTrade}
+        onSave={(newTrade) => {
+          handleSaveTrade(newTrade);
+          setCalendarPrefillDate(undefined);
+        }}
+        onUpdate={(updated) => {
+          handleUpdateTrade(updated);
+          setCalendarPrefillDate(undefined);
+        }}
         initialTrade={editingTrade}
+        defaultDate={calendarPrefillDate}
         nextTradeNumber={nextNum}
         journalBookId={selectedBookId === "all" ? (books[0]?.id || "book_default") : selectedBookId}
         isBn={isBn}

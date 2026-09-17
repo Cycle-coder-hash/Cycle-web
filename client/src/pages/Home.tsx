@@ -160,6 +160,8 @@ const STORE_BUNDLES_STATIC = [
     descriptionBn: "",
     originalPrice: "5550",
     price: "3999",
+    badgeEn: "PROFESSIONAL",
+    badgeBn: "প্রফেশনাল",
     featuresEn: [
       "Complete A–Z Trading Blueprint",
       "To take this course, you need to have a basic understanding of the market.",
@@ -227,17 +229,50 @@ export default function Home() {
       setCardsVisible(true);
       return;
     }
+
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting) {
+        const entry = entries[0];
+        if (!entry) return;
+        if (entry.isIntersecting) {
           setCardsVisible(true);
-          observer.disconnect();
+        } else {
+          setCardsVisible(false);
         }
       },
-      { threshold: 0.1, rootMargin: "0px 0px -30px 0px" }
+      { threshold: 0.1, rootMargin: "0px 0px -20px 0px" }
     );
+
     observer.observe(pricingRef.current);
-    return () => observer.disconnect();
+
+    const replayStoreAnimation = () => {
+      setCardsVisible(false);
+      setTimeout(() => {
+        setCardsVisible(true);
+      }, 50);
+    };
+
+    const handleAnchorClick = (e: MouseEvent) => {
+      const anchor = (e.target as HTMLElement)?.closest?.('a[href="#store"]');
+      if (anchor) {
+        replayStoreAnimation();
+      }
+    };
+
+    const handleHashChange = () => {
+      if (window.location.hash === "#store") {
+        replayStoreAnimation();
+      }
+    };
+
+    document.addEventListener("click", handleAnchorClick, { passive: true });
+    window.addEventListener("hashchange", handleHashChange);
+
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("click", handleAnchorClick);
+      window.removeEventListener("hashchange", handleHashChange);
+    };
   }, []);
 
   useEffect(() => {

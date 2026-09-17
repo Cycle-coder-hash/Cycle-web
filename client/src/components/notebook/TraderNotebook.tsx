@@ -396,64 +396,88 @@ export function TraderNotebook({ user, isBn = false }: TraderNotebookProps) {
         </div>
       </div>
 
-      {/* Main Workspace Layout: Sidebar + Page Editor */}
-      <div className="flex flex-col lg:flex-row gap-5 min-h-[720px]">
-        {/* Left Sidebar */}
-        <NotebookSidebar
-          templates={userData?.templates || []}
-          activeTemplateId={activeTemplateId}
-          pages={userData?.pages || []}
-          activePageId={activePageId}
-          isBn={isBn}
-          onSelectTemplate={handleSelectTemplate}
-          onCreateTemplate={handleCreateTemplate}
-          onRenameTemplate={handleRenameTemplate}
-          onDeleteTemplate={triggerDeleteTemplate}
-          onSelectPage={handleSelectPage}
-          onCreatePage={handleCreatePage}
-          onRenamePage={handleRenamePage}
-          onDeletePage={triggerDeletePage}
-          onOpenSearch={() => setIsSearchOpen(true)}
-        />
-
-        {/* Right Main Page Editor */}
-        {activePage && activeTemplate ? (
-          <NotebookPageEditor
-            page={activePage}
-            template={activeTemplate}
-            parentPage={activeParentPage}
-            subPages={activeSubPages}
-            isBn={isBn}
-            isSaving={isSaving}
-            onUpdatePage={handleUpdatePage}
-            onDeletePage={triggerDeletePage}
-            onCreateSubPage={(parentId) => handleCreatePage(parentId)}
-            onSelectPage={handleSelectPage}
-          />
-        ) : (
-          <div className="flex-1 flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200/80 bg-white/30 p-12 text-center dark:border-slate-800/80 dark:bg-slate-900/20">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-500 mb-4">
-              <Layers className="h-7 w-7" />
-            </div>
-            <h4 className="text-base font-bold text-slate-800 dark:text-slate-200">
-              {isBn ? "কোনো পৃষ্ঠা নির্বাচন করা হয়নি" : "No page selected"}
-            </h4>
-            <p className="text-xs text-slate-400 max-w-sm mt-1 mb-5">
-              {isBn
-                ? "বামের সাইডবার থেকে যেকোনো পৃষ্ঠা সিলেক্ট করুন অথবা নতুন পৃষ্ঠা তৈরি করুন।"
-                : "Select an existing topic from the sidebar or click below to start a new page."}
-            </p>
-            <button
-              type="button"
-              onClick={() => handleCreatePage(null)}
-              className="flex items-center gap-2 rounded-2xl bg-cyan-500 px-5 py-2.5 text-xs font-black text-slate-950 hover:bg-cyan-400 shadow-lg shadow-cyan-500/25 transition-all"
-            >
-              <Plus className="h-4 w-4" />
-              <span>{isBn ? "+ নতুন পৃষ্ঠা তৈরি করুন" : "+ Create New Page"}</span>
-            </button>
+      {/* Main Workspace Layout: Empty State or Sidebar + Page Editor */}
+      {userData && userData.templates.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200/80 bg-white/40 p-12 text-center dark:border-slate-800/80 dark:bg-slate-900/30 min-h-[480px] shadow-xs">
+          <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-cyan-500/10 text-cyan-500 mb-4 shadow-lg shadow-cyan-500/10">
+            <BookOpen className="h-8 w-8" />
           </div>
-        )}
-      </div>
+          <h4 className="text-lg font-extrabold text-slate-900 dark:text-white">
+            {isBn ? "এখনো কোনো নোটবুক নেই" : "No Notebooks Yet"}
+          </h4>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mt-1.5 mb-6 leading-relaxed">
+            {isBn
+              ? "আপনার ট্রেডিং জ্ঞান, স্ট্র্যাটেজি এবং প্লেবুক সাজাতে প্রথম নোটবুকটি তৈরি করুন।"
+              : "Create your first notebook to organize your trading knowledge."}
+          </p>
+          <button
+            type="button"
+            onClick={() => handleCreateTemplate(isBn ? "আমার নোটবুক" : "My Trading Playbook")}
+            className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 px-6 py-3 text-xs font-black text-white shadow-lg shadow-cyan-500/25 hover:from-cyan-400 hover:to-blue-500 transition-all"
+          >
+            <Plus className="h-4 w-4" />
+            <span>{isBn ? "+ প্রথম নোটবুক তৈরি করুন" : "+ Create First Notebook"}</span>
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-col lg:flex-row gap-5 min-h-[720px]">
+          {/* Left Sidebar */}
+          <NotebookSidebar
+            templates={userData?.templates || []}
+            activeTemplateId={activeTemplateId}
+            pages={userData?.pages || []}
+            activePageId={activePageId}
+            isBn={isBn}
+            onSelectTemplate={handleSelectTemplate}
+            onCreateTemplate={handleCreateTemplate}
+            onRenameTemplate={handleRenameTemplate}
+            onDeleteTemplate={triggerDeleteTemplate}
+            onSelectPage={handleSelectPage}
+            onCreatePage={handleCreatePage}
+            onRenamePage={handleRenamePage}
+            onDeletePage={triggerDeletePage}
+            onOpenSearch={() => setIsSearchOpen(true)}
+          />
+
+          {/* Right Main Page Editor */}
+          {activePage && activeTemplate ? (
+            <NotebookPageEditor
+              page={activePage}
+              template={activeTemplate}
+              parentPage={activeParentPage}
+              subPages={activeSubPages}
+              isBn={isBn}
+              isSaving={isSaving}
+              onUpdatePage={handleUpdatePage}
+              onDeletePage={triggerDeletePage}
+              onCreateSubPage={(parentId) => handleCreatePage(parentId)}
+              onSelectPage={handleSelectPage}
+            />
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200/80 bg-white/30 p-12 text-center dark:border-slate-800/80 dark:bg-slate-900/20">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-500 mb-4">
+                <Layers className="h-7 w-7" />
+              </div>
+              <h4 className="text-base font-bold text-slate-800 dark:text-slate-200">
+                {isBn ? "কোনো পৃষ্ঠা নির্বাচন করা হয়নি" : "No page selected"}
+              </h4>
+              <p className="text-xs text-slate-400 max-w-sm mt-1 mb-5">
+                {isBn
+                  ? "বামের সাইডবার থেকে যেকোনো পৃষ্ঠা সিলেক্ট করুন অথবা নতুন পৃষ্ঠা তৈরি করুন।"
+                  : "Select an existing topic from the sidebar or click below to start a new page."}
+              </p>
+              <button
+                type="button"
+                onClick={() => handleCreatePage(null)}
+                className="flex items-center gap-2 rounded-2xl bg-cyan-500 px-5 py-2.5 text-xs font-black text-slate-950 hover:bg-cyan-400 shadow-lg shadow-cyan-500/25 transition-all"
+              >
+                <Plus className="h-4 w-4" />
+                <span>{isBn ? "+ নতুন পৃষ্ঠা তৈরি করুন" : "+ Create New Page"}</span>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Global Search Modal */}
       <NotebookSearchModal

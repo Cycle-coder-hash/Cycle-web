@@ -381,6 +381,46 @@ function createDefaultSeedData(userId: string): NotebookUserData {
   };
 }
 
+function sanitizeLoadedNotebook(data: NotebookUserData, safeUserId: string): NotebookUserData {
+  if (!data || !Array.isArray(data.templates)) {
+    return { templates: [], pages: [], activeTemplateId: null, activePageId: null };
+  }
+  // Filter out any legacy auto-seeded demo templates
+  const personalTemplates = data.templates.filter(
+    (t) =>
+      t.id !== `tmpl_core_${safeUserId}` &&
+      t.id !== `tmpl_journal_${safeUserId}` &&
+      !t.id.startsWith("tmpl_core_") &&
+      !t.id.startsWith("tmpl_journal_")
+  );
+
+  if (personalTemplates.length === 0) {
+    return {
+      templates: [],
+      pages: [],
+      activeTemplateId: null,
+      activePageId: null,
+    };
+  }
+
+  const validTemplateIds = new Set(personalTemplates.map((t) => t.id));
+  const personalPages = (data.pages || []).filter((p) => validTemplateIds.has(p.notebookId));
+
+  const activeTemplateId = personalTemplates.some((t) => t.id === data.activeTemplateId)
+    ? data.activeTemplateId
+    : personalTemplates[0].id;
+  const activePageId = personalPages.some((p) => p.id === data.activePageId)
+    ? data.activePageId
+    : personalPages.find((p) => p.notebookId === activeTemplateId)?.id || null;
+
+  return {
+    templates: personalTemplates,
+    pages: personalPages,
+    activeTemplateId,
+    activePageId,
+  };
+}
+
 /**
  * Load user notebook data from IndexedDB with localStorage fallback
  */
@@ -398,8 +438,8 @@ export async function loadUserNotebookData(userId: string): Promise<NotebookUser
       req.onerror = () => reject(req.error);
     });
 
-    if (result && result.data && result.data.templates?.length) {
-      return result.data as NotebookUserData;
+    if (result && result.data && Array.isArray(result.data.templates)) {
+      return sanitizeLoadedNotebook(result.data as NotebookUserData, safeUserId);
     }
   } catch (err) {
     console.warn("[NotebookStorage] IndexedDB read error, checking localStorage fallback:", err);
@@ -410,16 +450,20 @@ export async function loadUserNotebookData(userId: string): Promise<NotebookUser
     const raw = localStorage.getItem(`cycle_notebook_${safeUserId}`);
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed && parsed.templates?.length) {
-        return parsed as NotebookUserData;
+      if (parsed && Array.isArray(parsed.templates)) {
+        return sanitizeLoadedNotebook(parsed as NotebookUserData, safeUserId);
       }
     }
   } catch {}
 
-  // 3. Initialize with seed data
-  const seed = createDefaultSeedData(safeUserId);
-  await saveUserNotebookData(safeUserId, seed);
-  return seed;
+  // 3. For new students: return a clean, empty workspace (no auto-seeded samples)
+  const emptyData: NotebookUserData = {
+    templates: [],
+    pages: [],
+    activeTemplateId: null,
+    activePageId: null,
+  };
+  return emptyData;
 }
 
 // Auto-save debounce timer

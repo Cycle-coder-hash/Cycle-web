@@ -11,6 +11,9 @@ export default function Checkout() {
   const { user } = useAuth();
   const { data: bundles } = trpc.public.bundles.useQuery();
   const { data: settings } = trpc.public.paymentSettings.useQuery();
+  const { data: entitlements, refetch: refetchEntitlements } = trpc.customer.entitlements.useQuery(undefined, {
+    enabled: !!user,
+  });
 
   const [selected, setSelected] = useState(() => {
     const params = new URLSearchParams(window.location.search);
@@ -27,9 +30,20 @@ export default function Checkout() {
   const [tx, setTx] = useState("");
   const [ack, setAck] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [freeClaimedSuccess, setFreeClaimedSuccess] = useState(false);
+  const [alreadyHadAccess, setAlreadyHadAccess] = useState(false);
 
   const submit = trpc.customer.submitOrder.useMutation({
     onSuccess: () => setSubmitted(true),
+    onError: (e) => setError(e.message),
+  });
+
+  const claimFree = trpc.customer.claimFreeProduct.useMutation({
+    onSuccess: (res) => {
+      refetchEntitlements();
+      setAlreadyHadAccess(Boolean(res?.alreadyClaimed));
+      setFreeClaimedSuccess(true);
+    },
     onError: (e) => setError(e.message),
   });
 
@@ -46,6 +60,10 @@ export default function Checkout() {
 
   const chosen = bundlesList.find((b: any) => b.id === selected);
   const price = chosen?.price || (selected === 1 ? "00" : selected === 2 ? "2499" : "3999");
+  const isFree = Number(price) === 0 || price === "00" || price === "0" || selected === 1;
+  const isAlreadyClaimed = Boolean(
+    isFree && entitlements?.some((e: any) => e.bundleId === selected || e.scope === `bundle:${selected}`)
+  );
 
   if (!user) {
     return (
@@ -56,11 +74,40 @@ export default function Checkout() {
           </div>
           <h1 className="mt-6 text-2xl sm:text-3xl font-extrabold tracking-tight">Sign in to continue</h1>
           <p className="mt-3 text-sm text-slate-300 leading-relaxed">
-            Orders and payment submissions are tied to your secure customer account.
+            {isFree
+              ? "Sign in or create your student account to claim and save your Free eBook Package."
+              : "Orders and payment submissions are tied to your secure customer account."}
           </p>
           <Button onClick={() => startLogin()} className="mt-6 w-full h-11 bg-sky-500 text-slate-950 font-extrabold hover:bg-sky-400">
             Sign In / Register
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (freeClaimedSuccess) {
+    return (
+      <div className="grid min-h-screen place-items-center bg-[#f8fafc] p-5">
+        <div className="max-w-md w-full rounded-3xl bg-white p-7 sm:p-10 text-center shadow-xl border border-slate-200">
+          <div className="mx-auto grid size-14 place-items-center rounded-full bg-emerald-500/15 text-emerald-600">
+            <Check size={28} />
+          </div>
+          <h1 className="mt-5 text-2xl sm:text-3xl font-extrabold text-slate-900">
+            {alreadyHadAccess ? "Access Already Active!" : "Free Package Unlocked!"}
+          </h1>
+          <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-500">
+            {alreadyHadAccess
+              ? "You already have active access to the Free eBook Package. You can access all your materials anytime in your dashboard library."
+              : "Your Free eBook Package has been activated and added to your student account. You can now access all institutional materials in your dashboard library."}
+          </p>
+          <div className="mt-6 space-y-2.5">
+            <Link href="/dashboard">
+              <Button className="w-full h-11 bg-[#081833] text-white font-bold hover:bg-[#0c244b]">
+                Go to Dashboard & Library →
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -118,12 +165,14 @@ export default function Checkout() {
             )}
 
             <div className="text-[11px] font-extrabold uppercase tracking-widest text-[#0284c7]">
-              CHECKOUT / MANUAL VERIFICATION
+              {isFree ? "FREE ACCESS ENROLLMENT" : "CHECKOUT / MANUAL VERIFICATION"}
             </div>
 
             <h1 className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight">Choose your learning path</h1>
             <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-500">
-              Submit your payment transaction ID. Access will be granted after manual verification.
+              {isFree
+                ? "Claim instant free access to this package. No payment or transaction verification required."
+                : "Submit your payment transaction ID. Access will be granted after manual verification."}
             </p>
 
             {/* Bundle Selection */}
@@ -154,7 +203,7 @@ export default function Checkout() {
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-xs sm:text-sm font-bold text-slate-800">Select Included PDFs</div>
-                    <div className="text-[11px] text-slate-500">15-PDF complete library · Fixed ৳199</div>
+                    <div className="text-[11px] text-slate-500">15-PDF complete institutional library · 100% Free Access</div>
                   </div>
                   <span className="text-xs font-extrabold text-[#0284c7]">
                     {selectedPdfIds.length} / 15
@@ -187,80 +236,116 @@ export default function Checkout() {
               </div>
             )}
 
-            {/* Payment Method Selector */}
-            <div className="mt-6">
-              <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-600">
-                Payment Method
-              </label>
-              <div className="mt-2 grid grid-cols-3 gap-2">
-                {(["bkash", "nagad", "rocket"] as const).map((m) => (
-                  <button
-                    type="button"
-                    key={m}
-                    onClick={() => setMethod(m)}
-                    className={`rounded-xl border py-2.5 text-xs sm:text-sm font-extrabold capitalize transition ${
-                      method === m
-                        ? "border-[#081833] bg-[#081833] text-white shadow-xs"
-                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                    }`}
-                  >
-                    {m}
-                  </button>
-                ))}
-              </div>
+            {/* Paid vs Free Sections */}
+            {!isFree ? (
+              <>
+                {/* Payment Method Selector */}
+                <div className="mt-6">
+                  <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-600">
+                    Payment Method
+                  </label>
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    {(["bkash", "nagad", "rocket"] as const).map((m) => (
+                      <button
+                        type="button"
+                        key={m}
+                        onClick={() => setMethod(m)}
+                        className={`rounded-xl border py-2.5 text-xs sm:text-sm font-extrabold capitalize transition ${
+                          method === m
+                            ? "border-[#081833] bg-[#081833] text-white shadow-xs"
+                            : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                        }`}
+                      >
+                        {m}
+                      </button>
+                    ))}
+                  </div>
 
-              <div className="mt-3 rounded-2xl bg-sky-50/80 border border-sky-200/60 p-3.5 text-xs text-slate-800">
-                <div className="flex items-center gap-2 font-extrabold text-[#0369a1]">
-                  <Info size={15} className="shrink-0" />
-                  <span>Send ৳{price} to {settings?.[method] || "01961079326"}</span>
+                  <div className="mt-3 rounded-2xl bg-sky-50/80 border border-sky-200/60 p-3.5 text-xs text-slate-800">
+                    <div className="flex items-center gap-2 font-extrabold text-[#0369a1]">
+                      <Info size={15} className="shrink-0" />
+                      <span>Send ৳{price} to {settings?.[method] || "01961079326"}</span>
+                    </div>
+                    <div className="mt-1 text-[11px] text-slate-600">
+                      Send Money using {method.toUpperCase()}, then paste your Transaction ID below.
+                    </div>
+                  </div>
                 </div>
-                <div className="mt-1 text-[11px] text-slate-600">
-                  Send Money using {method.toUpperCase()}, then paste your Transaction ID below.
+
+                {/* Transaction ID */}
+                <div className="mt-5">
+                  <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-600">
+                    Transaction ID (TrxID)
+                  </label>
+                  <input
+                    value={tx}
+                    onChange={(e) => setTx(e.target.value)}
+                    placeholder="e.g. 8A1B2C3D"
+                    className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none focus:border-[#0284c7] focus:bg-white focus:ring-2 focus:ring-sky-500/20 uppercase"
+                  />
                 </div>
-              </div>
-            </div>
 
-            {/* Transaction ID */}
-            <div className="mt-5">
-              <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-600">
-                Transaction ID (TrxID)
-              </label>
-              <input
-                value={tx}
-                onChange={(e) => setTx(e.target.value)}
-                placeholder="e.g. 8A1B2C3D"
-                className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium outline-none focus:border-[#0284c7] focus:bg-white focus:ring-2 focus:ring-sky-500/20 uppercase"
-              />
-            </div>
+                {/* No Refund Ack */}
+                <label className="mt-5 flex items-start gap-2.5 text-xs text-slate-600 font-medium cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={ack}
+                    onChange={(e) => setAck(e.target.checked)}
+                    className="mt-0.5 size-4 accent-[#081833] rounded"
+                  />
+                  <span>I understand that this is a digital product and no refund is provided after access is granted.</span>
+                </label>
 
-            {/* No Refund Ack */}
-            <label className="mt-5 flex items-start gap-2.5 text-xs text-slate-600 font-medium cursor-pointer">
-              <input
-                type="checkbox"
-                checked={ack}
-                onChange={(e) => setAck(e.target.checked)}
-                className="mt-0.5 size-4 accent-[#081833] rounded"
-              />
-              <span>I understand that this is a digital product and no refund is provided after access is granted.</span>
-            </label>
+                {/* Paid Submit Button */}
+                <Button
+                  disabled={!tx || !ack || submit.isPending}
+                  onClick={() =>
+                    submit.mutate({
+                      bundleId: selected,
+                      selectedPdfIds,
+                      amount: Number(price),
+                      paymentMethod: method,
+                      transactionId: tx.trim(),
+                      noRefundAcknowledged: true,
+                    })
+                  }
+                  className="mt-6 w-full h-12 bg-[#081833] text-white font-extrabold text-sm hover:bg-[#0c244b] active:scale-[0.99] disabled:opacity-50"
+                >
+                  {submit.isPending ? "Submitting..." : "Submit Order for Review"}
+                </Button>
+              </>
+            ) : (
+              <>
+                {/* Free Package Notice */}
+                <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 text-xs text-emerald-950 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
+                  <div className="flex items-center gap-2 font-extrabold text-emerald-700 dark:text-emerald-400">
+                    <Sparkles size={16} className="shrink-0" />
+                    <span>Free Package · No Payment Required</span>
+                  </div>
+                  <p className="mt-1 text-[11px] leading-relaxed text-emerald-800/80 dark:text-emerald-400/80">
+                    Instant access will be activated directly to your student account and library with no payment or manual verification required.
+                  </p>
+                </div>
 
-            {/* Submit Button */}
-            <Button
-              disabled={!tx || !ack || submit.isPending}
-              onClick={() =>
-                submit.mutate({
-                  bundleId: selected,
-                  selectedPdfIds,
-                  amount: Number(price),
-                  paymentMethod: method,
-                  transactionId: tx.trim(),
-                  noRefundAcknowledged: true,
-                })
-              }
-              className="mt-6 w-full h-12 bg-[#081833] text-white font-extrabold text-sm hover:bg-[#0c244b] active:scale-[0.99] disabled:opacity-50"
-            >
-              {submit.isPending ? "Submitting..." : "Submit Order for Review"}
-            </Button>
+                {/* Free Claim Button */}
+                <Button
+                  disabled={claimFree.isPending}
+                  onClick={() =>
+                    claimFree.mutate({
+                      bundleId: selected,
+                      selectedPdfIds,
+                    })
+                  }
+                  className="mt-6 w-full h-12 bg-emerald-600 text-white font-extrabold text-sm hover:bg-emerald-700 active:scale-[0.99] disabled:opacity-50 shadow-md shadow-emerald-600/20"
+                >
+                  {claimFree.isPending
+                    ? "Activating Access..."
+                    : isAlreadyClaimed
+                    ? "Already Claimed — Re-sync Access"
+                    : "Claim Free Package"}
+                </Button>
+              </>
+            )}
           </section>
 
           {/* Sidebar Order Summary */}
@@ -274,23 +359,33 @@ export default function Checkout() {
                 <div className="text-lg sm:text-xl font-bold">
                   {chosen?.titleEn || (selected === 1 ? "Free eBook Package" : selected === 2 ? "CYCLE OF CHART BASIC TO ADVANCE COURSE" : "CYCLE OF CHART — PROFESSIONAL TRADING BLUEPRINT")}
                 </div>
-                <div className="mt-1 text-xs text-slate-400">BDT · Manual Verification</div>
+                <div className="mt-1 text-xs text-slate-400">
+                  {isFree ? "100% Free · Instant Activation" : "BDT · Manual Verification"}
+                </div>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-[#38bdf8]">৳{price}</div>
+              <div className="text-2xl sm:text-3xl font-black text-[#38bdf8]">
+                {isFree ? "FREE" : `৳${price}`}
+              </div>
             </div>
 
             <div className="mt-8 space-y-3 border-t border-white/10 pt-6 text-xs text-slate-300">
               <div className="flex justify-between">
                 <span>Status</span>
-                <span className="font-bold text-amber-300">Pending Review</span>
+                <span className={`font-bold ${isFree ? "text-emerald-400" : "text-amber-300"}`}>
+                  {isFree ? "Instant Access" : "Pending Review"}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span>Delivery</span>
-                <span className="font-medium text-white">Instant Dashboard Access upon Approval</span>
+                <span className="font-medium text-white">
+                  {isFree ? "Direct Dashboard & Library Access" : "Instant Dashboard Access upon Approval"}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span>Security</span>
-                <span className="font-medium text-emerald-400">Verified & Encrypted</span>
+                <span className="font-medium text-emerald-400">
+                  {isFree ? "Verified Student Access" : "Verified & Encrypted"}
+                </span>
               </div>
             </div>
           </aside>

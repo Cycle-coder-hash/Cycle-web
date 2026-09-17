@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Calendar as CalendarIcon,
   Check,
@@ -13,6 +13,12 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  formatTaskTimeRange,
+  validateTaskTimeRange,
+  computeTaskStatus,
+  TIME_SUGGESTIONS,
+} from "@/lib/disciplineTimeUtils";
 
 interface DisciplineScheduleTabProps {
   selectedDate: string;
@@ -21,7 +27,14 @@ interface DisciplineScheduleTabProps {
   isLoading: boolean;
   isBn: boolean;
   onToggleTask: (taskId: number, completed: boolean) => void;
-  onAddTask: (task: { title: string; time: string; isMandatory: boolean; isTrackable: boolean }) => void;
+  onAddTask: (task: {
+    title: string;
+    startTime?: string | null;
+    endTime?: string | null;
+    time?: string | null;
+    isMandatory: boolean;
+    isTrackable: boolean;
+  }) => void;
   onUpdateTask: (id: number, updates: any) => void;
   onDeleteTask: (id: number) => void;
 }
@@ -42,11 +55,18 @@ export function DisciplineScheduleTab({
   const [editingTask, setEditingTask] = useState<any | null>(null);
   const [deletingTaskId, setDeletingTaskId] = useState<number | null>(null);
 
-  // Form states
+  // Form states (Flexible Start Time + End Time)
   const [taskTitle, setTaskTitle] = useState("");
-  const [taskTime, setTaskTime] = useState("08:00 AM");
+  const [taskStartTime, setTaskStartTime] = useState("");
+  const [taskEndTime, setTaskEndTime] = useState("");
   const [taskMandatory, setTaskMandatory] = useState(true);
   const [taskTrackable, setTaskTrackable] = useState(true);
+
+  // Real-time time range validation
+  const timeValidationError = useMemo(
+    () => validateTaskTimeRange(taskStartTime, taskEndTime),
+    [taskStartTime, taskEndTime]
+  );
 
   // Date helpers
   const handlePrevDay = () => {
@@ -73,7 +93,8 @@ export function DisciplineScheduleTab({
 
   const handleOpenAdd = () => {
     setTaskTitle("");
-    setTaskTime("08:00 AM");
+    setTaskStartTime("");
+    setTaskEndTime("");
     setTaskMandatory(true);
     setTaskTrackable(true);
     setShowAddModal(true);
@@ -82,17 +103,20 @@ export function DisciplineScheduleTab({
   const handleOpenEdit = (task: any) => {
     setEditingTask(task);
     setTaskTitle(task.title);
-    setTaskTime(task.time || "08:00 AM");
+    setTaskStartTime(task.startTime ?? (task.time || ""));
+    setTaskEndTime(task.endTime ?? "");
     setTaskMandatory(task.isMandatory !== false);
     setTaskTrackable(task.isTrackable !== false);
   };
 
   const handleSubmitAdd = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!taskTitle.trim()) return;
+    if (!taskTitle.trim() || timeValidationError) return;
     onAddTask({
       title: taskTitle.trim(),
-      time: taskTime.trim() || "08:00 AM",
+      startTime: taskStartTime.trim() || null,
+      endTime: taskEndTime.trim() || null,
+      time: taskStartTime.trim() || null,
       isMandatory: taskMandatory,
       isTrackable: taskTrackable,
     });
@@ -101,10 +125,12 @@ export function DisciplineScheduleTab({
 
   const handleSubmitEdit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingTask || !taskTitle.trim()) return;
+    if (!editingTask || !taskTitle.trim() || timeValidationError) return;
     onUpdateTask(editingTask.id, {
       title: taskTitle.trim(),
-      time: taskTime.trim() || "08:00 AM",
+      startTime: taskStartTime.trim() || null,
+      endTime: taskEndTime.trim() || null,
+      time: taskStartTime.trim() || null,
       isMandatory: taskMandatory,
       isTrackable: taskTrackable,
     });
@@ -215,6 +241,8 @@ export function DisciplineScheduleTab({
         <div className="space-y-2.5">
           {tasks.map((task: any) => {
             const isChecked = task.completed;
+            const timeDisplay = formatTaskTimeRange(task.startTime, task.endTime, task.time);
+            const autoStatus = computeTaskStatus(task, selectedDate);
             return (
               <div
                 key={task.id}
@@ -255,10 +283,35 @@ export function DisciplineScheduleTab({
 
                     <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px]">
                       {/* Time */}
-                      <span className="flex items-center gap-1 font-mono font-bold text-slate-400">
-                        <Clock size={11} />
-                        <span>{task.time || "08:00 AM"}</span>
-                      </span>
+                      {timeDisplay && (
+                        <span className="flex items-center gap-1 font-mono font-bold text-slate-500 dark:text-slate-400">
+                          <Clock size={11} />
+                          <span>{timeDisplay}</span>
+                        </span>
+                      )}
+
+                      {/* Automatic Status Badge */}
+                      {autoStatus === "Completed" && (
+                        <span className="rounded-md bg-emerald-50 px-2 py-0.5 font-bold uppercase text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
+                          {isBn ? "সম্পন্ন" : "Completed"}
+                        </span>
+                      )}
+                      {autoStatus === "In Progress" && (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-sky-50 px-2 py-0.5 font-bold uppercase text-sky-600 dark:bg-sky-950/50 dark:text-sky-400">
+                          <span className="h-1.5 w-1.5 rounded-full bg-sky-500 animate-pulse" />
+                          {isBn ? "চলমান" : "In Progress"}
+                        </span>
+                      )}
+                      {autoStatus === "Upcoming" && (
+                        <span className="rounded-md bg-slate-100 px-2 py-0.5 font-bold uppercase text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                          {isBn ? "আসন্ন" : "Upcoming"}
+                        </span>
+                      )}
+                      {autoStatus === "Overdue" && (
+                        <span className="rounded-md bg-rose-50 px-2 py-0.5 font-bold uppercase text-rose-600 dark:bg-rose-950/50 dark:text-rose-400">
+                          {isBn ? "বিলম্বিত" : "Overdue"}
+                        </span>
+                      )}
 
                       {/* Mandatory / Optional Badge */}
                       <span
@@ -350,18 +403,52 @@ export function DisciplineScheduleTab({
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                  {isBn ? "সময়" : "Task Time"}
-                </label>
-                <input
-                  type="text"
-                  placeholder="08:00 AM"
-                  value={taskTime}
-                  onChange={(e) => setTaskTime(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs sm:text-sm font-medium outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                />
+              {/* Flexible Start Time + End Time */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    {isBn ? "শুরুর সময়" : "Start Time"}
+                  </label>
+                  <input
+                    type="text"
+                    list="discipline-time-suggestions"
+                    placeholder="08:00 AM"
+                    value={taskStartTime}
+                    onChange={(e) => setTaskStartTime(e.target.value)}
+                    className={`mt-1.5 w-full rounded-xl border bg-slate-50 p-2.5 text-xs sm:text-sm font-medium outline-none transition dark:bg-slate-950 dark:text-white ${
+                      timeValidationError
+                        ? "border-rose-400 focus:border-rose-500 dark:border-rose-800"
+                        : "border-slate-200 focus:border-sky-500 dark:border-slate-800"
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    {isBn ? "শেষের সময়" : "End Time"}
+                  </label>
+                  <input
+                    type="text"
+                    list="discipline-time-suggestions"
+                    placeholder="10:00 AM"
+                    value={taskEndTime}
+                    onChange={(e) => setTaskEndTime(e.target.value)}
+                    className={`mt-1.5 w-full rounded-xl border bg-slate-50 p-2.5 text-xs sm:text-sm font-medium outline-none transition dark:bg-slate-950 dark:text-white ${
+                      timeValidationError
+                        ? "border-rose-400 focus:border-rose-500 dark:border-rose-800"
+                        : "border-slate-200 focus:border-sky-500 dark:border-slate-800"
+                    }`}
+                  />
+                </div>
               </div>
+
+              {/* Inline Validation Error */}
+              {timeValidationError && (
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-500">
+                  <AlertCircle size={14} className="shrink-0" />
+                  <span>{timeValidationError}</span>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div>
@@ -396,7 +483,8 @@ export function DisciplineScheduleTab({
               <div className="flex gap-2 pt-2">
                 <Button
                   type="submit"
-                  className="w-full bg-[#081833] hover:bg-[#0c244b] text-white dark:bg-sky-500 dark:text-slate-950 font-bold"
+                  disabled={!!timeValidationError}
+                  className="w-full bg-[#081833] hover:bg-[#0c244b] text-white dark:bg-sky-500 dark:text-slate-950 font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isBn ? "টাস্ক সংরক্ষণ করুন" : "Save Task"}
                 </Button>
@@ -444,17 +532,52 @@ export function DisciplineScheduleTab({
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                  {isBn ? "সময়" : "Task Time"}
-                </label>
-                <input
-                  type="text"
-                  value={taskTime}
-                  onChange={(e) => setTaskTime(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs sm:text-sm font-medium outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                />
+              {/* Flexible Start Time + End Time */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    {isBn ? "শুরুর সময়" : "Start Time"}
+                  </label>
+                  <input
+                    type="text"
+                    list="discipline-time-suggestions"
+                    placeholder="08:00 AM"
+                    value={taskStartTime}
+                    onChange={(e) => setTaskStartTime(e.target.value)}
+                    className={`mt-1.5 w-full rounded-xl border bg-slate-50 p-2.5 text-xs sm:text-sm font-medium outline-none transition dark:bg-slate-950 dark:text-white ${
+                      timeValidationError
+                        ? "border-rose-400 focus:border-rose-500 dark:border-rose-800"
+                        : "border-slate-200 focus:border-sky-500 dark:border-slate-800"
+                    }`}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    {isBn ? "শেষের সময়" : "End Time"}
+                  </label>
+                  <input
+                    type="text"
+                    list="discipline-time-suggestions"
+                    placeholder="10:00 AM"
+                    value={taskEndTime}
+                    onChange={(e) => setTaskEndTime(e.target.value)}
+                    className={`mt-1.5 w-full rounded-xl border bg-slate-50 p-2.5 text-xs sm:text-sm font-medium outline-none transition dark:bg-slate-950 dark:text-white ${
+                      timeValidationError
+                        ? "border-rose-400 focus:border-rose-500 dark:border-rose-800"
+                        : "border-slate-200 focus:border-sky-500 dark:border-slate-800"
+                    }`}
+                  />
+                </div>
               </div>
+
+              {/* Inline Validation Error */}
+              {timeValidationError && (
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-rose-500">
+                  <AlertCircle size={14} className="shrink-0" />
+                  <span>{timeValidationError}</span>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div>
@@ -489,7 +612,8 @@ export function DisciplineScheduleTab({
               <div className="flex gap-2 pt-2">
                 <Button
                   type="submit"
-                  className="w-full bg-[#081833] hover:bg-[#0c244b] text-white dark:bg-sky-500 dark:text-slate-950 font-bold"
+                  disabled={!!timeValidationError}
+                  className="w-full bg-[#081833] hover:bg-[#0c244b] text-white dark:bg-sky-500 dark:text-slate-950 font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isBn ? "আপডেট সংরক্ষণ করুন" : "Save Changes"}
                 </Button>
@@ -542,6 +666,13 @@ export function DisciplineScheduleTab({
           </div>
         </div>
       )}
+
+      {/* Time suggestions datalist */}
+      <datalist id="discipline-time-suggestions">
+        {TIME_SUGGESTIONS.map((t) => (
+          <option key={t} value={t} />
+        ))}
+      </datalist>
     </div>
   );
 }

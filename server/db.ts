@@ -1103,31 +1103,7 @@ export async function ensureDisciplineDefaults(userId: number) {
   const db = await getDb();
   if (db) {
     try {
-      // 1. Tasks
-      const existingTasks = await db.select().from(disciplineTasks).where(eq(disciplineTasks.userId, userId));
-      if (existingTasks.length === 0) {
-        for (let i = 0; i < DEFAULT_DISCIPLINE_TASKS.length; i++) {
-          await db.insert(disciplineTasks).values({
-            userId,
-            ...DEFAULT_DISCIPLINE_TASKS[i],
-            isActive: true,
-          });
-        }
-      }
-
-      // 2. Exercises
-      const existingExercises = await db.select().from(disciplineExercises).where(eq(disciplineExercises.userId, userId));
-      if (existingExercises.length === 0) {
-        for (let i = 0; i < DEFAULT_DISCIPLINE_EXERCISES.length; i++) {
-          await db.insert(disciplineExercises).values({
-            userId,
-            ...DEFAULT_DISCIPLINE_EXERCISES[i],
-            isActive: true,
-          });
-        }
-      }
-
-      // 3. Settings
+      // Ensure default system settings configuration if missing
       const existingSettings = await db.select().from(disciplineSettings).where(eq(disciplineSettings.userId, userId));
       if (existingSettings.length === 0) {
         await db.insert(disciplineSettings).values({
@@ -1144,34 +1120,7 @@ export async function ensureDisciplineDefaults(userId: number) {
     }
   }
 
-  // In-memory fallback
-  const memTasks = inMemoryDisciplineTasks.filter((t) => t.userId === userId && t.isActive !== false);
-  if (memTasks.length === 0) {
-    DEFAULT_DISCIPLINE_TASKS.forEach((t) => {
-      inMemoryDisciplineTasks.push({
-        id: disciplineTaskAutoId++,
-        userId,
-        ...t,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-    });
-  }
-
-  const memExercises = inMemoryDisciplineExercises.filter((e) => e.userId === userId && e.isActive !== false);
-  if (memExercises.length === 0) {
-    DEFAULT_DISCIPLINE_EXERCISES.forEach((e) => {
-      inMemoryDisciplineExercises.push({
-        id: disciplineExerciseAutoId++,
-        userId,
-        ...e,
-        isActive: true,
-        createdAt: new Date(),
-      });
-    });
-  }
-
+  // In-memory fallback: only ensure settings
   if (!inMemoryDisciplineSettings.has(userId)) {
     inMemoryDisciplineSettings.set(userId, {
       id: disciplineSettingsAutoId++,
@@ -1206,10 +1155,16 @@ export async function getDisciplineSchedule(userId: number, date: string) {
         .from(disciplineTaskCompletions)
         .where(and(eq(disciplineTaskCompletions.userId, userId), eq(disciplineTaskCompletions.date, date)));
 
-      const mergedTasks = tasks.map((t: any) => ({
-        ...t,
-        completed: completions.some((c: any) => c.taskId === t.id && c.completed),
-      }));
+      const mergedTasks = tasks.map((t: any) => {
+        const startTime = t.startTime !== undefined && t.startTime !== null ? t.startTime : (t.time ? t.time : null);
+        const endTime = t.endTime !== undefined && t.endTime !== null ? t.endTime : null;
+        return {
+          ...t,
+          startTime,
+          endTime,
+          completed: completions.some((c: any) => c.taskId === t.id && c.completed),
+        };
+      });
 
       return { tasks: mergedTasks, date };
     } catch (err) {
@@ -1226,18 +1181,35 @@ export async function getDisciplineSchedule(userId: number, date: string) {
     (c) => c.userId === userId && c.date === date
   );
 
-  const mergedTasks = tasks.map((t) => ({
-    ...t,
-    completed: completions.some((c) => c.taskId === t.id && c.completed),
-  }));
+  const mergedTasks = tasks.map((t) => {
+    const startTime = t.startTime !== undefined && t.startTime !== null ? t.startTime : (t.time ? t.time : null);
+    const endTime = t.endTime !== undefined && t.endTime !== null ? t.endTime : null;
+    return {
+      ...t,
+      startTime,
+      endTime,
+      completed: completions.some((c) => c.taskId === t.id && c.completed),
+    };
+  });
 
   return { tasks: mergedTasks, date };
 }
 
 export async function addDisciplineTask(
   userId: number,
-  task: { title: string; time: string; isMandatory: boolean; isTrackable: boolean }
+  task: {
+    title: string;
+    startTime?: string | null;
+    endTime?: string | null;
+    time?: string | null;
+    isMandatory: boolean;
+    isTrackable: boolean;
+  }
 ) {
+  const startTime = task.startTime?.trim() || null;
+  const endTime = task.endTime?.trim() || null;
+  const legacyTime = startTime || task.time?.trim() || null;
+
   const db = await getDb();
   if (db) {
     try {
@@ -1250,7 +1222,9 @@ export async function addDisciplineTask(
       const res = await db.insert(disciplineTasks).values({
         userId,
         title: task.title.trim(),
-        time: task.time.trim() || "08:00 AM",
+        startTime,
+        endTime,
+        time: legacyTime,
         isMandatory: task.isMandatory ?? true,
         isTrackable: task.isTrackable ?? true,
         orderIndex: nextOrder,
@@ -1260,7 +1234,12 @@ export async function addDisciplineTask(
       return {
         id: insertId || disciplineTaskAutoId++,
         userId,
-        ...task,
+        title: task.title.trim(),
+        startTime,
+        endTime,
+        time: legacyTime,
+        isMandatory: task.isMandatory ?? true,
+        isTrackable: task.isTrackable ?? true,
         orderIndex: nextOrder,
         isActive: true,
         createdAt: new Date(),
@@ -1277,7 +1256,9 @@ export async function addDisciplineTask(
     id: disciplineTaskAutoId++,
     userId,
     title: task.title.trim(),
-    time: task.time.trim() || "08:00 AM",
+    startTime,
+    endTime,
+    time: legacyTime,
     isMandatory: task.isMandatory ?? true,
     isTrackable: task.isTrackable ?? true,
     orderIndex: nextOrder,
@@ -1292,15 +1273,32 @@ export async function addDisciplineTask(
 export async function updateDisciplineTask(
   userId: number,
   taskId: number,
-  updates: Partial<{ title: string; time: string; isMandatory: boolean; isTrackable: boolean; orderIndex: number }>
+  updates: Partial<{
+    title: string;
+    startTime: string | null;
+    endTime: string | null;
+    time: string | null;
+    isMandatory: boolean;
+    isTrackable: boolean;
+    orderIndex: number;
+  }>
 ) {
+  const cleanUpdates: any = { ...updates };
+  if (cleanUpdates.startTime !== undefined) {
+    cleanUpdates.startTime = cleanUpdates.startTime?.trim() || null;
+    cleanUpdates.time = cleanUpdates.startTime;
+  }
+  if (cleanUpdates.endTime !== undefined) {
+    cleanUpdates.endTime = cleanUpdates.endTime?.trim() || null;
+  }
+
   const db = await getDb();
   if (db) {
     try {
       await db
         .update(disciplineTasks)
         .set({
-          ...updates,
+          ...cleanUpdates,
           updatedAt: new Date(),
         })
         .where(and(eq(disciplineTasks.id, taskId), eq(disciplineTasks.userId, userId)));
@@ -1312,7 +1310,7 @@ export async function updateDisciplineTask(
 
   const task = inMemoryDisciplineTasks.find((t) => t.id === taskId && t.userId === userId);
   if (task) {
-    Object.assign(task, updates, { updatedAt: new Date() });
+    Object.assign(task, cleanUpdates, { updatedAt: new Date() });
     return true;
   }
   return false;

@@ -756,6 +756,7 @@ export default function Admin() {
                 <option value="bkash">bKash</option>
                 <option value="nagad">Nagad</option>
                 <option value="rocket">Rocket</option>
+                <option value="free">Free Access</option>
               </select>
             </div>
 

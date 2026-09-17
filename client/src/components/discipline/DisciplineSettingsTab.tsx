@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatTaskTimeRange } from "@/lib/disciplineTimeUtils";
 
 interface DisciplineSettingsTabProps {
   settings: any;
@@ -247,25 +248,30 @@ export function DisciplineSettingsTab({
 
         {/* Current Tasks List */}
         <div className="mt-4 space-y-2 max-h-72 overflow-y-auto pr-1">
-          {tasks.map((task: any) => (
-            <div
-              key={task.id}
-              className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-800/40 text-xs"
-            >
-              <div className="flex items-center gap-3 overflow-hidden">
-                <span className="font-mono font-bold text-slate-400">{task.time}</span>
-                <span className="font-extrabold text-slate-800 dark:text-slate-200 truncate">{task.title}</span>
-              </div>
-
-              <button
-                onClick={() => onDeleteTask(task.id)}
-                className="p-1 text-slate-400 hover:text-rose-600 transition ml-2 shrink-0"
-                title="Delete Task"
+          {tasks.map((task: any) => {
+            const timeDisplay = formatTaskTimeRange(task.startTime, task.endTime, task.time);
+            return (
+              <div
+                key={task.id}
+                className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-800/40 text-xs"
               >
-                <Trash2 size={13} />
-              </button>
-            </div>
-          ))}
+                <div className="flex items-center gap-3 overflow-hidden">
+                  {timeDisplay && (
+                    <span className="font-mono font-bold text-slate-400 shrink-0">{timeDisplay}</span>
+                  )}
+                  <span className="font-extrabold text-slate-800 dark:text-slate-200 truncate">{task.title}</span>
+                </div>
+
+                <button
+                  onClick={() => onDeleteTask(task.id)}
+                  className="p-1 text-slate-400 hover:text-rose-600 transition ml-2 shrink-0"
+                  title="Delete Task"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
 

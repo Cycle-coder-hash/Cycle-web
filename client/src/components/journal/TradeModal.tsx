@@ -13,6 +13,7 @@ interface TradeModalProps {
   nextTradeNumber: number;
   journalBookId: string;
   isBn?: boolean;
+  defaultDate?: string;
 }
 
 const COMMON_PAIRS = [
@@ -44,6 +45,7 @@ export function TradeModal({
   nextTradeNumber,
   journalBookId,
   isBn = false,
+  defaultDate,
 }: TradeModalProps) {
   if (!isOpen) return null;
 
@@ -54,7 +56,7 @@ export function TradeModal({
 
   // 2. Date
   const [date, setDate] = useState(
-    initialTrade?.date || new Date().toISOString().slice(0, 10)
+    initialTrade?.date || defaultDate || new Date().toISOString().slice(0, 10)
   );
 
   // 3. Pair
@@ -219,7 +221,7 @@ export function TradeModal({
       setVideoUrl(loadedVideo);
       setVideoDurationSeconds(initialTrade.videoDurationSeconds);
     } else {
-      setDate(new Date().toISOString().slice(0, 10));
+      setDate(defaultDate || new Date().toISOString().slice(0, 10));
       setEntryTime("09:30");
       setPair("EURUSD");
       setIsCustomPair(false);
@@ -248,7 +250,7 @@ export function TradeModal({
       setVideoDurationSeconds(undefined);
     }
     setVideoError(null);
-  }, [initialTrade, isOpen]);
+  }, [initialTrade, isOpen, defaultDate]);
 
   // Active pair calculation
   const activePair = isCustomPair ? customPairText.trim().toUpperCase() : pair;
@@ -376,7 +378,7 @@ export function TradeModal({
     e.preventDefault();
 
     const parsedEntry = parseFloat(entryPrice) || 0;
-    const parsedExit = parseFloat(exitPrice) || 0;
+    const parsedExit = parseFloat(exitPrice) || (initialTrade?.exitPrice ?? 0);
     const parsedSl = parseFloat(stopLoss) || 0;
     const parsedTp = parseFloat(takeProfit) || 0;
     const parsedLots = parseFloat(lotSize) || 0.1;
@@ -554,7 +556,7 @@ export function TradeModal({
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
               <span>02.</span> {isBn ? "ডিরেকশন ও প্রাইস লেভেল" : "Direction & Price Levels"}
             </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
               {/* Field 6: Buy / Sell (Select Only) */}
               <div>
                 <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Direction *</label>
@@ -611,20 +613,6 @@ export function TradeModal({
                   value={takeProfit}
                   onChange={(e) => setTakeProfit(e.target.value)}
                   className="mt-1 w-full font-mono rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold outline-none focus:border-emerald-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                />
-              </div>
-
-              {/* Field 10: Exit Price */}
-              <div>
-                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Exit Price *</label>
-                <input
-                  type="number"
-                  step="any"
-                  required
-                  placeholder="e.g. 1.0910"
-                  value={exitPrice}
-                  onChange={(e) => setExitPrice(e.target.value)}
-                  className="mt-1 w-full font-mono rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-bold outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                 />
               </div>
             </div>

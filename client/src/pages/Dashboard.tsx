@@ -14,6 +14,7 @@ import {
   ClipboardCheck,
   Clock,
   Download,
+  Edit2,
   ExternalLink,
   Eye,
   FileCheck2,
@@ -22,6 +23,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   Layers,
+  Loader2,
   Lock,
   LogOut,
   Moon,
@@ -41,10 +43,12 @@ import {
   TrendingUp,
   X,
 } from "lucide-react";
+import { toast } from "sonner";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/contexts/ThemeContext";
 import { TraderJournal } from "@/components/journal/TraderJournal";
 import { getStoredTrades } from "@/lib/traderJournalStorage";
@@ -185,27 +189,51 @@ export default function Dashboard() {
     }
   }, []);
 
+  // User identifier key for strict personal isolation
+  const userKey = useMemo(() => {
+    if (!user) return "";
+    return user.openId || user.email || (user.id ? String(user.id) : "");
+  }, [user]);
+
   // Date for discipline
   const today = useMemo(() => new Date().toISOString().split("T")[0], []);
 
-  // 12-Stage Roadmap State & Notes
+  // 12-Stage Roadmap State & Notes (strictly isolated per user)
   const [roadmapFilter, setRoadmapFilter] = useState<"all" | "completed" | "todo">("all");
   const [selectedRoadmapStage, setSelectedRoadmapStage] = useState<DashboardRoadmapStage | null>(null);
   const [stageNotes, setStageNotes] = useState<Record<number, string>>(() => {
+    if (typeof window === "undefined" || !userKey) return {};
     try {
-      const saved = localStorage.getItem("cycle_stage_notes");
+      const saved = localStorage.getItem(`cycle_stage_notes_${userKey}`);
       return saved ? JSON.parse(saved) : {};
     } catch {
       return {};
     }
   });
 
+  // Re-sync stage notes when user changes
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!userKey) {
+      setStageNotes({});
+      return;
+    }
+    try {
+      const saved = localStorage.getItem(`cycle_stage_notes_${userKey}`);
+      setStageNotes(saved ? JSON.parse(saved) : {});
+    } catch {
+      setStageNotes({});
+    }
+  }, [userKey]);
+
   const handleSaveStageNote = (stageNum: number, note: string) => {
     setStageNotes((prev) => {
       const updated = { ...prev, [stageNum]: note };
-      try {
-        localStorage.setItem("cycle_stage_notes", JSON.stringify(updated));
-      } catch {}
+      if (typeof window !== "undefined" && userKey) {
+        try {
+          localStorage.setItem(`cycle_stage_notes_${userKey}`, JSON.stringify(updated));
+        } catch {}
+      }
       return updated;
     });
   };
@@ -283,8 +311,8 @@ export default function Dashboard() {
     },
   });
 
-  // Stored trades from Trader Journal
-  const [localTrades, setLocalTrades] = useState(() => getStoredTrades());
+  // Stored trades from Trader Journal (strictly isolated per user)
+  const [localTrades, setLocalTrades] = useState(() => getStoredTrades(userKey));
 
   // User profile photo state (strictly isolated per user)
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -304,6 +332,117 @@ export default function Dashboard() {
       setProfilePhoto(null);
     }
   }, [user]);
+
+  // tRPC utils to invalidate session caches
+  const trpcUtils = trpc.useUtils();
+
+  // Student Custom Display Name State
+  const [displayName, setDisplayName] = useState<string>(() => {
+    if (!user) return "Trader";
+    const userKey = user.openId || user.email || String(user.id);
+    const stored = typeof window !== "undefined" ? localStorage.getItem(`cycle_user_custom_name_${userKey}`) : null;
+    return stored || user.name || "Trader";
+  });
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const [isSavingName, setIsSavingName] = useState(false);
+  const [nameError, setNameError] = useState("");
+
+  // Keep display name in sync if user changes or session refreshes
+  useEffect(() => {
+    if (user) {
+      const userKey = user.openId || user.email || String(user.id);
+      const stored = localStorage.getItem(`cycle_user_custom_name_${userKey}`);
+      setDisplayName(stored || user.name || "Trader");
+    }
+  }, [user?.name, user?.email, user?.openId, user?.id]);
+
+  const handleStartEditName = () => {
+    setNameInput(displayName);
+    setNameError("");
+    setIsEditingName(true);
+  };
+
+  const handleCancelEditName = () => {
+    setIsEditingName(false);
+    setNameInput("");
+    setNameError("");
+  };
+
+  const handleSaveName = async () => {
+    const trimmed = nameInput.trim();
+    if (!trimmed) {
+      setNameError(isBn ? "নাম খালি রাখা যাবে না" : "Name cannot be empty");
+      return;
+    }
+    if (trimmed.length < 2) {
+      setNameError(isBn ? "কমপক্ষে ২ অক্ষরের নাম লিখুন" : "Name must be at least 2 characters");
+      return;
+    }
+    if (trimmed.length > 50) {
+      setNameError(isBn ? "নাম সর্বোচ্চ ৫০ অক্ষরের হতে হবে" : "Name cannot exceed 50 characters");
+      return;
+    }
+
+    setIsSavingName(true);
+    setNameError("");
+
+    try {
+      const userKey = user?.openId || user?.email || String(user?.id);
+
+      // 1. Update local state immediately for instant feedback
+      setDisplayName(trimmed);
+
+      // 2. Persist to local storage for current user
+      try {
+        localStorage.setItem(`cycle_user_custom_name_${userKey}`, trimmed);
+        const cached = localStorage.getItem("manus-runtime-user-info");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed) {
+            parsed.name = trimmed;
+            localStorage.setItem("manus-runtime-user-info", JSON.stringify(parsed));
+          }
+        }
+      } catch (err) {
+        console.warn("Local storage update warning:", err);
+      }
+
+      // 3. Persist to backend database via existing tRPC updateProfile mutation
+      await updateProfileMutation.mutateAsync({ name: trimmed });
+
+      // 4. Update Supabase user metadata if authenticated via Supabase
+      try {
+        await supabase.auth.updateUser({
+          data: { name: trimmed, full_name: trimmed },
+        });
+      } catch (supaErr) {
+        console.warn("[Supabase user name update notice]:", supaErr);
+      }
+
+      // 5. Invalidate tRPC meQuery to sync session data
+      await trpcUtils.auth.me.invalidate();
+
+      // 6. Broadcast event for other components/listeners
+      window.dispatchEvent(
+        new CustomEvent("cycle_user_profile_updated", {
+          detail: { userId: userKey, name: trimmed },
+        })
+      );
+
+      toast.success(
+        isBn ? "নাম সফলভাবে সেভ করা হয়েছে!" : "Display name updated successfully!"
+      );
+
+      setIsEditingName(false);
+    } catch (err: any) {
+      console.error("[Failed to update name]:", err);
+      setNameError(err.message || (isBn ? "নাম সেভ করতে সমস্যা হয়েছে" : "Failed to save name"));
+      toast.error(err.message || (isBn ? "নাম সেভ করতে সমস্যা হয়েছে" : "Failed to save name"));
+    } finally {
+      setIsSavingName(false);
+    }
+  };
 
   // trpc profile mutation to persist on backend
   const updateProfileMutation = trpc.auth.updateProfile.useMutation({
@@ -375,8 +514,13 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    const handleJournalUpdate = () => {
-      setLocalTrades(getStoredTrades());
+    setLocalTrades(getStoredTrades(userKey));
+  }, [userKey]);
+
+  useEffect(() => {
+    const handleJournalUpdate = (e: any) => {
+      if (e?.detail?.userId && userKey && e.detail.userId !== userKey) return;
+      setLocalTrades(getStoredTrades(userKey));
     };
     window.addEventListener("cycle_journal_updated", handleJournalUpdate);
     window.addEventListener("storage", handleJournalUpdate);
@@ -384,7 +528,7 @@ export default function Dashboard() {
       window.removeEventListener("cycle_journal_updated", handleJournalUpdate);
       window.removeEventListener("storage", handleJournalUpdate);
     };
-  }, []);
+  }, [userKey]);
   // Calculate journal analytics
   const journalStats = useMemo(() => {
     if (localTrades && localTrades.length) {
@@ -564,11 +708,11 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
                   {profilePhoto ? (
                     <img
                       src={profilePhoto}
-                      alt={user.name || "User Profile"}
+                      alt={displayName || user.name || "User Profile"}
                       className="size-full object-cover rounded-full"
                     />
                   ) : (
-                    <span>{user.name ? user.name[0].toUpperCase() : "U"}</span>
+                    <span>{(displayName || user?.name || "U")[0]?.toUpperCase() || "U"}</span>
                   )}
 
                   {/* Subtle hover edit/camera indicator */}
@@ -585,8 +729,84 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
                   onChange={handleAvatarUpload}
                 />
               </div>
-              <div className="overflow-hidden">
-                <div className="truncate text-sm font-extrabold">{user.name || "Trader"}</div>
+              <div className="min-w-0 flex-1 overflow-hidden">
+                {!isEditingName ? (
+                  <div className="flex items-center gap-1.5 group/name">
+                    <span
+                      className="truncate text-sm font-extrabold text-slate-900 dark:text-white hover:text-sky-500 dark:hover:text-sky-400 cursor-pointer transition-colors"
+                      title={isBn ? "কাস্টম নাম এডিট করতে ক্লিক করুন" : "Click to edit your display name"}
+                      onClick={handleStartEditName}
+                    >
+                      {displayName}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleStartEditName}
+                      className="opacity-60 hover:opacity-100 text-slate-400 hover:text-sky-500 dark:hover:text-sky-400 transition-all p-0.5 rounded shrink-0 cursor-pointer"
+                      title={isBn ? "নাম পরিবর্তন করুন" : "Edit display name"}
+                      aria-label={isBn ? "নাম পরিবর্তন করুন" : "Edit display name"}
+                    >
+                      <Edit2 size={12} />
+                    </button>
+                  </div>
+                ) : (
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSaveName();
+                    }}
+                    className="space-y-1"
+                  >
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        value={nameInput}
+                        onChange={(e) => {
+                          setNameInput(e.target.value);
+                          if (nameError) setNameError("");
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Escape") handleCancelEditName();
+                        }}
+                        disabled={isSavingName}
+                        placeholder={isBn ? "আপনার নাম" : "Your name"}
+                        maxLength={50}
+                        autoFocus
+                        className={`w-full rounded-md border px-2 py-0.5 text-xs font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 ${
+                          nameError
+                            ? "border-rose-500 focus:ring-rose-500"
+                            : "border-sky-400 focus:ring-sky-500"
+                        }`}
+                      />
+                      <button
+                        type="submit"
+                        disabled={isSavingName}
+                        className="inline-flex size-6 shrink-0 items-center justify-center rounded-md bg-sky-500 text-white hover:bg-sky-600 disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
+                        title={isBn ? "সেভ করুন" : "Save name"}
+                        aria-label={isBn ? "সেভ করুন" : "Save name"}
+                      >
+                        {isSavingName ? (
+                          <Loader2 size={12} className="animate-spin" />
+                        ) : (
+                          <Check size={12} className="stroke-[3]" />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isSavingName}
+                        onClick={handleCancelEditName}
+                        className="inline-flex size-6 shrink-0 items-center justify-center rounded-md bg-slate-200 text-slate-600 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+                        title={isBn ? "বাতিল করুন" : "Cancel"}
+                        aria-label={isBn ? "বাতিল করুন" : "Cancel"}
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                    {nameError && (
+                      <p className="text-[10px] text-rose-500 font-medium truncate">{nameError}</p>
+                    )}
+                  </form>
+                )}
                 <div className="truncate text-[11px] text-slate-400">{user.email}</div>
               </div>
             </div>
