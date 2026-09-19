@@ -78,6 +78,12 @@ import {
   exportDisciplineData,
   importDisciplineData,
   resetDisciplineData,
+  getOwnerProfile,
+  updateOwnerProfile,
+  syncUserTrades,
+  getUserTrades,
+  getLeaderboardRankings,
+  getPublicTraderStats,
 } from "./db";
 
 import { and, eq, or } from "drizzle-orm";
@@ -390,7 +396,9 @@ export const appRouter = router({
       const rows = await db.select().from(settings);
       return Object.fromEntries(rows.map((r: any) => [r.key, r.value]));
     }),
-
+    ownerProfile: publicProcedure.query(async () => {
+      return await getOwnerProfile();
+    }),
   }),
 
   customer: router({
@@ -679,6 +687,14 @@ export const appRouter = router({
       }),
     resetDisciplineData: protectedProcedure.mutation(async ({ ctx }) => {
       return await resetDisciplineData(ctx.user.id);
+    }),
+    syncTrades: protectedProcedure
+      .input(z.object({ trades: z.array(z.any()) }))
+      .mutation(async ({ ctx, input }) => {
+        return await syncUserTrades(ctx.user.id, input.trades);
+      }),
+    userTrades: protectedProcedure.query(async ({ ctx }) => {
+      return await getUserTrades(ctx.user.id);
     }),
     createJournal: protectedProcedure
       .input(
@@ -1457,8 +1473,81 @@ export const appRouter = router({
         await deleteFreeEbook(input.id);
         return { success: true };
       }),
+
+    ownerProfile: supportProcedure.query(async () => {
+      return await getOwnerProfile();
+    }),
+
+    updateOwnerProfile: supportProcedure
+      .input(
+        z.object({
+          name: z.string().optional(),
+          role: z.string().optional(),
+          roleBn: z.string().optional(),
+          bioEn: z.string().optional(),
+          bioBn: z.string().optional(),
+          photoUrl: z.string().optional(),
+          detailsEn: z.string().optional(),
+          detailsBn: z.string().optional(),
+          experienceYears: z.string().optional(),
+          studentsCount: z.string().optional(),
+          tradingStyle: z.string().optional(),
+          signatureQuoteEn: z.string().optional(),
+          signatureQuoteBn: z.string().optional(),
+          telegram: z.string().optional(),
+          youtube: z.string().optional(),
+          facebook: z.string().optional(),
+          twitter: z.string().optional(),
+          email: z.string().optional(),
+          showExperienceCard: z.boolean().optional(),
+          experienceLabel: z.string().optional(),
+          experienceIcon: z.string().optional(),
+          showMentoredCard: z.boolean().optional(),
+          mentoredLabel: z.string().optional(),
+          mentoredIcon: z.string().optional(),
+          showMethodologyCard: z.boolean().optional(),
+          methodologyLabel: z.string().optional(),
+          methodologyIcon: z.string().optional(),
+          showDetailsParagraph: z.boolean().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        return await updateOwnerProfile(input);
+      }),
+  }),
+
+  leaderboard: router({
+    rankings: publicProcedure
+      .input(
+        z
+          .object({
+            timeframe: z.enum(["all", "month", "week"]).default("all"),
+          })
+          .optional()
+      )
+      .query(async ({ input }) => {
+        const timeframe = input?.timeframe || "all";
+        return await getLeaderboardRankings(timeframe);
+      }),
+
+    traderProfile: publicProcedure
+      .input(
+        z.object({
+          userId: z.number(),
+          timeframe: z.enum(["all", "month", "week"]).default("all"),
+        })
+      )
+      .query(async ({ input }) => {
+        const stats = await getPublicTraderStats(input.userId, input.timeframe);
+        if (!stats) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Trader profile not found",
+          });
+        }
+        return stats;
+      }),
   }),
 });
-
 
 export type AppRouter = typeof appRouter;

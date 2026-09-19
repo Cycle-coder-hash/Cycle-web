@@ -47,6 +47,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { Button } from "@/components/ui/button";
+import { trpc } from "@/lib/trpc";
 import { JournalBook, TradeEntry, JournalStats, GrowthDataPoint, PeriodPnl } from "@/types/journal";
 import {
   getStoredJournalBooks,
@@ -140,6 +141,14 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
       window.removeEventListener("storage", handleStorageUpdate);
     };
   }, [userId]);
+
+  // Sync trades to server database for global leaderboard persistence
+  const syncTradesMutation = trpc.customer.syncTrades.useMutation();
+  useEffect(() => {
+    if (user && trades && trades.length > 0) {
+      syncTradesMutation.mutate({ trades });
+    }
+  }, [user, trades]);
 
   // Currently active book
   const currentBook = useMemo(() => {

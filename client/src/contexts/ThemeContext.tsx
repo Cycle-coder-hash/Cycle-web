@@ -17,7 +17,7 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({
   children,
-  defaultTheme = "light",
+  defaultTheme = "dark",
 }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>(() => {
     const stored = typeof window !== "undefined" ? localStorage.getItem("cycle-theme") : null;

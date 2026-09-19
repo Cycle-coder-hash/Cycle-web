@@ -22,6 +22,9 @@
     -moz-osx-font-smoothing: grayscale;
     touch-action: manipulation;
   }
+  html.dark, html.dark body {
+    background-color: #020813;
+  }
   html[lang="bn"], .font-bangla {
     font-family: 'Hind Siliguri', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
   }
@@ -125,6 +128,53 @@
   100% {
     stroke-dashoffset: -100;
   }
+}
+
+/* RGB Moving Border Continuous Traveling Light Animation */
+@keyframes rgb-border-travel {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+.rgb-border-disc {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(350%, 2200px);
+  aspect-ratio: 1 / 1;
+  transform: translate(-50%, -50%) rotate(0deg);
+  animation: rgb-border-travel 9s linear infinite;
+  will-change: transform;
+  pointer-events: none;
+}
+
+.rgb-border-mask-core {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.8px;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0) border-box;
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0) border-box;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.rgb-border-mask-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 3px;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0) border-box;
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0) border-box;
+  mask-composite: exclude;
+  opacity: 0.7;
+  pointer-events: none;
 }
 
 /* News Broadcast Headline Presentation Animations */
@@ -303,6 +353,9 @@
     animation: none !important;
     transform: none !important;
     filter: none !important;
+  }
+  .rgb-border-disc {
+    animation: none !important;
   }
 }
 

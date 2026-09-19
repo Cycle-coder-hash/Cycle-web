@@ -40,6 +40,9 @@ import {
   DisciplineDailyJournal,
   DisciplineForexLog,
   DisciplineSetting,
+  traderTrades,
+  TraderTrade,
+  InsertTraderTrade,
 } from "../drizzle/schema";
 
 import { ENV } from "./_core/env";
@@ -197,6 +200,7 @@ const inMemoryDisciplineWorkoutCompletions: any[] = [];
 const inMemoryDisciplineJournals: any[] = [];
 const inMemoryDisciplineForexLogs: any[] = [];
 const inMemoryDisciplineSettings: Map<number, any> = new Map();
+const inMemoryTraderTrades: any[] = [];
 
 let disciplineTaskAutoId = 1;
 let disciplineCompletionAutoId = 1;
@@ -2428,6 +2432,526 @@ export async function resetDisciplineData(userId: number) {
   return true;
 }
 
+// ------------------------------------------------------------------------------
+// OWNER PROFILE & GENERAL SETTINGS CMS
+// ------------------------------------------------------------------------------
+
+export interface OwnerProfile {
+  name: string;
+  role: string;
+  roleBn?: string;
+  bioEn: string;
+  bioBn?: string;
+  photoUrl: string;
+  detailsEn?: string;
+  detailsBn?: string;
+  experienceYears?: string;
+  studentsCount?: string;
+  tradingStyle?: string;
+  signatureQuoteEn?: string;
+  signatureQuoteBn?: string;
+  telegram?: string;
+  youtube?: string;
+  facebook?: string;
+  twitter?: string;
+  email?: string;
+  showExperienceCard?: boolean;
+  experienceLabel?: string;
+  experienceIcon?: string;
+  showMentoredCard?: boolean;
+  mentoredLabel?: string;
+  mentoredIcon?: string;
+  showMethodologyCard?: boolean;
+  methodologyLabel?: string;
+  methodologyIcon?: string;
+  showDetailsParagraph?: boolean;
+}
+
+export const DEFAULT_OWNER_PROFILE: OwnerProfile = {
+  name: "MD NIJAM UDDIN",
+  role: "Founder & Lead Institutional Trader",
+  roleBn: "প্রতিষ্ঠাতা ও লিড ইন্সটিটিউশনাল ট্রেডার",
+  bioEn: "Specializing in institutional price delivery, market structure, liquidity dynamics, and price action. Dedicated to replacing emotional speculation with structured understanding, systematic analysis, and disciplined execution.",
+  bioBn: "ইন্সটিটিউশনাল প্রাইস ডেলিভারি, মার্কেট স্ট্রাকচার, লিকুইডিটি ডায়নামিক্স এবং প্রাইস অ্যাকশন স্পেশালিস্ট। আবেগতাড়িত অনুমান দূর করে স্ট্রাকচার্ড আন্ডারস্ট্যান্ডিং, সিস্টেমেটিক অ্যানালাইসিস এবং সুশৃঙ্খল এক্সিকিউশন তৈরিতে প্রতিশ্রুতিবদ্ধ।",
+  photoUrl: "/logo.jpg",
+  detailsEn: "Over 6+ years of specialized market experience researching interbank price delivery algorithms, session manipulation cycles, and institutional risk management.",
+  detailsBn: "",
+  experienceYears: "6+ Years",
+  studentsCount: "1,500+",
+  tradingStyle: "Institutional Order Flow, Liquidity & (SMC)",
+  signatureQuoteEn: "Before you trade, understand trading. Before you deposit, understand trading.",
+  signatureQuoteBn: "ট্রেড করার আগে ট্রেডিং বুঝুন। ডিপোজিট করার আগে ট্রেডিং বুঝুন।",
+  telegram: "https://t.me/cycleofchart",
+  youtube: "https://youtube.com/@cycleofchart",
+  facebook: "https://facebook.com/cycleofchart",
+  twitter: "",
+  email: "contact@cycleofchart.com",
+  showExperienceCard: false,
+  experienceLabel: "Market Experience",
+  experienceIcon: "clock",
+  showMentoredCard: false,
+  mentoredLabel: "Traders Mentored",
+  mentoredIcon: "users",
+  showMethodologyCard: true,
+  methodologyLabel: "Core Methodology",
+  methodologyIcon: "award",
+  showDetailsParagraph: false,
+};
+
+const inMemorySettings: Map<string, string> = new Map();
+
+export async function getSetting(key: string): Promise<string | null> {
+  const db = await getDb();
+  if (db) {
+    try {
+      const rows = await db.select().from(settings).where(eq(settings.key, key)).limit(1);
+      if (rows.length) return rows[0].value;
+    } catch (err) {
+      console.warn("[getSetting error]:", err);
+    }
+  }
+  return inMemorySettings.get(key) || null;
+}
+
+export async function setSetting(key: string, value: string): Promise<boolean> {
+  const db = await getDb();
+  if (db) {
+    try {
+      const existing = await db.select().from(settings).where(eq(settings.key, key)).limit(1);
+      if (existing.length) {
+        await db.update(settings).set({ value, updatedAt: new Date() }).where(eq(settings.key, key));
+      } else {
+        await db.insert(settings).values({ key, value });
+      }
+      inMemorySettings.set(key, value);
+      return true;
+    } catch (err) {
+      console.warn("[setSetting error]:", err);
+    }
+  }
+  inMemorySettings.set(key, value);
+  return true;
+}
+
+export async function getOwnerProfile(): Promise<OwnerProfile> {
+  try {
+    const raw = await getSetting("owner_profile");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.bioEn && parsed.bioEn.includes("Candle Range Theory (CRT)")) {
+        parsed.bioEn = "Specializing in institutional price delivery, market structure, liquidity dynamics, and price action. Dedicated to replacing emotional speculation with structured understanding, systematic analysis, and disciplined execution.";
+      }
+      if (parsed.bioBn && parsed.bioBn.includes("ক্যান্ডেল রেঞ্জ থিওরি (CRT)")) {
+        parsed.bioBn = "ইন্সটিটিউশনাল প্রাইস ডেলিভারি, মার্কেট স্ট্রাকচার, লিকুইডিটি ডায়নামিক্স এবং প্রাইস অ্যাকশন স্পেশালিস্ট। আবেগতাড়িত অনুমান দূর করে স্ট্রাকচার্ড আন্ডারস্ট্যান্ডিং, সিস্টেমেটিক অ্যানালাইসিস এবং সুশৃঙ্খল এক্সিকিউশন তৈরিতে প্রতিশ্রুতিবদ্ধ।";
+      }
+      if (!parsed.tradingStyle || parsed.tradingStyle === "Institutional Order Flow & CRT") {
+        parsed.tradingStyle = "Institutional Order Flow, Liquidity & (SMC)";
+      }
+      // Ensure boolean flags default cleanly to current live state if not explicitly saved yet
+      if (parsed.showExperienceCard === undefined) parsed.showExperienceCard = false;
+      if (parsed.showMentoredCard === undefined) parsed.showMentoredCard = false;
+      if (parsed.showMethodologyCard === undefined) parsed.showMethodologyCard = true;
+      if (parsed.showDetailsParagraph === undefined) parsed.showDetailsParagraph = false;
+      if (!parsed.experienceYears) parsed.experienceYears = "6+ Years";
+      if (!parsed.studentsCount) parsed.studentsCount = "1,500+";
+      if (!parsed.experienceLabel) parsed.experienceLabel = "Market Experience";
+      if (!parsed.mentoredLabel) parsed.mentoredLabel = "Traders Mentored";
+      if (!parsed.methodologyLabel) parsed.methodologyLabel = "Core Methodology";
+      if (!parsed.experienceIcon) parsed.experienceIcon = "clock";
+      if (!parsed.mentoredIcon) parsed.mentoredIcon = "users";
+      if (!parsed.methodologyIcon) parsed.methodologyIcon = "award";
+      if (!parsed.detailsEn) {
+        parsed.detailsEn = "Over 6+ years of specialized market experience researching interbank price delivery algorithms, session manipulation cycles, and institutional risk management.";
+      }
+      return { ...DEFAULT_OWNER_PROFILE, ...parsed };
+    }
+  } catch (err) {
+    console.warn("[getOwnerProfile error]:", err);
+  }
+  return DEFAULT_OWNER_PROFILE;
+}
+
+export async function updateOwnerProfile(data: Partial<OwnerProfile>): Promise<OwnerProfile> {
+  const current = await getOwnerProfile();
+  const updated: OwnerProfile = {
+    ...current,
+    ...data,
+  };
+  await setSetting("owner_profile", JSON.stringify(updated));
+  return updated;
+}
+
+// ==============================================================================
+// TRADER TRADES & LEADERBOARD SYSTEM
+// ==============================================================================
+
+export interface LeaderboardTrader {
+  rank: number;
+  userId: number;
+  openId: string;
+  name: string;
+  avatar: string | null;
+  role: string;
+  totalTrades: number;
+  winningTrades: number;
+  losingTrades: number;
+  breakevenTrades: number;
+  winRate: number; // 0-100%
+  totalPnl: number;
+  profitFactor: number;
+  ruleComplianceRate: number; // 0-100% (Risk management performance)
+  disciplineScore: number; // 0-100% (Daily discipline adherence)
+  consistencyScore: number; // 0-100%
+  currentStreak: number; // Days
+  activeDays: number;
+  overallScore: number; // 0-100 deterministic composite score
+  bestPair: string;
+}
+
+export async function syncUserTrades(userId: number, trades: any[]): Promise<boolean> {
+  const db = await getDb();
+  if (db) {
+    try {
+      for (const t of trades) {
+        if (!t || !t.id) continue;
+        const row = {
+          id: String(t.id),
+          userId,
+          journalBookId: String(t.journalBookId || "default"),
+          tradeNumber: Number(t.tradeNumber) || 1,
+          date: String(t.date || new Date().toISOString().slice(0, 10)),
+          entryTime: t.entryTime ? String(t.entryTime) : null,
+          pair: String(t.pair || "EURUSD").toUpperCase(),
+          timeframe: String(t.timeframe || "15M"),
+          direction: String(t.direction || "Buy"),
+          entryPrice: Number(t.entryPrice) || 0,
+          stopLoss: Number(t.stopLoss) || 0,
+          takeProfit: Number(t.takeProfit) || 0,
+          exitPrice: Number(t.exitPrice) || 0,
+          followedRules: t.followedRules === "No" ? "No" : "Yes",
+          pnl: Number(t.pnl) || 0,
+          riskReward: String(t.riskReward || "1:2"),
+          pips: Number(t.pips) || 0,
+          lotSize: Number(t.lotSize) || 1,
+          tradeRun: t.tradeRun ? String(t.tradeRun) : null,
+          note: t.note ? String(t.note) : null,
+          tradeRank: String(t.tradeRank || "A"),
+          learning: t.learning ? String(t.learning) : null,
+          customProperties: t.customProperties || null,
+          updatedAt: new Date(),
+        };
+
+        const existing = await db.select().from(traderTrades).where(eq(traderTrades.id, row.id)).limit(1);
+        if (existing.length) {
+          await db.update(traderTrades).set(row).where(eq(traderTrades.id, row.id));
+        } else {
+          await db.insert(traderTrades).values(row);
+        }
+      }
+    } catch (err) {
+      console.warn("[syncUserTrades db error]:", err);
+    }
+  }
+
+  // Update in-memory fallback
+  for (const t of trades) {
+    if (!t || !t.id) continue;
+    const item = {
+      ...t,
+      userId,
+      entryPrice: Number(t.entryPrice) || 0,
+      stopLoss: Number(t.stopLoss) || 0,
+      takeProfit: Number(t.takeProfit) || 0,
+      exitPrice: Number(t.exitPrice) || 0,
+      pnl: Number(t.pnl) || 0,
+      followedRules: t.followedRules === "No" ? "No" : "Yes",
+      updatedAt: new Date(),
+    };
+    const idx = inMemoryTraderTrades.findIndex((i) => i.id === t.id);
+    if (idx !== -1) {
+      inMemoryTraderTrades[idx] = item;
+    } else {
+      inMemoryTraderTrades.push(item);
+    }
+  }
+  return true;
+}
+
+export async function getUserTrades(userId: number): Promise<any[]> {
+  const db = await getDb();
+  if (db) {
+    try {
+      return await db.select().from(traderTrades).where(eq(traderTrades.userId, userId)).orderBy(desc(traderTrades.createdAt));
+    } catch (err) {
+      console.warn("[getUserTrades db error]:", err);
+    }
+  }
+  return inMemoryTraderTrades.filter((t) => t.userId === userId);
+}
+
+export async function getAllTraderTrades(): Promise<any[]> {
+  const db = await getDb();
+  if (db) {
+    try {
+      return await db.select().from(traderTrades).orderBy(desc(traderTrades.createdAt));
+    } catch (err) {
+      console.warn("[getAllTraderTrades db error]:", err);
+    }
+  }
+  return inMemoryTraderTrades;
+}
+
+function parseTimeframeBounds(timeframe: "all" | "month" | "week"): { startDate?: string; endDate?: string } {
+  if (timeframe === "all") return {};
+  const now = new Date();
+  const format = (d: Date) => d.toISOString().slice(0, 10);
+
+  if (timeframe === "month") {
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const startDate = `${year}-${month}-01`;
+    const lastDay = new Date(year, now.getMonth() + 1, 0).getDate();
+    const endDate = `${year}-${month}-${String(lastDay).padStart(2, "0")}`;
+    return { startDate, endDate };
+  }
+
+  if (timeframe === "week") {
+    const day = now.getDay();
+    const diff = (day === 0 ? -6 : 1) - day;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + diff);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    return { startDate: format(monday), endDate: format(sunday) };
+  }
+
+  return {};
+}
+
+export async function getLeaderboardRankings(timeframe: "all" | "month" | "week" = "all"): Promise<LeaderboardTrader[]> {
+  const allUsers = await listAllUsers();
+  const allTrades = await getAllTraderTrades();
+  const { startDate, endDate } = parseTimeframeBounds(timeframe);
+
+  const db = await getDb();
+  let allCompletions: any[] = [];
+  if (db) {
+    try {
+      allCompletions = await db.select().from(disciplineTaskCompletions);
+    } catch (err) {
+      console.warn("[getLeaderboardRankings completions db error]:", err);
+      allCompletions = inMemoryDisciplineCompletions;
+    }
+  } else {
+    allCompletions = inMemoryDisciplineCompletions;
+  }
+
+  const results: LeaderboardTrader[] = [];
+
+  for (const user of allUsers) {
+    // Filter user trades by timeframe
+    let userTrades = allTrades.filter((t) => t.userId === user.id);
+    if (startDate && endDate) {
+      userTrades = userTrades.filter((t) => t.date >= startDate && t.date <= endDate);
+    }
+
+    // Filter user discipline completions by timeframe
+    let userCompletions = allCompletions.filter((c) => c.userId === user.id && c.completed);
+    if (startDate && endDate) {
+      userCompletions = userCompletions.filter((c) => c.date >= startDate && c.date <= endDate);
+    }
+
+    const totalTrades = userTrades.length;
+    let winningTrades = 0;
+    let losingTrades = 0;
+    let breakevenTrades = 0;
+    let totalProfit = 0;
+    let totalLoss = 0;
+    let rulesFollowed = 0;
+    const pairCounts: Record<string, number> = {};
+
+    for (const t of userTrades) {
+      const pnl = Number(t.pnl) || 0;
+      if (pnl > 0.001) {
+        winningTrades++;
+        totalProfit += pnl;
+      } else if (pnl < -0.001) {
+        losingTrades++;
+        totalLoss += Math.abs(pnl);
+      } else {
+        breakevenTrades++;
+      }
+
+      if (t.followedRules === "Yes") {
+        rulesFollowed++;
+      }
+
+      const p = (t.pair || "EURUSD").toUpperCase();
+      pairCounts[p] = (pairCounts[p] || 0) + 1;
+    }
+
+    let bestPair = "EUR/USD";
+    let maxPairCount = 0;
+    for (const [pair, count] of Object.entries(pairCounts)) {
+      if (count > maxPairCount) {
+        maxPairCount = count;
+        bestPair = pair;
+      }
+    }
+
+    const winRate = totalTrades > 0 ? Math.round((winningTrades / totalTrades) * 100) : 0;
+    const totalPnl = Math.round((totalProfit - totalLoss) * 100) / 100;
+    const profitFactor = totalLoss > 0
+      ? Math.round((totalProfit / totalLoss) * 100) / 100
+      : totalProfit > 0 ? 99.9 : 0;
+
+    const ruleComplianceRate = totalTrades > 0
+      ? Math.round((rulesFollowed / totalTrades) * 100)
+      : 100;
+
+    // Discipline stats
+    let disciplineScore = 0;
+    let currentStreak = 0;
+    try {
+      const stats = await getDisciplineStats(user.id);
+      currentStreak = stats.currentStreak || 0;
+      if (timeframe === "week") {
+        disciplineScore = stats.weeklyPercent || 0;
+      } else if (timeframe === "month") {
+        disciplineScore = stats.monthlyPercent || 0;
+      } else {
+        disciplineScore = Math.round(((stats.weeklyPercent || 0) + (stats.monthlyPercent || 0)) / 2) || (stats.todayPercent || 0);
+      }
+    } catch {
+      disciplineScore = 0;
+      currentStreak = 0;
+    }
+
+    // Active days count
+    const allActiveDates = new Set<string>();
+    userTrades.forEach((t) => {
+      if (t.date) allActiveDates.add(String(t.date));
+    });
+    userCompletions.forEach((c) => {
+      if (c.date) allActiveDates.add(String(c.date));
+    });
+    const activeDays = allActiveDates.size;
+
+    // Consistency score (0-100)
+    const consistencyScore = Math.min(100, Math.round(activeDays * 8 + Math.min(currentStreak * 4, 30)));
+
+    // Multidimensional deterministic scoring formula (0 - 100):
+    // 1. Rule / Risk Adherence (25%)
+    // 2. Discipline Execution (25%)
+    // 3. Win Rate (20%)
+    // 4. Consistency & Streak (15%)
+    // 5. Profit Factor / P&L Quality (15%)
+    const ruleWeight = (ruleComplianceRate * 0.25);
+    const discWeight = (disciplineScore * 0.25);
+    const winWeight = (winRate * 0.20);
+    const consistWeight = (consistencyScore * 0.15);
+    const normalizedPf = Math.min(100, Math.max(0, (profitFactor / 3) * 100));
+    const pfWeight = (normalizedPf * 0.15);
+
+    const hasActivity = totalTrades > 0 || userCompletions.length > 0 || disciplineScore > 0;
+    const overallScore = hasActivity
+      ? Math.round((ruleWeight + discWeight + winWeight + consistWeight + pfWeight) * 10) / 10
+      : 0;
+
+    results.push({
+      rank: 0,
+      userId: user.id,
+      openId: user.openId,
+      name: user.name || `Trader #${user.id}`,
+      avatar: user.avatar || null,
+      role: user.role || "user",
+      totalTrades,
+      winningTrades,
+      losingTrades,
+      breakevenTrades,
+      winRate,
+      totalPnl,
+      profitFactor,
+      ruleComplianceRate,
+      disciplineScore,
+      consistencyScore,
+      currentStreak,
+      activeDays,
+      overallScore,
+      bestPair,
+    });
+  }
+
+  // Sort deterministically:
+  // 1. Overall Score desc
+  // 2. Rule Compliance desc
+  // 3. Discipline Score desc
+  // 4. Win Rate desc
+  // 5. Total Trades desc
+  // 6. Net PnL desc
+  results.sort((a, b) => {
+    if (b.overallScore !== a.overallScore) return b.overallScore - a.overallScore;
+    if (b.ruleComplianceRate !== a.ruleComplianceRate) return b.ruleComplianceRate - a.ruleComplianceRate;
+    if (b.disciplineScore !== a.disciplineScore) return b.disciplineScore - a.disciplineScore;
+    if (b.winRate !== a.winRate) return b.winRate - a.winRate;
+    if (b.totalTrades !== a.totalTrades) return b.totalTrades - a.totalTrades;
+    return b.totalPnl - a.totalPnl;
+  });
+
+  // Assign ranks
+  results.forEach((item, idx) => {
+    item.rank = idx + 1;
+  });
+
+  return results;
+}
+
+export async function getPublicTraderStats(userId: number, timeframe: "all" | "month" | "week" = "all") {
+  const rankings = await getLeaderboardRankings(timeframe);
+  const trader = rankings.find((r) => r.userId === userId);
+  if (!trader) return null;
+
+  const userTrades = (await getUserTrades(userId)).filter((t) => {
+    const { startDate, endDate } = parseTimeframeBounds(timeframe);
+    if (startDate && endDate) {
+      return t.date >= startDate && t.date <= endDate;
+    }
+    return true;
+  });
+
+  let totalWinAmount = 0;
+  let totalLossAmount = 0;
+  let winCount = 0;
+  let lossCount = 0;
+
+  for (const t of userTrades) {
+    const pnl = Number(t.pnl) || 0;
+    if (pnl > 0.001) {
+      totalWinAmount += pnl;
+      winCount++;
+    } else if (pnl < -0.001) {
+      totalLossAmount += Math.abs(pnl);
+      lossCount++;
+    }
+  }
+
+  const avgWin = winCount > 0 ? Math.round((totalWinAmount / winCount) * 100) / 100 : 0;
+  const avgLoss = lossCount > 0 ? Math.round((totalLossAmount / lossCount) * 100) / 100 : 0;
+
+  return {
+    ...trader,
+    avgWin,
+    avgLoss,
+    scoreBreakdown: {
+      riskManagement: trader.ruleComplianceRate,
+      disciplineScore: trader.disciplineScore,
+      winRate: trader.winRate,
+      consistency: trader.consistencyScore,
+      pnlQuality: Math.min(100, Math.round((trader.profitFactor / 3) * 100)),
+    },
+  };
+}
+
 export {
   users,
   verificationTokens,
@@ -2453,6 +2977,7 @@ export {
   disciplineDailyJournals,
   disciplineForexLogs,
   disciplineSettings,
+  traderTrades,
 };
 
 

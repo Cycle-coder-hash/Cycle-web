@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean, json } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, boolean, json, double } from "drizzle-orm/mysql-core";
 
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
@@ -296,6 +296,34 @@ export const disciplineSettings = mysqlTable("disciplineSettings", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+export const traderTrades = mysqlTable("traderTrades", {
+  id: varchar("id", { length: 120 }).primaryKey(),
+  userId: int("userId").notNull(),
+  journalBookId: varchar("journalBookId", { length: 120 }).notNull(),
+  tradeNumber: int("tradeNumber").notNull(),
+  date: varchar("date", { length: 10 }).notNull(), // YYYY-MM-DD
+  entryTime: varchar("entryTime", { length: 16 }),
+  pair: varchar("pair", { length: 32 }).notNull(),
+  timeframe: varchar("timeframe", { length: 16 }).default("15M").notNull(),
+  direction: varchar("direction", { length: 8 }).notNull(), // Buy | Sell
+  entryPrice: double("entryPrice").notNull(),
+  stopLoss: double("stopLoss").notNull(),
+  takeProfit: double("takeProfit").notNull(),
+  exitPrice: double("exitPrice").notNull(),
+  followedRules: varchar("followedRules", { length: 8 }).default("Yes").notNull(), // Yes | No
+  pnl: double("pnl").notNull(),
+  riskReward: varchar("riskReward", { length: 16 }).default("1:2").notNull(),
+  pips: double("pips").default(0).notNull(),
+  lotSize: double("lotSize").default(1.0).notNull(),
+  tradeRun: varchar("tradeRun", { length: 16 }),
+  note: text("note"),
+  tradeRank: varchar("tradeRank", { length: 8 }).default("A").notNull(),
+  learning: text("learning"),
+  customProperties: json("customProperties"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type Product = typeof products.$inferSelect;
@@ -323,5 +351,8 @@ export type DisciplineForexLog = typeof disciplineForexLogs.$inferSelect;
 export type InsertDisciplineForexLog = typeof disciplineForexLogs.$inferInsert;
 export type DisciplineSetting = typeof disciplineSettings.$inferSelect;
 export type InsertDisciplineSetting = typeof disciplineSettings.$inferInsert;
+export type TraderTrade = typeof traderTrades.$inferSelect;
+export type InsertTraderTrade = typeof traderTrades.$inferInsert;
+
 
 

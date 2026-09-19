@@ -24,6 +24,19 @@ import {
   ExternalLink,
   ChevronRight,
   ChevronLeft,
+  Award,
+  Clock3,
+  Clock,
+  Calendar,
+  GraduationCap,
+  TrendingUp,
+  Shield,
+  Activity,
+  Users,
+  Send,
+  Mail,
+  Globe,
+  UserCheck,
 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
@@ -32,7 +45,10 @@ import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/BrandLogo";
 import { HeroCandle3D } from "@/components/HeroCandle3D";
 import { AnimatedCardBorder } from "@/components/AnimatedCardBorder";
+import { AnimatedRgbBorder } from "@/components/AnimatedRgbBorder";
+import { TopNavLinks } from "@/components/TopNavLinks";
 import { NewsHeadlineStats } from "@/components/NewsHeadlineStats";
+import { JournalAnalyticsShowcase } from "@/components/JournalAnalyticsShowcase";
 import { useTheme } from "@/contexts/ThemeContext";
 import { FreeEbookModal } from "@/components/ebook/FreeEbookModal";
 
@@ -176,6 +192,106 @@ const STORE_BUNDLES_STATIC = [
   },
 ];
 
+const TRADING_PLATFORMS = [
+  {
+    id: "tradingview",
+    name: "TradingView",
+    descEn: "Advanced charting, market analysis & indicators",
+    descBn: "অ্যাডভান্সড চার্ট, টেকনিক্যাল অ্যানালাইসিস ও ইন্ডিকেটরস",
+    devices: "Windows · macOS · iOS · Android",
+    url: "https://www.tradingview.com/desktop/",
+    icon: (
+      <svg className="h-10 w-10" viewBox="0 0 40 40" fill="none">
+        <rect width="40" height="40" rx="10" fill="#131722" />
+        <g transform="translate(8, 8)">
+          <path
+            d="M15.8654 8.2789c0 1.3541-1.0978 2.4519-2.452 2.4519-1.354 0-2.4519-1.0978-2.4519-2.452 0-1.354 1.0978-2.4518 2.452-2.4518 1.3541 0 2.4519 1.0977 2.4519 2.4519zM9.75 6H0v4.9038h4.8462v7.2692H9.75Zm8.5962 0H24l-5.1058 12.173h-5.6538z"
+            fill="#ffffff"
+          />
+        </g>
+      </svg>
+    ),
+  },
+  {
+    id: "forexfactory",
+    name: "Forex Factory",
+    descEn: "Economic calendar, market news & sentiment analysis",
+    descBn: "ইকোনমিক ক্যালেন্ডার, মার্কেট নিউজ ও সেন্টিনেন্ট অ্যানালাইসিস",
+    devices: "Web · Mobile · Market Intel",
+    url: "https://www.forexfactory.com/",
+    icon: (
+      <svg className="h-10 w-10" viewBox="0 0 40 40" fill="none">
+        <rect width="40" height="40" rx="10" fill="#142030" stroke="#f59e0b" strokeWidth="1" strokeOpacity="0.4" />
+        <text
+          x="20"
+          y="25"
+          textAnchor="middle"
+          fill="#f59e0b"
+          fontSize="16"
+          fontWeight="900"
+          fontFamily="system-ui, -apple-system, sans-serif"
+          letterSpacing="-0.5px"
+        >
+          FF
+        </text>
+        <rect x="11" y="28" width="18" height="2.5" rx="1" fill="#f59e0b" fillOpacity="0.85" />
+      </svg>
+    ),
+  },
+  {
+    id: "tradinghours",
+    name: "Forex Trading Hours",
+    descEn: "Live 24h market session clock & liquidity overlaps",
+    descBn: "লাইভ ২৪ঘণ্টা মার্কেট সেশন ক্লক ও লিকুইডিটি ওভারল্যাপ",
+    devices: "Web · Live Clock · All Sessions",
+    url: "https://www.babypips.com/tools/forex-market-hours",
+    icon: (
+      <svg className="h-10 w-10" viewBox="0 0 40 40" fill="none">
+        <rect width="40" height="40" rx="10" fill="#0b172a" stroke="#06b6d4" strokeWidth="1" strokeOpacity="0.4" />
+        <circle cx="20" cy="20" r="12" stroke="#334155" strokeWidth="2" strokeDasharray="2 3" />
+        <path d="M 20 8 A 12 12 0 0 1 32 20" stroke="#06b6d4" strokeWidth="2.5" strokeLinecap="round" />
+        <path d="M 32 20 A 12 12 0 0 1 20 32" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
+        <circle cx="20" cy="20" r="2.5" fill="#38bdf8" />
+        <line x1="20" y1="20" x2="20" y2="13" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
+        <line x1="20" y1="20" x2="26" y2="20" stroke="#38bdf8" strokeWidth="1.8" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+];
+
+function renderOwnerStatIcon(iconName?: string, className: string = "size-5") {
+  switch (iconName) {
+    case "clock":
+      return <Clock className={className} />;
+    case "calendar":
+      return <Calendar className={className} />;
+    case "trending":
+    case "trending-up":
+      return <TrendingUp className={className} />;
+    case "shield":
+      return <Shield className={className} />;
+    case "users":
+      return <Users className={className} />;
+    case "userCheck":
+    case "user-check":
+      return <UserCheck className={className} />;
+    case "graduation":
+    case "graduation-cap":
+      return <GraduationCap className={className} />;
+    case "sparkles":
+      return <Sparkles className={className} />;
+    case "target":
+      return <Target className={className} />;
+    case "zap":
+      return <Zap className={className} />;
+    case "activity":
+      return <Activity className={className} />;
+    case "award":
+    default:
+      return <Award className={className} />;
+  }
+}
+
 export default function Home() {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -186,6 +302,7 @@ export default function Home() {
   const [isFreeEbookModalOpen, setIsFreeEbookModalOpen] = useState(false);
   const { data: bundles } = trpc.public.bundles.useQuery();
   const { data: products } = trpc.public.products.useQuery();
+  const { data: ownerProfile } = trpc.public.ownerProfile.useQuery();
 
   const storeBundles = useMemo(() => {
     return STORE_BUNDLES_STATIC.map((base) => {
@@ -307,6 +424,7 @@ export default function Home() {
             navRoadmap: "রোডম্যাপ",
             navStore: "স্টোর",
             navFree: "ফ্রি বেসিকস",
+            navLeaderboard: "লিডারবোর্ড",
             navSupport: "সাপোর্ট",
             signIn: "সাইন ইন",
             dashboard: "ড্যাশবোর্ড",
@@ -345,6 +463,16 @@ export default function Home() {
             ctaEyebrow: "আপনার মূলধন, আপনার সিদ্ধান্ত",
             ctaTitle: "আপনার অতিরিক্ত VIP Group বা Signal-এর প্রয়োজন নেই।\nআপনার প্রয়োজন সঠিকভাবে Market বোঝার ক্ষমতা।",
             ctaButton: "আপনার প্রসেস তৈরি করুন",
+            platformsEyebrow: "ট্রেডিং অ্যাপস ও প্ল্যাটফর্ম",
+            platformsTitle: "টেকনিক্যাল অ্যানালাইসিস ও ফান্ডামেন্টাল অ্যানালাইসিস টুলস",
+            platformsDesc: "চার্ট অ্যানালাইসিস এবং লাইভ মার্কেট এক্সিকিউশনের জন্য অফিসিয়াল প্ল্যাটফর্মগুলো ডাউনলোড করুন।",
+            platformsDownload: "ডাউনলোড পেজ",
+            ownerEyebrow: "ফাউন্ডার পরিচিতি",
+            ownerTitle: "সাইকেল অব চার্ট-এর রূপকার",
+            ownerDesc: "প্রতিষ্ঠানিক ট্রেডিং অভিজ্ঞতা ও গভীর মার্কেট রিয়ালিটি নিয়ে তৈরি বিশ্বস্ত এডুকেশনাল প্ল্যাটফর্ম।",
+            ownerExpLabel: "ট্রেডিং অভিজ্ঞতা",
+            ownerStudentsLabel: "প্রশিক্ষণপ্রাপ্ত শিক্ষার্থী",
+            ownerStyleLabel: "কোর মেথডোলজি",
             footerDesc: "ট্রেডিং রিয়েলিটি · স্ট্রাকচার্ড ইন্সটিটিউশনাল এডুকেশন",
             footerLegal: "শুধুমাত্র শিক্ষামূলক উদ্দেশ্যে তৈরি। কোনো সিগন্যাল বিক্রি, প্রফিট গ্যারান্টি বা ফিন্যান্সিয়াল অ্যাডভাইস দেওয়া হয় না। ডিপোজিটের আগে ট্রেডিং বুঝুন।",
             modalStageOf: "স্টেজ",
@@ -361,6 +489,7 @@ export default function Home() {
             navRoadmap: "Roadmap",
             navStore: "Store",
             navFree: "Free Basics",
+            navLeaderboard: "Leaderboard",
             navSupport: "Support",
             signIn: "Sign in",
             dashboard: "Dashboard",
@@ -399,6 +528,16 @@ export default function Home() {
             ctaEyebrow: "YOUR CAPITAL, YOUR DECISION",
             ctaTitle: "You do not need more signals.\nYou need more understanding.",
             ctaButton: "Build your process",
+            platformsEyebrow: "TRADING APPS & PLATFORMS",
+            platformsTitle: "Technical Analysis & Fundamental Analysis Tools",
+            platformsDesc: "Download official desktop and mobile applications for institutional chart analysis and market execution.",
+            platformsDownload: "Download options",
+            ownerEyebrow: "FOUNDER & LEAD MENTOR",
+            ownerTitle: "The Mind Behind Cycle of Chart",
+            ownerDesc: "Dedicated to transforming retail traders through systematic Candle Range Theory, strict risk architecture, and authentic market reality.",
+            ownerExpLabel: "Market Experience",
+            ownerStudentsLabel: "Traders Mentored",
+            ownerStyleLabel: "Core Methodology",
             footerDesc: "Trading Reality · Structured Institutional Education",
             footerLegal: "Educational content only. No signal selling, profit guarantees, or financial advice. Before you deposit, understand trading.",
             modalStageOf: "Stage",
@@ -416,7 +555,7 @@ export default function Home() {
 
   return (
     <div
-      className={`min-h-screen bg-[#f8fafc] text-[#09111f] selection:bg-[#38bdf8] selection:text-[#09111f] dark:bg-[#060d19] dark:text-slate-100 transition-colors duration-300 ${
+      className={`min-h-screen bg-[#f8fafc] text-[#09111f] selection:bg-[#38bdf8] selection:text-[#09111f] dark:bg-transparent dark:text-slate-100 transition-colors duration-300 ${
         isBn ? "font-bangla" : ""
       }`}
     >
@@ -432,21 +571,7 @@ export default function Home() {
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-7 text-sm font-semibold text-slate-600 dark:text-slate-300 md:flex">
-            <a href="#roadmap" className="transition hover:text-[#0284c7] dark:hover:text-sky-400">
-              {copy.navRoadmap}
-            </a>
-            <a href="#store" className="transition hover:text-[#0284c7] dark:hover:text-sky-400">
-              {copy.navStore}
-            </a>
-            <Link
-              href="/support"
-              className="flex items-center gap-1.5 rounded-full px-3 py-1 bg-slate-100 text-slate-700 hover:bg-slate-200 transition dark:bg-slate-800/80 dark:text-slate-200 dark:hover:bg-slate-800 text-xs font-bold"
-            >
-              <span>🎫</span>
-              <span>{copy.navSupport}</span>
-            </Link>
-          </nav>
+          <TopNavLinks isBn={isBn} copy={copy} />
 
           <div className="flex items-center gap-2.5">
             {/* Dark / Light Theme Toggle */}
@@ -516,19 +641,13 @@ export default function Home() {
 
         {/* Mobile Navigation Dropdown */}
         {menuOpen && (
-          <div className="border-t border-slate-200 bg-white px-5 py-4 shadow-lg dark:border-slate-800 dark:bg-slate-900 md:hidden">
-            <div className="flex flex-col gap-4 text-sm font-semibold text-slate-700 dark:text-slate-300">
-              <a href="#roadmap" onClick={() => setMenuOpen(false)}>
-                {copy.navRoadmap}
-              </a>
-              <a href="#store" onClick={() => setMenuOpen(false)}>
-                {copy.navStore}
-              </a>
-              <Link href="/support" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 text-sky-600 dark:text-sky-400">
-                <span>🎫</span>
-                <span>{copy.navSupport}</span>
-              </Link>
-            </div>
+          <div className="border-t border-slate-200 bg-white px-5 py-4 shadow-lg dark:border-slate-800 dark:bg-[#070e1b] md:hidden">
+            <TopNavLinks
+              isBn={isBn}
+              copy={copy}
+              mobile
+              onItemClick={() => setMenuOpen(false)}
+            />
           </div>
         )}
       </header>
@@ -537,11 +656,10 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* HERO PANEL */}
         {/* ========================================================================= */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-[#ffffff] via-[#f0f7ff] to-[#e6f2fe] pt-24 pb-14 sm:pt-28 sm:pb-16 lg:pt-36 lg:pb-24 dark:from-[#060d19] dark:via-[#091527] dark:to-[#07111f] transition-colors duration-300">
-          <div className="pointer-events-none absolute inset-0 opacity-[0.35] [background-image:linear-gradient(rgba(2,132,199,0.08)_1px,transparent_1px),linear-gradient(90deg,rgba(2,132,199,0.08)_1px,transparent_1px)] [background-size:48px_48px] dark:opacity-[0.2] dark:[background-image:linear-gradient(rgba(56,189,248,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(56,189,248,0.12)_1px,transparent_1px)]" />
-          <div className="pointer-events-none absolute top-12 -left-20 size-[500px] rounded-full bg-sky-200/40 blur-[120px] dark:bg-sky-500/15 ambient-blur-blob hidden sm:block" />
-          <div className="pointer-events-none absolute top-20 right-0 size-[600px] rounded-full bg-sky-300/45 blur-[140px] dark:bg-sky-400/20 ambient-blur-blob hidden sm:block" />
-          <div className="pointer-events-none absolute bottom-0 left-1/3 size-[400px] rounded-full bg-blue-200/30 blur-[100px] dark:bg-blue-500/15 ambient-blur-blob hidden sm:block" />
+        <section className="relative overflow-hidden bg-gradient-to-b from-[#ffffff] via-[#f0f7ff] to-[#e6f2fe] pt-24 pb-14 sm:pt-28 sm:pb-16 lg:pt-36 lg:pb-24 dark:from-transparent dark:via-transparent dark:to-transparent transition-colors duration-300">
+          <div className="pointer-events-none absolute top-12 -left-20 size-[500px] rounded-full bg-sky-200/40 blur-[120px] dark:hidden ambient-blur-blob hidden sm:block" />
+          <div className="pointer-events-none absolute top-20 right-0 size-[600px] rounded-full bg-sky-300/45 blur-[140px] dark:hidden ambient-blur-blob hidden sm:block" />
+          <div className="pointer-events-none absolute bottom-0 left-1/3 size-[400px] rounded-full bg-blue-200/30 blur-[100px] dark:hidden ambient-blur-blob hidden sm:block" />
 
 
           <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 lg:grid-cols-[1.08fr_0.92fr] lg:gap-8 lg:px-8">
@@ -622,6 +740,11 @@ export default function Home() {
         </section>
 
         {/* ========================================================================= */}
+        {/* POWERFUL JOURNAL ANALYTICS SHOWCASE */}
+        {/* ========================================================================= */}
+        <JournalAnalyticsShowcase isBn={isBn} />
+
+        {/* ========================================================================= */}
         {/* THE SHIFT SECTION */}
         {/* ========================================================================= */}
         <section className="content-auto bg-[#f1f5f9] py-16 sm:py-20 dark:bg-[#070e1b] lg:py-28 transition-colors">
@@ -686,7 +809,7 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* ROADMAP SECTION (12 INTERACTIVE STAGES) */}
         {/* ========================================================================= */}
-        <section id="roadmap" className="content-auto bg-white py-16 sm:py-24 dark:bg-[#060d19] lg:py-32 transition-colors">
+        <section id="roadmap" className="content-auto bg-white py-16 sm:py-24 dark:bg-[#070e1b] lg:py-32 transition-colors">
 
           <div className="mx-auto max-w-7xl px-5 lg:px-8">
             <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
@@ -934,7 +1057,7 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* STORE & PRODUCTS SECTION */}
         {/* ========================================================================= */}
-        <section id="store" className="content-auto bg-[#f8fafc] py-16 sm:py-24 dark:bg-[#060d19] transition-colors">
+        <section id="store" className="content-auto bg-[#f8fafc] py-16 sm:py-24 dark:bg-[#070e1b] transition-colors">
 
           <div className="mx-auto max-w-7xl px-5 lg:px-8">
             <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
@@ -1126,7 +1249,7 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* CALL TO ACTION BOTTOM BANNER */}
         {/* ========================================================================= */}
-        <section className="bg-gradient-to-r from-[#071a36] via-[#0d2a52] to-[#0a1e3d] py-20 text-white dark:from-[#050b15] dark:via-[#09182d] dark:to-[#071222]">
+        <section className="bg-gradient-to-r from-[#071a36] via-[#0d2a52] to-[#0a1e3d] py-20 text-white dark:bg-[#070e1b] dark:from-[#070e1b] dark:via-[#070e1b] dark:to-[#070e1b]">
           <div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 px-5 sm:flex-row sm:items-center lg:px-8">
             <div>
               <p className="text-xs font-extrabold uppercase tracking-[.2em] text-[#38bdf8]">
@@ -1143,12 +1266,292 @@ export default function Home() {
             </a>
           </div>
         </section>
+
+        {/* ========================================================================= */}
+        {/* TRADING APPS / PLATFORMS */}
+        {/* ========================================================================= */}
+        <section
+          id="trading-platforms"
+          className="relative py-14 sm:py-16 text-slate-900 dark:text-white border-t border-slate-200/70 dark:border-slate-800/80 bg-slate-100/50 dark:bg-[#070e1b]"
+        >
+          <div className="mx-auto max-w-7xl px-5 lg:px-8">
+            <div className="mb-8">
+              <p className="text-xs font-extrabold uppercase tracking-[.2em] text-[#0284c7] dark:text-[#38bdf8]">
+                {copy.platformsEyebrow}
+              </p>
+              <h2 className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                {copy.platformsTitle}
+              </h2>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
+                {copy.platformsDesc}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+              {TRADING_PLATFORMS.map((platform) => (
+                <a
+                  key={platform.id}
+                  href={platform.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white/85 p-5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-sky-500/50 hover:shadow-lg hover:shadow-sky-500/10 dark:border-slate-800/90 dark:bg-slate-900/60 dark:hover:border-sky-400/50 dark:hover:bg-slate-900/90"
+                >
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl shadow-md transition-transform duration-300 group-hover:scale-105">
+                        {platform.icon}
+                      </div>
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition-colors group-hover:bg-sky-500/10 group-hover:text-sky-600 dark:bg-slate-800/80 dark:text-slate-500 dark:group-hover:text-sky-400">
+                        <ExternalLink className="h-4 w-4" />
+                      </span>
+                    </div>
+
+                    <h3 className="mt-4 text-base sm:text-lg font-bold text-slate-900 transition-colors group-hover:text-sky-600 dark:text-white dark:group-hover:text-sky-400">
+                      {platform.name}
+                    </h3>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                      {isBn ? platform.descBn : platform.descEn}
+                    </p>
+                  </div>
+
+                  <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4 text-xs dark:border-slate-800/80">
+                    <span className="font-medium text-slate-500 dark:text-slate-400">
+                      {platform.devices}
+                    </span>
+                    <span className="inline-flex items-center font-semibold text-sky-600 transition-transform group-hover:translate-x-0.5 dark:text-sky-400">
+                      {copy.platformsDownload}
+                      <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
+                    </span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ========================================================================= */}
+        {/* OWNER PROFILE */}
+        {/* ========================================================================= */}
+        <section
+          id="owner-profile"
+          className="relative py-16 sm:py-24 text-slate-900 dark:text-white border-t border-slate-200/70 dark:border-slate-800/80 bg-slate-50/50 dark:bg-[#070e1b] overflow-hidden"
+        >
+          {/* Subtle atmospheric ambient glow */}
+          <div className="absolute top-1/2 left-1/4 -translate-y-1/2 -translate-x-1/2 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none dark:hidden" />
+          <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl pointer-events-none dark:hidden" />
+
+          <div className="relative mx-auto max-w-7xl px-5 lg:px-8 z-10">
+            {/* Section Header */}
+            <div className="mb-10 sm:mb-12 text-center max-w-3xl mx-auto">
+              <p className="text-xs font-extrabold uppercase tracking-[.2em] text-[#0284c7] dark:text-[#38bdf8]">
+                {copy.ownerEyebrow}
+              </p>
+              <h2 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                {copy.ownerTitle}
+              </h2>
+              <p className="mt-2 text-sm sm:text-base text-slate-600 dark:text-slate-400">
+                {copy.ownerDesc}
+              </p>
+            </div>
+
+            {/* Profile Card */}
+            {ownerProfile && (
+              <div className="relative rounded-3xl border border-slate-200/90 bg-white/85 p-6 sm:p-10 lg:p-12 backdrop-blur-md shadow-xl dark:border-slate-800/90 dark:bg-[#0b162a]/80 dark:shadow-2xl dark:shadow-sky-950/30 transition-all">
+                <AnimatedRgbBorder />
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center relative z-10">
+                  {/* Left Column: Photo & Name & Role & Socials */}
+                  <div className="lg:col-span-4 flex flex-col items-center text-center">
+                    <div className="relative group">
+                      {/* Ambient Glow */}
+                      <div className="absolute -inset-1 rounded-[28px] bg-gradient-to-r from-sky-500 via-cyan-400 to-blue-600 opacity-60 blur-md group-hover:opacity-85 transition duration-500" />
+
+                      {/* Photo Container */}
+                      <div className="relative w-48 h-48 sm:w-56 sm:h-56 rounded-[24px] overflow-hidden p-1 bg-gradient-to-tr from-sky-500 via-cyan-400 to-blue-600 shadow-xl shadow-sky-500/20">
+                        <img
+                          src={ownerProfile.photoUrl}
+                          alt={ownerProfile.name}
+                          className="w-full h-full object-cover object-top rounded-[20px] transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                      </div>
+                    </div>
+
+                    <h3 className="mt-5 text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                      {ownerProfile.name}
+                    </h3>
+
+                    <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-sky-500/10 text-sky-600 dark:bg-sky-400/15 dark:text-sky-300 border border-sky-500/20">
+                      <ShieldCheck size={14} className="text-sky-500 shrink-0" />
+                      <span>{isBn && ownerProfile.roleBn ? ownerProfile.roleBn : ownerProfile.role}</span>
+                    </div>
+
+                    {/* Social Media & Contact Links */}
+                    {(ownerProfile.telegram ||
+                      ownerProfile.youtube ||
+                      ownerProfile.facebook ||
+                      ownerProfile.twitter ||
+                      ownerProfile.email) && (
+                      <div className="mt-5 flex items-center justify-center gap-2.5">
+                        {ownerProfile.telegram && (
+                          <a
+                            href={ownerProfile.telegram}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-sky-500/15 hover:text-sky-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-400 transition-all shadow-sm"
+                            title="Telegram"
+                          >
+                            <Send size={15} />
+                          </a>
+                        )}
+                        {ownerProfile.youtube && (
+                          <a
+                            href={ownerProfile.youtube}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-rose-500/15 hover:text-rose-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-rose-500/20 dark:hover:text-rose-400 transition-all shadow-sm"
+                            title="YouTube"
+                          >
+                            <ExternalLink size={15} />
+                          </a>
+                        )}
+                        {ownerProfile.facebook && (
+                          <a
+                            href={ownerProfile.facebook}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-blue-500/15 hover:text-blue-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-blue-500/20 dark:hover:text-blue-400 transition-all shadow-sm"
+                            title="Facebook"
+                          >
+                            <Globe size={15} />
+                          </a>
+                        )}
+                        {ownerProfile.twitter && (
+                          <a
+                            href={ownerProfile.twitter}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-sky-500/15 hover:text-sky-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-400 transition-all shadow-sm"
+                            title="Twitter / X"
+                          >
+                            <ExternalLink size={15} />
+                          </a>
+                        )}
+                        {ownerProfile.email && (
+                          <a
+                            href={`mailto:${ownerProfile.email}`}
+                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-emerald-500/15 hover:text-emerald-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-emerald-500/20 dark:hover:text-emerald-400 transition-all shadow-sm"
+                            title="Email"
+                          >
+                            <Mail size={15} />
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right Column: Bio, Methodology & Metrics */}
+                  <div className="lg:col-span-8 space-y-6">
+                    {/* Bio Text */}
+                    <div className="space-y-4 text-sm sm:text-base leading-relaxed text-slate-700 dark:text-slate-300">
+                      <p className="font-medium whitespace-pre-line">
+                        {isBn && ownerProfile.bioBn
+                          ? ownerProfile.bioBn
+                          : ownerProfile.bioEn ||
+                            "Specializing in institutional price delivery, market structure, liquidity dynamics, and price action. Dedicated to replacing emotional speculation with structured understanding, systematic analysis, and disciplined execution."}
+                      </p>
+                      {ownerProfile.showDetailsParagraph && (ownerProfile.detailsBn || ownerProfile.detailsEn) && (
+                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 whitespace-pre-line leading-relaxed pt-1">
+                          {isBn && ownerProfile.detailsBn ? ownerProfile.detailsBn : ownerProfile.detailsEn}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Dynamic Credentials & Statistic Cards */}
+                    {(() => {
+                      const activeCards = [];
+                      if (ownerProfile.showExperienceCard) {
+                        activeCards.push({
+                          key: "exp",
+                          label: ownerProfile.experienceLabel || copy.ownerExpLabel,
+                          value: ownerProfile.experienceYears || "6+ Years",
+                          icon: ownerProfile.experienceIcon || "clock",
+                          iconBg: "bg-sky-500/10 text-sky-600 dark:bg-sky-400/15 dark:text-sky-400",
+                        });
+                      }
+                      if (ownerProfile.showMentoredCard) {
+                        activeCards.push({
+                          key: "mentored",
+                          label: ownerProfile.mentoredLabel || copy.ownerStudentsLabel,
+                          value: ownerProfile.studentsCount || "1,500+",
+                          icon: ownerProfile.mentoredIcon || "users",
+                          iconBg: "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-400/15 dark:text-emerald-400",
+                        });
+                      }
+                      if (ownerProfile.showMethodologyCard !== false) {
+                        activeCards.push({
+                          key: "methodology",
+                          label: ownerProfile.methodologyLabel || copy.ownerStyleLabel,
+                          value: ownerProfile.tradingStyle || "Institutional Order Flow, Liquidity & (SMC)",
+                          icon: ownerProfile.methodologyIcon || "award",
+                          iconBg: "bg-amber-500/10 text-amber-600 dark:bg-amber-400/15 dark:text-amber-400",
+                        });
+                      }
+
+                      if (activeCards.length === 0) return null;
+
+                      if (activeCards.length === 1) {
+                        const card = activeCards[0];
+                        return (
+                          <div className="flex justify-center pt-2">
+                            <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-3.5 dark:border-slate-800 dark:bg-slate-900/70">
+                              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${card.iconBg}`}>
+                                {renderOwnerStatIcon(card.icon, "size-5")}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                                  {card.label}
+                                </div>
+                                <div className="text-sm font-black text-slate-900 dark:text-white truncate">
+                                  {card.value}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className={`grid grid-cols-1 ${activeCards.length === 2 ? "sm:grid-cols-2" : "sm:grid-cols-3"} gap-3 pt-2`}>
+                          {activeCards.map((card) => (
+                            <div key={card.key} className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-3.5 dark:border-slate-800 dark:bg-slate-900/70">
+                              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${card.iconBg}`}>
+                                {renderOwnerStatIcon(card.icon, "size-5")}
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">
+                                  {card.label}
+                                </div>
+                                <div className="text-sm font-black text-slate-900 dark:text-white truncate">
+                                  {card.value}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
       </main>
 
       {/* ========================================================================= */}
       {/* FOOTER */}
       {/* ========================================================================= */}
-      <footer className="bg-[#08111f] py-10 text-white dark:bg-[#040810] border-t border-slate-800/60">
+      <footer className="bg-[#08111f] py-10 text-white dark:bg-[#070e1b] border-t border-slate-800/60">
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-6 px-5 text-sm text-slate-400 sm:flex-row lg:px-8">
           <div className="flex items-center gap-4">
             <BrandLogo size={50} />

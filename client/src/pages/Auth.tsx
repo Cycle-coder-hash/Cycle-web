@@ -657,7 +657,7 @@ export default function Auth() {
 
   return (
     <div
-      className={`min-h-screen bg-[#f8fafc] text-slate-900 selection:bg-[#38bdf8] selection:text-slate-950 dark:bg-[#060d19] dark:text-slate-100 transition-colors duration-300 ${
+      className={`min-h-screen bg-[#f8fafc] text-slate-900 selection:bg-[#38bdf8] selection:text-slate-950 dark:bg-transparent dark:text-slate-100 transition-colors duration-300 ${
         isBn ? "font-bangla" : ""
       }`}
     >

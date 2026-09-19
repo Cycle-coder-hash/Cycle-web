@@ -19,6 +19,8 @@ import {
   createFreeEbook,
   updateFreeEbook,
   deleteFreeEbook,
+  getOwnerProfile,
+  updateOwnerProfile,
 } from "./db";
 import { eq } from "drizzle-orm";
 import { sendAccessEmail } from "./email";
@@ -330,6 +332,26 @@ adminRouter.delete("/ebooks/:id", async (req, res) => {
     const id = parseInt(req.params.id, 10);
     await deleteFreeEbook(id);
     return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/admin/owner-profile
+adminRouter.get("/owner-profile", async (_req, res) => {
+  try {
+    const profile = await getOwnerProfile();
+    return res.json({ success: true, profile });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/admin/owner-profile
+adminRouter.post("/owner-profile", async (req, res) => {
+  try {
+    const profile = await updateOwnerProfile(req.body);
+    return res.json({ success: true, profile });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }

@@ -9,9 +9,12 @@ import Checkout from "./pages/Checkout";
 import Auth from "./pages/Auth";
 import Support from "./pages/Support";
 import Admin from "./pages/Admin";
+import Leaderboard from "./pages/Leaderboard";
 import NotFound from "./pages/NotFound";
 import { FloatingSupportButton } from "./components/FloatingSupportButton";
 import { CursorLightTrail } from "./components/CursorLightTrail";
+import { GlobalPreloader } from "./components/GlobalPreloader";
+import { WebsiteBackground } from "./components/WebsiteBackground";
 
 function Router() {
   return (
@@ -21,6 +24,7 @@ function Router() {
       <Route path="/register" component={Auth} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/discipline" component={Dashboard} />
+      <Route path="/leaderboard" component={Leaderboard} />
       <Route path="/checkout" component={Checkout} />
       <Route path="/support" component={Support} />
       <Route path="/admin" component={Admin} />
@@ -32,12 +36,16 @@ function Router() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="light">
+      <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
-          <Toaster position="top-right" richColors />
-          <Router />
-          <FloatingSupportButton />
-          <CursorLightTrail />
+          <GlobalPreloader />
+          <WebsiteBackground />
+          <div className="relative z-10">
+            <Toaster position="top-right" richColors />
+            <Router />
+            <FloatingSupportButton />
+            <CursorLightTrail />
+          </div>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

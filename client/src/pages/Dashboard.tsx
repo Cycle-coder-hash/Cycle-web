@@ -41,6 +41,7 @@ import {
   Sun,
   Trash2,
   TrendingUp,
+  Trophy,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -591,10 +592,10 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
 
   if (loading || (isHashAuthenticating && !user)) {
     return (
-      <div className="grid min-h-screen place-items-center bg-[#f8fafc] text-slate-600 dark:bg-[#060d19] dark:text-slate-400">
+      <div className="grid min-h-screen place-items-center bg-[#030712] text-slate-300 dark:bg-[#030712] dark:text-slate-300">
         <div className="flex flex-col items-center gap-3">
           <BrandLogo size={64} className="animate-pulse" />
-          <div className="text-sm font-bold tracking-widest uppercase">
+          <div className="text-sm font-bold tracking-widest uppercase text-slate-400">
             {isHashAuthenticating ? "Verifying Session Access..." : "Loading Student Portal..."}
           </div>
         </div>
@@ -674,7 +675,7 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
 
   return (
     <div
-      className={`min-h-screen bg-[#f8fafc] text-slate-900 dark:bg-[#060d19] dark:text-slate-100 transition-colors duration-300 selection:bg-[#38bdf8] selection:text-slate-950 ${
+      className={`min-h-screen bg-[#f8fafc] text-slate-900 dark:bg-transparent dark:text-slate-100 transition-colors duration-300 selection:bg-[#38bdf8] selection:text-slate-950 ${
         isBn ? "font-bangla" : ""
       }`}
     >
@@ -853,6 +854,19 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
                 </button>
               );
             })}
+
+            <Link
+              href="/leaderboard"
+              className="flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all duration-200 border border-amber-500/30 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/20 shadow-xs mt-3"
+            >
+              <div className="flex items-center gap-3">
+                <Trophy size={17} className="text-amber-500 shrink-0" />
+                <span>{isBn ? "ট্রেডার লিডারবোর্ড" : "Leaderboard"}</span>
+              </div>
+              <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-extrabold text-amber-500 uppercase tracking-wider">
+                Rankings
+              </span>
+            </Link>
           </nav>
         </div>
 
@@ -921,11 +935,18 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link href="/leaderboard">
+              <Button size="sm" className="gap-1.5 text-xs font-extrabold bg-amber-500/15 text-amber-600 hover:bg-amber-500/25 dark:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/30 border border-amber-500/30">
+                <Trophy size={13} className="text-amber-500 shrink-0" />
+                <span>{isBn ? "লিডারবোর্ড" : "Leaderboard"}</span>
+              </Button>
+            </Link>
+
             <Link href="/">
               <Button variant="outline" size="sm" className="gap-1 text-xs font-bold border-slate-300 dark:border-slate-700">
                 <ArrowLeft size={13} />
-                <span>{isBn ? "মূল ওয়েবসাইট" : "Main Website"}</span>
+                <span className="hidden sm:inline">{isBn ? "মূল ওয়েবসাইট" : "Main Website"}</span>
               </Button>
             </Link>
 
@@ -940,12 +961,12 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
 
         {/* Mobile Horizontal Tab Navigation */}
         <div className="border-b border-slate-200 bg-white px-4 py-2.5 lg:hidden overflow-x-auto touch-pan-x overscroll-contain dark:border-slate-800 dark:bg-[#070e1b]">
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             {navItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => setTab(item.id as any)}
-                className={`whitespace-nowrap rounded-xl px-3.5 py-1.5 text-xs font-bold transition ${
+                className={`whitespace-nowrap rounded-xl px-3.5 py-1.5 text-xs font-bold transition shrink-0 ${
                   tab === item.id
                     ? "bg-[#081833] text-white dark:bg-sky-500 dark:text-slate-950"
                     : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
@@ -954,6 +975,13 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
                 {isBn ? item.labelBn : item.labelEn}
               </button>
             ))}
+            <Link
+              href="/leaderboard"
+              className="flex shrink-0 items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-extrabold text-amber-600 dark:text-amber-400"
+            >
+              <Trophy size={13} className="text-amber-500" />
+              <span>{isBn ? "লিডারবোর্ড" : "Leaderboard"}</span>
+            </Link>
           </div>
         </div>
 

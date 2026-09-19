@@ -28,6 +28,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
+import { TopNavLinks } from "@/components/TopNavLinks";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -304,7 +305,7 @@ export default function Support() {
   });
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 transition-colors duration-300 dark:bg-[#070e1b] dark:text-slate-100">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 transition-colors duration-300 dark:bg-transparent dark:text-slate-100">
       {/* ========================================================================= */}
       {/* HEADER / NAVIGATION */}
       {/* ========================================================================= */}
@@ -326,6 +327,8 @@ export default function Support() {
               </span>
             </Link>
           </div>
+
+          <TopNavLinks isBn={isBn} />
 
           <div className="flex items-center gap-2.5">
             {/* Theme Toggle */}
