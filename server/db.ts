@@ -46,6 +46,7 @@ import {
 } from "../drizzle/schema";
 
 import { ENV } from "./_core/env";
+import { deriveNumericIdFromOpenId } from "@shared/const";
 
 let _db: any = null;
 let _pgPool: pg.Pool | null = null;
@@ -202,6 +203,267 @@ const inMemoryDisciplineForexLogs: any[] = [];
 const inMemoryDisciplineSettings: Map<number, any> = new Map();
 const inMemoryTraderTrades: any[] = [];
 
+export const DEFAULT_INSTITUTIONAL_STUDENTS = [
+  {
+    id: 101,
+    openId: "inst_trader_fahim",
+    name: "Fahim Al-Mahmud",
+    role: "Senior CRT Lead Analyst",
+    email: null,
+    avatar: null,
+    baseScore: 94.2,
+    trades: [
+      { id: "ft_1", pair: "EUR/USD", direction: "Buy", pnl: 480, followedRules: "Yes", date: "2026-09-18", timeframe: "15M", entryPrice: 1.0820, exitPrice: 1.0868, stopLoss: 1.0805, takeProfit: 1.0870 },
+      { id: "ft_2", pair: "EUR/USD", direction: "Sell", pnl: 350, followedRules: "Yes", date: "2026-09-17", timeframe: "15M", entryPrice: 1.0910, exitPrice: 1.0875, stopLoss: 1.0925, takeProfit: 1.0870 },
+      { id: "ft_3", pair: "EUR/USD", direction: "Buy", pnl: 520, followedRules: "Yes", date: "2026-09-16", timeframe: "15M", entryPrice: 1.0840, exitPrice: 1.0892, stopLoss: 1.0825, takeProfit: 1.0895 },
+      { id: "ft_4", pair: "GBP/USD", direction: "Buy", pnl: -120, followedRules: "Yes", date: "2026-09-15", timeframe: "15M", entryPrice: 1.2650, exitPrice: 1.2638, stopLoss: 1.2638, takeProfit: 1.2720 },
+      { id: "ft_5", pair: "EUR/USD", direction: "Buy", pnl: 610, followedRules: "Yes", date: "2026-09-14", timeframe: "15M", entryPrice: 1.0790, exitPrice: 1.0851, stopLoss: 1.0775, takeProfit: 1.0855 },
+      { id: "ft_6", pair: "EUR/USD", direction: "Sell", pnl: 290, followedRules: "Yes", date: "2026-09-12", timeframe: "15M", entryPrice: 1.0880, exitPrice: 1.0851, stopLoss: 1.0895, takeProfit: 1.0850 },
+    ],
+    streak: 14,
+    disciplineScore: 95,
+  },
+  {
+    id: 102,
+    openId: "inst_trader_tanvir",
+    name: "Tanvir Hossain",
+    role: "SMC Execution Specialist",
+    email: null,
+    avatar: null,
+    baseScore: 91.8,
+    trades: [
+      { id: "th_1", pair: "GBP/USD", direction: "Buy", pnl: 410, followedRules: "Yes", date: "2026-09-18", timeframe: "15M", entryPrice: 1.2680, exitPrice: 1.2721, stopLoss: 1.2665, takeProfit: 1.2725 },
+      { id: "th_2", pair: "GBP/USD", direction: "Sell", pnl: 320, followedRules: "Yes", date: "2026-09-17", timeframe: "15M", entryPrice: 1.2750, exitPrice: 1.2718, stopLoss: 1.2765, takeProfit: 1.2715 },
+      { id: "th_3", pair: "EUR/USD", direction: "Buy", pnl: -110, followedRules: "Yes", date: "2026-09-15", timeframe: "15M", entryPrice: 1.0860, exitPrice: 1.0849, stopLoss: 1.0849, takeProfit: 1.0920 },
+      { id: "th_4", pair: "GBP/USD", direction: "Buy", pnl: 480, followedRules: "Yes", date: "2026-09-13", timeframe: "15M", entryPrice: 1.2610, exitPrice: 1.2658, stopLoss: 1.2595, takeProfit: 1.2660 },
+      { id: "th_5", pair: "GBP/USD", direction: "Sell", pnl: 270, followedRules: "Yes", date: "2026-09-11", timeframe: "15M", entryPrice: 1.2700, exitPrice: 1.2673, stopLoss: 1.2715, takeProfit: 1.2670 },
+    ],
+    streak: 11,
+    disciplineScore: 91,
+  },
+  {
+    id: 103,
+    openId: "inst_trader_zubair",
+    name: "Zubair Ahmed",
+    role: "London Open Scalper",
+    email: null,
+    avatar: null,
+    baseScore: 89.5,
+    trades: [
+      { id: "za_1", pair: "XAU/USD", direction: "Buy", pnl: 550, followedRules: "Yes", date: "2026-09-18", timeframe: "15M", entryPrice: 2570, exitPrice: 2581, stopLoss: 2565, takeProfit: 2582 },
+      { id: "za_2", pair: "XAU/USD", direction: "Sell", pnl: -180, followedRules: "Yes", date: "2026-09-16", timeframe: "15M", entryPrice: 2585, exitPrice: 2589, stopLoss: 2589, takeProfit: 2575 },
+      { id: "za_3", pair: "XAU/USD", direction: "Buy", pnl: 490, followedRules: "Yes", date: "2026-09-15", timeframe: "15M", entryPrice: 2562, exitPrice: 2572, stopLoss: 2557, takeProfit: 2575 },
+      { id: "za_4", pair: "EUR/USD", direction: "Buy", pnl: 230, followedRules: "Yes", date: "2026-09-13", timeframe: "15M", entryPrice: 1.0830, exitPrice: 1.0853, stopLoss: 1.0815, takeProfit: 1.0860 },
+    ],
+    streak: 9,
+    disciplineScore: 88,
+  },
+  {
+    id: 104,
+    openId: "inst_trader_nafis",
+    name: "Nafis Fuad",
+    role: "NY Session Breakout Specialist",
+    email: null,
+    avatar: null,
+    baseScore: 88.1,
+    trades: [
+      { id: "nf_1", pair: "GBP/JPY", direction: "Buy", pnl: 380, followedRules: "Yes", date: "2026-09-18", timeframe: "15M", entryPrice: 188.20, exitPrice: 188.75, stopLoss: 187.90, takeProfit: 188.80 },
+      { id: "nf_2", pair: "GBP/JPY", direction: "Sell", pnl: 290, followedRules: "Yes", date: "2026-09-16", timeframe: "15M", entryPrice: 189.40, exitPrice: 188.98, stopLoss: 189.65, takeProfit: 188.90 },
+      { id: "nf_3", pair: "EUR/USD", direction: "Buy", pnl: -95, followedRules: "Yes", date: "2026-09-14", timeframe: "15M", entryPrice: 1.0850, exitPrice: 1.0840, stopLoss: 1.0840, takeProfit: 1.0890 },
+      { id: "nf_4", pair: "GBP/JPY", direction: "Buy", pnl: 340, followedRules: "Yes", date: "2026-09-12", timeframe: "15M", entryPrice: 187.50, exitPrice: 188.00, stopLoss: 187.25, takeProfit: 188.05 },
+    ],
+    streak: 8,
+    disciplineScore: 86,
+  },
+  {
+    id: 105,
+    openId: "inst_trader_mahmud",
+    name: "Mahmudul Hasan",
+    role: "Liquidity Sweep & Judas Trap Trader",
+    email: null,
+    avatar: null,
+    baseScore: 86.4,
+    trades: [
+      { id: "mh_1", pair: "EUR/JPY", direction: "Buy", pnl: 320, followedRules: "Yes", date: "2026-09-17", timeframe: "15M", entryPrice: 161.10, exitPrice: 161.55, stopLoss: 160.85, takeProfit: 161.60 },
+      { id: "mh_2", pair: "EUR/JPY", direction: "Sell", pnl: 280, followedRules: "Yes", date: "2026-09-15", timeframe: "15M", entryPrice: 162.20, exitPrice: 161.80, stopLoss: 162.45, takeProfit: 161.75 },
+      { id: "mh_3", pair: "EUR/USD", direction: "Buy", pnl: -105, followedRules: "Yes", date: "2026-09-13", timeframe: "15M", entryPrice: 1.0845, exitPrice: 1.0834, stopLoss: 1.0834, takeProfit: 1.0890 },
+      { id: "mh_4", pair: "EUR/JPY", direction: "Buy", pnl: 290, followedRules: "Yes", date: "2026-09-11", timeframe: "15M", entryPrice: 160.50, exitPrice: 160.92, stopLoss: 160.25, takeProfit: 161.00 },
+    ],
+    streak: 7,
+    disciplineScore: 85,
+  },
+  {
+    id: 106,
+    openId: "inst_trader_shafiq",
+    name: "Shafiqur Rahman",
+    role: "HTF Bias & Swing Positioner",
+    email: null,
+    avatar: null,
+    baseScore: 85.2,
+    trades: [
+      { id: "sr_1", pair: "USD/CAD", direction: "Sell", pnl: 310, followedRules: "Yes", date: "2026-09-17", timeframe: "15M", entryPrice: 1.3580, exitPrice: 1.3540, stopLoss: 1.3605, takeProfit: 1.3535 },
+      { id: "sr_2", pair: "USD/CAD", direction: "Buy", pnl: 250, followedRules: "Yes", date: "2026-09-14", timeframe: "15M", entryPrice: 1.3510, exitPrice: 1.3542, stopLoss: 1.3490, takeProfit: 1.3550 },
+      { id: "sr_3", pair: "USD/CAD", direction: "Sell", pnl: -85, followedRules: "Yes", date: "2026-09-12", timeframe: "15M", entryPrice: 1.3590, exitPrice: 1.3601, stopLoss: 1.3601, takeProfit: 1.3540 },
+    ],
+    streak: 6,
+    disciplineScore: 84,
+  },
+  {
+    id: 107,
+    openId: "inst_trader_rashed",
+    name: "Rashedul Islam",
+    role: "CRT Silver Bullet Specialist",
+    email: null,
+    avatar: null,
+    baseScore: 83.7,
+    trades: [
+      { id: "ri_1", pair: "AUD/USD", direction: "Buy", pnl: 270, followedRules: "Yes", date: "2026-09-17", timeframe: "15M", entryPrice: 0.6720, exitPrice: 0.6755, stopLoss: 0.6705, takeProfit: 0.6760 },
+      { id: "ri_2", pair: "AUD/USD", direction: "Sell", pnl: 210, followedRules: "Yes", date: "2026-09-15", timeframe: "15M", entryPrice: 0.6790, exitPrice: 0.6762, stopLoss: 0.6805, takeProfit: 0.6760 },
+      { id: "ri_3", pair: "AUD/USD", direction: "Buy", pnl: -90, followedRules: "Yes", date: "2026-09-13", timeframe: "15M", entryPrice: 0.6730, exitPrice: 0.6720, stopLoss: 0.6720, takeProfit: 0.6775 },
+    ],
+    streak: 5,
+    disciplineScore: 82,
+  },
+  {
+    id: 108,
+    openId: "inst_trader_arif",
+    name: "Arifur Rahman",
+    role: "Risk Management & Prop Trader",
+    email: null,
+    avatar: null,
+    baseScore: 82.5,
+    trades: [
+      { id: "ar_1", pair: "NZD/USD", direction: "Buy", pnl: 240, followedRules: "Yes", date: "2026-09-16", timeframe: "15M", entryPrice: 0.6180, exitPrice: 0.6212, stopLoss: 0.6165, takeProfit: 0.6215 },
+      { id: "ar_2", pair: "NZD/USD", direction: "Sell", pnl: 190, followedRules: "Yes", date: "2026-09-14", timeframe: "15M", entryPrice: 0.6240, exitPrice: 0.6215, stopLoss: 0.6255, takeProfit: 0.6210 },
+      { id: "ar_3", pair: "NZD/USD", direction: "Buy", pnl: -80, followedRules: "Yes", date: "2026-09-11", timeframe: "15M", entryPrice: 0.6190, exitPrice: 0.6181, stopLoss: 0.6181, takeProfit: 0.6235 },
+    ],
+    streak: 5,
+    disciplineScore: 80,
+  },
+  {
+    id: 109,
+    openId: "inst_trader_minhaj",
+    name: "Kazi Minhaj",
+    role: "Asian Range Invalidation Trader",
+    email: null,
+    avatar: null,
+    baseScore: 81.0,
+    trades: [
+      { id: "km_1", pair: "EUR/GBP", direction: "Buy", pnl: 220, followedRules: "Yes", date: "2026-09-16", timeframe: "15M", entryPrice: 0.8520, exitPrice: 0.8548, stopLoss: 0.8505, takeProfit: 0.8550 },
+      { id: "km_2", pair: "EUR/GBP", direction: "Sell", pnl: 170, followedRules: "Yes", date: "2026-09-13", timeframe: "15M", entryPrice: 0.8570, exitPrice: 0.8548, stopLoss: 0.8582, takeProfit: 0.8545 },
+      { id: "km_3", pair: "EUR/GBP", direction: "Buy", pnl: -75, followedRules: "Yes", date: "2026-09-10", timeframe: "15M", entryPrice: 0.8530, exitPrice: 0.8522, stopLoss: 0.8522, takeProfit: 0.8565 },
+    ],
+    streak: 4,
+    disciplineScore: 78,
+  },
+  {
+    id: 110,
+    openId: "inst_trader_tariq",
+    name: "Tariqul Islam",
+    role: "Order Flow & FVG Sniper",
+    email: null,
+    avatar: null,
+    baseScore: 79.8,
+    trades: [
+      { id: "ti_1", pair: "USD/CHF", direction: "Sell", pnl: 210, followedRules: "Yes", date: "2026-09-15", timeframe: "15M", entryPrice: 0.8920, exitPrice: 0.8892, stopLoss: 0.8938, takeProfit: 0.8890 },
+      { id: "ti_2", pair: "USD/CHF", direction: "Buy", pnl: 160, followedRules: "Yes", date: "2026-09-12", timeframe: "15M", entryPrice: 0.8870, exitPrice: 0.8892, stopLoss: 0.8855, takeProfit: 0.8895 },
+      { id: "ti_3", pair: "USD/CHF", direction: "Sell", pnl: -70, followedRules: "Yes", date: "2026-09-09", timeframe: "15M", entryPrice: 0.8930, exitPrice: 0.8940, stopLoss: 0.8940, takeProfit: 0.8880 },
+    ],
+    streak: 4,
+    disciplineScore: 76,
+  },
+  {
+    id: 111,
+    openId: "inst_trader_imtiaz",
+    name: "Imtiaz Khan",
+    role: "Intraday Momentum Trader",
+    email: null,
+    avatar: null,
+    baseScore: 78.4,
+    trades: [
+      { id: "ik_1", pair: "GBP/AUD", direction: "Buy", pnl: 200, followedRules: "Yes", date: "2026-09-14", timeframe: "15M", entryPrice: 1.9320, exitPrice: 1.9365, stopLoss: 1.9295, takeProfit: 1.9370 },
+      { id: "ik_2", pair: "GBP/AUD", direction: "Sell", pnl: 150, followedRules: "Yes", date: "2026-09-11", timeframe: "15M", entryPrice: 1.9410, exitPrice: 1.9378, stopLoss: 1.9430, takeProfit: 1.9375 },
+      { id: "ik_3", pair: "GBP/AUD", direction: "Buy", pnl: -80, followedRules: "Yes", date: "2026-09-08", timeframe: "15M", entryPrice: 1.9330, exitPrice: 1.9318, stopLoss: 1.9318, takeProfit: 1.9380 },
+    ],
+    streak: 3,
+    disciplineScore: 75,
+  },
+  {
+    id: 112,
+    openId: "inst_trader_ashraf",
+    name: "Ashraful Alam",
+    role: "CRT Reversal Analyst",
+    email: null,
+    avatar: null,
+    baseScore: 77.1,
+    trades: [
+      { id: "aa_1", pair: "EUR/AUD", direction: "Buy", pnl: 190, followedRules: "Yes", date: "2026-09-14", timeframe: "15M", entryPrice: 1.6350, exitPrice: 1.6392, stopLoss: 1.6325, takeProfit: 1.6395 },
+      { id: "aa_2", pair: "EUR/AUD", direction: "Sell", pnl: 140, followedRules: "Yes", date: "2026-09-10", timeframe: "15M", entryPrice: 1.6420, exitPrice: 1.6390, stopLoss: 1.6440, takeProfit: 1.6385 },
+      { id: "aa_3", pair: "EUR/AUD", direction: "Buy", pnl: -75, followedRules: "Yes", date: "2026-09-07", timeframe: "15M", entryPrice: 1.6360, exitPrice: 1.6349, stopLoss: 1.6349, takeProfit: 1.6410 },
+    ],
+    streak: 3,
+    disciplineScore: 74,
+  },
+  {
+    id: 113,
+    openId: "inst_trader_hasib",
+    name: "Hasibul Hasan",
+    role: "Institutional Structure Student",
+    email: null,
+    avatar: null,
+    baseScore: 75.5,
+    trades: [
+      { id: "hh_1", pair: "USD/JPY", direction: "Buy", pnl: 180, followedRules: "Yes", date: "2026-09-13", timeframe: "15M", entryPrice: 142.10, exitPrice: 142.50, stopLoss: 141.85, takeProfit: 142.55 },
+      { id: "hh_2", pair: "USD/JPY", direction: "Sell", pnl: 130, followedRules: "Yes", date: "2026-09-09", timeframe: "15M", entryPrice: 143.20, exitPrice: 142.92, stopLoss: 143.40, takeProfit: 142.90 },
+      { id: "hh_3", pair: "USD/JPY", direction: "Buy", pnl: -70, followedRules: "Yes", date: "2026-09-06", timeframe: "15M", entryPrice: 142.30, exitPrice: 142.18, stopLoss: 142.18, takeProfit: 142.80 },
+    ],
+    streak: 3,
+    disciplineScore: 72,
+  },
+];
+
+let institutionalDataInitialized = false;
+export function initInstitutionalSeedData() {
+  if (institutionalDataInitialized) return;
+  institutionalDataInitialized = true;
+  for (const s of DEFAULT_INSTITUTIONAL_STUDENTS) {
+    if (!inMemoryUsers.has(s.openId)) {
+      inMemoryUsers.set(s.openId, {
+        id: s.id,
+        openId: s.openId,
+        name: s.name,
+        email: s.email,
+        phone: null,
+        avatar: s.avatar,
+        role: "user",
+        language: "en",
+        loginMethod: "seed",
+        createdAt: new Date("2026-01-01"),
+        updatedAt: new Date(),
+        lastSignedIn: new Date(),
+      });
+    }
+    for (const t of s.trades) {
+      if (!inMemoryTraderTrades.some((item) => item.id === t.id)) {
+        inMemoryTraderTrades.push({
+          ...t,
+          userId: s.id,
+          journalBookId: "default",
+          tradeNumber: 1,
+          timeframe: t.timeframe || "15M",
+          riskReward: "1:2",
+          pips: Math.abs(t.pnl) / 10,
+          lotSize: 1.0,
+          followedRules: t.followedRules,
+          createdAt: new Date(t.date),
+          updatedAt: new Date(t.date),
+        });
+      }
+    }
+  }
+}
+initInstitutionalSeedData();
+
 let disciplineTaskAutoId = 1;
 let disciplineCompletionAutoId = 1;
 let disciplineExerciseAutoId = 1;
@@ -218,8 +480,6 @@ let orderAutoId = 1;
 let entitlementAutoId = 1;
 let auditAutoId = 1;
 let ebookAutoId = 6;
-
-
 
 export async function getDb() {
   const url = process.env.DATABASE_URL;
@@ -243,63 +503,318 @@ export async function getDb() {
   return _db;
 }
 
+const inMemorySettings: Map<string, string> = new Map();
+
+export async function getSetting(key: string): Promise<string | null> {
+  const db = await getDb();
+  if (db) {
+    try {
+      const rows = await db.select().from(settings).where(eq(settings.key, key)).limit(1);
+      if (rows.length) return rows[0].value;
+    } catch (err) {
+      console.warn("[getSetting error]:", err);
+    }
+  }
+  try {
+    const { supabaseServer } = await import("./supabase");
+    const { data, error } = await supabaseServer.from("settings").select("value").eq("key", key).maybeSingle();
+    if (data && !error && data.value !== undefined && data.value !== null) {
+      inMemorySettings.set(key, data.value);
+      return data.value;
+    }
+  } catch {}
+  return inMemorySettings.get(key) || null;
+}
+
+export async function setSetting(key: string, value: string): Promise<boolean> {
+  inMemorySettings.set(key, value);
+  const db = await getDb();
+  if (db) {
+    try {
+      const existing = await db.select().from(settings).where(eq(settings.key, key)).limit(1);
+      if (existing.length) {
+        await db.update(settings).set({ value, updatedAt: new Date() }).where(eq(settings.key, key));
+      } else {
+        await db.insert(settings).values({ key, value });
+      }
+      return true;
+    } catch (err) {
+      console.warn("[setSetting error]:", err);
+    }
+  }
+  try {
+    const { supabaseServer } = await import("./supabase");
+    await supabaseServer.from("settings").upsert({ key, value }, { onConflict: "key" });
+  } catch (supaErr) {
+    console.warn("[setSetting Supabase error]:", supaErr);
+  }
+  return true;
+}
+
+export interface TraderProfileData {
+  userId: number;
+  openId: string;
+  name: string;
+  avatar: string | null;
+  phone?: string | null;
+  role?: string;
+  language?: "en" | "bn";
+  updatedAt?: string;
+}
+
+export async function getTraderProfile(openIdOrUserId: string | number): Promise<TraderProfileData | null> {
+  try {
+    const key = `trader_profile_${openIdOrUserId}`;
+    const raw = await getSetting(key);
+    if (raw) {
+      return JSON.parse(raw);
+    }
+  } catch (err) {
+    console.warn("[getTraderProfile error]:", err);
+  }
+  return null;
+}
+
+export async function saveTraderProfile(profile: TraderProfileData): Promise<void> {
+  try {
+    const key = `trader_profile_${profile.openId || profile.userId}`;
+    await setSetting(key, JSON.stringify(profile));
+
+    const registryKey = "global_trader_registry";
+    const rawRegistry = await getSetting(registryKey);
+    let openIds: string[] = [];
+    if (rawRegistry) {
+      try { openIds = JSON.parse(rawRegistry); } catch {}
+    }
+    if (profile.openId && !openIds.includes(profile.openId)) {
+      openIds.push(profile.openId);
+      await setSetting(registryKey, JSON.stringify(openIds));
+    }
+  } catch (err) {
+    console.warn("[saveTraderProfile error]:", err);
+  }
+}
+
+export async function updateUserProfile(
+  userId: number,
+  openId: string | undefined,
+  updates: { name?: string; phone?: string | null; language?: "en" | "bn"; avatar?: string | null }
+): Promise<void> {
+  const resolvedOpenId = openId || (userId ? `usr_${userId}` : "");
+
+  if (resolvedOpenId) {
+    const existing = inMemoryUsers.get(resolvedOpenId);
+    if (existing) {
+      if (updates.name) existing.name = updates.name;
+      if (updates.phone !== undefined) existing.phone = updates.phone;
+      if (updates.language) existing.language = updates.language;
+      if (updates.avatar !== undefined) existing.avatar = updates.avatar;
+      existing.updatedAt = new Date();
+    }
+  }
+  for (const u of Array.from(inMemoryUsers.values())) {
+    if (u.id === userId) {
+      if (updates.name) u.name = updates.name;
+      if (updates.phone !== undefined) u.phone = updates.phone;
+      if (updates.language) u.language = updates.language;
+      if (updates.avatar !== undefined) u.avatar = updates.avatar;
+      u.updatedAt = new Date();
+    }
+  }
+
+  const existingProf = resolvedOpenId ? await getTraderProfile(resolvedOpenId) : null;
+  const newProfile: TraderProfileData = {
+    userId,
+    openId: resolvedOpenId,
+    name: updates.name || existingProf?.name || "Trader",
+    avatar: updates.avatar !== undefined ? updates.avatar : (existingProf?.avatar || null),
+    phone: updates.phone !== undefined ? updates.phone : (existingProf?.phone || null),
+    language: updates.language || existingProf?.language || "en",
+    updatedAt: new Date().toISOString(),
+  };
+  await saveTraderProfile(newProfile);
+
+  try {
+    const { supabaseServer } = await import("./supabase");
+    if (resolvedOpenId) {
+      const supaUpdate: any = { updatedAt: new Date().toISOString() };
+      if (updates.name) supaUpdate.name = updates.name;
+      if (updates.phone !== undefined) supaUpdate.phone = updates.phone;
+      if (updates.language) supaUpdate.language = updates.language;
+      await supabaseServer.from("users").update(supaUpdate).eq("openId", resolvedOpenId);
+    }
+  } catch (supaErr) {
+    console.warn("[updateUserProfile Supabase error]:", supaErr);
+  }
+
+  const db = await getDb();
+  if (db) {
+    try {
+      await db
+        .update(users)
+        .set({
+          ...(updates.name ? { name: updates.name } : {}),
+          ...(updates.phone !== undefined ? { phone: updates.phone } : {}),
+          ...(updates.language ? { language: updates.language } : {}),
+          ...(updates.avatar !== undefined ? { avatar: updates.avatar } : {}),
+          updatedAt: new Date(),
+        })
+        .where(
+          resolvedOpenId
+            ? or(eq(users.id, userId), eq(users.openId, resolvedOpenId))
+            : eq(users.id, userId)
+        );
+    } catch (dbErr) {
+      console.warn("[updateUserProfile db error]:", dbErr);
+    }
+  }
+}
+
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) throw new Error("User openId is required");
+  initInstitutionalSeedData();
+
+  const numericId = user.id || inMemoryUsers.get(user.openId)?.id || deriveNumericIdFromOpenId(user.openId);
+
+  const existingProf = await getTraderProfile(user.openId);
+  const resolvedAvatar = user.avatar !== undefined ? user.avatar : (existingProf?.avatar || null);
+  const resolvedName = user.name || existingProf?.name || "Trader";
+
+  const userRecord = {
+    id: numericId,
+    ...user,
+    name: resolvedName,
+    avatar: resolvedAvatar,
+    createdAt: inMemoryUsers.get(user.openId)?.createdAt || new Date(),
+    updatedAt: new Date(),
+    lastSignedIn: user.lastSignedIn || new Date(),
+    role: user.role || (user.openId === ENV.ownerOpenId ? "admin" : "user"),
+    language: user.language || "en",
+  };
+
+  inMemoryUsers.set(user.openId, userRecord);
+
+  await saveTraderProfile({
+    userId: numericId,
+    openId: user.openId,
+    name: resolvedName,
+    avatar: resolvedAvatar,
+    phone: user.phone || null,
+    role: userRecord.role as string,
+    language: userRecord.language as any,
+    updatedAt: new Date().toISOString(),
+  });
+
+  try {
+    const { supabaseServer } = await import("./supabase");
+    await supabaseServer.from("users").upsert({
+      openId: user.openId,
+      name: resolvedName,
+      email: user.email || null,
+      phone: user.phone || null,
+      role: userRecord.role,
+      language: userRecord.language,
+      lastSignedIn: new Date().toISOString(),
+    }, { onConflict: "openId" });
+  } catch (supaErr) {
+    console.warn("[upsertUser Supabase error]:", supaErr);
+  }
+
   const db = await getDb();
   if (db) {
     try {
       const values: InsertUser = {
         openId: user.openId,
-        name: user.name,
+        name: resolvedName,
         email: user.email,
         passwordHash: user.passwordHash,
         phone: user.phone,
         loginMethod: user.loginMethod,
-        avatar: user.avatar,
+        avatar: resolvedAvatar,
         lastSignedIn: user.lastSignedIn ?? new Date(),
-        role: user.role ?? (user.openId === ENV.ownerOpenId ? "admin" : "user"),
-        language: user.language ?? "en",
+        role: userRecord.role as any,
+        language: userRecord.language as any,
       };
       const updateSet: Record<string, unknown> = { ...values };
       delete updateSet.openId;
       await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
-      return;
     } catch (err) {
       console.warn("[Database upsertUser fallback to memory]:", err);
     }
   }
-
-  inMemoryUsers.set(user.openId, {
-    id: inMemoryUsers.get(user.openId)?.id || userAutoId++,
-    ...user,
-    createdAt: inMemoryUsers.get(user.openId)?.createdAt || new Date(),
-    updatedAt: new Date(),
-    lastSignedIn: user.lastSignedIn || new Date(),
-    role: user.role || "user",
-    language: user.language || "en",
-  });
 }
 
 export async function getUserByOpenId(openId: string): Promise<User | undefined> {
+  initInstitutionalSeedData();
+  let user = inMemoryUsers.get(openId);
+  if (user) {
+    if (!user.avatar) {
+      const prof = await getTraderProfile(openId);
+      if (prof?.avatar) user.avatar = prof.avatar;
+    }
+    return user;
+  }
+
   const db = await getDb();
   if (db) {
     try {
       const rows = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-      if (rows && rows[0]) return rows[0];
+      if (rows && rows[0]) {
+        user = rows[0];
+        const prof = await getTraderProfile(openId);
+        if (prof?.avatar) (user as any).avatar = prof.avatar;
+        inMemoryUsers.set(openId, user);
+        return user;
+      }
     } catch (err) {
       console.warn("[Database getUserByOpenId fallback to memory]:", err);
     }
   }
+
+  try {
+    const { supabaseServer } = await import("./supabase");
+    const { data, error } = await supabaseServer.from("users").select("*").eq("openId", openId).maybeSingle();
+    if (data && !error) {
+      const prof = await getTraderProfile(openId);
+      const builtUser: any = {
+        id: data.id || deriveNumericIdFromOpenId(openId),
+        openId: data.openId,
+        name: prof?.name || data.name || "Trader",
+        email: data.email || null,
+        phone: data.phone || null,
+        role: data.role || "user",
+        loginMethod: data.loginMethod || "supabase",
+        language: data.language || "en",
+        avatar: prof?.avatar || null,
+        emailVerified: true,
+        createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
+        updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
+        lastSignedIn: data.lastSignedIn ? new Date(data.lastSignedIn) : new Date(),
+      };
+      inMemoryUsers.set(openId, builtUser);
+      return builtUser;
+    }
+  } catch (supaErr) {
+    console.warn("[getUserByOpenId Supabase fallback]:", supaErr);
+  }
+
   return inMemoryUsers.get(openId);
 }
 
 export async function getUserByEmail(email: string): Promise<User | undefined> {
+  initInstitutionalSeedData();
   const normalizedEmail = email.toLowerCase().trim();
   const db = await getDb();
   if (db) {
     try {
       const rows = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
-      if (rows && rows[0]) return rows[0];
+      if (rows && rows[0]) {
+        const u = rows[0];
+        const prof = await getTraderProfile(u.openId);
+        if (prof?.avatar) (u as any).avatar = prof.avatar;
+        inMemoryUsers.set(u.openId, u);
+        return u;
+      }
     } catch (err) {
       console.warn("[Database getUserByEmail fallback to memory]:", err);
     }
@@ -309,6 +824,33 @@ export async function getUserByEmail(email: string): Promise<User | undefined> {
     if (u.email && u.email.toLowerCase() === normalizedEmail) {
       return u;
     }
+  }
+
+  try {
+    const { supabaseServer } = await import("./supabase");
+    const { data, error } = await supabaseServer.from("users").select("*").eq("email", normalizedEmail).maybeSingle();
+    if (data && !error) {
+      const prof = await getTraderProfile(data.openId);
+      const builtUser: any = {
+        id: data.id || deriveNumericIdFromOpenId(data.openId),
+        openId: data.openId,
+        name: prof?.name || data.name || "Trader",
+        email: data.email,
+        phone: data.phone || null,
+        role: data.role || "user",
+        loginMethod: data.loginMethod || "supabase",
+        language: data.language || "en",
+        avatar: prof?.avatar || null,
+        emailVerified: true,
+        createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
+        updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
+        lastSignedIn: data.lastSignedIn ? new Date(data.lastSignedIn) : new Date(),
+      };
+      inMemoryUsers.set(data.openId, builtUser);
+      return builtUser;
+    }
+  } catch (supaErr) {
+    console.warn("[getUserByEmail Supabase fallback]:", supaErr);
   }
 
   return undefined;
@@ -872,14 +1414,95 @@ export async function addTicketReply(reply: {
 }
 
 export async function listAllUsers() {
+  initInstitutionalSeedData();
+
+  // 1. Sync any users from Supabase users table
+  try {
+    const { supabaseServer } = await import("./supabase");
+    const { data: supaUsers } = await supabaseServer.from("users").select("*");
+    if (supaUsers && supaUsers.length > 0) {
+      for (const su of supaUsers) {
+        if (su.openId) {
+          const prof = await getTraderProfile(su.openId);
+          const existing = inMemoryUsers.get(su.openId);
+          if (existing) {
+            if (prof?.name) existing.name = prof.name;
+            if (prof?.avatar !== undefined) existing.avatar = prof.avatar;
+          } else {
+            inMemoryUsers.set(su.openId, {
+              id: su.id || deriveNumericIdFromOpenId(su.openId),
+              openId: su.openId,
+              name: prof?.name || su.name || "Trader",
+              email: su.email || null,
+              phone: su.phone || null,
+              avatar: prof?.avatar || null,
+              role: su.role || "user",
+              language: su.language || "en",
+              loginMethod: "supabase",
+              createdAt: su.createdAt ? new Date(su.createdAt) : new Date(),
+              updatedAt: su.updatedAt ? new Date(su.updatedAt) : new Date(),
+              lastSignedIn: su.lastSignedIn ? new Date(su.lastSignedIn) : new Date(),
+            });
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("[listAllUsers Supabase notice]:", err);
+  }
+
+  // 2. Sync any additional registered users from persistent settings
+  try {
+    const rawReg = await getSetting("global_trader_registry");
+    if (rawReg) {
+      const regOpenIds: string[] = JSON.parse(rawReg);
+      for (const oid of regOpenIds) {
+        if (oid) {
+          const prof = await getTraderProfile(oid);
+          if (prof) {
+            const existing = inMemoryUsers.get(oid);
+            if (existing) {
+              if (prof.name) existing.name = prof.name;
+              if (prof.avatar !== undefined) existing.avatar = prof.avatar;
+            } else {
+              inMemoryUsers.set(oid, {
+                id: prof.userId || deriveNumericIdFromOpenId(oid),
+                openId: oid,
+                name: prof.name || "Trader",
+                email: null,
+                phone: prof.phone || null,
+                avatar: prof.avatar || null,
+                role: prof.role || "user",
+                language: prof.language || "en",
+                loginMethod: "supabase",
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                lastSignedIn: new Date(),
+              });
+            }
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("[listAllUsers registry notice]:", err);
+  }
+
+  // 3. If drizzle db is connected, merge
   const db = await getDb();
   if (db) {
     try {
-      return await db.select().from(users).orderBy(desc(users.createdAt));
+      const dbUsers = await db.select().from(users).orderBy(desc(users.createdAt));
+      for (const du of dbUsers) {
+        if (du.openId && !inMemoryUsers.has(du.openId)) {
+          inMemoryUsers.set(du.openId, du);
+        }
+      }
     } catch (err) {
       console.warn("[listAllUsers error]:", err);
     }
   }
+
   return Array.from(inMemoryUsers.values());
 }
 
@@ -1999,6 +2622,21 @@ export async function getDisciplineStats(userId: number) {
     userSettings = inMemoryDisciplineSettings.get(userId);
   }
 
+  const instStudent = DEFAULT_INSTITUTIONAL_STUDENTS.find((s) => s.id === userId);
+  if (instStudent && (!completions || completions.length === 0)) {
+    return {
+      currentStreak: instStudent.streak,
+      longestStreak: instStudent.streak + 2,
+      todayPercent: instStudent.disciplineScore,
+      weeklyPercent: instStudent.disciplineScore,
+      monthlyPercent: instStudent.disciplineScore,
+      totalCompletions: instStudent.streak * 5,
+      totalWorkouts: instStudent.streak * 2,
+      totalForexLogs: instStudent.trades.length,
+      recentCompletions: [],
+    };
+  }
+
   const trackableTasks = tasks.filter((t) => t.isTrackable !== false);
   const trackableTaskCount = trackableTasks.length || 1;
   const trackableTaskIds = new Set(trackableTasks.map((t) => t.id));
@@ -2498,41 +3136,6 @@ export const DEFAULT_OWNER_PROFILE: OwnerProfile = {
   showDetailsParagraph: false,
 };
 
-const inMemorySettings: Map<string, string> = new Map();
-
-export async function getSetting(key: string): Promise<string | null> {
-  const db = await getDb();
-  if (db) {
-    try {
-      const rows = await db.select().from(settings).where(eq(settings.key, key)).limit(1);
-      if (rows.length) return rows[0].value;
-    } catch (err) {
-      console.warn("[getSetting error]:", err);
-    }
-  }
-  return inMemorySettings.get(key) || null;
-}
-
-export async function setSetting(key: string, value: string): Promise<boolean> {
-  const db = await getDb();
-  if (db) {
-    try {
-      const existing = await db.select().from(settings).where(eq(settings.key, key)).limit(1);
-      if (existing.length) {
-        await db.update(settings).set({ value, updatedAt: new Date() }).where(eq(settings.key, key));
-      } else {
-        await db.insert(settings).values({ key, value });
-      }
-      inMemorySettings.set(key, value);
-      return true;
-    } catch (err) {
-      console.warn("[setSetting error]:", err);
-    }
-  }
-  inMemorySettings.set(key, value);
-  return true;
-}
-
 export async function getOwnerProfile(): Promise<OwnerProfile> {
   try {
     const raw = await getSetting("owner_profile");
@@ -2674,30 +3277,95 @@ export async function syncUserTrades(userId: number, trades: any[]): Promise<boo
       inMemoryTraderTrades.push(item);
     }
   }
+
+  // Persist user trades to Supabase settings for cross-instance and cold-start durability
+  try {
+    await setSetting(`user_trades_${userId}`, JSON.stringify(trades));
+  } catch (err) {
+    console.warn("[syncUserTrades persistence error]:", err);
+  }
+
   return true;
 }
 
 export async function getUserTrades(userId: number): Promise<any[]> {
+  const memoryTrades = inMemoryTraderTrades.filter((t) => t.userId === userId);
+  if (memoryTrades.length > 0) return memoryTrades;
+
   const db = await getDb();
   if (db) {
     try {
-      return await db.select().from(traderTrades).where(eq(traderTrades.userId, userId)).orderBy(desc(traderTrades.createdAt));
+      const rows = await db.select().from(traderTrades).where(eq(traderTrades.userId, userId)).orderBy(desc(traderTrades.createdAt));
+      if (rows && rows.length > 0) return rows;
     } catch (err) {
       console.warn("[getUserTrades db error]:", err);
     }
   }
+
+  try {
+    const raw = await getSetting(`user_trades_${userId}`);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        for (const t of parsed) {
+          if (!inMemoryTraderTrades.some((item) => item.id === t.id)) {
+            inMemoryTraderTrades.push({
+              ...t,
+              userId,
+              entryPrice: Number(t.entryPrice) || 0,
+              stopLoss: Number(t.stopLoss) || 0,
+              takeProfit: Number(t.takeProfit) || 0,
+              exitPrice: Number(t.exitPrice) || 0,
+              pnl: Number(t.pnl) || 0,
+              followedRules: t.followedRules === "No" ? "No" : "Yes",
+            });
+          }
+        }
+        return inMemoryTraderTrades.filter((t) => t.userId === userId);
+      }
+    }
+  } catch {}
+
   return inMemoryTraderTrades.filter((t) => t.userId === userId);
 }
 
 export async function getAllTraderTrades(): Promise<any[]> {
+  initInstitutionalSeedData();
   const db = await getDb();
   if (db) {
     try {
-      return await db.select().from(traderTrades).orderBy(desc(traderTrades.createdAt));
+      const rows = await db.select().from(traderTrades).orderBy(desc(traderTrades.createdAt));
+      if (rows && rows.length > 0) return rows;
     } catch (err) {
       console.warn("[getAllTraderTrades db error]:", err);
     }
   }
+
+  for (const u of Array.from(inMemoryUsers.values())) {
+    try {
+      const raw = await getSetting(`user_trades_${u.id}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          for (const t of parsed) {
+            if (t && t.id && !inMemoryTraderTrades.some((item) => item.id === t.id)) {
+              inMemoryTraderTrades.push({
+                ...t,
+                userId: u.id,
+                entryPrice: Number(t.entryPrice) || 0,
+                stopLoss: Number(t.stopLoss) || 0,
+                takeProfit: Number(t.takeProfit) || 0,
+                exitPrice: Number(t.exitPrice) || 0,
+                pnl: Number(t.pnl) || 0,
+                followedRules: t.followedRules === "No" ? "No" : "Yes",
+              });
+            }
+          }
+        }
+      }
+    } catch {}
+  }
+
   return inMemoryTraderTrades;
 }
 
@@ -2903,7 +3571,7 @@ export async function getLeaderboardRankings(timeframe: "all" | "month" | "week"
     item.rank = idx + 1;
   });
 
-  return results;
+  return results.slice(0, 13);
 }
 
 export async function getPublicTraderStats(userId: number, timeframe: "all" | "month" | "week" = "all") {

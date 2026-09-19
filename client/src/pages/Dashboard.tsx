@@ -421,8 +421,9 @@ export default function Dashboard() {
         console.warn("[Supabase user name update notice]:", supaErr);
       }
 
-      // 5. Invalidate tRPC meQuery to sync session data
+      // 5. Invalidate tRPC meQuery and leaderboard rankings to sync session data
       await trpcUtils.auth.me.invalidate();
+      await trpcUtils.leaderboard.rankings.invalidate();
 
       // 6. Broadcast event for other components/listeners
       window.dispatchEvent(
@@ -500,8 +501,23 @@ export default function Dashboard() {
           console.warn("Local storage write failed", err);
         }
 
-        // Persist to backend database via trpc
-        updateProfileMutation.mutate({ avatar: dataUrl });
+        // Persist to backend database via trpc and invalidate queries
+        updateProfileMutation.mutate(
+          { avatar: dataUrl },
+          {
+            onSuccess: async () => {
+              await trpcUtils.auth.me.invalidate();
+              await trpcUtils.leaderboard.rankings.invalidate();
+            },
+          }
+        );
+
+        // Update Supabase auth user metadata
+        try {
+          supabase.auth.updateUser({
+            data: { avatar: dataUrl, avatar_url: dataUrl },
+          }).catch((err) => console.warn("[Supabase avatar update notice]:", err));
+        } catch {}
 
         // Dispatch window event for other listeners
         window.dispatchEvent(new CustomEvent("cycle_user_profile_updated", { detail: { userId: userKey, avatar: dataUrl } }));
@@ -592,7 +608,7 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
 
   if (loading || (isHashAuthenticating && !user)) {
     return (
-      <div className="grid min-h-screen place-items-center bg-[#030712] text-slate-300 dark:bg-[#030712] dark:text-slate-300">
+      <div className="grid min-h-screen place-items-center bg-[#070e1b] text-slate-300 dark:bg-[#070e1b] dark:text-slate-300">
         <div className="flex flex-col items-center gap-3">
           <BrandLogo size={64} className="animate-pulse" />
           <div className="text-sm font-bold tracking-widest uppercase text-slate-400">
@@ -605,7 +621,7 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
 
   if (!user) {
     return (
-      <div className="grid min-h-screen place-items-center bg-[#070f1e] p-6 text-white">
+      <div className="grid min-h-screen place-items-center bg-[#070e1b] p-6 text-white">
         <div className="max-w-md text-center">
           <BrandLogo size={96} className="mx-auto" />
           <h1 className="mt-6 text-3xl font-extrabold tracking-tight">Student Dashboard Access</h1>
@@ -675,7 +691,7 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
 
   return (
     <div
-      className={`min-h-screen bg-[#f8fafc] text-slate-900 dark:bg-transparent dark:text-slate-100 transition-colors duration-300 selection:bg-[#38bdf8] selection:text-slate-950 ${
+      className={`min-h-screen bg-[#f8fafc] text-slate-900 dark:bg-[#070e1b] dark:text-slate-100 transition-colors duration-300 selection:bg-[#38bdf8] selection:text-slate-950 ${
         isBn ? "font-bangla" : ""
       }`}
     >

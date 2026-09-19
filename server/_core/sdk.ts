@@ -1,4 +1,4 @@
-import { AXIOS_TIMEOUT_MS, COOKIE_NAME, ONE_YEAR_MS, decodeOAuthState } from "@shared/const";
+import { AXIOS_TIMEOUT_MS, COOKIE_NAME, ONE_YEAR_MS, decodeOAuthState, deriveNumericIdFromOpenId } from "@shared/const";
 import { ForbiddenError } from "@shared/_core/errors";
 import axios, { type AxiosInstance } from "axios";
 import { parse as parseCookieHeader } from "cookie";
@@ -285,37 +285,53 @@ class SDKServer {
         if (supaData?.user && !supaErr) {
           const supaUser = supaData.user;
           const openId = supaUser.id;
+          const avatar =
+            supaUser.user_metadata?.avatar_url ||
+            supaUser.user_metadata?.avatar ||
+            supaUser.user_metadata?.picture ||
+            null;
+          const name =
+            supaUser.user_metadata?.name ||
+            supaUser.user_metadata?.full_name ||
+            supaUser.email?.split("@")[0] ||
+            "Trader";
+
+          // Ensure user is upserted/registered in persistent store and DB
+          await db.upsertUser({
+            openId,
+            name,
+            email: supaUser.email || null,
+            phone: supaUser.user_metadata?.phone || supaUser.phone || null,
+            avatar,
+            loginMethod: "supabase",
+            role: "user",
+            language: supaUser.user_metadata?.language || "en",
+            lastSignedIn: new Date(),
+          });
+
           let user = await db.getUserByOpenId(openId);
           if (!user && supaUser.email) {
             user = await db.getUserByEmail(supaUser.email);
           }
-          if (!user) {
-            await db.upsertUser({
-              openId,
-              name: supaUser.user_metadata?.name || supaUser.user_metadata?.full_name || supaUser.email?.split("@")[0] || "Trader",
-              email: supaUser.email || null,
-              phone: supaUser.user_metadata?.phone || supaUser.phone || null,
-              loginMethod: "supabase",
-              role: "user",
-              language: supaUser.user_metadata?.language || "en",
-              lastSignedIn: new Date(),
-            });
-            user = await db.getUserByOpenId(openId);
-          }
-          return user || ({
-            id: 1,
+
+          const numericId = user?.id || deriveNumericIdFromOpenId(openId);
+
+          return {
+            ...(user || {}),
+            id: numericId,
             openId,
-            name: supaUser.user_metadata?.name || supaUser.user_metadata?.full_name || supaUser.email?.split("@")[0] || "Trader",
-            email: supaUser.email || null,
-            phone: supaUser.user_metadata?.phone || supaUser.phone || null,
+            name: user?.name || name,
+            email: user?.email || supaUser.email || null,
+            phone: user?.phone || supaUser.user_metadata?.phone || supaUser.phone || null,
+            avatar: user?.avatar || avatar,
             loginMethod: "supabase",
-            role: "user",
-            language: supaUser.user_metadata?.language || "en",
+            role: (user?.role || "user") as "user" | "admin" | "support",
+            language: (user?.language || supaUser.user_metadata?.language || "en") as "en" | "bn",
             emailVerified: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: user?.createdAt || new Date(),
+            updatedAt: user?.updatedAt || new Date(),
             lastSignedIn: new Date(),
-          } as AuthenticatedUser);
+          } as AuthenticatedUser;
         }
       } catch (err) {
         console.warn("[Auth] Supabase server validation note:", err);
@@ -333,24 +349,45 @@ class SDKServer {
         ) {
           const openId = decoded.sub;
           const email = typeof decoded.email === "string" ? decoded.email : null;
+          const userMeta = (decoded.user_metadata as any) || {};
+          const avatar = userMeta.avatar_url || userMeta.avatar || userMeta.picture || null;
+          const name = userMeta.name || userMeta.full_name || email?.split("@")[0] || "Trader";
+
+          await db.upsertUser({
+            openId,
+            name,
+            email,
+            phone: userMeta.phone || null,
+            avatar,
+            loginMethod: "supabase",
+            role: "user",
+            language: userMeta.language || "en",
+            lastSignedIn: new Date(),
+          });
+
           let user = await db.getUserByOpenId(openId);
           if (!user && email) {
             user = await db.getUserByEmail(email);
           }
-          return user || ({
-            id: 1,
+
+          const numericId = user?.id || deriveNumericIdFromOpenId(openId);
+
+          return {
+            ...(user || {}),
+            id: numericId,
             openId,
-            name: (decoded.user_metadata as any)?.name || (decoded.user_metadata as any)?.full_name || email?.split("@")[0] || "Trader",
-            email,
-            phone: (decoded.user_metadata as any)?.phone || null,
+            name: user?.name || name,
+            email: user?.email || email,
+            phone: user?.phone || userMeta.phone || null,
+            avatar: user?.avatar || avatar,
             loginMethod: "supabase",
-            role: "user",
-            language: (decoded.user_metadata as any)?.language || "en",
+            role: (user?.role || "user") as "user" | "admin" | "support",
+            language: (user?.language || userMeta.language || "en") as "en" | "bn",
             emailVerified: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: user?.createdAt || new Date(),
+            updatedAt: user?.updatedAt || new Date(),
             lastSignedIn: new Date(),
-          } as AuthenticatedUser);
+          } as AuthenticatedUser;
         }
       } catch (jwtErr) {
         // Not a valid Supabase JWT, proceed to local session verification

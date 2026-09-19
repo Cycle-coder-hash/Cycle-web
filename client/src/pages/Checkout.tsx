@@ -135,7 +135,7 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 dark:bg-transparent dark:text-slate-100">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 dark:bg-[#070e1b] dark:text-slate-100">
       {/* Header */}
       <header className="border-b border-slate-200 bg-white/90 px-4 py-3.5 backdrop-blur-md sticky top-0 z-30 dark:border-slate-800 dark:bg-[#070e1b]/90">
         <div className="mx-auto flex max-w-5xl items-center justify-between">

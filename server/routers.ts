@@ -30,6 +30,7 @@ import {
   listAuditLogs,
   getUserByEmail,
   getUserByOpenId,
+  updateUserProfile,
   createUser,
   createVerificationOtp,
   verifyOtp,
@@ -335,35 +336,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const db = await getDb();
-        if (db) {
-          try {
-            await db
-              .update(users)
-              .set({
-                ...(input.name ? { name: input.name } : {}),
-                ...(input.phone ? { phone: input.phone } : {}),
-                ...(input.language ? { language: input.language } : {}),
-                ...(input.avatar !== undefined ? { avatar: input.avatar } : {}),
-                updatedAt: new Date(),
-              })
-              .where(
-                ctx.user.openId
-                  ? or(eq(users.id, ctx.user.id), eq(users.openId, ctx.user.openId))
-                  : eq(users.id, ctx.user.id)
-              );
-          } catch (dbErr) {
-            console.warn("[Database updateProfile fallback to memory]:", dbErr);
-          }
-        }
-        // Always sync in-memory user as well for consistent responses
-        const u = ctx.user.openId ? await getUserByOpenId(ctx.user.openId) : null;
-        if (u) {
-          if (input.name) u.name = input.name;
-          if (input.phone) u.phone = input.phone;
-          if (input.language) u.language = input.language;
-          if (input.avatar !== undefined) (u as any).avatar = input.avatar;
-        }
+        await updateUserProfile(ctx.user.id, ctx.user.openId, input);
         return { success: true };
       }),
 
@@ -1335,17 +1308,19 @@ export const appRouter = router({
           // In-memory fallback
           const allO = await listAllOrders();
           const ord = allO.find((o: any) => o.id === input.orderId);
-          if (ord) {
-            ord.orderStatus = "approved";
-            ord.paymentStatus = "approved";
-            ord.approvedAt = new Date();
-            await grantManualEntitlement(
-              ord.customerId,
-              ord.bundleId ? `bundle:${ord.bundleId}` : `product:${ord.productId || 1}`,
-              ord.bundleId,
-              ord.productId
-            );
+          if (!ord) throw new TRPCError({ code: "NOT_FOUND", message: "Order not found" });
+          if (ord.orderStatus !== "pending") {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "Only pending orders can be approved" });
           }
+          ord.orderStatus = "approved";
+          ord.paymentStatus = "approved";
+          ord.approvedAt = new Date();
+          await grantManualEntitlement(
+            ord.customerId,
+            ord.bundleId ? `bundle:${ord.bundleId}` : `product:${ord.productId || 1}`,
+            ord.bundleId,
+            ord.productId
+          );
         }
         return { success: true };
       }),
@@ -1399,11 +1374,13 @@ export const appRouter = router({
         } else {
           const allO = await listAllOrders();
           const ord = allO.find((o: any) => o.id === input.orderId);
-          if (ord) {
-            ord.orderStatus = "rejected";
-            ord.paymentStatus = "rejected";
-            ord.rejectionReason = input.reason;
+          if (!ord) throw new TRPCError({ code: "NOT_FOUND", message: "Order not found" });
+          if (ord.orderStatus !== "pending") {
+            throw new TRPCError({ code: "BAD_REQUEST", message: "Only pending orders can be rejected" });
           }
+          ord.orderStatus = "rejected";
+          ord.paymentStatus = "rejected";
+          ord.rejectionReason = input.reason;
         }
         return { success: true };
       }),

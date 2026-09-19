@@ -640,7 +640,7 @@ export default function Admin() {
   const pendingOrdersList = (orders || []).filter((o: any) => o.orderStatus === "pending");
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 dark:bg-transparent dark:text-slate-100 transition-colors duration-300">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 dark:bg-[#070e1b] dark:text-slate-100 transition-colors duration-300">
       {/* Top Operations Header */}
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-md dark:border-slate-800 dark:bg-[#070e1b]/95">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3.5 lg:px-8">

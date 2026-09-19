@@ -76,46 +76,69 @@ export default function Leaderboard() {
     { enabled: !!selectedTrader?.userId }
   );
 
-  // Filtered rankings based on search input
-  const filteredRankings = useMemo(() => {
+  // Strictly restrict to the Global Top 13 ranked traders
+  const top13Global = useMemo(() => {
     if (!rankings) return [];
-    if (!searchQuery.trim()) return rankings;
+    return rankings.slice(0, 13);
+  }, [rankings]);
+
+  // Filtered rankings based on search input (strictly within Top 13)
+  const filteredRankings = useMemo(() => {
+    if (!searchQuery.trim()) return top13Global;
     const q = searchQuery.toLowerCase();
-    return rankings.filter(
+    return top13Global.filter(
       (r) =>
         r.name?.toLowerCase().includes(q) ||
         r.role?.toLowerCase().includes(q) ||
         r.bestPair?.toLowerCase().includes(q)
     );
-  }, [rankings, searchQuery]);
+  }, [top13Global, searchQuery]);
 
-  // Podium Traders (#1, #2, #3) and Rest of Leaderboard (#4 and below)
+  // Podium Traders (#1, #2, #3)
   const topThree = useMemo(() => {
     if (!filteredRankings.length) return [];
     return filteredRankings.slice(0, 3);
   }, [filteredRankings]);
 
+  // Ranks #4 through #13 (strictly the remaining 10 users below podium)
   const restRankings = useMemo(() => {
     if (filteredRankings.length <= 3) return [];
-    return filteredRankings.slice(3);
+    return filteredRankings.slice(3, 13);
   }, [filteredRankings]);
 
-  // Get podium arrangement: #2 (left), #1 (center), #3 (right)
+  // Get podium arrangement:
+  // Desktop: #2 Second Place (left), #1 First Place (center elevated), #3 Third Place (right)
+  // Mobile: #1 First Place (top), #2 Second Place (second), #3 Third Place (third)
   const podiumTraders = useMemo(() => {
     if (!topThree.length) return [];
     const first = topThree[0] || null;
     const second = topThree[1] || null;
     const third = topThree[2] || null;
     return [
-      { trader: second, position: 2, label: "#2 Silver" },
-      { trader: first, position: 1, label: "#1 Champion" },
-      { trader: third, position: 3, label: "#3 Bronze" },
+      {
+        trader: second,
+        position: 2,
+        label: isBn ? "#২ দ্বিতীয় স্থান 🥈" : "#2 SECOND PLACE 🥈",
+        orderClass: "order-2 md:order-1",
+      },
+      {
+        trader: first,
+        position: 1,
+        label: isBn ? "#১ প্রথম স্থান 🥇" : "#1 FIRST PLACE 🥇",
+        orderClass: "order-1 md:order-2",
+      },
+      {
+        trader: third,
+        position: 3,
+        label: isBn ? "#৩ তৃতীয় স্থান 🥉" : "#3 THIRD PLACE 🥉",
+        orderClass: "order-3 md:order-3",
+      },
     ].filter((item) => item.trader !== null);
-  }, [topThree]);
+  }, [topThree, isBn]);
 
   return (
     <div
-      className={`min-h-screen bg-[#f8fafc] text-[#09111f] dark:bg-transparent dark:text-slate-100 transition-colors duration-300 ${
+      className={`min-h-screen bg-[#f8fafc] text-[#09111f] dark:bg-[#070e1b] dark:text-slate-100 transition-colors duration-300 ${
         isBn ? "font-bangla" : ""
       }`}
     >
@@ -385,12 +408,12 @@ export default function Leaderboard() {
             <div className="flex items-center gap-2">
               <Sparkles size={18} className="text-amber-400" />
               <h2 className="text-sm font-extrabold uppercase tracking-widest text-slate-700 dark:text-slate-200">
-                {isBn ? "শীর্ষ ৩ জন প্রাতিষ্ঠানিক ট্রেডার" : "Top 3 Institutional Traders"}
+                {isBn ? "শীর্ষ ৩ পোডিয়াম (টপ ৩ ট্রেডার)" : "Top 3 Podium (Global Ranks #1–#3)"}
               </h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-4">
-              {podiumTraders.map(({ trader, position, label }) => {
+              {podiumTraders.map(({ trader, position, label, orderClass }) => {
                 if (!trader) return null;
                 const isChampion = position === 1;
                 const isSilver = position === 2;
@@ -419,7 +442,7 @@ export default function Leaderboard() {
                   <div
                     key={trader.userId}
                     onClick={() => setSelectedTrader(trader)}
-                    className={`relative cursor-pointer rounded-3xl border ${borderColor} ${glowBg} p-6 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl ${
+                    className={`relative cursor-pointer rounded-3xl border ${borderColor} ${glowBg} p-6 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl ${orderClass} ${
                       isChampion ? "md:-translate-y-3 z-20" : "z-10"
                     }`}
                   >
@@ -534,7 +557,7 @@ export default function Leaderboard() {
         )}
 
         {/* ======================================================================= */}
-        {/* RANKED TABLE (#4 AND BELOW) */}
+        {/* RANKED LIST (RANKS #4–#13) */}
         {/* ======================================================================= */}
         {!isLoading && !isError && restRankings.length > 0 && (
           <section className="space-y-4">
@@ -542,7 +565,7 @@ export default function Leaderboard() {
               <div className="flex items-center gap-2">
                 <Layers size={18} className="text-sky-400" />
                 <h2 className="text-sm font-extrabold uppercase tracking-widest text-slate-700 dark:text-slate-200">
-                  {isBn ? "পরবর্তী র‌্যাঙ্কিং ট্রেডারবৃন্দ (#4+)" : "Ranked Traders (#4 and Below)"}
+                  {isBn ? "র‌্যাঙ্কিং তালিকা (#৪–#১৩)" : "Global Rankings (#4–#13)"}
                 </h2>
               </div>
               <span className="text-xs font-bold text-slate-500">

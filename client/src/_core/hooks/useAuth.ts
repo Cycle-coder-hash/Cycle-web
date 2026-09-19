@@ -1,4 +1,4 @@
-import { startLogin } from "@/const";
+import { startLogin, deriveNumericIdFromOpenId } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { supabase } from "@/lib/supabase";
 import { TRPCClientError } from "@trpc/client";
@@ -111,7 +111,7 @@ export function useAuth(options?: UseAuthOptions) {
               const payload = JSON.parse(jsonPayload);
               if (payload && (payload.sub || payload.email)) {
                 resolvedUser = {
-                  id: 1,
+                  id: deriveNumericIdFromOpenId(payload.sub || payload.email),
                   openId: payload.sub,
                   name:
                     payload.user_metadata?.name ||

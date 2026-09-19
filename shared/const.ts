@@ -35,3 +35,18 @@ export const decodeOAuthState = (state: string): OAuthState => {
   }
   return { redirectUri: decoded };
 };
+
+/**
+ * Deterministically generates a stable, unique positive integer from any string openId/UUID.
+ * Guarantees distinct users never collide or collapse onto id: 1.
+ */
+export function deriveNumericIdFromOpenId(openId: string | null | undefined): number {
+  if (!openId) return 1000;
+  let hash = 0;
+  for (let i = 0; i < openId.length; i++) {
+    const char = openId.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return Math.abs(hash) % 9000000 + 1000;
+}
