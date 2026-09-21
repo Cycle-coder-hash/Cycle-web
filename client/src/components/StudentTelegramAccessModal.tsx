@@ -28,18 +28,27 @@ export function StudentTelegramAccessModal() {
     staleTime: 1000 * 30,
   });
 
-  // Query owner profile for official telegram URL
+  // Query dynamic payment settings for admin-configured VIP student Telegram link
+  const { data: paymentSettings } = trpc.public.paymentSettings.useQuery(undefined, {
+    staleTime: 1000 * 60, // 1 min cache
+  });
+
+  // Query owner profile as fallback
   const { data: ownerProfile } = trpc.public.ownerProfile.useQuery(undefined, {
     staleTime: 1000 * 60 * 5, // 5 min cache
   });
 
   const telegramUrl = useMemo(() => {
+    const adminLink = (paymentSettings as any)?.studentTelegramUrl?.trim() || (paymentSettings as any)?.gateways?.studentTelegramUrl?.trim();
+    if (adminLink && (adminLink.startsWith("http://") || adminLink.startsWith("https://"))) {
+      return adminLink;
+    }
     const raw = ownerProfile?.telegram?.trim();
     if (raw && (raw.startsWith("http://") || raw.startsWith("https://"))) {
       return raw;
     }
     return "https://t.me/cycleofchart";
-  }, [ownerProfile]);
+  }, [paymentSettings, ownerProfile]);
 
   // Determine if student has an actual verified paid purchase (approved by admin)
   const approvedPaidOrder = useMemo(() => {

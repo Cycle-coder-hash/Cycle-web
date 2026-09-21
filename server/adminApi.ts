@@ -24,6 +24,8 @@ import {
   deleteFreeEbook,
   getOwnerProfile,
   updateOwnerProfile,
+  getPaymentGateways,
+  updatePaymentGateways,
 } from "./db";
 import { eq } from "drizzle-orm";
 import { sendAccessEmail } from "./email";
@@ -276,6 +278,85 @@ adminRouter.post("/owner-profile", async (req, res) => {
   try {
     const profile = await updateOwnerProfile(req.body);
     return res.json({ success: true, profile });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/admin/payment-settings
+adminRouter.get("/payment-settings", async (_req, res) => {
+  try {
+    const gateways = await getPaymentGateways();
+    return res.json({
+      success: true,
+      gateways: {
+        bkash: {
+          enabled: gateways.bkash.isEnabled,
+          number: gateways.bkash.number,
+          type: gateways.bkash.accountType.toLowerCase(),
+          instructions: gateways.bkash.instructions,
+        },
+        nagad: {
+          enabled: gateways.nagad.isEnabled,
+          number: gateways.nagad.number,
+          type: gateways.nagad.accountType.toLowerCase(),
+          instructions: gateways.nagad.instructions,
+        },
+        rocket: {
+          enabled: gateways.rocket.isEnabled,
+          number: gateways.rocket.number,
+          type: gateways.rocket.accountType.toLowerCase(),
+          instructions: gateways.rocket.instructions,
+        },
+      },
+      announcement: gateways.announcement,
+      announcementActive: gateways.isAnnouncementEnabled,
+      studentTelegramUrl: gateways.studentTelegramUrl || "https://t.me/cycleofchart",
+      studentTelegramDescription: gateways.studentTelegramDescription || "Official Cycle of Chart VIP Student Telegram Community",
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/admin/payment-settings
+adminRouter.post("/payment-settings", async (req, res) => {
+  try {
+    const b = req.body || {};
+    const formatAccountType = (t?: string): "Personal" | "Merchant" | "Agent" => {
+      if (!t) return "Personal";
+      const lower = t.toLowerCase();
+      if (lower === "merchant") return "Merchant";
+      if (lower === "agent") return "Agent";
+      return "Personal";
+    };
+
+    const updated = await updatePaymentGateways({
+      bkash: b.bkash ? {
+        number: b.bkash.number || "",
+        isEnabled: b.bkash.enabled ?? b.bkash.isEnabled ?? true,
+        accountType: formatAccountType(b.bkash.type || b.bkash.accountType),
+        instructions: b.bkash.instructions || "",
+      } : undefined,
+      nagad: b.nagad ? {
+        number: b.nagad.number || "",
+        isEnabled: b.nagad.enabled ?? b.nagad.isEnabled ?? true,
+        accountType: formatAccountType(b.nagad.type || b.nagad.accountType),
+        instructions: b.nagad.instructions || "",
+      } : undefined,
+      rocket: b.rocket ? {
+        number: b.rocket.number || "",
+        isEnabled: b.rocket.enabled ?? b.rocket.isEnabled ?? true,
+        accountType: formatAccountType(b.rocket.type || b.rocket.accountType),
+        instructions: b.rocket.instructions || "",
+      } : undefined,
+      announcement: b.announcement,
+      isAnnouncementEnabled: b.announcementActive ?? b.isAnnouncementEnabled,
+      studentTelegramUrl: b.studentTelegramUrl,
+      studentTelegramDescription: b.studentTelegramDescription,
+    });
+
+    return res.json({ success: true, gateways: updated });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }

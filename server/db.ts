@@ -531,6 +531,8 @@ export interface PaymentGatewaysConfig {
   rocket: PaymentGatewayDetail;
   announcement?: string;
   isAnnouncementEnabled?: boolean;
+  studentTelegramUrl?: string;
+  studentTelegramDescription?: string;
 }
 
 export const DEFAULT_PAYMENT_CONFIG: PaymentGatewaysConfig = {
@@ -554,6 +556,8 @@ export const DEFAULT_PAYMENT_CONFIG: PaymentGatewaysConfig = {
   },
   announcement: "Official Payment Numbers Verified. Instant Dashboard Access upon Payment Verification.",
   isAnnouncementEnabled: false,
+  studentTelegramUrl: "https://t.me/cycleofchart",
+  studentTelegramDescription: "Official Cycle of Chart VIP Student Telegram Community",
 };
 
 export async function getPaymentGateways(): Promise<PaymentGatewaysConfig> {
@@ -567,6 +571,8 @@ export async function getPaymentGateways(): Promise<PaymentGatewaysConfig> {
         rocket: { ...DEFAULT_PAYMENT_CONFIG.rocket, ...(parsed.rocket || {}) },
         announcement: parsed.announcement !== undefined ? parsed.announcement : DEFAULT_PAYMENT_CONFIG.announcement,
         isAnnouncementEnabled: parsed.isAnnouncementEnabled !== undefined ? parsed.isAnnouncementEnabled : DEFAULT_PAYMENT_CONFIG.isAnnouncementEnabled,
+        studentTelegramUrl: parsed.studentTelegramUrl || (await getSetting("student_telegram_url")) || DEFAULT_PAYMENT_CONFIG.studentTelegramUrl,
+        studentTelegramDescription: parsed.studentTelegramDescription || DEFAULT_PAYMENT_CONFIG.studentTelegramDescription,
       };
     }
     // Also check legacy individual settings if present
@@ -574,13 +580,16 @@ export async function getPaymentGateways(): Promise<PaymentGatewaysConfig> {
     const legacyNagad = await getSetting("nagad");
     const legacyRocket = await getSetting("rocket");
     const legacyAnnouncement = await getSetting("announcement");
-    if (legacyBkash || legacyNagad || legacyRocket) {
+    const legacyTelegram = await getSetting("student_telegram_url");
+    if (legacyBkash || legacyNagad || legacyRocket || legacyTelegram) {
       return {
         bkash: { ...DEFAULT_PAYMENT_CONFIG.bkash, number: legacyBkash || DEFAULT_PAYMENT_CONFIG.bkash.number },
         nagad: { ...DEFAULT_PAYMENT_CONFIG.nagad, number: legacyNagad || DEFAULT_PAYMENT_CONFIG.nagad.number },
         rocket: { ...DEFAULT_PAYMENT_CONFIG.rocket, number: legacyRocket || DEFAULT_PAYMENT_CONFIG.rocket.number },
         announcement: legacyAnnouncement || DEFAULT_PAYMENT_CONFIG.announcement,
         isAnnouncementEnabled: false,
+        studentTelegramUrl: legacyTelegram || DEFAULT_PAYMENT_CONFIG.studentTelegramUrl,
+        studentTelegramDescription: DEFAULT_PAYMENT_CONFIG.studentTelegramDescription,
       };
     }
   } catch (err) {
@@ -597,6 +606,8 @@ export async function updatePaymentGateways(config: Partial<PaymentGatewaysConfi
     bkash: { ...current.bkash, ...(config.bkash || {}) },
     nagad: { ...current.nagad, ...(config.nagad || {}) },
     rocket: { ...current.rocket, ...(config.rocket || {}) },
+    studentTelegramUrl: config.studentTelegramUrl !== undefined ? config.studentTelegramUrl : current.studentTelegramUrl,
+    studentTelegramDescription: config.studentTelegramDescription !== undefined ? config.studentTelegramDescription : current.studentTelegramDescription,
   };
   await setSetting("payment_gateways_config", JSON.stringify(updated));
   // Sync legacy individual keys for full backward compatibility
@@ -605,6 +616,9 @@ export async function updatePaymentGateways(config: Partial<PaymentGatewaysConfi
   await setSetting("rocket", updated.rocket.number);
   if (updated.announcement !== undefined) {
     await setSetting("announcement", updated.announcement);
+  }
+  if (updated.studentTelegramUrl !== undefined) {
+    await setSetting("student_telegram_url", updated.studentTelegramUrl);
   }
   return updated;
 }

@@ -399,6 +399,8 @@ export const appRouter = router({
         rocket: gateways.rocket.number,
         announcement: gateways.announcement,
         isAnnouncementEnabled: gateways.isAnnouncementEnabled,
+        studentTelegramUrl: gateways.studentTelegramUrl || "https://t.me/cycleofchart",
+        studentTelegramDescription: gateways.studentTelegramDescription || "Official Cycle of Chart VIP Student Telegram Community",
         gateways,
       };
     }),
@@ -1367,6 +1369,8 @@ export const appRouter = router({
             .optional(),
           announcement: z.string().optional(),
           isAnnouncementEnabled: z.boolean().optional(),
+          studentTelegramUrl: z.string().optional(),
+          studentTelegramDescription: z.string().optional(),
         })
       )
       .mutation(async ({ input }) => {

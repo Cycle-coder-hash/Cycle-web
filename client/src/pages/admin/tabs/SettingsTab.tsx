@@ -14,6 +14,7 @@ import {
   CreditCard,
   Eye,
   EyeOff,
+  Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -32,6 +33,8 @@ export interface PaymentSettingsFormState {
   rocket: GatewayConfigState;
   announcement: string;
   isAnnouncementEnabled: boolean;
+  studentTelegramUrl?: string;
+  studentTelegramDescription?: string;
 }
 
 interface SettingsTabProps {
@@ -359,6 +362,105 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               <p className="mt-1 text-[11px] text-slate-400">
                 When enabled, appears as an ambient highlight banner above the package selection on the checkout page.
               </p>
+            </div>
+          </div>
+
+          {/* VIP Student Private Telegram Community Link Card */}
+          <div className="rounded-3xl border border-sky-500/30 bg-gradient-to-br from-sky-950/40 via-[#070e1b] to-blue-950/20 p-5 sm:p-6 shadow-md dark:border-sky-500/30 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2.5">
+                <div className="h-10 w-10 rounded-2xl bg-gradient-to-tr from-sky-500 to-blue-600 flex items-center justify-center text-white shadow-md shadow-sky-500/20 shrink-0">
+                  <Send size={18} className="translate-x-0.5 -translate-y-0.5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                      VIP Student Private Telegram Link
+                    </h3>
+                    <span className="rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider">
+                      Paid Students Only
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    শুধুমাত্র ভেরিফাইড পেইড স্টুডেন্টদের ড্যাশবোর্ডে এবং পপআপে এই প্রাইভেট টেলিগ্রাম লিংক শো করবে।
+                  </p>
+                </div>
+              </div>
+
+              {paymentConfig.studentTelegramUrl && (
+                <a
+                  href={paymentConfig.studentTelegramUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1.5 rounded-xl border border-sky-500/30 bg-sky-500/10 px-3 py-1.5 text-xs font-bold text-sky-400 hover:bg-sky-500/20 transition shrink-0"
+                >
+                  <ExternalLink size={12} />
+                  <span>Test Link</span>
+                </a>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Private Telegram Channel / Group Invite Link *
+                </label>
+                <div className="relative">
+                  <input
+                    type="url"
+                    value={paymentConfig.studentTelegramUrl || ""}
+                    placeholder="https://t.me/+joinchat_... or https://t.me/cycleofchart"
+                    onChange={(e) =>
+                      setPaymentConfig((prev) => ({ ...prev, studentTelegramUrl: e.target.value }))
+                    }
+                    className="w-full rounded-xl border border-sky-500/30 bg-slate-50 p-3 font-mono text-xs font-bold text-slate-900 outline-none focus:border-sky-500 focus:bg-white dark:border-sky-500/40 dark:bg-slate-950 dark:text-white"
+                  />
+                  {paymentConfig.studentTelegramUrl && (
+                    <button
+                      type="button"
+                      onClick={() => copyNumber("student_telegram", paymentConfig.studentTelegramUrl || "")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-lg bg-slate-200 px-2.5 py-1 text-[10px] font-bold text-slate-700 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:hover:text-white transition"
+                    >
+                      {copiedKey === "student_telegram" ? (
+                        <span className="flex items-center gap-1 text-emerald-500">
+                          <Check size={11} /> Copied
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1">
+                          <Copy size={11} /> Copy
+                        </span>
+                      )}
+                    </button>
+                  )}
+                </div>
+                <p className="mt-1 text-[11px] text-slate-400">
+                  পেইড স্টুডেন্টদের কোর্স এপ্রুভ হওয়ার পর পপআপে "Join VIP Telegram" এ ক্লিক করলে তারা এই লিংকে যুক্ত হতে পারবে।
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                  Welcome Note / Community Description
+                </label>
+                <input
+                  type="text"
+                  value={paymentConfig.studentTelegramDescription || ""}
+                  placeholder="Official Cycle of Chart VIP Student Telegram Community"
+                  onChange={(e) =>
+                    setPaymentConfig((prev) => ({ ...prev, studentTelegramDescription: e.target.value }))
+                  }
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                />
+              </div>
+
+              {/* Security Shield Note */}
+              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-3 flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300">
+                <ShieldCheck size={16} className="text-emerald-500 shrink-0 mt-0.5" />
+                <div className="leading-relaxed text-[11px]">
+                  <span className="font-bold text-emerald-500">Strict Student Protection: </span>
+                  ফ্রি ইবুক ডাউনলোডকারী বা পেন্ডিং অ্যাকাউন্ট কখনোই এই লিংক দেখতে পাবে না। শুধুমাত্র এডমিন যখন অর্ডার ভেরিফাই করে এপ্রুভ করবেন, তখনই স্টুডেন্ট এই লিংকে জয়েন করতে পারবে।
+                </div>
+              </div>
             </div>
           </div>
 

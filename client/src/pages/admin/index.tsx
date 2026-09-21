@@ -72,6 +72,8 @@ export default function AdminPage() {
     },
     announcement: "Special Eid & Student Discount Active on All Institutional Packages!",
     isAnnouncementEnabled: false,
+    studentTelegramUrl: "https://t.me/cycleofchart",
+    studentTelegramDescription: "Official Cycle of Chart VIP Student Telegram Community",
   });
   const [paymentConfigInitialized, setPaymentConfigInitialized] = useState(false);
 
@@ -218,6 +220,8 @@ export default function AdminPage() {
         },
         announcement: paymentSettingsData.announcement || "",
         isAnnouncementEnabled: !!paymentSettingsData.isAnnouncementEnabled,
+        studentTelegramUrl: (paymentSettingsData as any)?.studentTelegramUrl || "https://t.me/cycleofchart",
+        studentTelegramDescription: (paymentSettingsData as any)?.studentTelegramDescription || "Official Cycle of Chart VIP Student Telegram Community",
       });
       setPaymentConfigInitialized(true);
     }
@@ -640,6 +644,8 @@ export default function AdminPage() {
         },
         announcement: paymentSettingsData.announcement || "",
         isAnnouncementEnabled: !!paymentSettingsData.isAnnouncementEnabled,
+        studentTelegramUrl: (paymentSettingsData as any)?.studentTelegramUrl || "https://t.me/cycleofchart",
+        studentTelegramDescription: (paymentSettingsData as any)?.studentTelegramDescription || "Official Cycle of Chart VIP Student Telegram Community",
       });
     }
   };
