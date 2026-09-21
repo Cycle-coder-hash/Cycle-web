@@ -12,6 +12,7 @@ import Admin from "./pages/admin";
 import Leaderboard from "./pages/Leaderboard";
 import NotFound from "./pages/NotFound";
 import { FloatingSupportButton } from "./components/FloatingSupportButton";
+import { StudentTelegramAccessModal } from "./components/StudentTelegramAccessModal";
 import { CursorLightTrail } from "./components/CursorLightTrail";
 import { GlobalPreloader } from "./components/GlobalPreloader";
 import { WebsiteBackground } from "./components/WebsiteBackground";
@@ -44,6 +45,7 @@ export default function App() {
             <Toaster position="top-right" richColors />
             <Router />
             <FloatingSupportButton />
+            <StudentTelegramAccessModal />
             <CursorLightTrail />
           </div>
         </TooltipProvider>

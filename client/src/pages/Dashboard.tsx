@@ -42,6 +42,7 @@ import {
   Trash2,
   TrendingUp,
   Trophy,
+  Send,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -281,6 +282,23 @@ export default function Dashboard() {
   const { data: tickets, refetch: refetchTickets } = trpc.customer.tickets.useQuery(undefined, { enabled: !!user });
   const { data: notifications } = trpc.customer.notifications.useQuery(undefined, { enabled: !!user });
   const { data: discipline, refetch: refetchDiscipline } = trpc.customer.discipline.useQuery({ date: today }, { enabled: !!user });
+  const { data: ownerProfile } = trpc.public.ownerProfile.useQuery(undefined, { staleTime: 1000 * 60 * 5 });
+
+  const telegramUrl = useMemo(() => {
+    const raw = ownerProfile?.telegram?.trim();
+    if (raw && (raw.startsWith("http://") || raw.startsWith("https://"))) {
+      return raw;
+    }
+    return "https://t.me/cycleofchart";
+  }, [ownerProfile]);
+
+  const hasApprovedAccess = useMemo(() => {
+    const hasApprovedOrder = (orders || []).some(
+      (o: any) => o.paymentStatus === "approved" || o.orderStatus === "approved"
+    );
+    const hasEntitlement = (entitlements || []).length > 0;
+    return hasApprovedOrder || hasEntitlement;
+  }, [orders, entitlements]);
 
   // Mutations
   const toggleProgressMutation = trpc.customer.toggleProgress.useMutation({
@@ -975,6 +993,18 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            {hasApprovedAccess && (
+              <Button
+                onClick={() => window.dispatchEvent(new CustomEvent("open-telegram-modal"))}
+                size="sm"
+                className="gap-1.5 text-xs font-black bg-gradient-to-r from-sky-500 to-blue-600 text-white hover:from-sky-400 hover:to-blue-500 shadow-md shadow-sky-500/20"
+                title={isBn ? "ভিআইপি টেলিগ্রাম গ্রুপ" : "VIP Telegram Community"}
+              >
+                <Send size={13} className="translate-x-0.5 -translate-y-0.5" />
+                <span className="hidden sm:inline">{isBn ? "ভিআইপি টেলিগ্রাম" : "VIP Telegram"}</span>
+              </Button>
+            )}
+
             <Link href="/leaderboard">
               <Button size="sm" className="gap-1.5 text-xs font-extrabold bg-amber-500/15 text-amber-600 hover:bg-amber-500/25 dark:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/30 border border-amber-500/30">
                 <Trophy size={13} className="text-amber-500 shrink-0" />
@@ -1014,6 +1044,15 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
                 {isBn ? item.labelBn : item.labelEn}
               </button>
             ))}
+            {hasApprovedAccess && (
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("open-telegram-modal"))}
+                className="flex shrink-0 items-center gap-1.5 rounded-xl border border-sky-500/30 bg-sky-500/10 px-3 py-1.5 text-xs font-extrabold text-sky-600 dark:text-sky-400"
+              >
+                <Send size={13} className="text-sky-500" />
+                <span>{isBn ? "টেলিগ্রাম" : "Telegram"}</span>
+              </button>
+            )}
             <Link
               href="/leaderboard"
               className="flex shrink-0 items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-extrabold text-amber-600 dark:text-amber-400"
@@ -1031,6 +1070,56 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
           {/* ========================================================================= */}
           {tab === "overview" && (
             <div className="space-y-8 animate-in fade-in duration-300">
+              {/* Verified Student VIP Telegram Banner */}
+              {hasApprovedAccess && (
+                <div className="relative overflow-hidden rounded-3xl border border-sky-500/40 bg-gradient-to-r from-[#081f3d] via-[#09172c] to-[#071324] p-5 sm:p-7 shadow-xl shadow-sky-950/40 backdrop-blur-sm">
+                  <div className="absolute top-0 right-0 w-80 h-40 bg-sky-500/10 blur-3xl pointer-events-none" />
+                  <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+                    <div className="flex items-start gap-4">
+                      <div className="flex size-12 sm:size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/30">
+                        <Send size={24} className="translate-x-0.5 -translate-y-0.5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 border border-emerald-500/30">
+                            ✓ {isBn ? "এনরোলমেন্ট অ্যাপ্রুভড" : "Enrollment Approved"}
+                          </span>
+                          <span className="text-[11px] font-bold text-sky-400">
+                            {isBn ? "প্রাতিষ্ঠানিক ভিআইপি এক্সেস" : "VIP Student Community"}
+                          </span>
+                        </div>
+                        <h3 className="text-base sm:text-lg font-black text-white tracking-tight">
+                          {isBn
+                            ? "লাইভ ক্লাস লিংক ও রেকর্ডেড ড্রাইভের জন্য অফিশিয়াল টেলিগ্রাম গ্রুপে যুক্ত থাকুন"
+                            : "Access Live Classes, Video Lectures & Daily Trade Breakdown on Telegram"}
+                        </h3>
+                        <p className="mt-1 text-xs text-slate-300 max-w-2xl leading-relaxed">
+                          {isBn
+                            ? "আপনার পেমেন্ট ভেরিফাই হয়েছে। সমস্ত লাইভ জুম সেশনের লিংক, শিডিউল ও প্রাইভেট সাপোর্ট টেলিগ্রাম চ্যানেলে প্রদান করা হয়।"
+                            : "Your payment verification has been cleared. All live class streaming links, PDF updates, and private mentor Q&A take place inside our official Telegram room."}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2.5 shrink-0 w-full sm:w-auto">
+                      <Button
+                        onClick={() => window.open(telegramUrl, "_blank")}
+                        className="flex-1 sm:flex-none h-11 px-5 rounded-xl bg-gradient-to-r from-sky-400 to-blue-500 hover:from-sky-300 hover:to-blue-400 text-slate-950 font-black text-xs shadow-lg shadow-sky-500/20 gap-1.5"
+                      >
+                        <Send size={15} />
+                        <span>{isBn ? "টেলিগ্রামে প্রবেশ করুন" : "Open VIP Telegram"}</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => window.dispatchEvent(new CustomEvent("open-telegram-modal"))}
+                        className="h-11 px-4 rounded-xl border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-200 font-bold text-xs"
+                      >
+                        <span>{isBn ? "নির্দেশিকা" : "Instructions"}</span>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Top Banner KPI Grid */}
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {/* 1. Total Documented Trades */}
