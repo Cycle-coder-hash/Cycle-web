@@ -1725,6 +1725,60 @@ export async function rejectOrder(orderId: number, reason: string, rejectedBy: n
   throw new Error("Order not found");
 }
 
+export async function deleteOrder(orderId: number, deletedBy: number = 1) {
+  const db = await getDb();
+  if (db) {
+    try {
+      try {
+        await db.delete(entitlements).where(eq(entitlements.orderId, orderId));
+      } catch {}
+      await db.delete(orders).where(eq(orders.id, orderId));
+    } catch (err) {
+      console.warn("[deleteOrder Drizzle error]:", err);
+    }
+  }
+
+  // Supabase live database deletion
+  try {
+    const { supabaseServer } = await import("./supabase");
+    try {
+      await supabaseServer.from("entitlements").delete().eq("orderId", orderId);
+    } catch {}
+
+    const { data: orderRows } = await supabaseServer.from("orders").select("*").eq("id", orderId).limit(1);
+    const targetOrder = orderRows?.[0] || inMemoryOrders.find((o) => o.id === orderId);
+
+    const { error: delErr } = await supabaseServer.from("orders").delete().eq("id", orderId);
+    if (delErr) {
+      console.warn("[deleteOrder Supabase delete error]:", delErr);
+    }
+
+    if (targetOrder) {
+      await addAuditLog({
+        actorId: deletedBy,
+        action: "order.deleted",
+        entity: "order",
+        entityId: orderId,
+        metadata: { customerId: targetOrder.customerId, amount: targetOrder.amount, transactionId: targetOrder.transactionId },
+      });
+    }
+  } catch (err) {
+    console.warn("[deleteOrder Supabase error]:", err);
+  }
+
+  // Remove from in-memory fallback array
+  const memIdx = inMemoryOrders.findIndex((o) => o.id === orderId);
+  if (memIdx !== -1) {
+    inMemoryOrders.splice(memIdx, 1);
+  }
+  const entIdx = inMemoryEntitlements.findIndex((e) => e.orderId === orderId);
+  if (entIdx !== -1) {
+    inMemoryEntitlements.splice(entIdx, 1);
+  }
+
+  return { success: true };
+}
+
 export async function listEntitlements(
   userIdentifier: number | { id?: number; openId?: string; email?: string }
 ) {

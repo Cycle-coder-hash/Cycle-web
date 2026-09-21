@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   X,
   FileCheck2,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -19,6 +20,7 @@ interface OrdersTabProps {
   setSearchQuery: (query: string) => void;
   onApproveOrder: (orderId: number) => void;
   onOpenRejectModal: (order: any) => void;
+  onDeleteOrder?: (orderId: number) => void;
   isApproving?: boolean;
   isRejecting?: boolean;
   copiedTrxId: string | null;
@@ -35,6 +37,7 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
   setSearchQuery,
   onApproveOrder,
   onOpenRejectModal,
+  onDeleteOrder,
   isApproving,
   copiedTrxId,
   copyToClipboard,
@@ -213,6 +216,19 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
                       <div className="text-xs text-rose-600 dark:text-rose-400">
                         <span className="font-bold">Reason:</span> {o.rejectionReason || "Proof unverified"}
                       </div>
+                    )}
+
+                    {onDeleteOrder && (
+                      <Button
+                        onClick={() => onDeleteOrder(o.id)}
+                        size="sm"
+                        variant="outline"
+                        className="border-rose-300 text-rose-600 hover:bg-rose-50 dark:border-rose-900/50 dark:hover:bg-rose-950/30"
+                        title="Delete order permanently from database"
+                      >
+                        <Trash2 size={15} className="mr-1" />
+                        <span>Delete</span>
+                      </Button>
                     )}
                   </div>
                 </div>

@@ -4,6 +4,7 @@ import {
   listAllOrders,
   approveOrder,
   rejectOrder,
+  deleteOrder,
   listAllUsers,
   listTickets,
   listAuditLogs,
@@ -159,6 +160,19 @@ adminRouter.post("/reject-order", async (req, res) => {
     if (!orderId) return res.status(400).json({ success: false, error: "orderId is required" });
 
     await rejectOrder(Number(orderId), reason || "Payment verification failed", 1);
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/admin/delete-order
+adminRouter.post("/delete-order", async (req, res) => {
+  try {
+    const { orderId } = req.body;
+    if (!orderId) return res.status(400).json({ success: false, error: "orderId is required" });
+
+    await deleteOrder(Number(orderId), 1);
     return res.json({ success: true });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });

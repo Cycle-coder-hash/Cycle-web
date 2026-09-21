@@ -14,6 +14,7 @@ import {
   createOrder,
   approveOrder,
   rejectOrder,
+  deleteOrder,
   listEntitlements,
   listNotifications,
   listJournal,
@@ -1215,6 +1216,13 @@ export const appRouter = router({
       .input(z.object({ orderId: z.number(), reason: z.string().min(3) }))
       .mutation(async ({ ctx, input }) => {
         await rejectOrder(input.orderId, input.reason, ctx.user.id);
+        return { success: true };
+      }),
+
+    deleteOrder: adminProcedure
+      .input(z.object({ orderId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await deleteOrder(input.orderId, ctx.user.id);
         return { success: true };
       }),
 

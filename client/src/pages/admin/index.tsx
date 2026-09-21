@@ -266,6 +266,19 @@ export default function AdminPage() {
     },
   });
 
+  const deleteMutation = trpc.admin.deleteOrder.useMutation({
+    onSuccess: () => {
+      refetchOrders();
+      refetchStats();
+      refetchAudit();
+      setActionSuccess("Order permanently deleted from database.");
+      setTimeout(() => setActionSuccess(null), 4000);
+    },
+    onError: (err: any) => {
+      alert(err.message || "Failed to delete order");
+    },
+  });
+
   const updateRoleMutation = trpc.admin.updateRole.useMutation({
     onSuccess: () => {
       refetchStudents();
@@ -680,6 +693,11 @@ export default function AdminPage() {
             setSearchQuery={setSearchQuery}
             onApproveOrder={(orderId) => approveMutation.mutate({ orderId })}
             onOpenRejectModal={(order) => setRejectModalOrder(order)}
+            onDeleteOrder={(orderId) => {
+              if (window.confirm(`Are you sure you want to permanently delete Order #${orderId} from the database?`)) {
+                deleteMutation.mutate({ orderId });
+              }
+            }}
             isApproving={approveMutation.isPending}
             copiedTrxId={copiedTrxId}
             copyToClipboard={copyToClipboard}
