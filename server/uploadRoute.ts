@@ -105,7 +105,7 @@ export function registerUploadRoutes(app: Express) {
     }
   });
 
-  // 3. Upload document/PDF to Free CDN (Catbox, up to 200MB, permanent direct download link)
+  // 3. Upload document/PDF to Free Object Storage (Supabase Storage 'ebooks' or Free Catbox CDN fallback)
   app.post("/api/upload/file", async (req: Request, res: Response) => {
     try {
       const { base64, filename = "document.pdf", contentType = "application/pdf" } = req.body;
@@ -115,13 +115,45 @@ export function registerUploadRoutes(app: Express) {
 
       const cleanBase64 = base64.replace(/^data:[a-zA-Z0-9/+-]+;base64,/, "");
       const buffer = Buffer.from(cleanBase64, "base64");
+      const safeFilename = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const uniqueName = `${Date.now()}_${safeFilename}`;
 
+      // 1. Try Supabase Storage 'ebooks' bucket first (100% free cloud object storage)
+      try {
+        const { supabaseServer } = await import("./supabase");
+        const { data: supaData, error: supaErr } = await supabaseServer.storage
+          .from("ebooks")
+          .upload(uniqueName, buffer, {
+            contentType,
+            upsert: true,
+          });
+
+        if (!supaErr && supaData?.path) {
+          const { data: pubData } = supabaseServer.storage
+            .from("ebooks")
+            .getPublicUrl(uniqueName);
+          if (pubData?.publicUrl) {
+            return res.json({
+              success: true,
+              url: pubData.publicUrl,
+              provider: "supabase",
+            });
+          }
+        }
+      } catch (supaEx) {
+        console.warn("[Supabase Storage upload notice, falling back to Free Cloud CDN]:", supaEx);
+      }
+
+      // 2. Free Cloud CDN Fallback (Catbox, up to 200MB, permanent direct download link)
       const fd = new FormData();
       fd.append("reqtype", "fileupload");
-      fd.append("fileToUpload", new Blob([buffer], { type: contentType }), filename);
+      fd.append("fileToUpload", new Blob([buffer], { type: contentType }), safeFilename);
 
       const catboxRes = await fetch("https://catbox.moe/user/api.php", {
         method: "POST",
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) CycleOfChart/1.0",
+        },
         body: fd,
       });
 
