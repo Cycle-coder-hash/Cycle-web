@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>Cycle of Chart — Trading Reality</title>
+    <meta name="description" content="Structured institutional trading education. Master market structure, candlesticks, and real price action before you trade." />
+    <link rel="icon" type="image/jpeg" href="/logo.jpg" />
+    <link rel="apple-touch-icon" href="/logo.jpg" />
+    <link rel="preload" as="image" href="/logo.jpg" fetchpriority="high" />
+    <!-- Google Fonts: Inter (English) & Hind Siliguri (Bengali) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      /* Full-Screen Loading Overlay: Cycle of Chart Brand Lockup */
+      #cycle-preloader {
+        position: fixed;
+        inset: 0;
+        z-index: 99999999;
+        background-color: #030712;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
+        pointer-events: auto;
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 0.48s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.48s;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      #cycle-preloader.cycle-preloader-fade-out {
+        opacity: 0;
+        pointer-events: none;
+        visibility: hidden;
+      }
+
+      /* Subtle Ambient Background Aura */
+      .cycle-preloader-aura {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: radial-gradient(
+          circle 380px at 50% 50%,
+          rgba(14, 165, 233, 0.12) 0%,
+          rgba(6, 182, 212, 0.04) 45%,
+          rgba(3, 7, 18, 0) 75%
+        );
+        animation: cycle-aura-pulse 2s ease-in-out infinite alternate;
+      }
+
+      /* Centered Brand Lockup (Logo + "CYCLE OF CHART" Text) */
+      .cycle-preloader-brand {
+        position: relative;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        animation: cycle-brand-reveal 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        will-change: transform, opacity;
+      }
+
+      /* Logo Ring */
+      .cycle-preloader-logo-ring {
+        position: relative;
+        width: 88px;
+        height: 88px;
+        border-radius: 9999px;
+        overflow: hidden;
+        background-color: #071022;
+        border: 1.5px solid rgba(56, 189, 248, 0.45);
+        box-shadow:
+          0 0 35px -5px rgba(14, 165, 233, 0.42),
+          0 20px 40px -10px rgba(0, 0, 0, 0.85);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      @media (max-width: 640px) {
+        .cycle-preloader-logo-ring {
+          width: 76px;
+          height: 76px;
+        }
+      }
+      .cycle-preloader-logo-ring img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 9999px;
+        display: block;
+      }
+
+      /* "CYCLE OF CHART" Brand Text */
+      .cycle-preloader-title {
+        margin-top: 18px;
+        font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 14px;
+        font-weight: 800;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: #ffffff;
+        text-shadow:
+          0 2px 12px rgba(0, 0, 0, 0.6),
+          0 0 24px rgba(56, 189, 248, 0.28);
+      }
+      @media (max-width: 640px) {
+        .cycle-preloader-title {
+          font-size: 12px;
+          letter-spacing: 0.20em;
+          margin-top: 15px;
+        }
+      }
+
+      /* Keyframe: Smooth Reveal & Subtle Scale */
+      @keyframes cycle-brand-reveal {
+        0% {
+          opacity: 0;
+          transform: scale(0.92) translateY(6px);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+      }
+
+      @keyframes cycle-aura-pulse {
+        0% {
+          opacity: 0.75;
+          transform: scale(0.95);
+        }
+        100% {
+          opacity: 1;
+          transform: scale(1.05);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        #cycle-preloader {
+          transition-duration: 0.05s !important;
+        }
+        .cycle-preloader-brand,
+        .cycle-preloader-aura {
+          animation: none !important;
+          opacity: 1 !important;
+          transform: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="cycle-preloader" aria-label="Loading Cycle of Chart" role="status">
+      <!-- Ambient Glow Behind Brand -->
+      <div class="cycle-preloader-aura"></div>
+
+      <!-- Cohesive Brand Lockup: Logo + Text -->
+      <div class="cycle-preloader-brand">
+        <div class="cycle-preloader-logo-ring">
+          <img
+            src="/logo.jpg"
+            alt="Cycle of Chart Official Logo"
+            width="88"
+            height="88"
+            loading="eager"
+            decoding="async"
+          />
+        </div>
+        <div class="cycle-preloader-title">CYCLE OF CHART</div>
+      </div>
+    </div>
+    <script>
+      window.__cycle_preloader_start = Date.now();
+      (function () {
+        var preloader = document.getElementById('cycle-preloader');
+        if (!preloader) return;
+
+        window.__cycle_preloader = {
+          hide: function () {
+            if (!preloader || preloader.classList.contains('cycle-preloader-fade-out')) return;
+            preloader.classList.add('cycle-preloader-fade-out');
+            setTimeout(function () {
+              if (preloader && preloader.parentNode) {
+                preloader.parentNode.removeChild(preloader);
+              }
+            }, 550);
+          },
+          isActive: function () {
+            return !!(preloader && !preloader.classList.contains('cycle-preloader-fade-out'));
+          }
+        };
+
+        // Failsafe timeout: ensure dismissal after 2.8s even if network stalls
+        setTimeout(function () {
+          if (window.__cycle_preloader && window.__cycle_preloader.isActive()) {
+            window.__cycle_preloader.hide();
+          }
+        }, 2800);
+      })();
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

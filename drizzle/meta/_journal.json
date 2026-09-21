@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1787978400517,
+      "tag": "0000_gifted_blonde_phantom",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1787979809232,
+      "tag": "0001_familiar_mongu",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1787980074116,
+      "tag": "0002_messy_centennial",
+      "breakpoints": true
+    }
+  ]
+}

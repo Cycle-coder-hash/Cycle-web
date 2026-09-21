@@ -1,0 +1,134 @@
+import "dotenv/config";
+import express from "express";
+import { createServer } from "http";
+import net from "net";
+import { createExpressMiddleware } from "@trpc/server/adapters/express";
+import { registerOAuthRoutes } from "./oauth";
+import { registerStorageProxy } from "./storageProxy";
+import { registerUploadRoutes } from "../uploadRoute";
+import { appRouter } from "../routers";
+import { adminRouter } from "../adminApi";
+import fs from "fs";
+import path from "path";
+import { createContext } from "./context";
+import { serveStatic } from "./serveStatic";
+
+function isPortAvailable(port: number): Promise<boolean> {
+  return new Promise(resolve => {
+    const server = net.createServer();
+    server.listen(port, () => {
+      server.close(() => resolve(true));
+    });
+    server.on("error", () => resolve(false));
+  });
+}
+
+async function findAvailablePort(startPort: number = 3000): Promise<number> {
+  for (let port = startPort; port < startPort + 20; port++) {
+    if (await isPortAvailable(port)) {
+      return port;
+    }
+  }
+  throw new Error(`No available port found starting from ${startPort}`);
+}
+
+async function startServer() {
+  const app = express();
+  const server = createServer(app);
+  // CORS configuration
+  app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, x-admin-key");
+    if (req.method === "OPTIONS") {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+  // Configure body parser with larger size limit for file uploads
+  app.use(express.json({ limit: "50mb" }));
+  app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  registerStorageProxy(app);
+  registerOAuthRoutes(app);
+  registerUploadRoutes(app);
+  // Admin REST API for standalone console
+  app.use("/api/admin", adminRouter);
+  // tRPC API
+  app.use(
+    "/api/trpc",
+    createExpressMiddleware({
+      router: appRouter,
+      createContext,
+    })
+  );
+  // Production / built mode vs Vite dev mode
+  const isProduction =
+    process.env.NODE_ENV === "production" ||
+    Boolean(process.env.VERCEL) ||
+    !fs.existsSync(path.resolve(import.meta.dirname, "vite.ts"));
+
+  if (isProduction) {
+    if (!process.env.VERCEL) {
+      serveStatic(app);
+    }
+  } else {
+    try {
+      const viteModule = "./vite.js";
+      const { setupVite } = await import(/* @vite-ignore */ viteModule);
+      await setupVite(app, server);
+    } catch (viteErr) {
+      console.warn("[Vite dev server not available, falling back to static]:", viteErr);
+      serveStatic(app);
+    }
+  }
+
+  const preferredPort = parseInt(process.env.PORT || "3000");
+  if (!process.env.VERCEL) {
+    const port = await findAvailablePort(preferredPort);
+    if (port !== preferredPort) {
+      console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
+    }
+    server.listen(port, () => {
+      console.log(`Server running on http://localhost:${port}/`);
+    });
+  }
+
+  return app;
+}
+
+let appInstance: any = null;
+let appInitPromise: Promise<any> | null = null;
+
+export async function getApp() {
+  if (appInstance) return appInstance;
+  if (!appInitPromise) {
+    appInitPromise = startServer()
+      .then((app) => {
+        appInstance = app;
+        return app;
+      })
+      .catch((err) => {
+        console.error("[Server start error]:", err);
+        appInitPromise = null;
+        throw err;
+      });
+  }
+  return appInitPromise;
+}
+
+export const appPromise = getApp();
+
+export default async function handler(req: any, res: any) {
+  try {
+    const app = await getApp();
+    if (app) {
+      return app(req, res);
+    }
+    res.status(500).send("Server initialization failed");
+  } catch (err: any) {
+    console.error("[Server handler error]:", err);
+    res.status(500).json({ error: err?.message || String(err) });
+  }
+}
+
+
