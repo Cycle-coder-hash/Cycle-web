@@ -292,12 +292,20 @@ export default function Dashboard() {
     return "https://t.me/cycleofchart";
   }, [ownerProfile]);
 
-  const hasApprovedAccess = useMemo(() => {
-    const hasApprovedOrder = (orders || []).some(
-      (o: any) => o.paymentStatus === "approved" || o.orderStatus === "approved"
-    );
-    const hasEntitlement = (entitlements || []).length > 0;
-    return hasApprovedOrder || hasEntitlement;
+  // Strictly check that student has an actual paid & approved course purchase.
+  // Free claims or pending/unapproved orders NEVER qualify.
+  const hasApprovedPurchase = useMemo(() => {
+    const hasApprovedPaidOrder = (orders || []).some((o: any) => {
+      const isApproved = o.paymentStatus === "approved" || o.orderStatus === "approved";
+      const isPaid = Number(o.amount || 0) > 0 || (o.bundleId != null && Number(o.bundleId) > 0);
+      return isApproved && isPaid;
+    });
+    const hasPaidEntitlement = (entitlements || []).some((e: any) => {
+      const isPaidScope = e.scope && !e.scope.includes("free") && (e.scope.startsWith("bundle:") || e.scope.startsWith("product:"));
+      const hasValidOrder = e.orderId && Number(e.orderId) > 0;
+      return isPaidScope && hasValidOrder;
+    });
+    return hasApprovedPaidOrder || hasPaidEntitlement;
   }, [orders, entitlements]);
 
   // Mutations
@@ -993,7 +1001,7 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            {hasApprovedAccess && (
+            {hasApprovedPurchase && (
               <Button
                 onClick={() => window.dispatchEvent(new CustomEvent("open-telegram-modal"))}
                 size="sm"
@@ -1044,7 +1052,7 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
                 {isBn ? item.labelBn : item.labelEn}
               </button>
             ))}
-            {hasApprovedAccess && (
+            {hasApprovedPurchase && (
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent("open-telegram-modal"))}
                 className="flex shrink-0 items-center gap-1.5 rounded-xl border border-sky-500/30 bg-sky-500/10 px-3 py-1.5 text-xs font-extrabold text-sky-600 dark:text-sky-400"
@@ -1071,7 +1079,7 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
           {tab === "overview" && (
             <div className="space-y-8 animate-in fade-in duration-300">
               {/* Verified Student VIP Telegram Banner */}
-              {hasApprovedAccess && (
+              {hasApprovedPurchase && (
                 <div className="relative overflow-hidden rounded-3xl border border-sky-500/40 bg-gradient-to-r from-[#081f3d] via-[#09172c] to-[#071324] p-5 sm:p-7 shadow-xl shadow-sky-950/40 backdrop-blur-sm">
                   <div className="absolute top-0 right-0 w-80 h-40 bg-sky-500/10 blur-3xl pointer-events-none" />
                   <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">

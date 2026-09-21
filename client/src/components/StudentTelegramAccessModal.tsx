@@ -41,23 +41,35 @@ export function StudentTelegramAccessModal() {
     return "https://t.me/cycleofchart";
   }, [ownerProfile]);
 
-  // Determine if student has at least one approved order or granted entitlement
-  const approvedOrder = useMemo(() => {
+  // Determine if student has an actual verified paid purchase (approved by admin)
+  const approvedPaidOrder = useMemo(() => {
     if (!orders || !Array.isArray(orders)) return null;
-    return orders.find(
-      (o: any) => o.paymentStatus === "approved" || o.orderStatus === "approved"
+    return (
+      orders.find((o: any) => {
+        const isApproved = o.paymentStatus === "approved" || o.orderStatus === "approved";
+        const isPaid = Number(o.amount || 0) > 0 || (o.bundleId != null && Number(o.bundleId) > 0);
+        return isApproved && isPaid;
+      }) || null
     );
   }, [orders]);
 
-  const hasApprovedAccess = useMemo(() => {
-    if (approvedOrder) return true;
-    if (entitlements && Array.isArray(entitlements) && entitlements.length > 0) return true;
+  // Strictly check that student has an actual paid & approved course purchase.
+  // Free claims, unpaid registrations, or pending/rejected orders NEVER qualify.
+  const hasApprovedPurchase = useMemo(() => {
+    if (approvedPaidOrder) return true;
+    if (entitlements && Array.isArray(entitlements)) {
+      return entitlements.some((e: any) => {
+        const isPaidScope = e.scope && !e.scope.includes("free") && (e.scope.startsWith("bundle:") || e.scope.startsWith("product:"));
+        const hasValidOrder = e.orderId && Number(e.orderId) > 0;
+        return isPaidScope && hasValidOrder;
+      });
+    }
     return false;
-  }, [approvedOrder, entitlements]);
+  }, [approvedPaidOrder, entitlements]);
 
   // Auto-trigger popup for verified students who haven't dismissed it yet
   useEffect(() => {
-    if (!user || !hasApprovedAccess || !storageKey) return;
+    if (!user || !hasApprovedPurchase || !storageKey) return;
 
     try {
       const alreadySeen = localStorage.getItem(storageKey);
@@ -69,14 +81,18 @@ export function StudentTelegramAccessModal() {
         return () => clearTimeout(timer);
       }
     } catch {}
-  }, [user, hasApprovedAccess, storageKey, hasInteracted]);
+  }, [user, hasApprovedPurchase, storageKey, hasInteracted]);
 
-  // Listen to custom event so any button across the app can open this modal
+  // Listen to custom event so any authorized button can open this modal
   useEffect(() => {
-    const handleOpen = () => setIsOpen(true);
+    const handleOpen = () => {
+      if (hasApprovedPurchase) {
+        setIsOpen(true);
+      }
+    };
     window.addEventListener("open-telegram-modal", handleOpen);
     return () => window.removeEventListener("open-telegram-modal", handleOpen);
-  }, []);
+  }, [hasApprovedPurchase]);
 
   const handleClose = () => {
     setIsOpen(false);
@@ -98,7 +114,7 @@ export function StudentTelegramAccessModal() {
     }
   };
 
-  if (!isOpen || !user || !hasApprovedAccess) {
+  if (!isOpen || !user || !hasApprovedPurchase) {
     return null;
   }
 
