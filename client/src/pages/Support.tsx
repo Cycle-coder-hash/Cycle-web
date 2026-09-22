@@ -109,6 +109,9 @@ export default function Support() {
     }
   }, [user]);
 
+  // TRPC utils for imperative fetching & invalidation
+  const trpcUtils = trpc.useUtils();
+
   // Queries
   const {
     data: myTicketsList,
@@ -138,7 +141,10 @@ export default function Support() {
       setAttachmentBase64(null);
       setAttachmentName(null);
       setAttachmentSize(null);
-      if (user) refetchMyTickets();
+      if (user) {
+        refetchMyTickets();
+        trpcUtils.support.myTickets.invalidate();
+      }
       toast.success(
         isBn
           ? `টিকেট সফলভাবে তৈরি হয়েছে! আপনার টিকেট আইডি: ${data.ticket.ticketCode}`
@@ -161,6 +167,8 @@ export default function Support() {
       if (selectedTicketId) {
         refetchActiveTicket();
         refetchMyTickets();
+        trpcUtils.support.getTicket.invalidate({ ticketId: selectedTicketId });
+        trpcUtils.support.myTickets.invalidate();
       }
       if (trackedData) {
         setTrackedData((prev) =>
@@ -184,25 +192,28 @@ export default function Support() {
 
     setIsTracking(true);
     try {
-      // Direct call using fetch through TRPC query endpoint or client helper
       const cleanCode = trackCode.trim();
-      const res = await fetch(
-        `/api/trpc/support.trackTicket?input=${encodeURIComponent(
-          JSON.stringify({ ticketCode: cleanCode, email: trackEmail.trim() })
-        )}`
-      );
-      const json = await res.json();
-      if (!res.ok || json.error) {
+      const cleanEmail = trackEmail.trim();
+      const result = await trpcUtils.support.trackTicket.fetch({
+        ticketCode: cleanCode,
+        email: cleanEmail,
+      });
+
+      if (!result || !result.ticket) {
         throw new Error(
-          json.error?.message ||
-            (isBn
-              ? "কোনো টিকেট পাওয়া যায়নি অথবা ইমেইল মিলছে না।"
-              : "No ticket found with this Ticket ID and Email address.")
+          isBn
+            ? "কোনো টিকেট পাওয়া যায়নি অথবা ইমেইল মিলছে না।"
+            : "No ticket found with this Ticket ID and Email address."
         );
       }
-      setTrackedData(json.result.data);
+      setTrackedData(result);
     } catch (err: any) {
-      setTrackError(err.message || "Failed to find ticket");
+      setTrackError(
+        err.message ||
+          (isBn
+            ? "কোনো টিকেট পাওয়া যায়নি অথবা ইমেইল মিলছে না।"
+            : "No ticket found with this Ticket ID and Email address.")
+      );
     } finally {
       setIsTracking(false);
     }

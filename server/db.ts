@@ -2553,118 +2553,145 @@ export interface TicketFilter {
   search?: string;
 }
 
+const GLOBAL_SUPPORT_TICKETS_KEY = "global_support_tickets_registry";
+
+async function getPersistentTickets(): Promise<any[]> {
+  try {
+    const raw = await getSetting(GLOBAL_SUPPORT_TICKETS_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.map((t: any) => ({
+          ...t,
+          createdAt: t.createdAt ? new Date(t.createdAt) : new Date(),
+          updatedAt: t.updatedAt ? new Date(t.updatedAt) : (t.createdAt ? new Date(t.createdAt) : new Date()),
+        }));
+      }
+    }
+  } catch (err) {
+    console.warn("[getPersistentTickets error]:", err);
+  }
+  return [];
+}
+
+async function savePersistentTickets(tickets: any[]): Promise<void> {
+  try {
+    await setSetting(GLOBAL_SUPPORT_TICKETS_KEY, JSON.stringify(tickets));
+  } catch (err) {
+    console.warn("[savePersistentTickets error]:", err);
+  }
+}
+
+async function getPersistentTicketReplies(ticketId: number): Promise<any[]> {
+  try {
+    const key = `support_ticket_replies_${ticketId}`;
+    const raw = await getSetting(key);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.map((r: any) => ({
+          ...r,
+          createdAt: r.createdAt ? new Date(r.createdAt) : new Date(),
+        }));
+      }
+    }
+  } catch (err) {
+    console.warn("[getPersistentTicketReplies error]:", err);
+  }
+  return [];
+}
+
+async function savePersistentTicketReplies(ticketId: number, replies: any[]): Promise<void> {
+  try {
+    const key = `support_ticket_replies_${ticketId}`;
+    await setSetting(key, JSON.stringify(replies));
+  } catch (err) {
+    console.warn("[savePersistentTicketReplies error]:", err);
+  }
+}
+
 export async function listTickets(filterOrUserId?: number | TicketFilter) {
   const filter: TicketFilter =
     typeof filterOrUserId === "number" ? { userId: filterOrUserId } : filterOrUserId || {};
 
-  const db = await getDb();
-  if (db) {
-    try {
-      let query = db.select().from(supportTickets);
-      const conditions: any[] = [];
-      if (filter.userId !== undefined && filter.userId !== null) {
-        conditions.push(eq(supportTickets.userId, filter.userId));
-      }
-      if (filter.userEmail) {
-        conditions.push(eq(supportTickets.userEmail, filter.userEmail));
-      }
-      if (filter.status && filter.status !== "all") {
-        conditions.push(eq(supportTickets.status, filter.status as any));
-      }
-      if (filter.category && filter.category !== "all") {
-        conditions.push(eq(supportTickets.category, filter.category));
-      }
-      const records =
-        conditions.length > 0
-          ? await query.where(and(...conditions)).orderBy(desc(supportTickets.createdAt))
-          : await query.orderBy(desc(supportTickets.createdAt));
-
-      if (filter.search) {
-        const q = filter.search.toLowerCase();
-        return records.filter(
-          (t: any) =>
-            t.ticketCode?.toLowerCase().includes(q) ||
-            t.subject?.toLowerCase().includes(q) ||
-            t.userName?.toLowerCase().includes(q) ||
-            t.userEmail?.toLowerCase().includes(q) ||
-            t.message?.toLowerCase().includes(q)
-        );
-      }
-      return records;
-    } catch (err) {
-      console.warn("[listTickets error]:", err);
+  // 1. Sync from persistent settings registry
+  const persistentTickets = await getPersistentTickets();
+  for (const pt of persistentTickets) {
+    const idx = inMemoryTickets.findIndex((item) => item.id === pt.id || item.ticketCode === pt.ticketCode);
+    if (idx >= 0) {
+      inMemoryTickets[idx] = { ...inMemoryTickets[idx], ...pt };
+    } else {
+      inMemoryTickets.push(pt);
     }
   }
 
-  // Supabase live query
+  // 2. Sync any additional tickets from Supabase SQL table (legacy sync)
   try {
     const { supabaseServer } = await import("./supabase");
-    let query = supabaseServer
+    const { data: supaTickets, error } = await supabaseServer
       .from("supportTickets")
       .select("*")
       .order("createdAt", { ascending: false });
 
-    if (filter.userId !== undefined && filter.userId !== null) {
-      query = query.eq("userId", filter.userId);
-    }
-    if (filter.status && filter.status !== "all") {
-      query = query.eq("status", filter.status);
-    }
-    if (filter.category && filter.category !== "all") {
-      query = query.eq("category", filter.category);
-    }
-    const { data, error } = await query;
-    if (!error && data) {
-      let results = data.map((t) => ({
-        ...t,
-        createdAt: t.createdAt ? new Date(t.createdAt) : new Date(),
-        updatedAt: t.updatedAt ? new Date(t.updatedAt) : new Date(),
-      }));
-      if (filter.userEmail) {
-        results = results.filter((t) => t.userEmail?.toLowerCase() === filter.userEmail?.toLowerCase());
-      }
-      if (filter.search) {
-        const q = filter.search.toLowerCase();
-        results = results.filter(
-          (t) =>
-            t.ticketCode?.toLowerCase().includes(q) ||
-            t.subject?.toLowerCase().includes(q) ||
-            t.userName?.toLowerCase().includes(q) ||
-            t.userEmail?.toLowerCase().includes(q) ||
-            t.message?.toLowerCase().includes(q)
-        );
-      }
-      // Update in-memory cache with Supabase items
-      for (const t of results) {
-        const idx = inMemoryTickets.findIndex((item) => item.id === t.id);
-        if (idx >= 0) {
-          inMemoryTickets[idx] = t;
+    if (!error && Array.isArray(supaTickets) && supaTickets.length > 0) {
+      for (const st of supaTickets) {
+        const existing = inMemoryTickets.find((item) => item.id === st.id);
+        if (!existing) {
+          const syncedItem = {
+            id: st.id,
+            ticketCode: `#TKT-${st.id}`,
+            userId: st.userId,
+            userName: `Student #${st.userId}`,
+            userEmail: "",
+            category: "General",
+            subject: st.subject || "Support Inquiry",
+            message: st.message || "",
+            attachmentUrl: null,
+            status: st.status || "open",
+            assignedStaff: null,
+            createdAt: st.createdAt ? new Date(st.createdAt) : new Date(),
+            updatedAt: st.createdAt ? new Date(st.createdAt) : new Date(),
+          };
+          inMemoryTickets.push(syncedItem);
         } else {
-          inMemoryTickets.push(t);
+          if (st.status && existing.status !== st.status) {
+            existing.status = st.status;
+          }
         }
       }
-      return results;
     }
   } catch (err) {
-    console.warn("[listTickets Supabase error]:", err);
+    console.warn("[listTickets Supabase legacy sync notice]:", err);
   }
 
-  // In-memory fallback
+  // 3. Filter tickets
   let results = [...inMemoryTickets];
-  if (filter.userId !== undefined && filter.userId !== null) {
+
+  // User identity filter: if both userId and userEmail provided, match EITHER
+  if (filter.userId !== undefined && filter.userId !== null && filter.userEmail) {
+    const lowerEmail = filter.userEmail.trim().toLowerCase();
+    results = results.filter(
+      (t) =>
+        t.userId === filter.userId ||
+        (t.userEmail && t.userEmail.trim().toLowerCase() === lowerEmail)
+    );
+  } else if (filter.userId !== undefined && filter.userId !== null) {
     results = results.filter((t) => t.userId === filter.userId);
+  } else if (filter.userEmail) {
+    const lowerEmail = filter.userEmail.trim().toLowerCase();
+    results = results.filter((t) => t.userEmail && t.userEmail.trim().toLowerCase() === lowerEmail);
   }
-  if (filter.userEmail) {
-    results = results.filter((t) => t.userEmail?.toLowerCase() === filter.userEmail?.toLowerCase());
-  }
+
   if (filter.status && filter.status !== "all") {
     results = results.filter((t) => t.status === filter.status);
   }
+
   if (filter.category && filter.category !== "all") {
     results = results.filter((t) => t.category === filter.category);
   }
-  if (filter.search) {
-    const q = filter.search.toLowerCase();
+
+  if (filter.search && filter.search.trim()) {
+    const q = filter.search.trim().toLowerCase();
     results = results.filter(
       (t) =>
         t.ticketCode?.toLowerCase().includes(q) ||
@@ -2674,7 +2701,12 @@ export async function listTickets(filterOrUserId?: number | TicketFilter) {
         t.message?.toLowerCase().includes(q)
     );
   }
-  return results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  return results.sort((a, b) => {
+    const timeB = new Date(b.updatedAt || b.createdAt).getTime();
+    const timeA = new Date(a.updatedAt || a.createdAt).getTime();
+    return timeB - timeA;
+  });
 }
 
 export async function createSupportTicket(input: {
@@ -2686,18 +2718,30 @@ export async function createSupportTicket(input: {
   message: string;
   attachmentUrl?: string | null;
 }) {
-  const code = `#TKT-${ticketAutoId++}`;
+  const persistentTickets = await getPersistentTickets();
+  
+  // Calculate unique integer ID & ticketCode
+  const maxExistingId = Math.max(
+    0,
+    ...inMemoryTickets.map((t) => Number(t.id) || 0),
+    ...persistentTickets.map((t) => Number(t.id) || 0),
+    ticketAutoId
+  );
+  const nextId = maxExistingId + 1;
+  ticketAutoId = nextId + 1;
+
+  const code = `#TKT-${1000 + persistentTickets.length + 1}`;
   const now = new Date();
-  const db = await getDb();
 
   const ticketObj = {
+    id: nextId,
     ticketCode: code,
     userId: input.userId || null,
-    userName: input.userName,
-    userEmail: input.userEmail,
+    userName: input.userName.trim(),
+    userEmail: input.userEmail.trim(),
     category: input.category,
-    subject: input.subject,
-    message: input.message,
+    subject: input.subject.trim(),
+    message: input.message.trim(),
     attachmentUrl: input.attachmentUrl || null,
     status: "open" as const,
     assignedStaff: null,
@@ -2705,57 +2749,55 @@ export async function createSupportTicket(input: {
     updatedAt: now,
   };
 
-  if (db) {
-    try {
-      const res = await db.insert(supportTickets).values(ticketObj);
-      const insertId = res[0]?.insertId || res[0]?.id;
-      return { id: insertId || ticketAutoId - 1, ...ticketObj };
-    } catch (err) {
-      console.warn("[createSupportTicket fallback to memory]:", err);
-    }
-  }
+  // 1. Add to in-memory list
+  inMemoryTickets.unshift(ticketObj);
 
-  // Supabase live database insertion
+  // 2. Persist to Supabase settings registry
+  const updatedPersistent = [ticketObj, ...persistentTickets.filter((t) => t.id !== ticketObj.id)];
+  await savePersistentTickets(updatedPersistent);
+
+  // 3. Also safely attempt Supabase supportTickets SQL table insert if userId matches a valid user
   try {
     const { supabaseServer } = await import("./supabase");
-    const { data, error } = await supabaseServer
-      .from("supportTickets")
-      .insert({
-        ticketCode: ticketObj.ticketCode,
+    if (ticketObj.userId) {
+      await supabaseServer.from("supportTickets").insert({
         userId: ticketObj.userId,
-        userName: ticketObj.userName,
-        userEmail: ticketObj.userEmail,
-        category: ticketObj.category,
-        subject: ticketObj.subject,
+        subject: `[${ticketObj.ticketCode}] [${ticketObj.category}] ${ticketObj.subject}`,
         message: ticketObj.message,
-        attachmentUrl: ticketObj.attachmentUrl,
         status: "open",
         createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-      })
-      .select();
-
-    if (!error && data && data.length > 0) {
-      const created = {
-        ...data[0],
-        createdAt: new Date(data[0].createdAt),
-        updatedAt: new Date(data[0].updatedAt),
-      };
-      inMemoryTickets.unshift(created);
-      return created;
-    } else if (error) {
-      console.warn("[createSupportTicket Supabase error]:", error.message);
+      });
     }
-  } catch (err) {
-    console.warn("[createSupportTicket Supabase exception]:", err);
+  } catch (supaErr) {
+    console.warn("[createSupportTicket Supabase table notice]:", supaErr);
   }
 
-  const inMemItem = { id: ticketAutoId - 1, ...ticketObj };
-  inMemoryTickets.unshift(inMemItem);
-  return inMemItem;
+  // 4. Also try Drizzle DB if connected
+  const db = await getDb();
+  if (db) {
+    try {
+      await db.insert(supportTickets).values(ticketObj);
+    } catch (err) {
+      console.warn("[createSupportTicket Drizzle notice]:", err);
+    }
+  }
+
+  return ticketObj;
 }
 
 export async function getTicketById(ticketId: number) {
+  // Check memory first
+  let ticket = inMemoryTickets.find((t) => t.id === ticketId);
+  if (ticket) return ticket;
+
+  // Check persistent storage
+  const persistent = await getPersistentTickets();
+  ticket = persistent.find((t) => t.id === ticketId);
+  if (ticket) {
+    inMemoryTickets.push(ticket);
+    return ticket;
+  }
+
   const db = await getDb();
   if (db) {
     try {
@@ -2766,31 +2808,32 @@ export async function getTicketById(ticketId: number) {
     }
   }
 
-  // Supabase fetch
-  try {
-    const { supabaseServer } = await import("./supabase");
-    const { data, error } = await supabaseServer
-      .from("supportTickets")
-      .select("*")
-      .eq("id", ticketId)
-      .limit(1);
-    if (!error && data && data.length > 0) {
-      return {
-        ...data[0],
-        createdAt: new Date(data[0].createdAt),
-        updatedAt: new Date(data[0].updatedAt),
-      };
-    }
-  } catch (err) {
-    console.warn("[getTicketById Supabase error]:", err);
-  }
-
-  return inMemoryTickets.find((t) => t.id === ticketId) || null;
+  return null;
 }
 
 export async function getTicketByCode(ticketCode: string) {
-  const cleanCode = ticketCode.trim().toUpperCase();
-  const formattedCode = cleanCode.startsWith("#") ? cleanCode : `#${cleanCode}`;
+  if (!ticketCode) return null;
+  const raw = ticketCode.trim().toUpperCase();
+  const cleanCode = raw.startsWith("#") ? raw.slice(1) : raw;
+  const formattedCode = `#${cleanCode}`;
+
+  const matchCode = (c?: string) => {
+    if (!c) return false;
+    const upper = c.trim().toUpperCase();
+    return upper === formattedCode || upper === cleanCode || upper.replace(/^#/, "") === cleanCode;
+  };
+
+  // Check memory
+  let ticket = inMemoryTickets.find((t) => matchCode(t.ticketCode));
+  if (ticket) return ticket;
+
+  // Check persistent storage
+  const persistent = await getPersistentTickets();
+  ticket = persistent.find((t) => matchCode(t.ticketCode));
+  if (ticket) {
+    inMemoryTickets.push(ticket);
+    return ticket;
+  }
 
   const db = await getDb();
   if (db) {
@@ -2810,28 +2853,41 @@ export async function getTicketByCode(ticketCode: string) {
       console.warn("[getTicketByCode error]:", err);
     }
   }
-  return (
-    inMemoryTickets.find(
-      (t) =>
-        t.ticketCode?.toUpperCase() === formattedCode ||
-        t.ticketCode?.toUpperCase() === cleanCode
-    ) || null
-  );
+
+  return null;
 }
 
 export async function getTicketReplies(ticketId: number) {
+  // 1. Fetch persistent replies from Supabase settings
+  const persistentReplies = await getPersistentTicketReplies(ticketId);
+  if (persistentReplies.length > 0) {
+    // Merge into inMemoryReplies
+    for (const pr of persistentReplies) {
+      if (!inMemoryReplies.some((r) => r.id === pr.id && r.ticketId === pr.ticketId)) {
+        inMemoryReplies.push(pr);
+      }
+    }
+    return persistentReplies.sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+  }
+
+  // 2. Check Drizzle DB if connected
   const db = await getDb();
   if (db) {
     try {
-      return await db
+      const rows = await db
         .select()
         .from(ticketReplies)
         .where(eq(ticketReplies.ticketId, ticketId))
         .orderBy(asc(ticketReplies.createdAt));
+      if (rows.length > 0) return rows;
     } catch (err) {
       console.warn("[getTicketReplies error]:", err);
     }
   }
+
+  // 3. In-memory fallback
   return inMemoryReplies
     .filter((r) => r.ticketId === ticketId)
     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
@@ -2846,33 +2902,58 @@ export async function addTicketReply(reply: {
   attachmentUrl?: string | null;
 }) {
   const now = new Date();
-  const db = await getDb();
+  const existingReplies = await getPersistentTicketReplies(reply.ticketId);
+
+  const maxReplyId = Math.max(
+    0,
+    ...inMemoryReplies.map((r) => Number(r.id) || 0),
+    ...existingReplies.map((r) => Number(r.id) || 0),
+    replyAutoId
+  );
+  const newReplyId = maxReplyId + 1;
+  replyAutoId = newReplyId + 1;
+
   const replyObj = {
+    id: newReplyId,
     ticketId: reply.ticketId,
     senderRole: reply.senderRole,
-    senderName: reply.senderName,
-    senderEmail: reply.senderEmail || null,
-    message: reply.message,
+    senderName: reply.senderName.trim(),
+    senderEmail: reply.senderEmail?.trim() || null,
+    message: reply.message.trim(),
     attachmentUrl: reply.attachmentUrl || null,
     createdAt: now,
   };
 
+  // 1. Push to in-memory list
+  inMemoryReplies.push(replyObj);
+
+  // 2. Persist replies to Supabase settings
+  const updatedReplies = [...existingReplies, replyObj];
+  await savePersistentTicketReplies(reply.ticketId, updatedReplies);
+
+  // 3. Update ticket's updatedAt in memory & persistent store
+  const t = inMemoryTickets.find((item) => item.id === reply.ticketId);
+  if (t) t.updatedAt = now;
+
+  const persistentTickets = await getPersistentTickets();
+  const pt = persistentTickets.find((item) => item.id === reply.ticketId);
+  if (pt) {
+    pt.updatedAt = now;
+    await savePersistentTickets(persistentTickets);
+  }
+
+  // 4. Try Drizzle DB insert
+  const db = await getDb();
   if (db) {
     try {
-      const res = await db.insert(ticketReplies).values(replyObj);
+      await db.insert(ticketReplies).values(replyObj);
       await db.update(supportTickets).set({ updatedAt: now }).where(eq(supportTickets.id, reply.ticketId));
-      const insertId = res[0]?.insertId || res[0]?.id;
-      return { id: insertId || replyAutoId++, ...replyObj };
     } catch (err) {
-      console.warn("[addTicketReply error]:", err);
+      console.warn("[addTicketReply Drizzle notice]:", err);
     }
   }
 
-  const createdReply = { id: replyAutoId++, ...replyObj };
-  inMemoryReplies.push(createdReply);
-  const t = inMemoryTickets.find((item) => item.id === reply.ticketId);
-  if (t) t.updatedAt = now;
-  return createdReply;
+  return replyObj;
 }
 
 export async function listAllUsers() {
@@ -3103,6 +3184,21 @@ export async function updateTicketStatus(
     t.updatedAt = now;
     if (assignedStaff !== undefined) t.assignedStaff = assignedStaff;
   }
+
+  // Update persistent registry
+  try {
+    const persistentTickets = await getPersistentTickets();
+    const pt = persistentTickets.find((item) => item.id === ticketId);
+    if (pt) {
+      pt.status = status as any;
+      pt.updatedAt = now;
+      if (assignedStaff !== undefined) pt.assignedStaff = assignedStaff;
+      await savePersistentTickets(persistentTickets);
+    }
+  } catch (err) {
+    console.warn("[updateTicketStatus persistent error]:", err);
+  }
+
   return true;
 }
 

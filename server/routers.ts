@@ -994,7 +994,7 @@ export const appRouter = router({
       }),
 
     myTickets: protectedProcedure.query(async ({ ctx }) => {
-      return await listTickets({ userId: ctx.user.id });
+      return await listTickets({ userId: ctx.user.id, userEmail: ctx.user.email || undefined });
     }),
 
     trackTicket: publicProcedure
@@ -1012,7 +1012,7 @@ export const appRouter = router({
             message: "No support ticket found with this Ticket ID.",
           });
         }
-        if (ticket.userEmail?.toLowerCase() !== input.email.trim().toLowerCase()) {
+        if (ticket.userEmail?.toLowerCase().trim() !== input.email.trim().toLowerCase()) {
           throw new TRPCError({
             code: "UNAUTHORIZED",
             message: "The email address provided does not match this ticket record.",
@@ -1026,7 +1026,7 @@ export const appRouter = router({
       .input(
         z.object({
           ticketId: z.number(),
-          email: z.string().email().optional(),
+          email: z.string().optional(),
         })
       )
       .query(async ({ ctx, input }) => {
@@ -1040,7 +1040,10 @@ export const appRouter = router({
 
         const isStaff = ctx.user?.role === "admin" || ctx.user?.role === "support";
         const isOwner =
-          (ctx.user && (ticket.userId === ctx.user.id || ticket.userEmail.toLowerCase() === ctx.user.email?.toLowerCase())) ||
+          (ctx.user && (
+            ticket.userId === ctx.user.id ||
+            (ctx.user.email && ticket.userEmail.toLowerCase() === ctx.user.email.toLowerCase())
+          )) ||
           (input.email && ticket.userEmail.toLowerCase() === input.email.trim().toLowerCase());
 
         if (!isStaff && !isOwner) {
@@ -1060,7 +1063,7 @@ export const appRouter = router({
           ticketId: z.number(),
           message: z.string().min(1, "Reply message cannot be empty"),
           senderName: z.string().optional(),
-          senderEmail: z.string().email().optional(),
+          senderEmail: z.string().optional(),
           attachmentUrl: z.string().optional(),
         })
       )
@@ -1075,7 +1078,10 @@ export const appRouter = router({
 
         const isStaff = ctx.user?.role === "admin" || ctx.user?.role === "support";
         const isOwner =
-          (ctx.user && (ticket.userId === ctx.user.id || ticket.userEmail.toLowerCase() === ctx.user.email?.toLowerCase())) ||
+          (ctx.user && (
+            ticket.userId === ctx.user.id ||
+            (ctx.user.email && ticket.userEmail.toLowerCase() === ctx.user.email.toLowerCase())
+          )) ||
           (input.senderEmail && ticket.userEmail.toLowerCase() === input.senderEmail.trim().toLowerCase());
 
         if (!isStaff && !isOwner) {

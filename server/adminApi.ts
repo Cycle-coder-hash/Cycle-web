@@ -7,6 +7,9 @@ import {
   deleteOrder,
   listAllUsers,
   listTickets,
+  getTicketById,
+  getTicketReplies,
+  addTicketReply,
   listAuditLogs,
   updateUserRole,
   grantManualEntitlement,
@@ -210,14 +213,54 @@ adminRouter.post("/update-role", async (req, res) => {
   }
 });
 
+// GET /api/admin/tickets/:id
+adminRouter.get("/tickets/:id", async (req, res) => {
+  try {
+    const ticketId = parseInt(req.params.id, 10);
+    if (isNaN(ticketId)) return res.status(400).json({ success: false, error: "Invalid ticketId" });
+
+    const ticket = await getTicketById(ticketId);
+    if (!ticket) return res.status(404).json({ success: false, error: "Ticket not found" });
+
+    const replies = await getTicketReplies(ticketId);
+    return res.json({ success: true, ticket, replies });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // POST /api/admin/update-ticket
 adminRouter.post("/update-ticket", async (req, res) => {
   try {
-    const { ticketId, status } = req.body;
+    const { ticketId, status, assignedStaff } = req.body;
     if (!ticketId || !status) return res.status(400).json({ success: false, error: "ticketId and status are required" });
 
-    await updateTicketStatus(ticketId, status);
+    await updateTicketStatus(Number(ticketId), status, assignedStaff);
     return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/admin/reply-ticket
+adminRouter.post("/reply-ticket", async (req, res) => {
+  try {
+    const { ticketId, message, status, senderName, attachmentUrl } = req.body;
+    if (!ticketId || !message) return res.status(400).json({ success: false, error: "ticketId and message are required" });
+
+    const reply = await addTicketReply({
+      ticketId: Number(ticketId),
+      senderRole: "support",
+      senderName: senderName || "Support Specialist",
+      senderEmail: "support@cycleofchart.com",
+      message: String(message).trim(),
+      attachmentUrl: attachmentUrl || null,
+    });
+
+    const targetStatus = status || "waiting_user";
+    await updateTicketStatus(Number(ticketId), targetStatus, senderName || "Support Specialist");
+
+    return res.json({ success: true, reply });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
