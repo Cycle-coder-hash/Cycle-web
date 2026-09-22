@@ -62,8 +62,11 @@ export default function Support() {
   const [lang, setLang] = useState<"en" | "bn">("bn");
   const isBn = lang === "bn";
 
-  // Active Tab: "create" | "my_tickets" | "track"
-  const [activeTab, setActiveTab] = useState<"create" | "my_tickets" | "track">("create");
+  // Admin / Support Staff check
+  const isAdmin = !!(user && (user.role === "admin" || user.role === "support"));
+
+  // Active Tab: "create" | "my_tickets" | "track" | "admin_desk"
+  const [activeTab, setActiveTab] = useState<"create" | "my_tickets" | "track" | "admin_desk">("create");
 
   // Create Form State
   const [formName, setFormName] = useState("");
@@ -95,6 +98,11 @@ export default function Support() {
   // Status Filter for My Tickets
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchFilter, setSearchFilter] = useState<string>("");
+
+  // Status & Search Filter for Admin Desk
+  const [adminStatusFilter, setAdminStatusFilter] = useState<string>("all");
+  const [adminCategoryFilter, setAdminCategoryFilter] = useState<string>("all");
+  const [adminSearchFilter, setAdminSearchFilter] = useState<string>("");
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const replyFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -178,6 +186,49 @@ export default function Support() {
     },
     onError: (err) => {
       toast.error(err.message || (isBn ? "উত্তর পাঠাতে সমস্যা হয়েছে" : "Failed to send reply"));
+    },
+  });
+
+  // Admin Tickets Query & Mutations
+  const {
+    data: adminTicketsList,
+    refetch: refetchAdminTickets,
+    isLoading: isLoadingAdminTickets,
+  } = trpc.admin.tickets.useQuery(undefined, {
+    enabled: !!isAdmin,
+  });
+
+  const adminReplyMutation = trpc.admin.replyTicket.useMutation({
+    onSuccess: (res) => {
+      setReplyMessage("");
+      setReplyAttachment(null);
+      setReplyAttachmentName(null);
+      toast.success(isBn ? "অ্যাডমিন উত্তর সফলভাবে পাঠানো হয়েছে!" : "Admin reply sent successfully!");
+
+      if (selectedTicketId) {
+        refetchActiveTicket();
+        refetchAdminTickets();
+        trpcUtils.support.getTicket.invalidate({ ticketId: selectedTicketId });
+        trpcUtils.admin.tickets.invalidate();
+      }
+    },
+    onError: (err) => {
+      toast.error(err.message || (isBn ? "উত্তর পাঠাতে সমস্যা হয়েছে" : "Failed to send reply"));
+    },
+  });
+
+  const adminUpdateStatusMutation = trpc.admin.updateTicketStatus.useMutation({
+    onSuccess: () => {
+      toast.success(isBn ? "টিকেটের স্ট্যাটাস পরিবর্তন করা হয়েছে" : "Ticket status updated successfully");
+      if (selectedTicketId) {
+        refetchActiveTicket();
+        refetchAdminTickets();
+        trpcUtils.support.getTicket.invalidate({ ticketId: selectedTicketId });
+        trpcUtils.admin.tickets.invalidate();
+      }
+    },
+    onError: (err) => {
+      toast.error(err.message || (isBn ? "স্ট্যাটাস পরিবর্তন ব্যর্থ হয়েছে" : "Failed to update status"));
     },
   });
 
@@ -326,6 +377,29 @@ export default function Support() {
     return true;
   });
 
+  const filteredAdminTickets = (adminTicketsList || []).filter((t: any) => {
+    if (adminStatusFilter !== "all" && t.status !== adminStatusFilter) return false;
+    if (adminCategoryFilter !== "all" && t.category !== adminCategoryFilter) return false;
+    if (adminSearchFilter.trim()) {
+      const q = adminSearchFilter.toLowerCase();
+      return (
+        t.ticketCode?.toLowerCase().includes(q) ||
+        t.subject?.toLowerCase().includes(q) ||
+        t.category?.toLowerCase().includes(q) ||
+        t.message?.toLowerCase().includes(q) ||
+        t.userName?.toLowerCase().includes(q) ||
+        t.userEmail?.toLowerCase().includes(q) ||
+        String(t.id).includes(q) ||
+        String(t.userId).includes(q)
+      );
+    }
+    return true;
+  });
+
+  const adminOpenCount = (adminTicketsList || []).filter(
+    (t: any) => t.status === "open" || t.status === "in_progress"
+  ).length;
+
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 transition-colors duration-300 dark:bg-[#070e1b] dark:text-slate-100">
       {/* ========================================================================= */}
@@ -456,21 +530,21 @@ export default function Support() {
       {/* ========================================================================= */}
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Navigation Tabs */}
-        <div className="flex rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-900 max-w-xl mx-auto mb-8">
+        <div className={`flex flex-wrap sm:flex-nowrap rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-900 ${isAdmin ? "max-w-3xl" : "max-w-xl"} mx-auto mb-8 gap-1.5`}>
           <button
             onClick={() => {
               setActiveTab("create");
               setSelectedTicketId(null);
               setTrackedData(null);
             }}
-            className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs sm:text-sm font-extrabold transition-all duration-200 ${
+            className={`flex-1 min-w-[120px] flex items-center justify-center gap-1.5 rounded-xl py-2.5 px-2 text-xs sm:text-sm font-extrabold transition-all duration-200 ${
               activeTab === "create"
                 ? "bg-[#081833] text-white shadow-sm dark:bg-sky-500 dark:text-slate-950"
                 : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
             }`}
           >
             <Plus size={16} />
-            <span>{isBn ? "নতুন টিকেট তৈরি করুন" : "Create New Ticket"}</span>
+            <span>{isBn ? "নতুন টিকেট" : "New Ticket"}</span>
           </button>
 
           <button
@@ -479,14 +553,14 @@ export default function Support() {
               setSelectedTicketId(null);
               setTrackedData(null);
             }}
-            className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs sm:text-sm font-extrabold transition-all duration-200 relative ${
+            className={`flex-1 min-w-[120px] flex items-center justify-center gap-1.5 rounded-xl py-2.5 px-2 text-xs sm:text-sm font-extrabold transition-all duration-200 relative ${
               activeTab === "my_tickets"
                 ? "bg-[#081833] text-white shadow-sm dark:bg-sky-500 dark:text-slate-950"
                 : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
             }`}
           >
             <Ticket size={16} />
-            <span>{isBn ? "আমার টিকেটসমূহ" : "My Tickets"}</span>
+            <span>{isBn ? "আমার টিকেট" : "My Tickets"}</span>
             {user && (myTicketsList?.length || 0) > 0 && (
               <span className="ml-1 flex size-5 items-center justify-center rounded-full bg-sky-500 text-[10px] font-black text-white dark:bg-[#081833]">
                 {myTicketsList?.length}
@@ -499,15 +573,42 @@ export default function Support() {
               setActiveTab("track");
               setSelectedTicketId(null);
             }}
-            className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs sm:text-sm font-extrabold transition-all duration-200 ${
+            className={`flex-1 min-w-[120px] flex items-center justify-center gap-1.5 rounded-xl py-2.5 px-2 text-xs sm:text-sm font-extrabold transition-all duration-200 ${
               activeTab === "track"
                 ? "bg-[#081833] text-white shadow-sm dark:bg-sky-500 dark:text-slate-950"
                 : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
             }`}
           >
             <Search size={16} />
-            <span>{isBn ? "টিকেট ট্র্যাক করুন" : "Track Ticket"}</span>
+            <span>{isBn ? "ট্র্যাক করুন" : "Track"}</span>
           </button>
+
+          {isAdmin && (
+            <button
+              onClick={() => {
+                setActiveTab("admin_desk");
+                setSelectedTicketId(null);
+                setTrackedData(null);
+              }}
+              className={`flex-1 min-w-[140px] flex items-center justify-center gap-1.5 rounded-xl py-2.5 px-2 text-xs sm:text-sm font-extrabold transition-all duration-200 relative ${
+                activeTab === "admin_desk"
+                  ? "bg-sky-500 text-slate-950 shadow-sm font-black ring-2 ring-sky-400/40"
+                  : "bg-sky-50 text-sky-800 hover:bg-sky-100 dark:bg-sky-950/40 dark:text-sky-300 dark:hover:bg-sky-950/70"
+              }`}
+            >
+              <ShieldCheck size={16} className={activeTab === "admin_desk" ? "text-slate-950" : "text-sky-500"} />
+              <span>{isBn ? "অ্যাডমিন ডেস্ক" : "Admin Desk"}</span>
+              {adminOpenCount > 0 && (
+                <span
+                  className={`ml-1 flex size-5 items-center justify-center rounded-full text-[10px] font-black ${
+                    activeTab === "admin_desk" ? "bg-slate-950 text-white" : "bg-sky-500 text-white"
+                  }`}
+                >
+                  {adminOpenCount}
+                </span>
+              )}
+            </button>
+          )}
         </div>
 
         {/* ========================================================================= */}
@@ -810,14 +911,35 @@ export default function Support() {
                     ticket={activeTicketData.ticket}
                     replies={activeTicketData.replies}
                     isBn={isBn}
-                    onReply={(msg, att) => {
-                      replyMutation.mutate({
-                        ticketId: activeTicketData.ticket.id,
-                        message: msg,
-                        attachmentUrl: att,
-                      });
+                    isAdmin={isAdmin}
+                    onReply={(msg, att, status) => {
+                      if (isAdmin) {
+                        adminReplyMutation.mutate({
+                          ticketId: activeTicketData.ticket.id,
+                          message: msg,
+                          status: (status as any) || "waiting_user",
+                          attachmentUrl: att,
+                        });
+                      } else {
+                        replyMutation.mutate({
+                          ticketId: activeTicketData.ticket.id,
+                          message: msg,
+                          attachmentUrl: att,
+                        });
+                      }
                     }}
-                    isReplying={replyMutation.isPending}
+                    isReplying={isAdmin ? adminReplyMutation.isPending : replyMutation.isPending}
+                    onUpdateStatus={
+                      isAdmin
+                        ? (status) => {
+                            adminUpdateStatusMutation.mutate({
+                              ticketId: activeTicketData.ticket.id,
+                              status: status as any,
+                            });
+                          }
+                        : undefined
+                    }
+                    isUpdatingStatus={adminUpdateStatusMutation.isPending}
                   />
                 ) : (
                   <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center dark:border-slate-800 dark:bg-slate-900">
@@ -1090,6 +1212,235 @@ export default function Support() {
             )}
           </div>
         )}
+
+        {/* ========================================================================= */}
+        {/* TAB 4: ADMIN DESK (STAFF ONLY) */}
+        {/* ========================================================================= */}
+        {activeTab === "admin_desk" && isAdmin && (
+          <div className="animate-in fade-in duration-300">
+            {selectedTicketId ? (
+              <div className="mx-auto max-w-3xl">
+                <button
+                  onClick={() => setSelectedTicketId(null)}
+                  className="mb-4 flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                >
+                  <ArrowLeft size={16} />
+                  <span>{isBn ? "অ্যাডমিন ডেস্ক তালিকায় ফিরে যান" : "Back to Admin Desk"}</span>
+                </button>
+
+                {isLoadingActiveTicket ? (
+                  <div className="flex items-center justify-center p-12 text-slate-400">
+                    <RefreshCw size={24} className="animate-spin mr-2" />
+                    <span>{isBn ? "টিকেট লোড হচ্ছে..." : "Loading ticket conversation..."}</span>
+                  </div>
+                ) : activeTicketData?.ticket ? (
+                  <TicketConversationThread
+                    ticket={activeTicketData.ticket}
+                    replies={activeTicketData.replies}
+                    isBn={isBn}
+                    isAdmin={true}
+                    onReply={(msg, att, status) => {
+                      adminReplyMutation.mutate({
+                        ticketId: activeTicketData.ticket.id,
+                        message: msg,
+                        status: (status as any) || "waiting_user",
+                        attachmentUrl: att,
+                      });
+                    }}
+                    isReplying={adminReplyMutation.isPending}
+                    onUpdateStatus={(status) => {
+                      adminUpdateStatusMutation.mutate({
+                        ticketId: activeTicketData.ticket.id,
+                        status: status as any,
+                      });
+                    }}
+                    isUpdatingStatus={adminUpdateStatusMutation.isPending}
+                  />
+                ) : (
+                  <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center dark:border-slate-800 dark:bg-slate-900">
+                    {isBn ? "টিকেট লোড করা যায়নি।" : "Could not load ticket details."}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Admin Metrics Cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 shadow-sm">
+                    <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase">
+                      {isBn ? "মোট টিকেট" : "Total Tickets"}
+                    </div>
+                    <div className="mt-1 text-2xl font-black text-slate-900 dark:text-white">
+                      {adminTicketsList?.length || 0}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-sky-200 bg-sky-50/60 p-4 dark:border-sky-900/40 dark:bg-sky-950/30 shadow-sm">
+                    <div className="text-[11px] font-bold text-sky-700 dark:text-sky-300 uppercase flex items-center gap-1.5">
+                      <span className="size-2 rounded-full bg-sky-500 animate-pulse" />
+                      {isBn ? "খোলা (Open)" : "Open"}
+                    </div>
+                    <div className="mt-1 text-2xl font-black text-sky-700 dark:text-sky-300">
+                      {(adminTicketsList || []).filter((t: any) => t.status === "open").length}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-900/40 dark:bg-amber-950/30 shadow-sm">
+                    <div className="text-[11px] font-bold text-amber-700 dark:text-amber-300 uppercase">
+                      {isBn ? "চলমান (In Progress)" : "In Progress"}
+                    </div>
+                    <div className="mt-1 text-2xl font-black text-amber-700 dark:text-amber-300">
+                      {(adminTicketsList || []).filter((t: any) => t.status === "in_progress").length}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-purple-200 bg-purple-50/60 p-4 dark:border-purple-900/40 dark:bg-purple-950/30 shadow-sm">
+                    <div className="text-[11px] font-bold text-purple-700 dark:text-purple-300 uppercase">
+                      {isBn ? "শিক্ষার্থীর অপেক্ষায়" : "Waiting User"}
+                    </div>
+                    <div className="mt-1 text-2xl font-black text-purple-700 dark:text-purple-300">
+                      {(adminTicketsList || []).filter((t: any) => t.status === "waiting_user").length}
+                    </div>
+                  </div>
+
+                  <div className="col-span-2 sm:col-span-1 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/30 shadow-sm">
+                    <div className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 uppercase">
+                      {isBn ? "সমাধান (Resolved)" : "Resolved"}
+                    </div>
+                    <div className="mt-1 text-2xl font-black text-emerald-700 dark:text-emerald-300">
+                      {(adminTicketsList || []).filter((t: any) => t.status === "resolved").length}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Filters and Search */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 shadow-sm">
+                  {/* Status Pills */}
+                  <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
+                    {[
+                      { key: "all", labelEn: "All", labelBn: "সব" },
+                      { key: "open", labelEn: "Open", labelBn: "খোলা" },
+                      { key: "in_progress", labelEn: "In Progress", labelBn: "চলমান" },
+                      { key: "waiting_user", labelEn: "Waiting", labelBn: "অপেক্ষমান" },
+                      { key: "resolved", labelEn: "Resolved", labelBn: "সমাধান" },
+                      { key: "closed", labelEn: "Closed", labelBn: "বন্ধ" },
+                    ].map((f) => (
+                      <button
+                        key={f.key}
+                        onClick={() => setAdminStatusFilter(f.key)}
+                        className={`rounded-xl px-3 py-1 text-xs font-bold transition ${
+                          adminStatusFilter === f.key
+                            ? "bg-sky-500 text-slate-950 font-black"
+                            : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400"
+                        }`}
+                      >
+                        {isBn ? f.labelBn : f.labelEn}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Search Input */}
+                  <div className="relative w-full sm:w-72">
+                    <Search size={14} className="absolute top-1/2 left-3 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder={isBn ? "শিক্ষার্থী, আইডি বা বিষয়ে খুঁজুন..." : "Search by student, ID, subject..."}
+                      value={adminSearchFilter}
+                      onChange={(e) => setAdminSearchFilter(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 py-1.5 pr-3 pl-8 text-xs font-medium outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Ticket List */}
+                {isLoadingAdminTickets ? (
+                  <div className="flex items-center justify-center p-12 text-slate-400">
+                    <RefreshCw size={24} className="animate-spin mr-2" />
+                    <span>{isBn ? "টিকেট লোড হচ্ছে..." : "Loading all tickets..."}</span>
+                  </div>
+                ) : filteredAdminTickets.length === 0 ? (
+                  <div className="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center text-slate-500 dark:border-slate-800 dark:bg-slate-900">
+                    <Ticket size={40} className="mx-auto text-slate-300 dark:text-slate-700 mb-3" />
+                    <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">
+                      {isBn ? "কোনো টিকেট পাওয়া যায়নি" : "No Tickets Found"}
+                    </h3>
+                    <p className="mt-1 text-xs text-slate-400">
+                      {isBn ? "এই ফিল্টারে কোনো টিকেট নেই।" : "No tickets match your filter criteria."}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3">
+                    {filteredAdminTickets.map((t: any) => (
+                      <div
+                        key={t.id}
+                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm transition hover:border-sky-400 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-sky-500"
+                      >
+                        <div className="space-y-1.5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-mono text-xs font-black text-sky-600 dark:text-sky-400">
+                              {t.ticketCode}
+                            </span>
+                            <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                              {t.category}
+                            </span>
+                            {renderStatusBadge(t.status)}
+                          </div>
+
+                          <h4 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
+                            {t.subject}
+                          </h4>
+
+                          <p className="line-clamp-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                            {t.message}
+                          </p>
+
+                          <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-400 pt-1">
+                            <span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                              <UserIcon size={12} />
+                              {t.userName} ({t.userEmail})
+                            </span>
+                            <span>•</span>
+                            <span>
+                              {new Date(t.createdAt).toLocaleDateString()}{" "}
+                              {new Date(t.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-2 self-end sm:self-center shrink-0">
+                          {t.status !== "resolved" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                adminUpdateStatusMutation.mutate({
+                                  ticketId: t.id,
+                                  status: "resolved",
+                                })
+                              }
+                              className="h-8 text-xs font-bold text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                            >
+                              <Check size={13} className="mr-1" />
+                              <span>{isBn ? "সমাধান" : "Resolve"}</span>
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            onClick={() => setSelectedTicketId(t.id)}
+                            className="h-8 gap-1.5 text-xs font-black bg-sky-500 text-slate-950 hover:bg-sky-400 shadow-sm"
+                          >
+                            <MessageSquare size={13} />
+                            <span>{isBn ? "রিপ্লাই দিন" : "View & Reply"}</span>
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </main>
     </div>
   );
@@ -1103,8 +1454,11 @@ interface TicketConversationProps {
   ticket: any;
   replies: any[];
   isBn: boolean;
-  onReply: (message: string, attachmentUrl?: string) => void;
+  onReply: (message: string, attachmentUrl?: string, status?: string) => void;
   isReplying: boolean;
+  isAdmin?: boolean;
+  onUpdateStatus?: (status: "open" | "in_progress" | "waiting_user" | "resolved" | "closed") => void;
+  isUpdatingStatus?: boolean;
 }
 
 function TicketConversationThread({
@@ -1113,8 +1467,12 @@ function TicketConversationThread({
   isBn,
   onReply,
   isReplying,
+  isAdmin = false,
+  onUpdateStatus,
+  isUpdatingStatus = false,
 }: TicketConversationProps) {
   const [replyText, setReplyText] = useState("");
+  const [replyStatus, setReplyStatus] = useState<string>("waiting_user");
   const [replyFileBase64, setReplyFileBase64] = useState<string | null>(null);
   const [replyFileName, setReplyFileName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -1122,7 +1480,7 @@ function TicketConversationThread({
   const handleReplySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!replyText.trim()) return;
-    onReply(replyText.trim(), replyFileBase64 || undefined);
+    onReply(replyText.trim(), replyFileBase64 || undefined, isAdmin ? replyStatus : undefined);
     setReplyText("");
     setReplyFileBase64(null);
     setReplyFileName(null);
@@ -1191,9 +1549,40 @@ function TicketConversationThread({
             </h2>
           </div>
 
-          <div className="text-right text-xs text-slate-400">
-            <div>{new Date(ticket.createdAt).toLocaleDateString()}</div>
-            <div className="text-[11px]">{new Date(ticket.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
+          <div className="flex flex-col sm:items-end gap-1 text-xs text-slate-400">
+            <div className="text-right">
+              <div>{new Date(ticket.createdAt).toLocaleDateString()}</div>
+              <div className="text-[11px]">{new Date(ticket.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
+            </div>
+
+            {isAdmin && onUpdateStatus && (
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                {ticket.status !== "resolved" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={isUpdatingStatus}
+                    onClick={() => onUpdateStatus("resolved")}
+                    className="h-7 px-2 text-[11px] font-bold border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                  >
+                    <Check size={12} className="mr-1" />
+                    <span>{isBn ? "সমাধান" : "Resolve"}</span>
+                  </Button>
+                )}
+                {ticket.status === "open" && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={isUpdatingStatus}
+                    onClick={() => onUpdateStatus("in_progress")}
+                    className="h-7 px-2 text-[11px] font-bold border-sky-500/40 text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/40"
+                  >
+                    <Clock size={12} className="mr-1" />
+                    <span>{isBn ? "চলমান" : "In Progress"}</span>
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -1320,14 +1709,39 @@ function TicketConversationThread({
         </div>
       ) : null}
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-3">
+        {isAdmin && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-xl border border-sky-200 bg-sky-50/80 p-3 text-xs dark:border-sky-900/50 dark:bg-sky-950/40">
+            <div className="flex items-center gap-2 text-sky-900 dark:text-sky-200 font-bold">
+              <ShieldCheck size={16} className="text-sky-600 dark:text-sky-400 shrink-0" />
+              <span>{isBn ? "অফিশিয়াল সাপোর্ট স্পেশালিস্ট হিসেবে উত্তর দিচ্ছেন" : "Replying as Official Support Specialist"}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                {isBn ? "উত্তরের পর স্ট্যাটাস:" : "Status after reply:"}
+              </span>
+              <select
+                value={replyStatus}
+                onChange={(e) => setReplyStatus(e.target.value)}
+                className="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              >
+                <option value="waiting_user">{isBn ? "শিক্ষার্থীর উত্তরের অপেক্ষায়" : "Waiting for User"}</option>
+                <option value="in_progress">{isBn ? "কাজ চলমান (In Progress)" : "In Progress"}</option>
+                <option value="resolved">{isBn ? "সমাধান হয়েছে (Resolved)" : "Mark Resolved"}</option>
+                <option value="closed">{isBn ? "টিকেট বন্ধ (Closed)" : "Close Ticket"}</option>
+                <option value="open">{isBn ? "উন্মুক্ত রাখুন (Keep Open)" : "Keep Open"}</option>
+              </select>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleReplySubmit} className="space-y-3">
           <textarea
             rows={3}
             placeholder={
-              isBn
-                ? "আপনার উত্তর বা অতিরিক্ত তথ্য এখানে লিখুন..."
-                : "Type your reply or additional information here..."
+              isAdmin
+                ? (isBn ? "শিক্ষার্থীর প্রশ্নের সমাধান বা অফিসিয়াল উত্তর এখানে লিখুন..." : "Type your official response to this student inquiry here...")
+                : (isBn ? "আপনার উত্তর বা অতিরিক্ত তথ্য এখানে লিখুন..." : "Type your reply or additional information here...")
             }
             value={replyText}
             onChange={(e) => setReplyText(e.target.value)}

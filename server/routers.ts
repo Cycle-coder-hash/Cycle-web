@@ -1199,6 +1199,18 @@ export const appRouter = router({
         await updateTicketStatus(input.ticketId, targetStatus, ctx.user.name || "Staff");
         return { success: true, reply };
       }),
+    updateTicketStatus: supportProcedure
+      .input(
+        z.object({
+          ticketId: z.number(),
+          status: z.enum(["open", "in_progress", "waiting_user", "resolved", "closed"]),
+          assignedStaff: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        await updateTicketStatus(input.ticketId, input.status, input.assignedStaff || ctx.user.name || "Staff");
+        return { success: true };
+      }),
     users: supportProcedure.query(async () => {
       const usersList = await listAllUsers();
       const ordersList = await listAllOrders();
