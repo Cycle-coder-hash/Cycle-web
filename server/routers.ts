@@ -70,6 +70,7 @@ import {
   createFreeEbook,
   updateFreeEbook,
   deleteFreeEbook,
+  getCustomerLibraryPdfs,
   getDisciplineSchedule,
   addDisciplineTask,
   updateDisciplineTask,
@@ -416,6 +417,13 @@ export const appRouter = router({
   customer: router({
     freeEbooks: protectedProcedure.query(async () => {
       return await listFreeEbooks(false);
+    }),
+    myLibrary: protectedProcedure.query(async ({ ctx }) => {
+      return await getCustomerLibraryPdfs({
+        id: ctx.user.id,
+        openId: ctx.user.openId,
+        email: ctx.user.email || undefined,
+      });
     }),
     downloadEbook: protectedProcedure
       .input(z.object({ id: z.number() }))
@@ -1313,6 +1321,9 @@ export const appRouter = router({
           fileName: z.string().nullable().optional(),
           fileSize: z.string().nullable().optional(),
           isPublished: z.boolean().optional(),
+          isFree: z.boolean().optional(),
+          price: z.string().optional(),
+          coverImageUrl: z.string().nullable().optional(),
         })
       )
       .mutation(async ({ input }) => {
@@ -1334,6 +1345,9 @@ export const appRouter = router({
           fileName: z.string().nullable().optional(),
           fileSize: z.string().nullable().optional(),
           isPublished: z.boolean().optional(),
+          isFree: z.boolean().optional(),
+          price: z.string().optional(),
+          coverImageUrl: z.string().nullable().optional(),
         })
       )
       .mutation(async ({ input }) => {

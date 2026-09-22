@@ -56,114 +56,7 @@ import { sendAccessEmail } from "./email";
 let _db: any = null;
 let _pgPool: pg.Pool | null = null;
 
-export const DEFAULT_FREE_EBOOKS: any[] = [
-  {
-    id: 1,
-    titleEn: "1. Candle Range Theory (CRT) Master Cheat-Sheet",
-    titleBn: "১. ক্যান্ডেল রেঞ্জ থিওরি (CRT) মাস্টার চিট-শীট",
-    subtitleEn: "Complete 4-Step Algorithmic Cycle & Invalidation Points",
-    subtitleBn: "সম্পূর্ণ ৪-ধাপ অ্যালগরিদমিক সাইকেল ও ইনভ্যালিডেশন পয়েন্ট",
-    category: "Algorithm",
-    pages: 18,
-    keyConcepts: [
-      "Phase 1: Asian Session Range Initiation (00:00 - 06:00 GMT)",
-      "Phase 2: London Open Judas Sweep (07:30 - 09:00 GMT)",
-      "Phase 3: NY Open Real Institutional Expansion (13:00 - 15:30 GMT)",
-      "Phase 4: Targeted Distribution into HTF Pool",
-    ],
-    fileUrl: null,
-    fileName: "01_Candle_Range_Theory_CRT_Master_CheatSheet.pdf",
-    fileSize: "2.4 MB",
-    isPublished: true,
-    position: 1,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: 2,
-    titleEn: "2. Liquidity Engineering & Stop Hunt Identification",
-    titleBn: "২. লিকুইডিটি ইঞ্জিনিয়ারিং ও স্টপ হান্ট আইডেন্টিফিকেশন",
-    subtitleEn: "BSL, SSL, Internal vs External Liquidity Traps",
-    subtitleBn: "BSL, SSL এবং ইন্টারনাল বনাম এক্সটারনাল লিকুইডিটি ট্র্যাপ",
-    category: "Liquidity",
-    pages: 24,
-    keyConcepts: [
-      "Buy-Side Liquidity (BSL) rests above swing highs & equal highs.",
-      "Sell-Side Liquidity (SSL) rests below swing lows & trendline support.",
-      "Inducement vs Valid Breakout confirmation formula.",
-    ],
-    fileUrl: null,
-    fileName: "02_Liquidity_Engineering_Stop_Hunt.pdf",
-    fileSize: "3.1 MB",
-    isPublished: true,
-    position: 2,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: 3,
-    titleEn: "3. Institutional Order Block (OB) Validation Matrix",
-    titleBn: "৩. ইনস্টিটিউশনাল অর্ডার ব্লক (OB) ভ্যালিডেশন ম্যাট্রিক্স",
-    subtitleEn: "Distinguishing 80%+ Win Rate OBs from Fake SMC Zones",
-    subtitleBn: "৮০%+ উইন রেটের জেনুইন অর্ডার ব্লক শনাক্তকরণ পদ্ধতি",
-    category: "SMC Strategy",
-    pages: 20,
-    keyConcepts: [
-      "Rule 1: Must have swept liquidity prior to creation.",
-      "Rule 2: Must have caused a Market Structure Shift (MSS).",
-      "Rule 3: Must contain an imbalance / Fair Value Gap in the displacement.",
-    ],
-    fileUrl: null,
-    fileName: "03_Order_Block_Validation_Matrix.pdf",
-    fileSize: "2.8 MB",
-    isPublished: true,
-    position: 3,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: 4,
-    titleEn: "4. Fair Value Gap (FVG) & Volume Inefficiency Guide",
-    titleBn: "৪. ফেয়ার ভ্যালু গ্যাপ (FVG) ও ভলিউম ইনফিশিয়েন্সি গাইড",
-    subtitleEn: "Consequent Encroachment & Inverse FVG Trading Models",
-    subtitleBn: "কনসিকুয়েন্ট এনক্রোচমেন্ট ও ইনভার্স এফভিজি ট্রেডিং মডেল",
-    category: "Price Action",
-    pages: 16,
-    keyConcepts: [
-      "3-Candle Imbalance calculation formula.",
-      "Consequent Encroachment (50% midpoint) entry technique.",
-      "Inverse FVG (IFVG) as continuation confirmation.",
-    ],
-    fileUrl: null,
-    fileName: "04_Fair_Value_Gap_FVG_Guide.pdf",
-    fileSize: "1.9 MB",
-    isPublished: true,
-    position: 4,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-  {
-    id: 5,
-    titleEn: "5. Multi-Timeframe Top-Down Sniper Execution Blueprint",
-    titleBn: "৫. মাল্টি-টাইমফ্রেম টপ-ডাউন স্নাইপার এক্সিকিউশন ব্লুপ্রিন্ট",
-    subtitleEn: "Daily → 1H → 5m/1m Confirmation Sequences",
-    subtitleBn: "ডেইলি থেকে ১-ঘণ্টা এবং ৫-মিনিট / ১-মিনিট এন্ট্রি কনফার্মেশন",
-    category: "Execution",
-    pages: 22,
-    keyConcepts: [
-      "Step 1: Daily Candle Narrative & Liquidity Draw.",
-      "Step 2: 1H Point of Interest (POI) & Zone Refinement.",
-      "Step 3: 1m MSS + FVG entry for 5-10 pip stop loss.",
-    ],
-    fileUrl: null,
-    fileName: "05_Multi_Timeframe_Sniper_Execution.pdf",
-    fileSize: "2.7 MB",
-    isPublished: true,
-    position: 5,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  },
-];
+export const DEFAULT_FREE_EBOOKS: any[] = [];
 
 // In-memory runtime fallback (strictly initialized with seed data where appropriate)
 const inMemoryUsers: Map<string, any> = new Map();
@@ -175,7 +68,7 @@ const inMemoryProgress: any[] = [];
 const inMemoryTickets: any[] = [];
 const inMemoryReplies: any[] = [];
 const inMemoryAuditEvents: any[] = [];
-const inMemoryFreeEbooks: any[] = [...DEFAULT_FREE_EBOOKS];
+const inMemoryFreeEbooks: any[] = [];
 
 export const DEFAULT_DISCIPLINE_TASKS = [
   { title: "Wake up at 6:00 AM & Hydrate", time: "06:00 AM", isMandatory: true, isTrackable: true, orderIndex: 1 },
@@ -3265,6 +3158,23 @@ export async function listAuditLogs() {
 }
 
 export async function listFreeEbooks(includeUnpublished = false) {
+  // 1. Primary source: Supabase settings key 'free_ebooks', which is the persistent store used by Admin Panel
+  try {
+    const rawSetting = await getSetting("free_ebooks");
+    if (rawSetting) {
+      const parsed = JSON.parse(rawSetting);
+      if (Array.isArray(parsed)) {
+        const sorted = [...parsed].sort((a: any, b: any) => (a.position || 0) - (b.position || 0));
+        return includeUnpublished
+          ? sorted
+          : sorted.filter((b: any) => b.isPublished !== false);
+      }
+    }
+  } catch (err) {
+    console.warn("[listFreeEbooks getSetting error]:", err);
+  }
+
+  // 2. Postgres table if configured
   const db = await getDb();
   if (db) {
     try {
@@ -3273,12 +3183,10 @@ export async function listFreeEbooks(includeUnpublished = false) {
         : db.select().from(freeEbooks).where(eq(freeEbooks.isPublished, true)).orderBy(asc(freeEbooks.position));
       const rows = await query;
       if (rows && rows.length > 0) return rows;
-    } catch (err) {
-      console.warn("[listFreeEbooks error, using fallback]:", err);
-    }
+    } catch (err) {}
   }
 
-  // Supabase live database sync
+  // 3. Supabase direct table query
   try {
     let query = supabaseServer.from("freeEbooks").select("*").order("position", { ascending: true });
     if (!includeUnpublished) {
@@ -3292,38 +3200,33 @@ export async function listFreeEbooks(includeUnpublished = false) {
         updatedAt: b.updatedAt ? new Date(b.updatedAt) : new Date(),
       }));
     }
-  } catch (err) {
-    console.warn("[listFreeEbooks Supabase error]:", err);
-  }
+  } catch (err) {}
 
+  // 4. In-memory runtime fallback
   return includeUnpublished
     ? [...inMemoryFreeEbooks]
-    : inMemoryFreeEbooks.filter((b) => b.isPublished);
+    : inMemoryFreeEbooks.filter((b) => b.isPublished !== false);
 }
 
 export async function getFreeEbookById(id: number) {
+  const all = await listFreeEbooks(true);
+  const found = all.find((b: any) => Number(b.id) === Number(id));
+  if (found) return found;
+
   const db = await getDb();
   if (db) {
     try {
       const rows = await db.select().from(freeEbooks).where(eq(freeEbooks.id, id)).limit(1);
       if (rows && rows[0]) return rows[0];
-    } catch (err) {
-      console.warn("[getFreeEbookById error]:", err);
-    }
+    } catch (err) {}
   }
 
   try {
     const { data, error } = await supabaseServer.from("freeEbooks").select("*").eq("id", id).maybeSingle();
-    if (!error && data) {
-      return {
-        ...data,
-        createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
-        updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
-      };
-    }
+    if (!error && data) return data;
   } catch (err) {}
 
-  return inMemoryFreeEbooks.find((b) => b.id === id) || null;
+  return inMemoryFreeEbooks.find((b) => Number(b.id) === Number(id)) || null;
 }
 
 export async function createFreeEbook(data: {
@@ -3338,8 +3241,11 @@ export async function createFreeEbook(data: {
   fileName?: string | null;
   fileSize?: string | null;
   isPublished?: boolean;
+  isFree?: boolean;
+  price?: string;
+  coverImageUrl?: string | null;
 }) {
-  const newId = ebookAutoId++;
+  const newId = Date.now();
   const record: any = {
     id: newId,
     titleEn: data.titleEn,
@@ -3347,30 +3253,60 @@ export async function createFreeEbook(data: {
     subtitleEn: data.subtitleEn,
     subtitleBn: data.subtitleBn || data.subtitleEn,
     category: data.category || "Institutional",
-    pages: data.pages || 10,
+    pages: data.pages || 15,
     keyConcepts: data.keyConcepts || [],
     fileUrl: data.fileUrl || null,
     fileName: data.fileName || `${data.titleEn.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`,
     fileSize: data.fileSize || "2.5 MB",
     isPublished: data.isPublished !== undefined ? data.isPublished : true,
+    isFree: data.isFree !== undefined ? data.isFree : (Number(data.price) === 0 || !data.price),
+    price: data.price ? String(data.price) : "0",
+    coverImageUrl: data.coverImageUrl || null,
     position: inMemoryFreeEbooks.length + 1,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 
+  // 1. Persist to Supabase settings key: "free_ebooks"
+  try {
+    let existing: any[] = [];
+    const rawSetting = await getSetting("free_ebooks");
+    if (rawSetting) {
+      const parsed = JSON.parse(rawSetting);
+      if (Array.isArray(parsed)) existing = parsed;
+    }
+    existing.unshift(record);
+    await setSetting("free_ebooks", JSON.stringify(existing));
+  } catch (err) {
+    console.warn("[createFreeEbook settings error]:", err);
+  }
+
+  // 2. Drizzle DB insert
   const db = await getDb();
   if (db) {
     try {
       await db.insert(freeEbooks).values({
-        ...record,
+        id: record.id,
+        titleEn: record.titleEn,
+        titleBn: record.titleBn,
+        subtitleEn: record.subtitleEn,
+        subtitleBn: record.subtitleBn,
+        category: record.category,
+        pages: record.pages,
+        keyConcepts: record.keyConcepts,
+        fileUrl: record.fileUrl,
+        fileName: record.fileName,
+        fileSize: record.fileSize,
+        isPublished: record.isPublished,
+        position: record.position,
       });
-    } catch (err) {
-      console.warn("[createFreeEbook db error, stored in memory]:", err);
-    }
+    } catch (err) {}
   }
 
+  // 3. Supabase table insert
   try {
     await supabaseServer.from("freeEbooks").insert({
+      id: record.id,
       titleEn: record.titleEn,
       titleBn: record.titleBn,
       subtitleEn: record.subtitleEn,
@@ -3383,76 +3319,221 @@ export async function createFreeEbook(data: {
       fileSize: record.fileSize,
       isPublished: record.isPublished,
       position: record.position,
-      createdAt: record.createdAt.toISOString(),
-      updatedAt: record.updatedAt.toISOString(),
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
     });
-  } catch (supaErr) {
-    console.warn("[createFreeEbook Supabase error]:", supaErr);
-  }
+  } catch (supaErr) {}
 
-  inMemoryFreeEbooks.push(record);
+  inMemoryFreeEbooks.unshift(record);
   return record;
 }
 
 export async function updateFreeEbook(id: number, data: Partial<any>) {
   const now = new Date();
+
+  // 1. Update in Supabase settings
+  try {
+    const rawSetting = await getSetting("free_ebooks");
+    if (rawSetting) {
+      const parsed = JSON.parse(rawSetting);
+      if (Array.isArray(parsed)) {
+        const idx = parsed.findIndex((b: any) => Number(b.id) === Number(id));
+        if (idx !== -1) {
+          parsed[idx] = {
+            ...parsed[idx],
+            ...data,
+            updatedAt: now.toISOString(),
+          };
+          await setSetting("free_ebooks", JSON.stringify(parsed));
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("[updateFreeEbook settings error]:", err);
+  }
+
+  // 2. Drizzle update
   const db = await getDb();
   if (db) {
     try {
-      await db
-        .update(freeEbooks)
-        .set({
-          ...data,
-          updatedAt: now,
-        })
-        .where(eq(freeEbooks.id, id));
-    } catch (err) {
-      console.warn("[updateFreeEbook db error]:", err);
-    }
+      await db.update(freeEbooks).set({ ...data, updatedAt: now }).where(eq(freeEbooks.id, id));
+    } catch (err) {}
   }
 
+  // 3. Supabase direct table update
   try {
-    await supabaseServer
-      .from("freeEbooks")
-      .update({
-        ...data,
-        updatedAt: now.toISOString(),
-      })
-      .eq("id", id);
-  } catch (supaErr) {
-    console.warn("[updateFreeEbook Supabase error]:", supaErr);
-  }
+    await supabaseServer.from("freeEbooks").update({ ...data, updatedAt: now.toISOString() }).eq("id", id);
+  } catch (supaErr) {}
 
-  const item = inMemoryFreeEbooks.find((b) => b.id === id);
+  const item = inMemoryFreeEbooks.find((b) => Number(b.id) === Number(id));
   if (item) {
     Object.assign(item, data, { updatedAt: now });
     return item;
   }
-  return null;
+  return { id, ...data };
 }
 
 export async function deleteFreeEbook(id: number) {
+  // 1. Delete from Supabase settings
+  try {
+    const rawSetting = await getSetting("free_ebooks");
+    if (rawSetting) {
+      const parsed = JSON.parse(rawSetting);
+      if (Array.isArray(parsed)) {
+        const filtered = parsed.filter((b: any) => Number(b.id) !== Number(id));
+        await setSetting("free_ebooks", JSON.stringify(filtered));
+      }
+    }
+  } catch (err) {
+    console.warn("[deleteFreeEbook settings error]:", err);
+  }
+
+  // 2. Drizzle delete
   const db = await getDb();
   if (db) {
     try {
       await db.delete(freeEbooks).where(eq(freeEbooks.id, id));
-    } catch (err) {
-      console.warn("[deleteFreeEbook db error]:", err);
+    } catch (err) {}
+  }
+
+  // 3. Supabase direct table delete
+  try {
+    await supabaseServer.from("freeEbooks").delete().eq("id", id);
+  } catch (supaErr) {}
+
+  const idx = inMemoryFreeEbooks.findIndex((b) => Number(b.id) === Number(id));
+  if (idx !== -1) {
+    inMemoryFreeEbooks.splice(idx, 1);
+  }
+  return true;
+}
+
+export async function getCustomerLibraryPdfs(
+  userIdentifier: number | { id?: number; openId?: string; email?: string }
+) {
+  const allPdfs = await listFreeEbooks(false);
+  if (!allPdfs || allPdfs.length === 0) return [];
+
+  const [ordersList, entitlementsList] = await Promise.all([
+    listOrdersForUser(userIdentifier),
+    listEntitlements(userIdentifier),
+  ]);
+
+  const approvedOrders = (ordersList || []).filter(
+    (o: any) =>
+      o.paymentStatus === "approved" ||
+      o.orderStatus === "approved" ||
+      o.paymentMethod === "free"
+  );
+
+  // If user has NO approved orders and NO entitlements, they own 0 PDFs
+  if (approvedOrders.length === 0 && (!entitlementsList || entitlementsList.length === 0)) {
+    return [];
+  }
+
+  // 1. Check Master Bundle / Professional Blueprint Bundle (Bundle 4 or Bundle 3)
+  const hasMasterBundle =
+    approvedOrders.some(
+      (o: any) =>
+        o.bundleId === 4 ||
+        o.bundleId === 3 ||
+        o.bundleSlug === "pro-blueprint" ||
+        o.bundle?.slug === "pro-blueprint" ||
+        (o.bundle?.includesPdfPackage && !o.bundle?.isFree && Number(o.amount) > 1000)
+    ) ||
+    (entitlementsList || []).some(
+      (e: any) =>
+        e.bundleId === 4 ||
+        e.bundleId === 3 ||
+        e.scope === "bundle:4" ||
+        e.scope === "bundle:3" ||
+        e.scope === "all_pdfs"
+    );
+
+  if (hasMasterBundle) {
+    // Master bundle includes ALL published PDFs (paid and free)
+    return allPdfs;
+  }
+
+  // 2. Check Course + eBook Bundle (Bundle 2)
+  const hasCourseBundle =
+    approvedOrders.some(
+      (o: any) =>
+        o.bundleId === 2 ||
+        o.bundleSlug === "course-ebook" ||
+        o.bundle?.slug === "course-ebook" ||
+        o.bundle?.includesEbook === true
+    ) ||
+    (entitlementsList || []).some(
+      (e: any) => e.bundleId === 2 || e.scope === "bundle:2"
+    );
+
+  // 3. Check Free eBook Package (Bundle 1)
+  const hasFreePackage =
+    approvedOrders.some(
+      (o: any) =>
+        o.bundleId === 1 ||
+        o.paymentMethod === "free" ||
+        o.bundleSlug === "pdf-package" ||
+        o.bundle?.slug === "pdf-package" ||
+        o.bundle?.isFree === true ||
+        o.amount === "0" ||
+        o.amount === "0.00" ||
+        o.amount === "00"
+    ) ||
+    (entitlementsList || []).some(
+      (e: any) => e.bundleId === 1 || e.scope === "bundle:1"
+    );
+
+  // 4. Collect specific explicitly unlocked PDF IDs
+  const unlockedPdfIds = new Set<number>();
+  for (const order of approvedOrders) {
+    if (Array.isArray(order.selectedPdfIds)) {
+      for (const pid of order.selectedPdfIds) {
+        unlockedPdfIds.add(Number(pid));
+      }
+    }
+    if (order.productId) {
+      unlockedPdfIds.add(Number(order.productId));
     }
   }
 
-  try {
-    await supabaseServer.from("freeEbooks").delete().eq("id", id);
-  } catch (supaErr) {
-    console.warn("[deleteFreeEbook Supabase error]:", supaErr);
+  for (const ent of (entitlementsList || [])) {
+    if (ent.productId) {
+      unlockedPdfIds.add(Number(ent.productId));
+    }
+    if (ent.scope && ent.scope.startsWith("product:")) {
+      const pid = parseInt(ent.scope.replace("product:", ""), 10);
+      if (!isNaN(pid)) unlockedPdfIds.add(pid);
+    }
+    if (ent.scope && ent.scope.startsWith("pdf:")) {
+      const pid = parseInt(ent.scope.replace("pdf:", ""), 10);
+      if (!isNaN(pid)) unlockedPdfIds.add(pid);
+    }
   }
 
-  const idx = inMemoryFreeEbooks.findIndex((b) => b.id === id);
-  if (idx !== -1) {
-    inMemoryFreeEbooks.splice(idx, 1);
-    return true;
-  }
-  return true;
+  return allPdfs.filter((pdf: any) => {
+    const isPdfFree = pdf.isFree === true || Number(pdf.price) === 0 || !pdf.price || pdf.price === "0";
+
+    // Explicit purchase / selected PDF ID
+    if (unlockedPdfIds.has(Number(pdf.id))) return true;
+
+    // Course bundle unlocks free PDFs and Course-tagged / SMC strategy PDFs
+    if (hasCourseBundle) {
+      if (isPdfFree) return true;
+      const cat = (pdf.category || "").toLowerCase();
+      if (cat.includes("course") || cat.includes("ebook") || cat.includes("playbook") || cat.includes("smc")) {
+        return true;
+      }
+    }
+
+    // Free package unlocks Free PDFs only
+    if (hasFreePackage && isPdfFree) {
+      return true;
+    }
+
+    return false;
+  });
 }
 
 // ==============================================================================

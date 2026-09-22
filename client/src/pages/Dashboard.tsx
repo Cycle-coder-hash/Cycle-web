@@ -46,6 +46,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import { jsPDF } from "jspdf";
 import { BrandLogo } from "@/components/BrandLogo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -90,71 +91,6 @@ const DAILY_DISCIPLINE_RULES = [
     id: "journal_logged",
     textEn: "Documented trade setup, emotional state & lesson in trading journal",
     textBn: "ট্রেড নেওয়ার পর মানসিক অবস্থা ও লজিক বিস্তারিত জার্নালে লিখেছি",
-  },
-];
-
-// Institutional PDF Cheatsheet Previews
-const PDF_CHEATSHEETS_DATA = [
-  {
-    id: 1,
-    title: "1. Candle Range Theory (CRT) Master Cheat-Sheet",
-    subtitle: "Complete 4-Step Algorithmic Cycle & Invalidation Points",
-    pages: 18,
-    category: "Algorithm",
-    keyConcepts: [
-      "Phase 1: Asian Session Range Initiation (00:00 - 06:00 GMT)",
-      "Phase 2: London Open Judas Sweep (07:30 - 09:00 GMT)",
-      "Phase 3: NY Open Real Institutional Expansion (13:00 - 15:30 GMT)",
-      "Phase 4: Targeted Distribution into HTF Pool",
-    ],
-  },
-  {
-    id: 2,
-    title: "2. Liquidity Engineering & Stop Hunt Identification",
-    subtitle: "BSL, SSL, Internal vs External Liquidity Traps",
-    pages: 24,
-    category: "Liquidity",
-    keyConcepts: [
-      "Buy-Side Liquidity (BSL) rests above swing highs & equal highs.",
-      "Sell-Side Liquidity (SSL) rests below swing lows & trendline support.",
-      "Inducement vs Valid Breakout confirmation formula.",
-    ],
-  },
-  {
-    id: 3,
-    title: "3. Institutional Order Block (OB) Validation Matrix",
-    subtitle: "Distinguishing 80%+ Win Rate OBs from Fake SMC Zones",
-    pages: 20,
-    category: "SMC Strategy",
-    keyConcepts: [
-      "Rule 1: Must have swept liquidity prior to creation.",
-      "Rule 2: Must have caused a Market Structure Shift (MSS).",
-      "Rule 3: Must contain an imbalance / Fair Value Gap in the displacement.",
-    ],
-  },
-  {
-    id: 4,
-    title: "4. Fair Value Gap (FVG) & Volume Inefficiency Guide",
-    subtitle: "Consequent Encroachment & Inverse FVG Trading Models",
-    pages: 16,
-    category: "Price Action",
-    keyConcepts: [
-      "3-Candle Imbalance calculation formula.",
-      "Consequent Encroachment (50% midpoint) entry technique.",
-      "Inverse FVG (IFVG) as continuation confirmation.",
-    ],
-  },
-  {
-    id: 5,
-    title: "5. Multi-Timeframe Top-Down Sniper Execution Blueprint",
-    subtitle: "Daily → 1H → 5m/1m Confirmation Sequences",
-    pages: 22,
-    category: "Execution",
-    keyConcepts: [
-      "Step 1: Daily Candle Narrative & Liquidity Draw.",
-      "Step 2: 1H Point of Interest (POI) & Zone Refinement.",
-      "Step 3: 1m MSS + FVG entry for 5-10 pip stop loss.",
-    ],
   },
 ];
 
@@ -284,6 +220,11 @@ export default function Dashboard() {
   const { data: notifications } = trpc.customer.notifications.useQuery(undefined, { enabled: !!user });
   const { data: discipline, refetch: refetchDiscipline } = trpc.customer.discipline.useQuery({ date: today }, { enabled: !!user });
   const { data: ownerProfile } = trpc.public.ownerProfile.useQuery(undefined, { staleTime: 1000 * 60 * 5 });
+  const { data: libraryPdfs, isLoading: isLoadingLibrary } = trpc.customer.myLibrary.useQuery(undefined, {
+    enabled: !!user,
+    staleTime: 1000 * 30,
+  });
+  const downloadMutation = trpc.customer.downloadEbook.useMutation();
 
   const telegramUrl = useMemo(() => {
     const raw = ownerProfile?.telegram?.trim();
@@ -629,32 +570,131 @@ export default function Dashboard() {
   }, [journal, localTrades]);
 
   // Download institutional guide
-  const handleDownloadResource = (pdfItem: any) => {
-    const content = `=====================================================
-CYCLE OF CHART — INSTITUTIONAL TRADING REALITY GUIDE
-Title: ${pdfItem.title}
-Subtitle: ${pdfItem.subtitle}
-=====================================================
+  const handleDownloadResource = async (pdfItem: any) => {
+    try {
+      if (pdfItem.id) {
+        try {
+          await downloadMutation.mutateAsync({ id: Number(pdfItem.id) });
+        } catch {}
+      }
 
-KEY INSTITUTIONAL CONCEPTS & RULES:
-${pdfItem.keyConcepts.map((c: string, idx: number) => `[0${idx + 1}] ${c}`).join("\n\n")}
+      const itemTitle = pdfItem.titleEn || pdfItem.title || "Institutional Trading Guide";
+      const itemSubtitle = pdfItem.subtitleEn || pdfItem.subtitle || "";
+      const itemCategory = pdfItem.category || "Institutional";
+      const itemPages = pdfItem.pages || 15;
+      const itemConcepts = Array.isArray(pdfItem.keyConcepts) ? pdfItem.keyConcepts : [];
 
-CRITICAL RISK MANAGEMENT PROTOCOL:
-- Never risk more than 1% of equity on any individual trade.
-- Always wait for candle closure on the confirmation timeframe.
-- Scale out at Target 1 and trail your stop loss to Breakeven.
+      if (pdfItem.fileUrl) {
+        const link = document.createElement("a");
+        link.href = pdfItem.fileUrl;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.download = pdfItem.fileName || `${itemTitle.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        return;
+      }
 
-(C) 2026 Cycle of Chart. All rights reserved. For authorized student use only.
-`;
-    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${pdfItem.title.replace(/[^a-zA-Z0-9]/g, "_")}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+      // Generate institutional PDF using jsPDF
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "pt",
+        format: "a4",
+      });
+
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const margin = 40;
+      const contentWidth = pageWidth - margin * 2;
+
+      // Header Banner
+      doc.setFillColor(8, 24, 51);
+      doc.rect(0, 0, pageWidth, 90, "F");
+
+      doc.setTextColor(56, 189, 248);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text("CYCLE OF CHART — INSTITUTIONAL PLAYBOOK", margin, 38);
+
+      doc.setTextColor(148, 163, 184);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.text(`CATEGORY: ${itemCategory.toUpperCase()} | VERIFIED REFERENCE MATERIAL`, margin, 58);
+      doc.text(`PAGES: ${itemPages} Pages | Authorized Student Access`, margin, 74);
+
+      let y = 130;
+      doc.setTextColor(15, 23, 42);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      const titleLines = doc.splitTextToSize(itemTitle, contentWidth);
+      doc.text(titleLines, margin, y);
+      y += titleLines.length * 20 + 8;
+
+      doc.setTextColor(71, 85, 105);
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(11);
+      const subtitleLines = doc.splitTextToSize(itemSubtitle, contentWidth);
+      doc.text(subtitleLines, margin, y);
+      y += subtitleLines.length * 16 + 20;
+
+      doc.setDrawColor(226, 232, 240);
+      doc.setLineWidth(1.5);
+      doc.line(margin, y, pageWidth - margin, y);
+      y += 25;
+
+      doc.setTextColor(2, 132, 199);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.text("CORE INSTITUTIONAL CONCEPTS & RULES", margin, y);
+      y += 20;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10.5);
+
+      itemConcepts.forEach((concept: string, idx: number) => {
+        doc.setTextColor(15, 23, 42);
+        doc.setFont("helvetica", "bold");
+        doc.text(`[Rule ${idx + 1}]`, margin, y);
+
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(51, 65, 85);
+        const conceptLines = doc.splitTextToSize(concept, contentWidth - 60);
+        doc.text(conceptLines, margin + 55, y);
+        y += conceptLines.length * 15 + 12;
+      });
+
+      y += 15;
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(56, 189, 248);
+      doc.roundedRect(margin, y, contentWidth, 75, 6, 6, "FD");
+
+      doc.setTextColor(2, 132, 199);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10.5);
+      doc.text("NON-NEGOTIABLE RISK GOVERNANCE", margin + 14, y + 20);
+
+      doc.setTextColor(71, 85, 105);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9.5);
+      doc.text("1. Strictly risk maximum 1% of account equity per execution.", margin + 14, y + 36);
+      doc.text("2. Maintain minimum 1:3 Risk-to-Reward on every entry setup.", margin + 14, y + 50);
+      doc.text("3. Never execute outside dedicated algorithmic Killzones (London/NY).", margin + 14, y + 64);
+
+      doc.setFontSize(8.5);
+      doc.setTextColor(148, 163, 184);
+      doc.text(
+        "(C) 2026 Cycle of Chart. All rights reserved. Downloaded by authorized student.",
+        margin,
+        doc.internal.pageSize.getHeight() - 25
+      );
+
+      const filename = `${itemTitle.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
+      doc.save(filename);
+      toast.success(isBn ? "PDF সফলভাবে ডাউনলোড হয়েছে" : "PDF downloaded successfully");
+    } catch (err) {
+      console.error("[handleDownloadResource error]:", err);
+      toast.error(isBn ? "PDF ডাউনলোড ব্যর্থ হয়েছে" : "Failed to download PDF");
+    }
   };
 
   const completedStagesCount = useMemo(() => {
@@ -1534,45 +1574,93 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
                 </Link>
               </div>
 
-              {/* Resource Cards Grid */}
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {PDF_CHEATSHEETS_DATA.map((pdf) => (
-                  <div key={pdf.id} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="rounded-full bg-emerald-100 px-3 py-0.5 text-[10px] font-black uppercase text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
-                          INSTITUTIONAL PDF
-                        </span>
-                        <FileText size={18} className="text-[#0284c7] dark:text-sky-400" />
+              {/* Loading Skeletons */}
+              {isLoadingLibrary && (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-56 rounded-3xl border border-slate-200 bg-slate-50/70 p-6 animate-pulse dark:border-slate-800 dark:bg-slate-900/50 flex flex-col justify-between">
+                      <div className="space-y-3">
+                        <div className="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded-full" />
+                        <div className="h-6 w-3/4 bg-slate-200 dark:bg-slate-800 rounded-lg" />
+                        <div className="h-4 w-full bg-slate-200 dark:bg-slate-800 rounded-lg" />
                       </div>
-                      <h3 className="mt-4 text-base font-extrabold">{pdf.title}</h3>
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{pdf.subtitle}</p>
-                      <div className="mt-3 text-[11px] font-mono text-slate-400">{pdf.pages} Pages · High Resolution Reference</div>
+                      <div className="h-8 w-full bg-slate-200 dark:bg-slate-800 rounded-xl" />
                     </div>
+                  ))}
+                </div>
+              )}
 
-                    <div className="mt-6 flex gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
-                      <Button
-                        size="sm"
-                        onClick={() => setPreviewPdfModal(pdf)}
-                        variant="outline"
-                        className="w-1/2 text-xs font-bold border-slate-300 dark:border-slate-700"
-                      >
-                        <Eye size={13} className="mr-1" />
-                        <span>Preview</span>
-                      </Button>
-
-                      <Button
-                        size="sm"
-                        onClick={() => handleDownloadResource(pdf)}
-                        className="w-1/2 gap-1 bg-[#081833] text-xs font-bold text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950"
-                      >
-                        <Download size={13} />
-                        <span>Download</span>
-                      </Button>
-                    </div>
+              {/* Empty State */}
+              {!isLoadingLibrary && (!libraryPdfs || libraryPdfs.length === 0) && (
+                <div className="rounded-3xl border border-slate-200 bg-white p-10 sm:p-14 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900 flex flex-col items-center justify-center">
+                  <div className="size-16 rounded-2xl bg-sky-50 dark:bg-sky-950/50 flex items-center justify-center text-[#0284c7] dark:text-sky-400 mb-4 border border-sky-100 dark:border-sky-900/50">
+                    <FileText size={32} />
                   </div>
-                ))}
-              </div>
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                    {isBn ? "আপনার লাইব্রেরিতে কোনো PDF নেই" : "No PDFs in your library yet."}
+                  </h3>
+                  <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md">
+                    {isBn
+                      ? "আমাদের প্রাতিষ্ঠানিক স্ট্র্যাটেজি গাইড, চিট-শীট ও সম্পূর্ণ ট্রেডিং কোর্স আনলক করতে স্টোর বান্ডেলগুলো দেখুন।"
+                      : "Explore our institutional blueprints, high-resolution cheat-sheets, and comprehensive trading courses to unlock them here."}
+                  </p>
+                  <Link href="/checkout">
+                    <Button className="mt-6 gap-2 bg-[#081833] text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 font-bold px-6 py-2.5 rounded-2xl shadow-md">
+                      <Plus size={16} /> {isBn ? "স্টোর বান্ডেল দেখুন" : "Browse Store Bundles"}
+                    </Button>
+                  </Link>
+                </div>
+              )}
+
+              {/* Resource Cards Grid */}
+              {!isLoadingLibrary && libraryPdfs && libraryPdfs.length > 0 && (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {libraryPdfs.map((pdf: any) => {
+                    const title = isBn && pdf.titleBn ? pdf.titleBn : (pdf.titleEn || pdf.title);
+                    const subtitle = isBn && pdf.subtitleBn ? pdf.subtitleBn : (pdf.subtitleEn || pdf.subtitle || "");
+                    const isFree = pdf.isFree === true || Number(pdf.price) === 0 || !pdf.price;
+
+                    return (
+                      <div key={pdf.id} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <span className="rounded-full bg-emerald-100 px-3 py-0.5 text-[10px] font-black uppercase text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
+                              {pdf.category || (isFree ? "FREE PDF" : "INSTITUTIONAL PDF")}
+                            </span>
+                            <FileText size={18} className="text-[#0284c7] dark:text-sky-400" />
+                          </div>
+                          <h3 className="mt-4 text-base font-extrabold">{title}</h3>
+                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{subtitle}</p>
+                          <div className="mt-3 text-[11px] font-mono text-slate-400">
+                            {pdf.pages || 15} Pages · {pdf.fileSize || "High Resolution Reference"}
+                          </div>
+                        </div>
+
+                        <div className="mt-6 flex gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
+                          <Button
+                            size="sm"
+                            onClick={() => setPreviewPdfModal(pdf)}
+                            variant="outline"
+                            className="w-1/2 text-xs font-bold border-slate-300 dark:border-slate-700"
+                          >
+                            <Eye size={13} className="mr-1" />
+                            <span>{isBn ? "প্রিভিউ" : "Preview"}</span>
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            onClick={() => handleDownloadResource(pdf)}
+                            className="w-1/2 gap-1 bg-[#081833] text-xs font-bold text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950"
+                          >
+                            <Download size={13} />
+                            <span>{isBn ? "ডাউনলোড" : "Download"}</span>
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 
@@ -1888,8 +1976,12 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
           <div className="relative w-full max-w-xl max-h-[85vh] overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-2xl dark:border-slate-800 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
               <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-[#0284c7] dark:text-sky-400">INSTITUTIONAL CHEAT-SHEET</span>
-                <h3 className="text-base font-extrabold mt-0.5">{previewPdfModal.title}</h3>
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#0284c7] dark:text-sky-400">
+                  {previewPdfModal.category ? `${previewPdfModal.category.toUpperCase()} RESOURCE` : "INSTITUTIONAL PDF GUIDE"}
+                </span>
+                <h3 className="text-base font-extrabold mt-0.5">
+                  {isBn && previewPdfModal.titleBn ? previewPdfModal.titleBn : (previewPdfModal.titleEn || previewPdfModal.title)}
+                </h3>
               </div>
               <button onClick={() => setPreviewPdfModal(null)} className="p-1 text-slate-400 hover:text-slate-600">
                 <X size={18} />
@@ -1899,27 +1991,29 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
             <div className="mt-5 space-y-4 text-xs leading-relaxed">
               <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/50 space-y-3">
                 <div className="font-extrabold text-slate-800 dark:text-slate-200">
-                  {previewPdfModal.subtitle}
+                  {isBn && previewPdfModal.subtitleBn ? previewPdfModal.subtitleBn : (previewPdfModal.subtitleEn || previewPdfModal.subtitle)}
                 </div>
-                <div className="space-y-2">
-                  {previewPdfModal.keyConcepts.map((c: string, idx: number) => (
-                    <div key={idx} className="flex items-start gap-2 text-slate-600 dark:text-slate-300">
-                      <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-sky-100 font-mono text-[10px] font-bold text-sky-800 dark:bg-sky-950 dark:text-sky-400">
-                        {idx + 1}
-                      </span>
-                      <span>{c}</span>
-                    </div>
-                  ))}
-                </div>
+                {previewPdfModal.keyConcepts && Array.isArray(previewPdfModal.keyConcepts) && previewPdfModal.keyConcepts.length > 0 && (
+                  <div className="space-y-2">
+                    {previewPdfModal.keyConcepts.map((c: string, idx: number) => (
+                      <div key={idx} className="flex items-start gap-2 text-slate-600 dark:text-slate-300">
+                        <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-sky-100 font-mono text-[10px] font-bold text-sky-800 dark:bg-sky-950 dark:text-sky-400">
+                          {idx + 1}
+                        </span>
+                        <span>{c}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="flex gap-2 pt-2">
                 <Button
                   onClick={() => handleDownloadResource(previewPdfModal)}
-                  className="w-full gap-1.5 bg-[#081833] text-xs font-bold text-white dark:bg-sky-500 dark:text-slate-950"
+                  className="w-full gap-1.5 bg-[#081833] text-xs font-bold text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400"
                 >
                   <Download size={14} />
-                  <span>Download Full Guide (.txt)</span>
+                  <span>{isBn ? "সম্পূর্ণ PDF গাইড ডাউনলোড করুন" : "Download Full PDF Guide"}</span>
                 </Button>
               </div>
             </div>
