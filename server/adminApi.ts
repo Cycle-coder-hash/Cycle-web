@@ -15,6 +15,11 @@ import {
   grantManualEntitlement,
   revokeEntitlement,
   updateTicketStatus,
+  getTicketInternalNotes,
+  addTicketInternalNote,
+  updateTicketPriority,
+  assignTicketStaff,
+  calculateSupportMetrics,
   orders,
   users,
   entitlements,
@@ -130,7 +135,15 @@ adminRouter.get("/users", async (req, res) => {
 // GET /api/admin/tickets
 adminRouter.get("/tickets", async (req, res) => {
   try {
-    const allTickets = await listTickets();
+    const { status, category, priority, assignedStaff, search, sort } = req.query;
+    const allTickets = await listTickets({
+      status: status ? String(status) : undefined,
+      category: category ? String(category) : undefined,
+      priority: priority ? String(priority) : undefined,
+      assignedStaff: assignedStaff ? String(assignedStaff) : undefined,
+      search: search ? String(search) : undefined,
+      sort: sort as any,
+    });
     return res.json({ success: true, tickets: allTickets });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
@@ -223,7 +236,8 @@ adminRouter.get("/tickets/:id", async (req, res) => {
     if (!ticket) return res.status(404).json({ success: false, error: "Ticket not found" });
 
     const replies = await getTicketReplies(ticketId);
-    return res.json({ success: true, ticket, replies });
+    const internalNotes = await getTicketInternalNotes(ticketId);
+    return res.json({ success: true, ticket, replies, internalNotes });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
@@ -257,10 +271,66 @@ adminRouter.post("/reply-ticket", async (req, res) => {
       attachmentUrl: attachmentUrl || null,
     });
 
-    const targetStatus = status || "waiting_user";
+    const targetStatus = status || "waiting_customer";
     await updateTicketStatus(Number(ticketId), targetStatus, senderName || "Support Specialist");
 
     return res.json({ success: true, reply });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/admin/tickets/internal-note
+adminRouter.post("/tickets/internal-note", async (req, res) => {
+  try {
+    const { ticketId, note, authorName, authorEmail, authorRole } = req.body;
+    if (!ticketId || !note) return res.status(400).json({ success: false, error: "ticketId and note are required" });
+
+    const savedNote = await addTicketInternalNote({
+      ticketId: Number(ticketId),
+      authorName: authorName || "Support Specialist",
+      authorEmail: authorEmail || null,
+      authorRole: authorRole || "support",
+      content: String(note).trim(),
+    });
+
+    return res.json({ success: true, note: savedNote });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/admin/tickets/priority
+adminRouter.post("/tickets/priority", async (req, res) => {
+  try {
+    const { ticketId, priority } = req.body;
+    if (!ticketId || !priority) return res.status(400).json({ success: false, error: "ticketId and priority are required" });
+
+    await updateTicketPriority(Number(ticketId), priority);
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/admin/tickets/assign
+adminRouter.post("/tickets/assign", async (req, res) => {
+  try {
+    const { ticketId, staffName, staffId } = req.body;
+    if (!ticketId || !staffName) return res.status(400).json({ success: false, error: "ticketId and staffName are required" });
+
+    await assignTicketStaff(Number(ticketId), staffName, staffId ? Number(staffId) : null);
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/admin/support-metrics
+adminRouter.get("/support-metrics", async (req, res) => {
+  try {
+    const metrics = await calculateSupportMetrics();
+    return res.json({ success: true, metrics });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }

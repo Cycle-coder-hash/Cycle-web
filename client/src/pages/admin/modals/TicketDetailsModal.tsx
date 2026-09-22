@@ -9,8 +9,8 @@ interface TicketDetailsModalProps {
   onClose: () => void;
   staffReplyText: string;
   setStaffReplyText: (text: string) => void;
-  staffReplyStatus: "open" | "in_progress" | "waiting_user" | "resolved" | "closed";
-  setStaffReplyStatus: (status: "open" | "in_progress" | "waiting_user" | "resolved" | "closed") => void;
+  staffReplyStatus: "open" | "pending" | "in_progress" | "waiting_customer" | "waiting_user" | "solved" | "resolved" | "closed" | string;
+  setStaffReplyStatus: (status: any) => void;
   onSendReply: (ticketId: number, message: string, status: string) => void;
   isReplying?: boolean;
 }
@@ -158,12 +158,13 @@ export const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
                 <label className="text-xs font-bold text-slate-500 shrink-0">Status after reply:</label>
                 <select
                   value={staffReplyStatus}
-                  onChange={(e) => setStaffReplyStatus(e.target.value as any)}
+                  onChange={(e) => setStaffReplyStatus(e.target.value)}
                   className="rounded-xl border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold outline-none dark:border-slate-800 dark:bg-slate-900"
                 >
-                  <option value="waiting_user">Waiting for User</option>
+                  <option value="waiting_customer">Waiting for Customer</option>
                   <option value="in_progress">In Progress</option>
-                  <option value="resolved">Mark Resolved</option>
+                  <option value="pending">Pending</option>
+                  <option value="solved">Mark Solved</option>
                   <option value="closed">Close Ticket</option>
                   <option value="open">Keep Open</option>
                 </select>

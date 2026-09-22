@@ -35,12 +35,12 @@ export default function AdminPage() {
   const [studentSearch, setStudentSearch] = useState("");
 
   // Ticket filter & modal states
-  const [ticketFilter, setTicketFilter] = useState<"all" | "open" | "in_progress" | "waiting_user" | "resolved" | "closed">("all");
+  const [ticketFilter, setTicketFilter] = useState<"all" | "open" | "pending" | "in_progress" | "waiting_customer" | "waiting_user" | "solved" | "resolved" | "closed" | string>("all");
   const [ticketCategoryFilter, setTicketCategoryFilter] = useState<string>("all");
   const [ticketSearch, setTicketSearch] = useState<string>("");
   const [selectedTicketForModal, setSelectedTicketForModal] = useState<any | null>(null);
   const [staffReplyText, setStaffReplyText] = useState("");
-  const [staffReplyStatus, setStaffReplyStatus] = useState<"open" | "in_progress" | "waiting_user" | "resolved" | "closed">("waiting_user");
+  const [staffReplyStatus, setStaffReplyStatus] = useState<"open" | "pending" | "in_progress" | "waiting_customer" | "waiting_user" | "solved" | "resolved" | "closed">("waiting_customer");
 
   // Modals state
   const [rejectModalOrder, setRejectModalOrder] = useState<any | null>(null);

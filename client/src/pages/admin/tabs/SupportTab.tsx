@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 
 interface SupportTabProps {
   tickets: any[];
-  ticketFilter: "all" | "open" | "in_progress" | "waiting_user" | "resolved" | "closed";
-  setTicketFilter: (filter: "all" | "open" | "in_progress" | "waiting_user" | "resolved" | "closed") => void;
+  ticketFilter: "all" | "open" | "pending" | "in_progress" | "waiting_customer" | "waiting_user" | "solved" | "resolved" | "closed" | string;
+  setTicketFilter: (filter: any) => void;
   ticketCategoryFilter: string;
   setTicketCategoryFilter: (category: string) => void;
   ticketSearch: string;
@@ -25,8 +25,16 @@ export const SupportTab: React.FC<SupportTabProps> = ({
   onSelectTicketForModal,
   onUpdateTicketStatus,
 }) => {
+  const normStatus = (st?: string) => {
+    if (!st) return "open";
+    const s = st.toLowerCase().trim();
+    if (s === "waiting_user") return "waiting_customer";
+    if (s === "resolved") return "solved";
+    return s;
+  };
+
   const filteredTickets = (tickets || []).filter((t: any) => {
-    if (ticketFilter !== "all" && t.status !== ticketFilter) return false;
+    if (ticketFilter !== "all" && normStatus(t.status) !== normStatus(ticketFilter)) return false;
     if (ticketCategoryFilter !== "all" && t.category !== ticketCategoryFilter) return false;
     if (ticketSearch.trim()) {
       const q = ticketSearch.toLowerCase();
@@ -53,14 +61,15 @@ export const SupportTab: React.FC<SupportTabProps> = ({
       </div>
 
       {/* Metrics Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
         {[
           { label: "Total Tickets", val: (tickets || []).length, color: "text-slate-900 dark:text-white" },
-          { label: "Open", val: (tickets || []).filter((t: any) => t.status === "open").length, color: "text-sky-600 dark:text-sky-400" },
-          { label: "In Progress", val: (tickets || []).filter((t: any) => t.status === "in_progress").length, color: "text-amber-600 dark:text-amber-400" },
-          { label: "Waiting for User", val: (tickets || []).filter((t: any) => t.status === "waiting_user").length, color: "text-purple-600 dark:text-purple-400" },
-          { label: "Resolved", val: (tickets || []).filter((t: any) => t.status === "resolved").length, color: "text-emerald-600 dark:text-emerald-400" },
-          { label: "Closed", val: (tickets || []).filter((t: any) => t.status === "closed").length, color: "text-slate-500" },
+          { label: "Open", val: (tickets || []).filter((t: any) => normStatus(t.status) === "open").length, color: "text-sky-600 dark:text-sky-400" },
+          { label: "Pending", val: (tickets || []).filter((t: any) => normStatus(t.status) === "pending").length, color: "text-amber-600 dark:text-amber-400" },
+          { label: "In Progress", val: (tickets || []).filter((t: any) => normStatus(t.status) === "in_progress").length, color: "text-indigo-600 dark:text-indigo-400" },
+          { label: "Waiting Customer", val: (tickets || []).filter((t: any) => normStatus(t.status) === "waiting_customer").length, color: "text-orange-600 dark:text-orange-400" },
+          { label: "Solved", val: (tickets || []).filter((t: any) => normStatus(t.status) === "solved").length, color: "text-emerald-600 dark:text-emerald-400" },
+          { label: "Closed", val: (tickets || []).filter((t: any) => normStatus(t.status) === "closed").length, color: "text-slate-500" },
         ].map((m, idx) => (
           <div key={idx} className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider truncate">{m.label}</div>
@@ -76,9 +85,10 @@ export const SupportTab: React.FC<SupportTabProps> = ({
           {[
             { id: "all", label: "All" },
             { id: "open", label: "Open" },
+            { id: "pending", label: "Pending" },
             { id: "in_progress", label: "In Progress" },
-            { id: "waiting_user", label: "Waiting for User" },
-            { id: "resolved", label: "Resolved" },
+            { id: "waiting_customer", label: "Waiting Customer" },
+            { id: "solved", label: "Solved" },
             { id: "closed", label: "Closed" },
           ].map((st) => (
             <button
@@ -143,18 +153,20 @@ export const SupportTab: React.FC<SupportTabProps> = ({
                     </span>
                     <span
                       className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase ${
-                        t.status === "resolved"
+                        normStatus(t.status) === "solved"
                           ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
-                          : t.status === "in_progress"
+                          : normStatus(t.status) === "in_progress"
+                          ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-400"
+                          : normStatus(t.status) === "pending"
                           ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
-                          : t.status === "waiting_user"
-                          ? "bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-400"
-                          : t.status === "closed"
+                          : normStatus(t.status) === "waiting_customer"
+                          ? "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-400"
+                          : normStatus(t.status) === "closed"
                           ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
                           : "bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-400"
                       }`}
                     >
-                      {t.status.replace("_", " ")}
+                      {normStatus(t.status).replace("_", " ")}
                     </span>
                   </div>
 
@@ -189,14 +201,15 @@ export const SupportTab: React.FC<SupportTabProps> = ({
                   </Button>
 
                   <select
-                    value={t.status}
+                    value={normStatus(t.status)}
                     onChange={(e) => onUpdateTicketStatus(t.id, e.target.value)}
                     className="rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-bold outline-none dark:border-slate-800 dark:bg-slate-950"
                   >
                     <option value="open">Status: Open</option>
+                    <option value="pending">Status: Pending</option>
                     <option value="in_progress">Status: In Progress</option>
-                    <option value="waiting_user">Status: Waiting for User</option>
-                    <option value="resolved">Status: Resolved</option>
+                    <option value="waiting_customer">Status: Waiting Customer</option>
+                    <option value="solved">Status: Solved</option>
                     <option value="closed">Status: Closed</option>
                   </select>
                 </div>
