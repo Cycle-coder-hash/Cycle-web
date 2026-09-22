@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface RGB {
   r: number;
@@ -40,13 +40,24 @@ function getInterpolatedRgb(progress: number): RGB {
 
 export function CursorLightTrail() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [isEnabled, setIsEnabled] = useState(false);
 
   useEffect(() => {
-    // Accessibility check: disable if user prefers reduced motion
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (mediaQuery.matches) {
-      return;
+    if (typeof window === "undefined") return;
+
+    // Only enable on desktop devices with a precision mouse pointer.
+    // Mobile phones and touchscreens do not have a mouse cursor; disabling this on mobile
+    // eliminates full-screen canvas re-renders and touchmove latency during scrolling.
+    const hasFinePointer = window.matchMedia("(pointer: fine)").matches && window.innerWidth >= 1024;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (hasFinePointer && !prefersReducedMotion) {
+      setIsEnabled(true);
     }
+  }, []);
+
+  useEffect(() => {
+    if (!isEnabled) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -175,10 +186,6 @@ export function CursorLightTrail() {
     window.addEventListener("mousemove", onMouseMove, { passive: true });
     window.addEventListener("mouseenter", onMouseEnter, { passive: true });
     window.addEventListener("mouseleave", onMouseLeave, { passive: true });
-    window.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchmove", onTouchMove, { passive: true });
-    window.addEventListener("touchend", onTouchEnd, { passive: true });
-    window.addEventListener("touchcancel", onTouchEnd, { passive: true });
 
     // Render loop
     const render = (time: number) => {
@@ -315,15 +322,15 @@ export function CursorLightTrail() {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseenter", onMouseEnter);
       window.removeEventListener("mouseleave", onMouseLeave);
-      window.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchmove", onTouchMove);
-      window.removeEventListener("touchend", onTouchEnd);
-      window.removeEventListener("touchcancel", onTouchEnd);
       if (animFrameId) {
         cancelAnimationFrame(animFrameId);
       }
     };
-  }, []);
+  }, [isEnabled]);
+
+  if (!isEnabled) {
+    return null;
+  }
 
   return (
     <canvas

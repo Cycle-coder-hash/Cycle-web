@@ -117,6 +117,7 @@ export function HeroCandle3D({ lang = "en", className = "" }: HeroCandle3DProps)
   const [isHovered, setIsHovered] = useState(false);
   const [isTouchActive, setIsTouchActive] = useState(false);
   const [isInViewport, setIsInViewport] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const touchTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Motion physics state
@@ -129,6 +130,18 @@ export function HeroCandle3D({ lang = "en", className = "" }: HeroCandle3DProps)
 
   const isInteractive = isHovered || isTouchActive;
   const activeTheme = CANDLE_THEMES[themeIndex];
+
+  // Mobile device detection: coarse pointer or viewport < 1024px
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const checkDevice = () => {
+      const mobile = !window.matchMedia("(pointer: fine)").matches || window.innerWidth < 1024;
+      setIsMobile(mobile);
+    };
+    checkDevice();
+    window.addEventListener("resize", checkDevice, { passive: true });
+    return () => window.removeEventListener("resize", checkDevice);
+  }, []);
 
   // Pause offscreen calculations to keep low-end mobile phones lag-free
   useEffect(() => {
@@ -152,10 +165,25 @@ export function HeroCandle3D({ lang = "en", className = "" }: HeroCandle3DProps)
     return () => clearInterval(interval);
   }, [isInViewport]);
 
-  // Smooth animation loop (only executes when visible in viewport)
+  // Animation loop:
+  // - Desktop: runs continuous rAF for smooth mouse follow & organic floating
+  // - Mobile: pauses continuous rAF style mutations when idle to free mobile main thread,
+  //   using hardware-accelerated CSS keyframe floating instead.
   useEffect(() => {
     if (!isInViewport) {
       if (animFrameId.current) cancelAnimationFrame(animFrameId.current);
+      return;
+    }
+
+    // On mobile, if not actively interacted with, let GPU CSS animation handle floating
+    if (isMobile && !isInteractive) {
+      if (animFrameId.current) cancelAnimationFrame(animFrameId.current);
+      if (containerRef.current) {
+        containerRef.current.style.setProperty("--rot-x", "-3deg");
+        containerRef.current.style.setProperty("--rot-y", "10deg");
+        containerRef.current.style.setProperty("--light-x", "45%");
+        containerRef.current.style.setProperty("--light-y", "35%");
+      }
       return;
     }
 
@@ -182,6 +210,15 @@ export function HeroCandle3D({ lang = "en", className = "" }: HeroCandle3DProps)
         containerRef.current.style.setProperty("--light-y", `${currentLight.current.y.toFixed(1)}%`);
       }
 
+      // On mobile when interactive, once settled, we can stop the loop
+      if (isMobile && isInteractive) {
+        const distRot = Math.hypot(targetX - currentRotation.current.x, targetY - currentRotation.current.y);
+        if (distRot < 0.05) {
+          animFrameId.current = null;
+          return;
+        }
+      }
+
       animFrameId.current = requestAnimationFrame(updateMotion);
     };
 
@@ -189,7 +226,7 @@ export function HeroCandle3D({ lang = "en", className = "" }: HeroCandle3DProps)
     return () => {
       if (animFrameId.current) cancelAnimationFrame(animFrameId.current);
     };
-  }, [isInteractive, isInViewport]);
+  }, [isInteractive, isInViewport, isMobile]);
 
   // Pointer interactions
   const handlePointerMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
@@ -246,9 +283,24 @@ export function HeroCandle3D({ lang = "en", className = "" }: HeroCandle3DProps)
         } as React.CSSProperties
       }
     >
+      {/* Embedded Mobile CSS Floating Animation (0% JS Main-Thread Cost on Mobile) */}
+      <style>{`
+        @keyframes candle-mobile-float {
+          0%, 100% {
+            transform: rotateX(-3deg) rotateY(8deg);
+          }
+          50% {
+            transform: rotateX(1deg) rotateY(13deg);
+          }
+        }
+        .animate-candle-mobile-float {
+          animation: candle-mobile-float 7s ease-in-out infinite;
+        }
+      `}</style>
+
       {/* Dynamic Ambient Glow with smooth transition */}
       <div
-        className="pointer-events-none absolute inset-0 -z-10 rounded-full transition-all duration-1000 blur-xl sm:blur-[70px] ambient-blur-blob"
+        className="pointer-events-none absolute inset-0 -z-10 rounded-full transition-all duration-1000 blur-md sm:blur-[70px] ambient-blur-blob"
         style={{
           background: activeTheme.ambientBg,
           transform: isInteractive ? "scale(1.28)" : "scale(1.15)",
@@ -259,9 +311,11 @@ export function HeroCandle3D({ lang = "en", className = "" }: HeroCandle3DProps)
       <div className="perspective-1200 relative flex h-[380px] w-full max-w-[520px] items-center justify-center sm:h-[460px] lg:h-[500px]">
         {/* Master 3D Spatial Anchor */}
         <div
-          className="preserve-3d relative flex h-full w-full items-center justify-center transition-transform duration-75 ease-out"
+          className={`preserve-3d relative flex h-full w-full items-center justify-center ${
+            isMobile && !isInteractive ? "animate-candle-mobile-float" : "transition-transform duration-75 ease-out"
+          }`}
           style={{
-            transform: "rotateX(var(--rot-x)) rotateY(var(--rot-y))",
+            transform: isMobile && !isInteractive ? undefined : "rotateX(var(--rot-x)) rotateY(var(--rot-y))",
           }}
         >
           {/* ========================================================================= */}
@@ -377,7 +431,7 @@ export function HeroCandle3D({ lang = "en", className = "" }: HeroCandle3DProps)
             className="preserve-3d absolute transition-all duration-700"
             style={{
               transform: "translate3d(82px, 18px, -110px) rotateY(-8deg) scale(0.88)",
-              filter: "drop-shadow(0 25px 35px rgba(0,0,0,0.25))",
+              filter: isMobile ? "drop-shadow(0 12px 18px rgba(0,0,0,0.22))" : "drop-shadow(0 25px 35px rgba(0,0,0,0.25))",
             }}
           >
             {/* Top Wick */}
@@ -441,7 +495,9 @@ export function HeroCandle3D({ lang = "en", className = "" }: HeroCandle3DProps)
             className="preserve-3d absolute transition-all duration-700"
             style={{
               transform: "translate3d(-18px, -10px, 45px) rotateY(4deg) scale(1.05)",
-              filter: `drop-shadow(0 30px 45px rgba(0,0,0,0.28)) drop-shadow(0 0 35px ${activeTheme.glow})`,
+              filter: isMobile
+                ? `drop-shadow(0 18px 24px rgba(0,0,0,0.24)) drop-shadow(0 0 18px ${activeTheme.glow})`
+                : `drop-shadow(0 30px 45px rgba(0,0,0,0.28)) drop-shadow(0 0 35px ${activeTheme.glow})`,
             }}
           >
             {/* Top Wick */}

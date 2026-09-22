@@ -12,6 +12,7 @@ export function AnimatedCardBorder({
   className = "",
 }: AnimatedCardBorderProps) {
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -19,7 +20,17 @@ export function AnimatedCardBorder({
     setReducedMotion(mq.matches);
     const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
     mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
+
+    const checkMobile = () => {
+      setIsMobile(!window.matchMedia("(pointer: fine)").matches || window.innerWidth < 1024);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile, { passive: true });
+
+    return () => {
+      mq.removeEventListener("change", handler);
+      window.removeEventListener("resize", checkMobile);
+    };
   }, []);
 
   if (reducedMotion) return null;
@@ -27,9 +38,13 @@ export function AnimatedCardBorder({
   const isRed = color === "red";
   const glowColor = isRed ? "rgba(239, 68, 68, 0.6)" : "rgba(16, 185, 129, 0.6)";
   const coreColor = isRed ? "#ff3b5c" : "#10b981";
-  const dropShadow = isRed
-    ? "drop-shadow(0 0 5px rgba(239, 68, 68, 0.85)) drop-shadow(0 0 10px rgba(239, 68, 68, 0.4))"
-    : "drop-shadow(0 0 5px rgba(16, 185, 129, 0.85)) drop-shadow(0 0 10px rgba(16, 185, 129, 0.4))";
+  const dropShadow = isMobile
+    ? isRed
+      ? "drop-shadow(0 0 4px rgba(239, 68, 68, 0.7))"
+      : "drop-shadow(0 0 4px rgba(16, 185, 129, 0.7))"
+    : isRed
+      ? "drop-shadow(0 0 5px rgba(239, 68, 68, 0.85)) drop-shadow(0 0 10px rgba(239, 68, 68, 0.4))"
+      : "drop-shadow(0 0 5px rgba(16, 185, 129, 0.85)) drop-shadow(0 0 10px rgba(16, 185, 129, 0.4))";
 
   return (
     <svg

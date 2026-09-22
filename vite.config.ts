@@ -167,6 +167,35 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    chunkSizeWarningLimit: 650,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (
+              id.includes("jspdf") ||
+              id.includes("html2canvas") ||
+              id.includes("canvg") ||
+              id.includes("dompurify")
+            ) {
+              return "vendor-pdf";
+            }
+            if (id.includes("recharts") || id.includes("d3-") || id.includes("victory-vendor")) {
+              return "vendor-charts";
+            }
+            if (id.includes("@radix-ui") || id.includes("lucide-react")) {
+              return "vendor-ui";
+            }
+            if (id.includes("@tanstack") || id.includes("@trpc")) {
+              return "vendor-query";
+            }
+            if (id.includes("react") || id.includes("wouter") || id.includes("scheduler")) {
+              return "vendor-react";
+            }
+          }
+        },
+      },
+    },
   },
   server: {
     host: true,

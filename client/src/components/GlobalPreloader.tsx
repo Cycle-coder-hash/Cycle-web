@@ -24,13 +24,17 @@ export function GlobalPreloader() {
     const prefersReducedMotion =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const isMobile =
+      typeof window !== "undefined" &&
+      (!window.matchMedia("(pointer: fine)").matches || window.innerWidth < 768);
 
     const startTime = window.__cycle_preloader_start || Date.now();
     const elapsed = Date.now() - startTime;
 
-    // Minimum display duration allows the user to experience the 850ms brand reveal
-    // Reduced motion bypasses immediately
-    const minDisplayDuration = prefersReducedMotion ? 50 : 950;
+    // Minimum display duration allows the user to experience the brand reveal.
+    // On mobile devices, accelerate reveal to 250ms so the interface is immediately interactive
+    // without feeling like the device is hanging.
+    const minDisplayDuration = prefersReducedMotion ? 50 : isMobile ? 250 : 950;
     const delay = Math.max(0, minDisplayDuration - elapsed);
 
     const timer = setTimeout(() => {

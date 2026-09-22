@@ -96,12 +96,13 @@ export function WebsiteBackground() {
           will-change: transform, opacity;
         }
 
-        @media (prefers-reduced-motion: reduce) {
+        @media (max-width: 1024px), (pointer: coarse), (prefers-reduced-motion: reduce) {
           .animate-bg-glow,
           .animate-bg-grid,
           .animate-bg-highlights {
             animation: none !important;
             transform: none !important;
+            will-change: auto !important;
           }
         }
       `}</style>

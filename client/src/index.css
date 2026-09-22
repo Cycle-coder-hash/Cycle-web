@@ -152,6 +152,12 @@
   pointer-events: none;
 }
 
+@media (max-width: 1024px) {
+  .rgb-border-disc {
+    width: max(250%, 600px);
+  }
+}
+
 .rgb-border-mask-core {
   position: absolute;
   inset: 0;
