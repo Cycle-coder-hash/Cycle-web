@@ -43,11 +43,15 @@ import {
   traderTrades,
   TraderTrade,
   InsertTraderTrade,
+  courseTelegramPopupEvents,
+  CourseTelegramPopupEvent,
+  InsertCourseTelegramPopupEvent,
 } from "../drizzle/schema";
 
 import { ENV } from "./_core/env";
 import { deriveNumericIdFromOpenId } from "@shared/const";
 import { supabaseServer } from "./supabase";
+import { sendAccessEmail } from "./email";
 
 let _db: any = null;
 let _pgPool: pg.Pool | null = null;
@@ -934,6 +938,25 @@ export async function getUserByEmail(email: string): Promise<User | undefined> {
   return undefined;
 }
 
+export async function getUserById(id: number): Promise<User | undefined> {
+  const db = await getDb();
+  if (db) {
+    try {
+      const rows = await db.select().from(users).where(eq(users.id, id)).limit(1);
+      if (rows.length) return rows[0];
+    } catch {}
+  }
+  try {
+    const { supabaseServer } = await import("./supabase");
+    const { data } = await supabaseServer.from("users").select("*").eq("id", id).maybeSingle();
+    if (data) return data;
+  } catch {}
+  for (const u of Array.from(inMemoryUsers.values())) {
+    if (u.id === id) return u;
+  }
+  return undefined;
+}
+
 export async function createUser(data: {
   name: string;
   email: string;
@@ -1556,116 +1579,512 @@ export async function createOrder(orderInput: {
   return fallbackOrder;
 }
 
+// ------------------------------------------------------------------------------
+// DEDICATED COURSE TELEGRAM COMMUNITY POPUP CONFIGURATION & EVENTS
+// ------------------------------------------------------------------------------
+
+export interface CourseTelegramPopupConfig {
+  enabled: boolean;
+  telegramUrl: string;
+  titleEn: string;
+  titleBn: string;
+  messageEn: string;
+  messageBn: string;
+  joinButtonTextEn: string;
+  joinButtonTextBn: string;
+  dismissButtonTextEn: string;
+  dismissButtonTextBn: string;
+  displayMode: "once" | "until_joined";
+  popupDelay?: number;
+}
+
+export const defaultCourseTelegramPopupConfig: CourseTelegramPopupConfig = {
+  enabled: true,
+  telegramUrl: "",
+  titleEn: "COURSE ACCESS IS READY",
+  titleBn: "কোর্স অ্যাক্সেস প্রস্তুত",
+  messageEn: "Before you begin your course journey, join our official Telegram community for real-time course updates, institutional study materials, session announcements, and dedicated student support.",
+  messageBn: "কোর্স শুরু করার আগে আমাদের অফিশিয়াল Telegram কমিউনিটিতে যুক্ত হোন। এখানে কোর্স সংক্রান্ত আপডেট, প্রাতিষ্ঠানিক স্টাডি ম্যাটেরিয়াল, সেশন অ্যানাউন্সমেন্ট এবং ডেডিকেটেড স্টুডেন্ট সাপোর্ট পাবেন।",
+  joinButtonTextEn: "JOIN TELEGRAM",
+  joinButtonTextBn: "TELEGRAM এ যুক্ত হোন",
+  dismissButtonTextEn: "MAYBE LATER",
+  dismissButtonTextBn: "পরে যুক্ত হব",
+  displayMode: "once",
+  popupDelay: 0,
+};
+
+export async function getCourseTelegramPopupConfig(): Promise<CourseTelegramPopupConfig> {
+  const raw = await getSetting("course_telegram_popup_config");
+  if (raw) {
+    try {
+      const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+      return {
+        enabled: parsed.enabled !== false,
+        telegramUrl: parsed.telegramUrl || "",
+        titleEn: parsed.titleEn || defaultCourseTelegramPopupConfig.titleEn,
+        titleBn: parsed.titleBn || defaultCourseTelegramPopupConfig.titleBn,
+        messageEn: parsed.messageEn || defaultCourseTelegramPopupConfig.messageEn,
+        messageBn: parsed.messageBn || defaultCourseTelegramPopupConfig.messageBn,
+        joinButtonTextEn: parsed.joinButtonTextEn || defaultCourseTelegramPopupConfig.joinButtonTextEn,
+        joinButtonTextBn: parsed.joinButtonTextBn || defaultCourseTelegramPopupConfig.joinButtonTextBn,
+        dismissButtonTextEn: parsed.dismissButtonTextEn || defaultCourseTelegramPopupConfig.dismissButtonTextEn,
+        dismissButtonTextBn: parsed.dismissButtonTextBn || defaultCourseTelegramPopupConfig.dismissButtonTextBn,
+        displayMode: parsed.displayMode === "until_joined" ? "until_joined" : "once",
+        popupDelay: Number(parsed.popupDelay) || 0,
+      };
+    } catch (e) {
+      console.warn("[getCourseTelegramPopupConfig parse error]:", e);
+    }
+  }
+  return defaultCourseTelegramPopupConfig;
+}
+
+export async function setCourseTelegramPopupConfig(
+  config: Partial<CourseTelegramPopupConfig>
+): Promise<CourseTelegramPopupConfig> {
+  const current = await getCourseTelegramPopupConfig();
+  const merged: CourseTelegramPopupConfig = {
+    ...current,
+    ...config,
+    enabled: config.enabled !== undefined ? Boolean(config.enabled) : current.enabled,
+    telegramUrl: (config.telegramUrl ?? current.telegramUrl).trim(),
+    displayMode: config.displayMode === "until_joined" ? "until_joined" : "once",
+    popupDelay: Number(config.popupDelay) || 0,
+  };
+  await setSetting("course_telegram_popup_config", JSON.stringify(merged));
+  return merged;
+}
+
+export async function orderGrantsCourseAccess(order: {
+  bundleId?: number | null;
+  productId?: number | null;
+}): Promise<boolean> {
+  if (!order) return false;
+  if (order.bundleId) {
+    const allBundles = await listBundles();
+    const targetBundle = allBundles.find((b: any) => b.id === order.bundleId);
+    if (targetBundle) {
+      return Boolean(targetBundle.includesCourse);
+    }
+    if (order.bundleId === 2 || order.bundleId === 3 || order.bundleId === 4) return true;
+    if (order.bundleId === 1) return false;
+  }
+  if (order.productId) {
+    const allProducts = await listProducts();
+    const targetProduct = allProducts.find((p: any) => p.id === order.productId);
+    if (targetProduct) {
+      return targetProduct.kind === "course";
+    }
+  }
+  return false;
+}
+
+export interface CourseTelegramEventRecord {
+  id: number;
+  userId: number;
+  orderId: number;
+  entitlementId?: number | null;
+  status: "pending" | "dismissed" | "joined";
+  firstShownAt?: string | null;
+  dismissedAt?: string | null;
+  joinedClickedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const inMemoryTelegramEvents: Map<string, CourseTelegramEventRecord> = new Map();
+
+export async function getCourseTelegramEventsForUser(userIds: number[]): Promise<CourseTelegramEventRecord[]> {
+  const events: CourseTelegramEventRecord[] = [];
+  const seenKeys = new Set<string>();
+
+  // 1. Try Supabase table if available
+  try {
+    const { supabaseServer } = await import("./supabase");
+    const { data, error } = await supabaseServer
+      .from("course_telegram_popup_events")
+      .select("*")
+      .in("userId", userIds);
+    if (!error && Array.isArray(data)) {
+      for (const row of data) {
+        const key = `${row.userId}_${row.orderId}`;
+        seenKeys.add(key);
+        events.push(row);
+        inMemoryTelegramEvents.set(key, row);
+      }
+    }
+  } catch (err) {}
+
+  // 2. Persistent fallback via settings table
+  for (const uid of userIds) {
+    try {
+      const raw = await getSetting(`course_telegram_events_user_${uid}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          for (const item of parsed) {
+            const key = `${item.userId}_${item.orderId}`;
+            if (!seenKeys.has(key)) {
+              seenKeys.add(key);
+              events.push(item);
+              inMemoryTelegramEvents.set(key, item);
+            }
+          }
+        }
+      }
+    } catch {}
+  }
+
+  // 3. In-memory check
+  for (const [, ev] of Array.from(inMemoryTelegramEvents.entries())) {
+    if (userIds.includes(ev.userId)) {
+      const key = `${ev.userId}_${ev.orderId}`;
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        events.push(ev);
+      }
+    }
+  }
+
+  return events;
+}
+
+export async function createCourseTelegramPopupEvent(input: {
+  userId: number;
+  orderId: number;
+  entitlementId?: number | null;
+}): Promise<CourseTelegramEventRecord> {
+  const now = new Date().toISOString();
+  const eventKey = `${input.userId}_${input.orderId}`;
+
+  // Check if already exists (idempotency)
+  const existingList = await getCourseTelegramEventsForUser([input.userId]);
+  const existing = existingList.find((e) => e.orderId === input.orderId);
+  if (existing) {
+    return existing;
+  }
+
+  const newRecord: CourseTelegramEventRecord = {
+    id: Date.now() + Math.floor(Math.random() * 1000),
+    userId: input.userId,
+    orderId: input.orderId,
+    entitlementId: input.entitlementId || null,
+    status: "pending",
+    firstShownAt: null,
+    dismissedAt: null,
+    joinedClickedAt: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  inMemoryTelegramEvents.set(eventKey, newRecord);
+
+  // 1. Try Supabase table insert
+  try {
+    const { supabaseServer } = await import("./supabase");
+    const { data, error } = await supabaseServer
+      .from("course_telegram_popup_events")
+      .insert({
+        userId: newRecord.userId,
+        orderId: newRecord.orderId,
+        entitlementId: newRecord.entitlementId,
+        status: newRecord.status,
+        createdAt: newRecord.createdAt,
+        updatedAt: newRecord.updatedAt,
+      })
+      .select("*")
+      .single();
+    if (!error && data) {
+      newRecord.id = data.id;
+      inMemoryTelegramEvents.set(eventKey, newRecord);
+    }
+  } catch (err) {}
+
+  // 2. Persist in settings table for guaranteed backup resilience
+  try {
+    const currentList = await getCourseTelegramEventsForUser([input.userId]);
+    const updated = [...currentList.filter((e) => e.orderId !== input.orderId), newRecord];
+    await setSetting(`course_telegram_events_user_${input.userId}`, JSON.stringify(updated));
+  } catch (err) {}
+
+  return newRecord;
+}
+
+export async function getPendingCourseTelegramPopupForUser(
+  userIdentifier: number | { id?: number; openId?: string; email?: string }
+): Promise<{ event: CourseTelegramEventRecord; config: CourseTelegramPopupConfig } | null> {
+  const candidateIds = await resolveUserCandidateIds(userIdentifier);
+  if (candidateIds.length === 0) return null;
+
+  const config = await getCourseTelegramPopupConfig();
+  if (!config.enabled || !config.telegramUrl) {
+    return null;
+  }
+
+  // Get user's orders
+  const orders = await listOrdersForUser(userIdentifier);
+  // Find approved course orders
+  const approvedCourseOrders: any[] = [];
+  for (const o of orders) {
+    if (o.orderStatus === "approved" || o.paymentStatus === "approved") {
+      const grantsCourse = await orderGrantsCourseAccess(o);
+      if (grantsCourse) {
+        approvedCourseOrders.push(o);
+      }
+    }
+  }
+
+  if (approvedCourseOrders.length === 0) {
+    return null;
+  }
+
+  // Fetch all recorded events for user
+  const events = await getCourseTelegramEventsForUser(candidateIds);
+
+  for (const order of approvedCourseOrders) {
+    let ev = events.find((e) => e.orderId === order.id);
+    if (!ev) {
+      // Auto-create event for approved course purchase if not exists
+      ev = await createCourseTelegramPopupEvent({
+        userId: order.customerId || candidateIds[0],
+        orderId: order.id,
+      });
+    }
+
+    if (config.displayMode === "once") {
+      if (ev.status === "pending") {
+        return { event: ev, config };
+      }
+    } else if (config.displayMode === "until_joined") {
+      if (ev.status !== "joined") {
+        return { event: ev, config };
+      }
+    }
+  }
+
+  return null;
+}
+
+export async function recordCourseTelegramAction(
+  userIdentifier: number | { id?: number; openId?: string; email?: string },
+  eventId: number,
+  action: "joined" | "dismissed"
+): Promise<{ success: boolean }> {
+  const candidateIds = await resolveUserCandidateIds(userIdentifier);
+  if (candidateIds.length === 0) throw new Error("Unauthorized");
+
+  const events = await getCourseTelegramEventsForUser(candidateIds);
+  const targetEvent = events.find((e) => e.id === eventId || e.orderId === eventId);
+  if (!targetEvent) {
+    throw new Error("Event not found or access denied");
+  }
+
+  // Security check: must belong to candidateIds
+  if (!candidateIds.includes(targetEvent.userId)) {
+    throw new Error("Unauthorized to modify this event");
+  }
+
+  const now = new Date().toISOString();
+  targetEvent.status = action;
+  targetEvent.updatedAt = now;
+  if (action === "joined") {
+    targetEvent.joinedClickedAt = now;
+  } else if (action === "dismissed") {
+    targetEvent.dismissedAt = now;
+  }
+
+  const eventKey = `${targetEvent.userId}_${targetEvent.orderId}`;
+  inMemoryTelegramEvents.set(eventKey, targetEvent);
+
+  // Update in Supabase
+  try {
+    const { supabaseServer } = await import("./supabase");
+    await supabaseServer
+      .from("course_telegram_popup_events")
+      .update({
+        status: targetEvent.status,
+        dismissedAt: targetEvent.dismissedAt || null,
+        joinedClickedAt: targetEvent.joinedClickedAt || null,
+        updatedAt: now,
+      })
+      .eq("id", targetEvent.id);
+  } catch (err) {}
+
+  // Update in settings table
+  try {
+    const allUserEvents = await getCourseTelegramEventsForUser([targetEvent.userId]);
+    const updatedList = allUserEvents.map((e) => (e.id === targetEvent.id ? targetEvent : e));
+    await setSetting(`course_telegram_events_user_${targetEvent.userId}`, JSON.stringify(updatedList));
+  } catch (err) {}
+
+  return { success: true };
+}
+
 export async function approveOrder(orderId: number, approvedBy: number = 1) {
   const now = new Date();
+
+  // Find target order first to check IDEMPOTENCY and determine course access
+  let targetOrder: any = null;
   const db = await getDb();
   if (db) {
     try {
-      const row = (await db.select().from(orders).where(eq(orders.id, orderId)).limit(1))[0];
-      if (row) {
-        await db.update(orders).set({
-          orderStatus: "approved",
-          paymentStatus: "approved",
-          approvedAt: now,
-          approvedBy,
-          updatedAt: now,
-        }).where(eq(orders.id, orderId));
-        await db.insert(entitlements).values({
-          userId: row.customerId,
-          orderId: row.id,
-          productId: row.productId,
-          bundleId: row.bundleId,
-          scope: row.bundleId ? `bundle:${row.bundleId}` : `product:${row.productId || 1}`,
-          grantedAt: now,
-        });
-        await db.insert(notifications).values({
-          userId: row.customerId,
-          title: "Access unlocked",
-          message: "Your payment was approved and your digital learning access is now available.",
-          read: false,
-          createdAt: now,
-        });
-        return { success: true, order: row };
-      }
+      const rows = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+      if (rows.length > 0) targetOrder = rows[0];
+    } catch (err) {}
+  }
+
+  if (!targetOrder) {
+    try {
+      const { supabaseServer } = await import("./supabase");
+      const { data: orderRows } = await supabaseServer.from("orders").select("*").eq("id", orderId).limit(1);
+      if (orderRows?.[0]) targetOrder = orderRows[0];
+    } catch (err) {}
+  }
+
+  if (!targetOrder) {
+    targetOrder = inMemoryOrders.find((o) => o.id === orderId);
+  }
+
+  if (!targetOrder) {
+    throw new Error("Order not found");
+  }
+
+  // IDEMPOTENCY CHECK: If already approved, avoid duplicate entitlements & events
+  if (targetOrder.orderStatus === "approved" && targetOrder.paymentStatus === "approved") {
+    console.info(`[approveOrder IDEMPOTENT]: Order #${orderId} is already approved. Returning without duplicate processing.`);
+    return { success: true, order: targetOrder, alreadyApproved: true };
+  }
+
+  // Check if this order grants course access
+  const isCourse = await orderGrantsCourseAccess(targetOrder);
+  const telegramConfig = await getCourseTelegramPopupConfig();
+
+  // 1. Update Drizzle database if active
+  if (db) {
+    try {
+      await db.update(orders).set({
+        orderStatus: "approved",
+        paymentStatus: "approved",
+        approvedAt: now,
+        approvedBy,
+        updatedAt: now,
+      }).where(eq(orders.id, orderId));
+
+      await db.insert(entitlements).values({
+        userId: targetOrder.customerId,
+        orderId: targetOrder.id,
+        productId: targetOrder.productId,
+        bundleId: targetOrder.bundleId,
+        scope: targetOrder.bundleId ? `bundle:${targetOrder.bundleId}` : `product:${targetOrder.productId || 1}`,
+        grantedAt: now,
+      });
+
+      await db.insert(notifications).values({
+        userId: targetOrder.customerId,
+        title: isCourse ? "Course Access Unlocked 🎓" : "Access unlocked",
+        message: isCourse && telegramConfig.telegramUrl
+          ? "Your course access has been approved! Join our official Telegram community for real-time course updates, institutional study materials, and student support."
+          : "Your payment was approved and your digital learning access is now available.",
+        read: false,
+        createdAt: now,
+      });
     } catch (err) {
       console.warn("[approveOrder Drizzle error]:", err);
     }
   }
 
-  // Supabase live database update
+  // 2. Supabase live database update
   try {
     const { supabaseServer } = await import("./supabase");
-    const { data: orderRows } = await supabaseServer.from("orders").select("*").eq("id", orderId).limit(1);
-    const targetOrder = orderRows?.[0] || inMemoryOrders.find((o) => o.id === orderId);
-    if (targetOrder) {
-      await supabaseServer
-        .from("orders")
-        .update({
-          orderStatus: "approved",
-          paymentStatus: "approved",
-          approvedAt: now.toISOString(),
-          approvedBy,
-          updatedAt: now.toISOString(),
-        })
-        .eq("id", orderId);
+    await supabaseServer
+      .from("orders")
+      .update({
+        orderStatus: "approved",
+        paymentStatus: "approved",
+        approvedAt: now.toISOString(),
+        approvedBy,
+        updatedAt: now.toISOString(),
+      })
+      .eq("id", orderId);
 
-      // Add entitlement in Supabase
-      await supabaseServer.from("entitlements").insert({
-        userId: targetOrder.customerId,
-        orderId: targetOrder.id,
-        bundleId: targetOrder.bundleId || null,
-        productId: targetOrder.productId || null,
-        scope: targetOrder.bundleId ? `bundle:${targetOrder.bundleId}` : `product:${targetOrder.productId || 1}`,
-        grantedAt: now.toISOString(),
-      });
+    // Add entitlement in Supabase
+    await supabaseServer.from("entitlements").insert({
+      userId: targetOrder.customerId,
+      orderId: targetOrder.id,
+      bundleId: targetOrder.bundleId || null,
+      productId: targetOrder.productId || null,
+      scope: targetOrder.bundleId ? `bundle:${targetOrder.bundleId}` : `product:${targetOrder.productId || 1}`,
+      grantedAt: now.toISOString(),
+    });
 
-      // Add notification in Supabase
-      await supabaseServer.from("notifications").insert({
-        userId: targetOrder.customerId,
-        title: "Access unlocked",
-        message: "Your payment was approved and your digital learning access is now available.",
-        read: false,
-        createdAt: now.toISOString(),
-      });
+    // Add notification in Supabase
+    await supabaseServer.from("notifications").insert({
+      userId: targetOrder.customerId,
+      title: isCourse ? "Course Access Unlocked 🎓" : "Access unlocked",
+      message: isCourse && telegramConfig.telegramUrl
+        ? "Your course access has been approved! Join our official Telegram community for real-time course updates, institutional study materials, and student support."
+        : "Your payment was approved and your digital learning access is now available.",
+      read: false,
+      createdAt: now.toISOString(),
+    });
 
-      // Record in audit logs
-      await addAuditLog({
-        actorId: approvedBy,
-        action: "order.approved",
-        entity: "order",
-        entityId: orderId,
-        metadata: { customerId: targetOrder.customerId, amount: targetOrder.amount },
-      });
-
-      // Update in-memory cache
-      const memOrder = inMemoryOrders.find((o) => o.id === orderId);
-      if (memOrder) {
-        memOrder.orderStatus = "approved";
-        memOrder.paymentStatus = "approved";
-        memOrder.approvedAt = now;
-      }
-
-      return { success: true, order: targetOrder };
-    }
+    // Record in audit logs
+    await addAuditLog({
+      actorId: approvedBy,
+      action: "order.approved",
+      entity: "order",
+      entityId: orderId,
+      metadata: { customerId: targetOrder.customerId, amount: targetOrder.amount, isCourse },
+    });
   } catch (err) {
     console.warn("[approveOrder Supabase error]:", err);
   }
 
-  // In-memory fallback
+  // 3. If Course access granted, create Telegram Popup Event
+  if (isCourse) {
+    try {
+      await createCourseTelegramPopupEvent({
+        userId: targetOrder.customerId,
+        orderId: targetOrder.id,
+      });
+      console.log(`[approveOrder]: Course Telegram Popup event created for user ${targetOrder.customerId} on Order #${targetOrder.id}`);
+    } catch (evErr) {
+      console.warn("[createCourseTelegramPopupEvent notice]:", evErr);
+    }
+  }
+
+  // 4. Update in-memory cache
+  targetOrder.orderStatus = "approved";
+  targetOrder.paymentStatus = "approved";
+  targetOrder.approvedAt = now;
+
   const memOrder = inMemoryOrders.find((o) => o.id === orderId);
   if (memOrder) {
     memOrder.orderStatus = "approved";
     memOrder.paymentStatus = "approved";
     memOrder.approvedAt = now;
-    await grantManualEntitlement(
-      memOrder.customerId,
-      memOrder.bundleId ? `bundle:${memOrder.bundleId}` : `product:${memOrder.productId || 1}`,
-      memOrder.bundleId,
-      memOrder.productId
-    );
-    return { success: true, order: memOrder };
   }
-  throw new Error("Order not found");
+
+  // 5. Send access email via credential-safe email boundary
+  try {
+    const customer = await getUserById(targetOrder.customerId);
+    const recipientEmail = customer?.email || targetOrder.customerEmail;
+    if (recipientEmail) {
+      await sendAccessEmail("payment_approved", recipientEmail, {
+        orderId: targetOrder.id,
+        customerName: customer?.name || targetOrder.customerName || "Trader",
+        bundleId: targetOrder.bundleId,
+        productId: targetOrder.productId,
+        amount: targetOrder.amount,
+        isCourse,
+        telegramUrl: isCourse && telegramConfig.enabled ? telegramConfig.telegramUrl : undefined,
+      });
+    }
+  } catch (emailErr) {
+    console.warn("[approveOrder email boundary notice]:", emailErr);
+  }
+
+  return { success: true, order: targetOrder };
 }
 
 export async function rejectOrder(orderId: number, reason: string, rejectedBy: number = 1) {

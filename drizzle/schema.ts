@@ -202,6 +202,19 @@ export const auditEvents = mysqlTable("auditEvents", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+export const courseTelegramPopupEvents = mysqlTable("courseTelegramPopupEvents", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  orderId: int("orderId").notNull(),
+  entitlementId: int("entitlementId"),
+  status: mysqlEnum("status", ["pending", "dismissed", "joined"]).default("pending").notNull(),
+  firstShownAt: timestamp("firstShownAt"),
+  dismissedAt: timestamp("dismissedAt"),
+  joinedClickedAt: timestamp("joinedClickedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 export const freeEbooks = mysqlTable("freeEbooks", {
   id: int("id").autoincrement().primaryKey(),
   titleEn: varchar("titleEn", { length: 255 }).notNull(),
@@ -354,5 +367,5 @@ export type InsertDisciplineSetting = typeof disciplineSettings.$inferInsert;
 export type TraderTrade = typeof traderTrades.$inferSelect;
 export type InsertTraderTrade = typeof traderTrades.$inferInsert;
 
-
-
+export type CourseTelegramPopupEvent = typeof courseTelegramPopupEvents.$inferSelect;
+export type InsertCourseTelegramPopupEvent = typeof courseTelegramPopupEvents.$inferInsert;

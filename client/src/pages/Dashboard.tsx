@@ -57,6 +57,7 @@ import { getStoredTrades } from "@/lib/traderJournalStorage";
 import { getDashboardRoadmapStages, DashboardRoadmapStage } from "@/data/roadmapStages";
 import { DailyDisciplineMaster } from "@/components/discipline/DailyDisciplineMaster";
 import { uploadImage } from "@/lib/mediaUpload";
+import { CourseTelegramModal } from "@/components/CourseTelegramModal";
 
 // Daily Discipline Rules
 const DAILY_DISCIPLINE_RULES = [
@@ -307,6 +308,19 @@ export default function Dashboard() {
     });
     return hasApprovedPaidOrder || hasPaidEntitlement;
   }, [orders, entitlements]);
+
+  // Course Access Telegram Community Popup Query & State
+  const { data: telegramPopupData, refetch: refetchTelegramPopup } = trpc.customer.courseTelegramPopup.useQuery(undefined, {
+    enabled: !!user,
+    refetchInterval: 20000, // Lightweight 20s sync so online students receive the popup upon admin approval
+  });
+  const [isTelegramModalDismissedLocally, setIsTelegramModalDismissedLocally] = useState(false);
+
+  const recordTelegramActionMutation = trpc.customer.recordCourseTelegramAction.useMutation({
+    onSuccess: () => {
+      refetchTelegramPopup();
+    },
+  });
 
   // Mutations
   const toggleProgressMutation = trpc.customer.toggleProgress.useMutation({
@@ -2149,6 +2163,38 @@ CRITICAL RISK MANAGEMENT PROTOCOL:
             </form>
           </div>
         </div>
+      )}
+
+      {/* Course Access Telegram Community Popup Modal */}
+      {telegramPopupData && !isTelegramModalDismissedLocally && (
+        <CourseTelegramModal
+          isOpen={true}
+          config={telegramPopupData.config}
+          lang={lang}
+          onClose={() => setIsTelegramModalDismissedLocally(true)}
+          onJoin={async () => {
+            try {
+              await recordTelegramActionMutation.mutateAsync({
+                eventId: telegramPopupData.event.id,
+                action: "joined",
+              });
+            } catch (e) {
+              console.warn("[Telegram action record notice]:", e);
+            }
+            setIsTelegramModalDismissedLocally(true);
+          }}
+          onDismiss={async () => {
+            try {
+              await recordTelegramActionMutation.mutateAsync({
+                eventId: telegramPopupData.event.id,
+                action: "dismissed",
+              });
+            } catch (e) {
+              console.warn("[Telegram action dismiss notice]:", e);
+            }
+            setIsTelegramModalDismissedLocally(true);
+          }}
+        />
       )}
     </div>
   );

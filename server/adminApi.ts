@@ -26,6 +26,8 @@ import {
   updateOwnerProfile,
   getPaymentGateways,
   updatePaymentGateways,
+  getCourseTelegramPopupConfig,
+  setCourseTelegramPopupConfig,
 } from "./db";
 import { eq } from "drizzle-orm";
 import { sendAccessEmail } from "./email";
@@ -362,3 +364,22 @@ adminRouter.post("/payment-settings", async (req, res) => {
   }
 });
 
+// GET /api/admin/course-telegram-settings
+adminRouter.get("/course-telegram-settings", async (_req, res) => {
+  try {
+    const config = await getCourseTelegramPopupConfig();
+    return res.json({ success: true, config });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/admin/course-telegram-settings
+adminRouter.post("/course-telegram-settings", async (req, res) => {
+  try {
+    const updated = await setCourseTelegramPopupConfig(req.body);
+    return res.json({ success: true, config: updated });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});

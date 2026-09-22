@@ -302,7 +302,10 @@ export default function Home() {
   const [isFreeEbookModalOpen, setIsFreeEbookModalOpen] = useState(false);
   const { data: bundles } = trpc.public.bundles.useQuery();
   const { data: products } = trpc.public.products.useQuery();
-  const { data: ownerProfile } = trpc.public.ownerProfile.useQuery();
+  const { data: ownerProfile } = trpc.public.ownerProfile.useQuery(undefined, {
+    staleTime: 1000 * 30,
+    refetchOnWindowFocus: true,
+  });
 
   const storeBundles = useMemo(() => {
     return STORE_BUNDLES_STATIC.map((base) => {
