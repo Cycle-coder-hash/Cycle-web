@@ -2725,14 +2725,52 @@ async function saveSupportConversationsRegistry(conversations: SupportConversati
  * Gets or creates the SINGLE permanent support conversation for a customer.
  * Lifetime guarantee: One customer = One permanent conversation.
  */
-export async function getOrCreateSupportConversation(customerId: number): Promise<SupportConversationRecord> {
-  const numCustomerId = Number(customerId);
+export async function getOrCreateSupportConversation(
+  customerId: number,
+  userContext?: { id?: number; openId?: string | null; email?: string | null }
+): Promise<SupportConversationRecord> {
+  let canonicalCustomerId = Number(customerId);
   const allConversations = await loadSupportConversationsRegistry();
 
+  // Try to resolve user details to guarantee canonical ID binding
+  let matchedUser: any = null;
+  try {
+    matchedUser = await getUserById(canonicalCustomerId);
+    if (!matchedUser && userContext?.openId) {
+      matchedUser = await getUserByOpenId(userContext.openId);
+    }
+    if (!matchedUser && userContext?.email) {
+      matchedUser = await getUserByEmail(userContext.email);
+    }
+    if (!matchedUser) {
+      for (const u of Array.from(inMemoryUsers.values())) {
+        if (
+          Number(u.id) === canonicalCustomerId ||
+          (userContext?.openId && u.openId === userContext.openId) ||
+          (userContext?.email && u.email?.toLowerCase() === userContext.email.toLowerCase())
+        ) {
+          matchedUser = u;
+          break;
+        }
+      }
+    }
+    if (matchedUser?.id) {
+      canonicalCustomerId = Number(matchedUser.id);
+    }
+  } catch {}
+
   // 1. Check existing in registry
-  const existing = allConversations.find((c) => Number(c.customerId) === numCustomerId);
+  let existing = allConversations.find((c) => Number(c.customerId) === canonicalCustomerId);
   if (existing) {
     return existing;
+  }
+
+  // Also check if any existing conversation matches user's other potential ID
+  if (matchedUser) {
+    existing = allConversations.find((c) => Number(c.customerId) === Number(matchedUser.id));
+    if (existing) {
+      return existing;
+    }
   }
 
   // 2. Check Postgres DB if active
@@ -2742,7 +2780,7 @@ export async function getOrCreateSupportConversation(customerId: number): Promis
       const rows = await db
         .select()
         .from(supportConversations)
-        .where(eq(supportConversations.customerId, numCustomerId))
+        .where(eq(supportConversations.customerId, canonicalCustomerId))
         .limit(1);
       if (rows && rows[0]) {
         const conv: SupportConversationRecord = {
@@ -2771,7 +2809,7 @@ export async function getOrCreateSupportConversation(customerId: number): Promis
 
   const newConv: SupportConversationRecord = {
     id: newId,
-    customerId: numCustomerId,
+    customerId: canonicalCustomerId,
     createdAt: now,
     updatedAt: now,
     lastMessageAt: null,
@@ -2788,7 +2826,7 @@ export async function getOrCreateSupportConversation(customerId: number): Promis
     try {
       await db.insert(supportConversations).values({
         id: newId,
-        customerId: numCustomerId,
+        customerId: canonicalCustomerId,
         createdAt: new Date(now),
         updatedAt: new Date(now),
         lastMessageAt: null,
@@ -2803,7 +2841,7 @@ export async function getOrCreateSupportConversation(customerId: number): Promis
     const { supabaseServer } = await import("./supabase");
     await supabaseServer.from("supportConversations").insert({
       id: newId,
-      customerId: numCustomerId,
+      customerId: canonicalCustomerId,
       createdAt: now,
       updatedAt: now,
       lastMessageAt: null,
@@ -2816,10 +2854,17 @@ export async function getOrCreateSupportConversation(customerId: number): Promis
 /**
  * Gets a support conversation by customerId (or null if not created).
  */
-export async function getSupportConversation(customerId: number): Promise<SupportConversationRecord | null> {
-  const numCustomerId = Number(customerId);
+export async function getSupportConversation(
+  customerId: number,
+  userContext?: { id?: number; openId?: string | null; email?: string | null }
+): Promise<SupportConversationRecord | null> {
+  let canonicalCustomerId = Number(customerId);
+  try {
+    const userObj = await getUserById(canonicalCustomerId);
+    if (userObj?.id) canonicalCustomerId = Number(userObj.id);
+  } catch {}
   const allConversations = await loadSupportConversationsRegistry();
-  const found = allConversations.find((c) => Number(c.customerId) === numCustomerId);
+  const found = allConversations.find((c) => Number(c.customerId) === canonicalCustomerId);
   return found || null;
 }
 
@@ -2903,7 +2948,8 @@ export async function getSupportMessages(conversationId: number): Promise<Suppor
  * Real-time broadcast + persistence + notification + email dispatch.
  */
 export async function sendSupportMessage(input: {
-  conversationId: number;
+  conversationId?: number;
+  customerId?: number;
   senderId: number;
   senderRole: "customer" | "admin";
   message: string;
@@ -2913,11 +2959,21 @@ export async function sendSupportMessage(input: {
     throw new Error("Message cannot be empty");
   }
 
-  const numConvId = Number(input.conversationId);
-  const conversation = await getSupportConversationById(numConvId);
-  if (!conversation) {
-    throw new Error(`Conversation #${numConvId} not found`);
+  let conversation: SupportConversationRecord | null = null;
+  if (input.conversationId) {
+    conversation = await getSupportConversationById(Number(input.conversationId));
   }
+  if (!conversation && input.customerId) {
+    conversation = await getSupportConversation(Number(input.customerId));
+  }
+  if (!conversation && input.customerId) {
+    conversation = await getOrCreateSupportConversation(Number(input.customerId));
+  }
+  if (!conversation) {
+    throw new Error(`Conversation #${input.conversationId || input.customerId} not found`);
+  }
+
+  const numConvId = Number(conversation.id);
 
   const now = new Date().toISOString();
   const existingMessages = await getSupportMessages(numConvId);
@@ -2997,35 +3053,49 @@ export async function sendSupportMessage(input: {
       .eq("id", numConvId);
   } catch {}
 
-  // 4. Real-time Broadcast via Supabase channels
+  // 4. Real-time Broadcast via Supabase channels (properly awaited)
   try {
     const { supabaseServer } = await import("./supabase");
     
     // Broadcast to customer chat channel
     const chatChannel = supabaseServer.channel(`support_chat_${numConvId}`);
-    chatChannel.subscribe((status) => {
-      if (status === "SUBSCRIBED") {
-        chatChannel.send({
-          type: "broadcast",
-          event: "new_message",
-          payload: messageRecord,
-        }).catch(() => {});
-      }
+    await new Promise<void>((resolve) => {
+      const timer = setTimeout(() => resolve(), 600);
+      chatChannel.subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          try {
+            await chatChannel.send({
+              type: "broadcast",
+              event: "new_message",
+              payload: messageRecord,
+            });
+          } catch {}
+          clearTimeout(timer);
+          resolve();
+        }
+      });
     });
 
     // Broadcast to global admin inbox
     const adminInboxChannel = supabaseServer.channel("admin_support_inbox");
-    adminInboxChannel.subscribe((status) => {
-      if (status === "SUBSCRIBED") {
-        adminInboxChannel.send({
-          type: "broadcast",
-          event: "conversation_updated",
-          payload: {
-            conversationId: numConvId,
-            lastMessage: messageRecord,
-          },
-        }).catch(() => {});
-      }
+    await new Promise<void>((resolve) => {
+      const timer = setTimeout(() => resolve(), 600);
+      adminInboxChannel.subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          try {
+            await adminInboxChannel.send({
+              type: "broadcast",
+              event: "conversation_updated",
+              payload: {
+                conversationId: numConvId,
+                lastMessage: messageRecord,
+              },
+            });
+          } catch {}
+          clearTimeout(timer);
+          resolve();
+        }
+      });
     });
   } catch (broadcastErr) {
     console.warn("[sendSupportMessage broadcast notice]:", broadcastErr);
@@ -3141,14 +3211,21 @@ export async function markSupportConversationRead(
         .is("readAt", null);
 
       const channel = supabaseServer.channel(`support_chat_${numId}`);
-      channel.subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-          channel.send({
-            type: "broadcast",
-            event: "messages_read",
-            payload: { conversationId: numId, readerRole, readAt: now },
-          }).catch(() => {});
-        }
+      await new Promise<void>((resolve) => {
+        const timer = setTimeout(() => resolve(), 600);
+        channel.subscribe(async (status) => {
+          if (status === "SUBSCRIBED") {
+            try {
+              await channel.send({
+                type: "broadcast",
+                event: "messages_read",
+                payload: { conversationId: numId, readerRole, readAt: now },
+              });
+            } catch {}
+            clearTimeout(timer);
+            resolve();
+          }
+        });
       });
     } catch {}
   }

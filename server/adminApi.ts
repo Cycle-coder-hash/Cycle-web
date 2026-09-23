@@ -251,13 +251,17 @@ adminRouter.get("/support/conversations/:id/messages", async (req, res) => {
 // POST /api/admin/support/reply
 adminRouter.post("/support/reply", async (req, res) => {
   try {
-    const { conversationId, message, senderId } = req.body;
-    if (!conversationId || !message) {
-      return res.status(400).json({ success: false, error: "conversationId and message are required" });
+    const { conversationId, customerId, message, senderId } = req.body;
+    if (!conversationId && !customerId) {
+      return res.status(400).json({ success: false, error: "conversationId or customerId is required" });
+    }
+    if (!message || !String(message).trim()) {
+      return res.status(400).json({ success: false, error: "message is required" });
     }
 
     const reply = await sendSupportMessage({
-      conversationId: Number(conversationId),
+      conversationId: conversationId ? Number(conversationId) : undefined,
+      customerId: customerId ? Number(customerId) : undefined,
       senderId: senderId ? Number(senderId) : 1,
       senderRole: "admin",
       message: String(message).trim(),

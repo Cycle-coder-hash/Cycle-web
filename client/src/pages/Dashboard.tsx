@@ -67,6 +67,7 @@ import { PositionSizeCalculator } from "@/components/calculator/PositionSizeCalc
 import { uploadImage } from "@/lib/mediaUpload";
 import { CourseTelegramModal } from "@/components/CourseTelegramModal";
 import { NewUserOnboardingModal } from "@/components/NewUserOnboardingModal";
+import { SupportChat } from "@/components/SupportChat";
 
 // Daily Discipline Rules
 const DAILY_DISCIPLINE_RULES = [
@@ -223,6 +224,17 @@ export default function Dashboard() {
   const { data: entitlements, refetch: refetchEntitlements } = trpc.customer.entitlements.useQuery(undefined, { enabled: !!user });
   const { data: journal, refetch: refetchJournal } = trpc.customer.journal.useQuery(undefined, { enabled: !!user });
   const { data: tickets, refetch: refetchTickets } = trpc.customer.tickets.useQuery(undefined, { enabled: !!user });
+  const { data: supportData, refetch: refetchSupport } = trpc.support.getConversation.useQuery(undefined, {
+    enabled: !!user,
+    refetchInterval: 3000,
+  });
+
+  const unreadSupportCount = useMemo(() => {
+    if (!supportData?.messages) return 0;
+    return supportData.messages.filter(
+      (m: any) => (m.senderRole === "admin" || m.senderRole === "support") && !m.readAt
+    ).length;
+  }, [supportData?.messages]);
   const { data: notifications } = trpc.customer.notifications.useQuery(undefined, { enabled: !!user });
   const { data: discipline, refetch: refetchDiscipline } = trpc.customer.discipline.useQuery({ date: today }, { enabled: !!user });
   const { data: ownerProfile } = trpc.public.ownerProfile.useQuery(undefined, { staleTime: 1000 * 60 * 5 });
@@ -812,7 +824,13 @@ export default function Dashboard() {
         ? `${orders.length}`
         : undefined,
     },
-    { id: "support", labelEn: t("dashboard.tabSupport"), labelBn: "সাপোর্ট চ্যাট", icon: MessageSquare },
+    {
+      id: "support",
+      labelEn: t("dashboard.tabSupport"),
+      labelBn: "সাপোর্ট চ্যাট",
+      icon: MessageSquare,
+      badge: unreadSupportCount > 0 ? `${unreadSupportCount}` : undefined,
+    },
   ];
 
   // Filtered Journals
@@ -1826,58 +1844,7 @@ export default function Dashboard() {
           {/* ========================================================================= */}
           {tab === "support" && (
             <div className="space-y-6 animate-in fade-in duration-300">
-              <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6 dark:border-slate-800">
-                  <div className="flex items-center gap-3.5">
-                    <div className="flex size-12 items-center justify-center rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-500 dark:text-sky-400 font-black">
-                      <Headphones size={24} />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h2 className="text-xl font-black tracking-tight">
-                          {isBn ? "সরাসরি সাপোর্ট চ্যাট" : "Direct Support Chat"}
-                        </h2>
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-                          <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                          {isBn ? "অনলাইন" : "Active"}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                        {isBn
-                          ? "আপনার সব প্রশ্ন বা সহায়তার জন্য সরাসরি অ্যাডমিনের সাথে কথা বলুন।"
-                          : "Connect directly with Cycle of Chart administration in real-time."}
-                      </p>
-                    </div>
-                  </div>
-
-                  <Link href="/support">
-                    <Button className="gap-2 bg-[#081833] text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 font-bold shrink-0">
-                      <MessageSquare size={16} />
-                      <span>{isBn ? "সাপোর্ট চ্যাট ওপেন করুন" : "Open Full Chat"}</span>
-                    </Button>
-                  </Link>
-                </div>
-
-                <div className="mt-6 rounded-2xl border border-sky-100 bg-sky-50/50 p-6 sm:p-8 text-center dark:border-sky-900/30 dark:bg-sky-950/20">
-                  <MessageSquare size={36} className="mx-auto text-sky-500 mb-3" />
-                  <h3 className="font-extrabold text-base text-slate-800 dark:text-slate-200">
-                    {isBn ? "১-অন-১ পার্সোনাল সাপোর্ট সিস্টেম" : "Permanent 1-on-1 Support Desk"}
-                  </h3>
-                  <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
-                    {isBn
-                      ? "পেমেন্ট ভেরিফিকেশন, কোর্স অ্যাক্সেস বা যেকোনো সহায়তায় আমাদের সাপোর্ট টিম আপনার সেবায় নিয়োজিত। আপনার সম্পূর্ণ চ্যাট হিস্ট্রি স্থায়ীভাবে সংরক্ষিত থাকে।"
-                      : "Need help with orders, study materials, or account access? Send a direct message and get immediate assistance from our dedicated team."}
-                  </p>
-                  <div className="mt-6 flex flex-wrap justify-center gap-3">
-                    <Link href="/support">
-                      <Button className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-black tracking-wide gap-2 px-6">
-                        <Send size={15} />
-                        <span>{isBn ? "মেসেজ পাঠান" : "Send a Message"}</span>
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </div>
+              <SupportChat inline />
             </div>
           )}
         </main>

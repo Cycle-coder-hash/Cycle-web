@@ -659,11 +659,11 @@ export const appRouter = router({
       .input(z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }))
       .query(({ ctx, input }) => listHabits(ctx.user.id, input.date)),
     tickets: protectedProcedure.query(async ({ ctx }) => {
-      const conv = await getOrCreateSupportConversation(ctx.user.id);
+      const conv = await getOrCreateSupportConversation(ctx.user.id, ctx.user);
       return [conv];
     }),
     supportConversation: protectedProcedure.query(async ({ ctx }) => {
-      return await getOrCreateSupportConversation(ctx.user.id);
+      return await getOrCreateSupportConversation(ctx.user.id, ctx.user);
     }),
     progress: protectedProcedure.query(async ({ ctx }) => {
       return await listProgress(ctx.user.id);
@@ -1158,7 +1158,7 @@ export const appRouter = router({
 
   support: router({
     getConversation: protectedProcedure.query(async ({ ctx }) => {
-      const conversation = await getOrCreateSupportConversation(ctx.user.id);
+      const conversation = await getOrCreateSupportConversation(ctx.user.id, ctx.user);
       const messages = await getSupportMessages(conversation.id);
       return { conversation, messages };
     }),
@@ -1170,7 +1170,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const conversation = await getOrCreateSupportConversation(ctx.user.id);
+        const conversation = await getOrCreateSupportConversation(ctx.user.id, ctx.user);
         const msg = await sendSupportMessage({
           conversationId: conversation.id,
           senderId: ctx.user.id,
