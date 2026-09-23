@@ -342,7 +342,13 @@ let entitlementAutoId = 1;
 let auditAutoId = 1;
 let ebookAutoId = 6;
 
+let _dbChecked = false;
+let _dbAvailable = false;
+
 export async function getDb() {
+  if (_dbChecked) {
+    return _dbAvailable ? _db : null;
+  }
   const url = process.env.DATABASE_URL;
   const isTemplate = !url || url.includes("[") || url.includes("]") || url.includes("<") || url.includes(">");
   if (!_db && url && !isTemplate) {
@@ -351,17 +357,28 @@ export async function getDb() {
         _pgPool = new pg.Pool({
           connectionString: url,
           ssl: url.includes("supabase.com") ? { rejectUnauthorized: false } : undefined,
+          connectionTimeoutMillis: 1500,
         });
+        // Test connectivity once
+        const client = await _pgPool.connect();
+        client.release();
         _db = drizzlePg(_pgPool);
+        _dbAvailable = true;
       } else if (url.startsWith("mysql://")) {
         _db = drizzleMysql(url);
+        _dbAvailable = true;
       }
     } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
+      console.warn("[Database] Pooler unavailable, seamlessly using Supabase REST engine:", (error as any)?.message || error);
       _db = null;
+      _dbAvailable = false;
+    } finally {
+      _dbChecked = true;
     }
+  } else {
+    _dbChecked = true;
   }
-  return _db;
+  return _dbAvailable ? _db : null;
 }
 
 const inMemorySettings: Map<string, string> = new Map();
@@ -2633,14 +2650,21 @@ async function loadSupportConversationsRegistry(): Promise<SupportConversationRe
   try {
     const raw = await getSetting("support_conversations_registry");
     if (raw) {
-      const list = JSON.parse(raw);
+      const list = typeof raw === "string" ? JSON.parse(raw) : raw;
       if (Array.isArray(list)) {
-        for (const item of list) {
-          if (!inMemoryConversations.some((c) => c.id === item.id)) {
+        const normalized: SupportConversationRecord[] = list.map((item: any) => ({
+          id: Number(item.id),
+          customerId: Number(item.customerId),
+          createdAt: item.createdAt || new Date().toISOString(),
+          updatedAt: item.updatedAt || new Date().toISOString(),
+          lastMessageAt: item.lastMessageAt || null,
+        }));
+        for (const item of normalized) {
+          if (!inMemoryConversations.some((c) => Number(c.id) === Number(item.id))) {
             inMemoryConversations.push(item);
           }
         }
-        return list;
+        return normalized;
       }
     }
   } catch (err) {
@@ -2665,10 +2689,11 @@ async function saveSupportConversationsRegistry(conversations: SupportConversati
  * Lifetime guarantee: One customer = One permanent conversation.
  */
 export async function getOrCreateSupportConversation(customerId: number): Promise<SupportConversationRecord> {
+  const numCustomerId = Number(customerId);
   const allConversations = await loadSupportConversationsRegistry();
 
   // 1. Check existing in registry
-  const existing = allConversations.find((c) => c.customerId === customerId);
+  const existing = allConversations.find((c) => Number(c.customerId) === numCustomerId);
   if (existing) {
     return existing;
   }
@@ -2680,12 +2705,12 @@ export async function getOrCreateSupportConversation(customerId: number): Promis
       const rows = await db
         .select()
         .from(supportConversations)
-        .where(eq(supportConversations.customerId, customerId))
+        .where(eq(supportConversations.customerId, numCustomerId))
         .limit(1);
       if (rows && rows[0]) {
         const conv: SupportConversationRecord = {
-          id: rows[0].id,
-          customerId: rows[0].customerId,
+          id: Number(rows[0].id),
+          customerId: Number(rows[0].customerId),
           createdAt: rows[0].createdAt ? new Date(rows[0].createdAt).toISOString() : new Date().toISOString(),
           updatedAt: rows[0].updatedAt ? new Date(rows[0].updatedAt).toISOString() : new Date().toISOString(),
           lastMessageAt: rows[0].lastMessageAt ? new Date(rows[0].lastMessageAt).toISOString() : null,
@@ -2703,20 +2728,20 @@ export async function getOrCreateSupportConversation(customerId: number): Promis
   const now = new Date().toISOString();
   let maxId = 0;
   for (const c of allConversations) {
-    if (c.id > maxId) maxId = c.id;
+    if (Number(c.id) > maxId) maxId = Number(c.id);
   }
   const newId = Math.max(maxId + 1, conversationAutoId++);
 
   const newConv: SupportConversationRecord = {
     id: newId,
-    customerId,
+    customerId: numCustomerId,
     createdAt: now,
     updatedAt: now,
     lastMessageAt: null,
   };
 
   allConversations.push(newConv);
-  if (!inMemoryConversations.some((c) => c.id === newConv.id)) {
+  if (!inMemoryConversations.some((c) => Number(c.id) === newConv.id)) {
     inMemoryConversations.push(newConv);
   }
   await saveSupportConversationsRegistry(allConversations);
@@ -2726,7 +2751,7 @@ export async function getOrCreateSupportConversation(customerId: number): Promis
     try {
       await db.insert(supportConversations).values({
         id: newId,
-        customerId,
+        customerId: numCustomerId,
         createdAt: new Date(now),
         updatedAt: new Date(now),
         lastMessageAt: null,
@@ -2741,7 +2766,7 @@ export async function getOrCreateSupportConversation(customerId: number): Promis
     const { supabaseServer } = await import("./supabase");
     await supabaseServer.from("supportConversations").insert({
       id: newId,
-      customerId,
+      customerId: numCustomerId,
       createdAt: now,
       updatedAt: now,
       lastMessageAt: null,
@@ -2755,8 +2780,9 @@ export async function getOrCreateSupportConversation(customerId: number): Promis
  * Gets a support conversation by customerId (or null if not created).
  */
 export async function getSupportConversation(customerId: number): Promise<SupportConversationRecord | null> {
+  const numCustomerId = Number(customerId);
   const allConversations = await loadSupportConversationsRegistry();
-  const found = allConversations.find((c) => c.customerId === customerId);
+  const found = allConversations.find((c) => Number(c.customerId) === numCustomerId);
   return found || null;
 }
 
@@ -2764,8 +2790,9 @@ export async function getSupportConversation(customerId: number): Promise<Suppor
  * Gets a support conversation by its conversationId.
  */
 export async function getSupportConversationById(conversationId: number): Promise<SupportConversationRecord | null> {
+  const numId = Number(conversationId);
   const allConversations = await loadSupportConversationsRegistry();
-  const found = allConversations.find((c) => c.id === conversationId);
+  const found = allConversations.find((c) => Number(c.id) === numId);
   return found || null;
 }
 
@@ -2773,15 +2800,24 @@ export async function getSupportConversationById(conversationId: number): Promis
  * Fetches all messages for a conversation in chronological order (createdAt ASC).
  */
 export async function getSupportMessages(conversationId: number): Promise<SupportMessageRecord[]> {
-  const key = `support_messages_${conversationId}`;
+  const numId = Number(conversationId);
+  const key = `support_messages_${numId}`;
   let messages: SupportMessageRecord[] = [];
 
   try {
     const raw = await getSetting(key);
     if (raw) {
-      const parsed = JSON.parse(raw);
+      const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
       if (Array.isArray(parsed)) {
-        messages = parsed;
+        messages = parsed.map((m: any) => ({
+          id: Number(m.id),
+          conversationId: Number(m.conversationId),
+          senderId: Number(m.senderId),
+          senderRole: m.senderRole,
+          message: m.message,
+          readAt: m.readAt || null,
+          createdAt: m.createdAt,
+        }));
       }
     }
   } catch (err) {
@@ -2795,13 +2831,13 @@ export async function getSupportMessages(conversationId: number): Promise<Suppor
       const { data, error } = await supabaseServer
         .from("supportMessages")
         .select("*")
-        .eq("conversationId", conversationId)
+        .eq("conversationId", numId)
         .order("createdAt", { ascending: true });
       if (!error && data && data.length > 0) {
         messages = data.map((m: any) => ({
-          id: m.id,
-          conversationId: m.conversationId,
-          senderId: m.senderId,
+          id: Number(m.id),
+          conversationId: Number(m.conversationId),
+          senderId: Number(m.senderId),
           senderRole: m.senderRole,
           message: m.message,
           readAt: m.readAt || null,
@@ -2813,9 +2849,9 @@ export async function getSupportMessages(conversationId: number): Promise<Suppor
   }
 
   // Merge any in-memory messages for this conversation
-  const memMsgs = inMemoryMessages.filter((m) => m.conversationId === conversationId);
+  const memMsgs = inMemoryMessages.filter((m) => Number(m.conversationId) === numId);
   for (const m of memMsgs) {
-    if (!messages.some((existing) => existing.id === m.id)) {
+    if (!messages.some((existing) => Number(existing.id) === Number(m.id))) {
       messages.push(m);
     }
   }
@@ -2840,27 +2876,28 @@ export async function sendSupportMessage(input: {
     throw new Error("Message cannot be empty");
   }
 
-  const conversation = await getSupportConversationById(input.conversationId);
+  const numConvId = Number(input.conversationId);
+  const conversation = await getSupportConversationById(numConvId);
   if (!conversation) {
-    throw new Error(`Conversation #${input.conversationId} not found`);
+    throw new Error(`Conversation #${numConvId} not found`);
   }
 
   const now = new Date().toISOString();
-  const existingMessages = await getSupportMessages(input.conversationId);
+  const existingMessages = await getSupportMessages(numConvId);
 
   let maxId = 0;
   for (const m of existingMessages) {
-    if (m.id > maxId) maxId = m.id;
+    if (Number(m.id) > maxId) maxId = Number(m.id);
   }
   for (const m of inMemoryMessages) {
-    if (m.id > maxId) maxId = m.id;
+    if (Number(m.id) > maxId) maxId = Number(m.id);
   }
   const newMsgId = Math.max(maxId + 1, messageAutoId++);
 
   const messageRecord: SupportMessageRecord = {
     id: newMsgId,
-    conversationId: input.conversationId,
-    senderId: input.senderId,
+    conversationId: numConvId,
+    senderId: Number(input.senderId),
     senderRole: input.senderRole,
     message: trimmed,
     readAt: null,
@@ -2870,13 +2907,13 @@ export async function sendSupportMessage(input: {
   // 1. Save message to settings array
   existingMessages.push(messageRecord);
   inMemoryMessages.push(messageRecord);
-  await setSetting(`support_messages_${input.conversationId}`, JSON.stringify(existingMessages));
+  await setSetting(`support_messages_${numConvId}`, JSON.stringify(existingMessages));
 
   // 2. Update conversation timestamps
   conversation.lastMessageAt = now;
   conversation.updatedAt = now;
   const allConversations = await loadSupportConversationsRegistry();
-  const idx = allConversations.findIndex((c) => c.id === conversation.id);
+  const idx = allConversations.findIndex((c) => Number(c.id) === numConvId);
   if (idx !== -1) {
     allConversations[idx] = conversation;
   } else {
@@ -2890,8 +2927,8 @@ export async function sendSupportMessage(input: {
     try {
       await db.insert(supportMessages).values({
         id: newMsgId,
-        conversationId: input.conversationId,
-        senderId: input.senderId,
+        conversationId: numConvId,
+        senderId: Number(input.senderId),
         senderRole: input.senderRole,
         message: trimmed,
         readAt: null,
@@ -2900,7 +2937,7 @@ export async function sendSupportMessage(input: {
       await db
         .update(supportConversations)
         .set({ lastMessageAt: new Date(now), updatedAt: new Date(now) })
-        .where(eq(supportConversations.id, input.conversationId));
+        .where(eq(supportConversations.id, numConvId));
     } catch (err) {
       console.warn("[sendSupportMessage db insert notice]:", err);
     }
@@ -2910,8 +2947,8 @@ export async function sendSupportMessage(input: {
     const { supabaseServer } = await import("./supabase");
     await supabaseServer.from("supportMessages").insert({
       id: newMsgId,
-      conversationId: input.conversationId,
-      senderId: input.senderId,
+      conversationId: numConvId,
+      senderId: Number(input.senderId),
       senderRole: input.senderRole,
       message: trimmed,
       readAt: null,
@@ -2920,24 +2957,38 @@ export async function sendSupportMessage(input: {
     await supabaseServer
       .from("supportConversations")
       .update({ lastMessageAt: now, updatedAt: now })
-      .eq("id", input.conversationId);
+      .eq("id", numConvId);
   } catch {}
 
   // 4. Real-time Broadcast via Supabase channels
   try {
     const { supabaseServer } = await import("./supabase");
-    await supabaseServer.channel(`support_chat_${input.conversationId}`).send({
-      type: "broadcast",
-      event: "new_message",
-      payload: messageRecord,
+    
+    // Broadcast to customer chat channel
+    const chatChannel = supabaseServer.channel(`support_chat_${numConvId}`);
+    chatChannel.subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        chatChannel.send({
+          type: "broadcast",
+          event: "new_message",
+          payload: messageRecord,
+        }).catch(() => {});
+      }
     });
-    await supabaseServer.channel("admin_support_inbox").send({
-      type: "broadcast",
-      event: "conversation_updated",
-      payload: {
-        conversationId: input.conversationId,
-        lastMessage: messageRecord,
-      },
+
+    // Broadcast to global admin inbox
+    const adminInboxChannel = supabaseServer.channel("admin_support_inbox");
+    adminInboxChannel.subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        adminInboxChannel.send({
+          type: "broadcast",
+          event: "conversation_updated",
+          payload: {
+            conversationId: numConvId,
+            lastMessage: messageRecord,
+          },
+        }).catch(() => {});
+      }
     });
   } catch (broadcastErr) {
     console.warn("[sendSupportMessage broadcast notice]:", broadcastErr);
@@ -2947,7 +2998,7 @@ export async function sendSupportMessage(input: {
   if (input.senderRole === "admin") {
     // Admin replied -> Notify customer
     try {
-      const customer = await getUserById(conversation.customerId);
+      const customer = await getUserById(Number(conversation.customerId));
       if (customer) {
         await createUserNotification(
           customer.id,
@@ -2973,7 +3024,7 @@ export async function sendSupportMessage(input: {
   } else {
     // Customer sent message -> Notify Admin
     try {
-      const customer = await getUserById(conversation.customerId);
+      const customer = await getUserById(Number(conversation.customerId));
       const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.SMTP_USER;
       if (adminEmail) {
         const { sendEmail } = await import("./email");
@@ -3002,8 +3053,9 @@ export async function markSupportConversationRead(
   conversationId: number,
   readerRole: "customer" | "admin"
 ): Promise<{ success: boolean; count: number }> {
-  const key = `support_messages_${conversationId}`;
-  const messages = await getSupportMessages(conversationId);
+  const numId = Number(conversationId);
+  const key = `support_messages_${numId}`;
+  const messages = await getSupportMessages(numId);
   const now = new Date().toISOString();
   let updatedCount = 0;
 
@@ -3020,7 +3072,7 @@ export async function markSupportConversationRead(
 
     // Update in-memory messages
     for (const m of inMemoryMessages) {
-      if (m.conversationId === conversationId && m.senderRole !== readerRole && !m.readAt) {
+      if (Number(m.conversationId) === numId && m.senderRole !== readerRole && !m.readAt) {
         m.readAt = now;
       }
     }
@@ -3034,7 +3086,7 @@ export async function markSupportConversationRead(
           .set({ readAt: new Date(now) })
           .where(
             and(
-              eq(supportMessages.conversationId, conversationId),
+              eq(supportMessages.conversationId, numId),
               ne(supportMessages.senderRole, readerRole),
               isNull(supportMessages.readAt)
             )
@@ -3047,14 +3099,19 @@ export async function markSupportConversationRead(
       await supabaseServer
         .from("supportMessages")
         .update({ readAt: now })
-        .eq("conversationId", conversationId)
+        .eq("conversationId", numId)
         .neq("senderRole", readerRole)
         .is("readAt", null);
 
-      await supabaseServer.channel(`support_chat_${conversationId}`).send({
-        type: "broadcast",
-        event: "messages_read",
-        payload: { conversationId, readerRole, readAt: now },
+      const channel = supabaseServer.channel(`support_chat_${numId}`);
+      channel.subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          channel.send({
+            type: "broadcast",
+            event: "messages_read",
+            payload: { conversationId: numId, readerRole, readAt: now },
+          }).catch(() => {});
+        }
       });
     } catch {}
   }
@@ -3068,34 +3125,41 @@ export async function markSupportConversationRead(
  */
 export async function listAdminSupportConversations(): Promise<AdminSupportConversationSummary[]> {
   const allConversations = await loadSupportConversationsRegistry();
-  const summaries: AdminSupportConversationSummary[] = [];
 
-  for (const conv of allConversations) {
-    const customer = await getUserById(conv.customerId);
-    const messages = await getSupportMessages(conv.id);
+  const summaries: AdminSupportConversationSummary[] = await Promise.all(
+    allConversations.map(async (conv) => {
+      const numConvId = Number(conv.id);
+      const numCustomerId = Number(conv.customerId);
+      const [customer, messages] = await Promise.all([
+        getUserById(numCustomerId),
+        getSupportMessages(numConvId),
+      ]);
 
-    const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
-    const unreadCount = messages.filter((m) => m.senderRole === "customer" && !m.readAt).length;
+      const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
+      const unreadCount = messages.filter(
+        (m) => (m.senderRole === "customer" || (m as any).senderRole === "user") && !m.readAt
+      ).length;
 
-    summaries.push({
-      id: conv.id,
-      customerId: conv.customerId,
-      createdAt: conv.createdAt,
-      updatedAt: conv.updatedAt,
-      lastMessageAt: conv.lastMessageAt || (lastMsg ? lastMsg.createdAt : conv.createdAt),
-      customer: {
-        id: conv.customerId,
-        name: customer?.name || `Customer #${conv.customerId}`,
-        email: customer?.email || null,
-        phone: customer?.phone || null,
-        avatar: (customer as any)?.avatar || null,
-        createdAt: customer?.createdAt ? new Date(customer.createdAt).toISOString() : null,
-      },
-      lastMessage: lastMsg,
-      unreadCount,
-      totalMessages: messages.length,
-    });
-  }
+      return {
+        id: numConvId,
+        customerId: numCustomerId,
+        createdAt: conv.createdAt,
+        updatedAt: conv.updatedAt,
+        lastMessageAt: conv.lastMessageAt || (lastMsg ? lastMsg.createdAt : conv.createdAt),
+        customer: {
+          id: numCustomerId,
+          name: customer?.name || `Customer #${numCustomerId}`,
+          email: customer?.email || null,
+          phone: customer?.phone || null,
+          avatar: (customer as any)?.avatar || null,
+          createdAt: customer?.createdAt ? new Date(customer.createdAt).toISOString() : null,
+        },
+        lastMessage: lastMsg,
+        unreadCount,
+        totalMessages: messages.length,
+      };
+    })
+  );
 
   // Sort: Unread messages or newest activity first
   summaries.sort((a, b) => {

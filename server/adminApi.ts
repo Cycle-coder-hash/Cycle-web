@@ -133,25 +133,7 @@ adminRouter.get("/users", async (req, res) => {
   }
 });
 
-// GET /api/admin/support/conversations
-adminRouter.get("/support/conversations", async (req, res) => {
-  try {
-    const conversations = await listAdminSupportConversations();
-    return res.json({ success: true, conversations });
-  } catch (err: any) {
-    return res.status(500).json({ success: false, error: err.message });
-  }
-});
 
-// Backward compatibility: GET /api/admin/tickets
-adminRouter.get("/tickets", async (req, res) => {
-  try {
-    const conversations = await listAdminSupportConversations();
-    return res.json({ success: true, tickets: conversations });
-  } catch (err: any) {
-    return res.status(500).json({ success: false, error: err.message });
-  }
-});
 
 // GET /api/admin/audit-logs
 adminRouter.get("/audit-logs", async (req, res) => {

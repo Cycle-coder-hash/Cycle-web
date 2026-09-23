@@ -132,15 +132,19 @@ export const SupportTab: React.FC<SupportTabProps> = () => {
   useEffect(() => {
     const adminInboxChannel = supabase
       .channel("admin_support_inbox")
-      .on("broadcast", { event: "conversation_updated" }, () => {
+      .on("broadcast", { event: "conversation_updated" }, (payload: any) => {
         refetchConversations();
+        const updatedConvId = payload?.payload?.conversationId;
+        if (updatedConvId && Number(updatedConvId) === Number(selectedConversationId)) {
+          refetchMessages();
+        }
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(adminInboxChannel);
     };
-  }, [refetchConversations]);
+  }, [refetchConversations, refetchMessages, selectedConversationId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
