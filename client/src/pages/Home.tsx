@@ -337,6 +337,13 @@ export default function Home() {
           storeEl.scrollIntoView({ behavior: "smooth" });
         }, 200);
       }
+    } else if (window.location.hash === "#store") {
+      const storeEl = document.getElementById("store");
+      if (storeEl) {
+        setTimeout(() => {
+          storeEl.scrollIntoView({ behavior: "smooth" });
+        }, 150);
+      }
     }
   }, [user]);
 

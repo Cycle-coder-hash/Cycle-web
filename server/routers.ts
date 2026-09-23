@@ -21,6 +21,8 @@ import {
   setCourseTelegramPopupConfig,
   getPendingCourseTelegramPopupForUser,
   recordCourseTelegramAction,
+  getUserOnboardingStatus,
+  saveUserOnboarding,
   listJournal,
   createJournalEntry,
   deleteJournal,
@@ -484,6 +486,31 @@ export const appRouter = router({
           },
           input.eventId,
           input.action
+        );
+      }),
+    onboardingStatus: protectedProcedure.query(async ({ ctx }) => {
+      return await getUserOnboardingStatus({
+        id: ctx.user.id,
+        openId: ctx.user.openId,
+        email: ctx.user.email || undefined,
+      });
+    }),
+    submitOnboarding: protectedProcedure
+      .input(
+        z.object({
+          discoverySource: z.string().trim().min(1, "Please enter where you first discovered trading"),
+          tradingExperience: z.enum(["Complete Beginner", "6 Month+ Experience", "1 Year+ Experience"]),
+          keepsJournal: z.enum(["Yes", "No"]),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        return await saveUserOnboarding(
+          {
+            id: ctx.user.id,
+            openId: ctx.user.openId,
+            email: ctx.user.email || undefined,
+          },
+          input
         );
       }),
     journal: protectedProcedure.query(({ ctx }) => listJournal(ctx.user.id)),

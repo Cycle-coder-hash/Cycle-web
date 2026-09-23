@@ -61,6 +61,7 @@ import { getDashboardRoadmapStages, DashboardRoadmapStage } from "@/data/roadmap
 import { DailyDisciplineMaster } from "@/components/discipline/DailyDisciplineMaster";
 import { uploadImage } from "@/lib/mediaUpload";
 import { CourseTelegramModal } from "@/components/CourseTelegramModal";
+import { NewUserOnboardingModal } from "@/components/NewUserOnboardingModal";
 
 // Daily Discipline Rules
 const DAILY_DISCIPLINE_RULES = [
@@ -227,6 +228,22 @@ export default function Dashboard() {
     staleTime: 1000 * 30,
   });
   const downloadMutation = trpc.customer.downloadEbook.useMutation();
+  const { data: onboardingData, isLoading: isLoadingOnboarding } = trpc.customer.onboardingStatus.useQuery(undefined, {
+    enabled: !!user,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const isOnboardingCompleted = useMemo(() => {
+    if (!user) return true;
+    if (typeof window !== "undefined" && userKey) {
+      const localCompleted = localStorage.getItem(`cycle_onboarding_completed_${userKey}`);
+      if (localCompleted === "true") return true;
+    }
+    if (onboardingData?.completed) return true;
+    return false;
+  }, [user, userKey, onboardingData]);
+
+  const showOnboardingModal = Boolean(user && !isLoadingOnboarding && !isOnboardingCompleted);
 
   const telegramUrl = useMemo(() => {
     const raw = ownerProfile?.telegram?.trim();
@@ -2310,6 +2327,14 @@ export default function Dashboard() {
             }
             setIsTelegramModalDismissedLocally(true);
           }}
+        />
+      )}
+
+      {/* New User One-Time Onboarding Modal */}
+      {showOnboardingModal && (
+        <NewUserOnboardingModal
+          isOpen={true}
+          userKey={userKey}
         />
       )}
     </div>

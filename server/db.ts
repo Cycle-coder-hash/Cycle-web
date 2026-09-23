@@ -6903,6 +6903,110 @@ export async function getPublicTraderStats(userId: number, timeframe: "all" | "m
   };
 }
 
+export interface UserOnboardingAnswers {
+  discoverySource: string;
+  tradingExperience: "Complete Beginner" | "6 Month+ Experience" | "1 Year+ Experience" | string;
+  keepsJournal: "Yes" | "No" | string;
+}
+
+export interface UserOnboardingRecord {
+  userId: number;
+  completed: boolean;
+  completedAt: string;
+  answers: UserOnboardingAnswers;
+}
+
+export async function getUserOnboardingStatus(
+  userIdentifier: number | { id?: number; openId?: string; email?: string }
+): Promise<{ completed: boolean; answers?: UserOnboardingAnswers; completedAt?: string }> {
+  const candidateIds = await resolveUserCandidateIds(userIdentifier);
+  if (candidateIds.length === 0) {
+    if (typeof userIdentifier === "object" && userIdentifier?.id && userIdentifier.id > 0) {
+      candidateIds.push(userIdentifier.id);
+    }
+  }
+
+  for (const id of candidateIds) {
+    const raw = await getSetting(`user_onboarding_${id}`);
+    if (raw) {
+      try {
+        const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+        if (parsed && parsed.completed) {
+          return {
+            completed: true,
+            answers: parsed.answers,
+            completedAt: parsed.completedAt,
+          };
+        }
+      } catch (err) {
+        console.warn(`[getUserOnboardingStatus parse error for user ${id}]:`, err);
+      }
+    }
+  }
+
+  return { completed: false };
+}
+
+export async function saveUserOnboarding(
+  userIdentifier: number | { id?: number; openId?: string; email?: string },
+  answers: UserOnboardingAnswers
+): Promise<{ success: boolean; record: UserOnboardingRecord }> {
+  const candidateIds = await resolveUserCandidateIds(userIdentifier);
+  let primaryId = candidateIds[0];
+  if (!primaryId && typeof userIdentifier === "object" && userIdentifier?.id && userIdentifier.id > 0) {
+    primaryId = userIdentifier.id;
+  }
+  if (!primaryId && typeof userIdentifier === "number" && userIdentifier > 0) {
+    primaryId = userIdentifier;
+  }
+
+  if (!primaryId) {
+    throw new Error("Unable to identify user account to save onboarding answers.");
+  }
+
+  const now = new Date().toISOString();
+  const record: UserOnboardingRecord = {
+    userId: primaryId,
+    completed: true,
+    completedAt: now,
+    answers: {
+      discoverySource: (answers.discoverySource || "").trim(),
+      tradingExperience: (answers.tradingExperience || "").trim(),
+      keepsJournal: (answers.keepsJournal || "").trim(),
+    },
+  };
+
+  // 1. Save to user-specific settings key
+  await setSetting(`user_onboarding_${primaryId}`, JSON.stringify(record));
+
+  // Also if candidateIds has other linked IDs, ensure consistency
+  for (let i = 1; i < candidateIds.length; i++) {
+    await setSetting(`user_onboarding_${candidateIds[i]}`, JSON.stringify(record));
+  }
+
+  // 2. Append or update in user_onboarding_registry for admin/analytics
+  try {
+    const rawRegistry = await getSetting("user_onboarding_registry");
+    let registry: any[] = [];
+    if (rawRegistry) {
+      const parsed = typeof rawRegistry === "string" ? JSON.parse(rawRegistry) : rawRegistry;
+      if (Array.isArray(parsed)) registry = parsed;
+    }
+
+    const existingIdx = registry.findIndex((item) => Number(item.userId) === Number(primaryId));
+    if (existingIdx >= 0) {
+      registry[existingIdx] = record;
+    } else {
+      registry.push(record);
+    }
+    await setSetting("user_onboarding_registry", JSON.stringify(registry));
+  } catch (err) {
+    console.warn("[saveUserOnboarding registry error]:", err);
+  }
+
+  return { success: true, record };
+}
+
 export {
   users,
   verificationTokens,

@@ -25,11 +25,19 @@ function PageFallback() {
   return <div className="min-h-screen bg-[#020813]" />;
 }
 
+function StoreRedirect() {
+  if (typeof window !== "undefined") {
+    window.location.replace("/#store");
+  }
+  return <PageFallback />;
+}
+
 function Router() {
   return (
     <Suspense fallback={<PageFallback />}>
       <Switch>
         <Route path="/" component={Home} />
+        <Route path="/store" component={StoreRedirect} />
         <Route path="/login" component={Auth} />
         <Route path="/register" component={Auth} />
         <Route path="/dashboard" component={Dashboard} />
