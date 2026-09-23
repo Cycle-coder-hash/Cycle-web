@@ -1388,8 +1388,8 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
 
                       {/* 7 & 10. Entry & Exit */}
                       <td className="py-3.5 px-2 font-mono text-[11px]">
-                        <div>{t.entryPrice}</div>
-                        <div className="text-slate-400">→ {t.exitPrice}</div>
+                        <div>{t.entryPrice != null ? t.entryPrice : "—"}</div>
+                        <div className="text-slate-400">→ {t.exitPrice != null ? t.exitPrice : "—"}</div>
                       </td>
 
                       {/* 15. Lot Size */}
@@ -1623,19 +1623,19 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="rounded-2xl border border-slate-200/80 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/40">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Entry Price</div>
-                  <div className="mt-1 font-mono text-sm font-black">{viewingTrade.entryPrice}</div>
+                  <div className="mt-1 font-mono text-sm font-black">{viewingTrade.entryPrice != null ? viewingTrade.entryPrice : "—"}</div>
                 </div>
                 <div className="rounded-2xl border border-slate-200/80 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/40">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Stop Loss</div>
-                  <div className="mt-1 font-mono text-sm font-black text-rose-500">{viewingTrade.stopLoss}</div>
+                  <div className="mt-1 font-mono text-sm font-black text-rose-500">{viewingTrade.stopLoss != null ? viewingTrade.stopLoss : "—"}</div>
                 </div>
                 <div className="rounded-2xl border border-slate-200/80 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/40">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Take Profit</div>
-                  <div className="mt-1 font-mono text-sm font-black text-emerald-500">{viewingTrade.takeProfit}</div>
+                  <div className="mt-1 font-mono text-sm font-black text-emerald-500">{viewingTrade.takeProfit != null ? viewingTrade.takeProfit : "—"}</div>
                 </div>
                 <div className="rounded-2xl border border-slate-200/80 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/40">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Exit Price</div>
-                  <div className="mt-1 font-mono text-sm font-black text-cyan-500">{viewingTrade.exitPrice}</div>
+                  <div className="mt-1 font-mono text-sm font-black text-cyan-500">{viewingTrade.exitPrice != null ? viewingTrade.exitPrice : "—"}</div>
                 </div>
 
                 <div className="rounded-2xl border border-slate-200/80 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/40">

@@ -647,25 +647,25 @@ export function JournalCalendar({
                         <div>
                           <div className="text-slate-400 text-[9px] uppercase">Entry</div>
                           <div className="font-bold text-slate-700 dark:text-slate-300 truncate">
-                            {trade.entryPrice}
+                            {trade.entryPrice != null ? trade.entryPrice : "—"}
                           </div>
                         </div>
                         <div>
                           <div className="text-slate-400 text-[9px] uppercase">Exit</div>
                           <div className="font-bold text-slate-700 dark:text-slate-300 truncate">
-                            {trade.exitPrice}
+                            {trade.exitPrice != null ? trade.exitPrice : "—"}
                           </div>
                         </div>
                         <div>
                           <div className="text-slate-400 text-[9px] uppercase">Stop Loss</div>
                           <div className="font-bold text-rose-500 truncate">
-                            {trade.stopLoss}
+                            {trade.stopLoss != null ? trade.stopLoss : "—"}
                           </div>
                         </div>
                         <div>
                           <div className="text-slate-400 text-[9px] uppercase">Target</div>
                           <div className="font-bold text-emerald-500 truncate">
-                            {trade.takeProfit}
+                            {trade.takeProfit != null ? trade.takeProfit : "—"}
                           </div>
                         </div>
                       </div>

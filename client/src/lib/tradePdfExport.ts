@@ -188,19 +188,19 @@ export function printTrade(trade: TradeEntry, book?: JournalBook | null): void {
 
           <div class="card">
             <div class="card-title">Entry Price</div>
-            <div class="card-val">${trade.entryPrice}</div>
+            <div class="card-val">${trade.entryPrice != null ? trade.entryPrice : "—"}</div>
           </div>
           <div class="card">
             <div class="card-title">Stop Loss</div>
-            <div class="card-val" style="color: #ef4444;">${trade.stopLoss}</div>
+            <div class="card-val" style="color: #ef4444;">${trade.stopLoss != null ? trade.stopLoss : "—"}</div>
           </div>
           <div class="card">
             <div class="card-title">Take Profit</div>
-            <div class="card-val" style="color: #10b981;">${trade.takeProfit}</div>
+            <div class="card-val" style="color: #10b981;">${trade.takeProfit != null ? trade.takeProfit : "—"}</div>
           </div>
           <div class="card">
             <div class="card-title">Exit Price</div>
-            <div class="card-val">${trade.exitPrice}</div>
+            <div class="card-val">${trade.exitPrice != null ? trade.exitPrice : "—"}</div>
           </div>
 
           <div class="card">
@@ -366,10 +366,10 @@ export async function exportTradePdf(trade: TradeEntry, book?: JournalBook | nul
     { label: "SETUP RANK", val: `Rank ${trade.tradeRank}` },
     { label: "FOLLOWED RULES", val: trade.followedRules === "Yes" ? "YES (100%)" : "NO (Broken)" },
 
-    { label: "ENTRY PRICE", val: String(trade.entryPrice) },
-    { label: "STOP LOSS", val: String(trade.stopLoss) },
-    { label: "TAKE PROFIT", val: String(trade.takeProfit) },
-    { label: "EXIT PRICE", val: String(trade.exitPrice) },
+    { label: "ENTRY PRICE", val: trade.entryPrice != null ? String(trade.entryPrice) : "—" },
+    { label: "STOP LOSS", val: trade.stopLoss != null ? String(trade.stopLoss) : "—" },
+    { label: "TAKE PROFIT", val: trade.takeProfit != null ? String(trade.takeProfit) : "—" },
+    { label: "EXIT PRICE", val: trade.exitPrice != null ? String(trade.exitPrice) : "—" },
 
     { label: "NET PIPS", val: `${trade.pips} pips` },
     { label: "RISK : REWARD", val: trade.riskReward },

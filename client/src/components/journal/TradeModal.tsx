@@ -95,17 +95,17 @@ export function TradeModal({
 
   // 7. Entry Price
   const [entryPrice, setEntryPrice] = useState<string>(
-    initialTrade ? String(initialTrade.entryPrice) : ""
+    initialTrade && initialTrade.entryPrice != null ? String(initialTrade.entryPrice) : ""
   );
 
   // 8. Stop Loss
   const [stopLoss, setStopLoss] = useState<string>(
-    initialTrade ? String(initialTrade.stopLoss) : ""
+    initialTrade && initialTrade.stopLoss != null ? String(initialTrade.stopLoss) : ""
   );
 
   // 9. Take Profit
   const [takeProfit, setTakeProfit] = useState<string>(
-    initialTrade ? String(initialTrade.takeProfit) : ""
+    initialTrade && initialTrade.takeProfit != null ? String(initialTrade.takeProfit) : ""
   );
 
   // 10. Exit Price
@@ -198,9 +198,9 @@ export function TradeModal({
       setIsCustomTimeframe(!["1M", "5M", "15M", "30M", "1H", "4H", "1D", "1W"].includes(initialTrade.timeframe));
       setCustomTimeframeText(!["1M", "5M", "15M", "30M", "1H", "4H", "1D", "1W"].includes(initialTrade.timeframe) ? initialTrade.timeframe : "");
       setDirection(initialTrade.direction || "Buy");
-      setEntryPrice(String(initialTrade.entryPrice ?? ""));
-      setStopLoss(String(initialTrade.stopLoss ?? ""));
-      setTakeProfit(String(initialTrade.takeProfit ?? ""));
+      setEntryPrice(initialTrade.entryPrice != null ? String(initialTrade.entryPrice) : "");
+      setStopLoss(initialTrade.stopLoss != null ? String(initialTrade.stopLoss) : "");
+      setTakeProfit(initialTrade.takeProfit != null ? String(initialTrade.takeProfit) : "");
       setExitPrice(String(initialTrade.exitPrice ?? ""));
       setFollowedRules(initialTrade.followedRules || "Yes");
       setPnl(String(initialTrade.pnl ?? ""));
@@ -404,10 +404,10 @@ export function TradeModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const parsedEntry = parseFloat(entryPrice) || 0;
-    const parsedExit = parseFloat(exitPrice) || (initialTrade?.exitPrice ?? 0);
-    const parsedSl = parseFloat(stopLoss) || 0;
-    const parsedTp = parseFloat(takeProfit) || 0;
+    const parsedEntry = entryPrice.trim() !== "" && !isNaN(parseFloat(entryPrice)) ? parseFloat(entryPrice) : null;
+    const parsedExit = exitPrice.trim() !== "" && !isNaN(parseFloat(exitPrice)) ? parseFloat(exitPrice) : (initialTrade?.exitPrice ?? null);
+    const parsedSl = stopLoss.trim() !== "" && !isNaN(parseFloat(stopLoss)) ? parseFloat(stopLoss) : null;
+    const parsedTp = takeProfit.trim() !== "" && !isNaN(parseFloat(takeProfit)) ? parseFloat(takeProfit) : null;
     const parsedLots = parseFloat(lotSize) || 0.1;
     const parsedPnl = parseFloat(pnl) || 0;
     const parsedPips = parseFloat(pips) || 0;
@@ -603,11 +603,10 @@ export function TradeModal({
 
               {/* Field 7: Entry Price */}
               <div>
-                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Entry Price *</label>
+                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Entry Price (Optional)</label>
                 <input
                   type="number"
                   step="any"
-                  required
                   placeholder="e.g. 1.0850"
                   value={entryPrice}
                   onChange={(e) => setEntryPrice(e.target.value)}
@@ -617,11 +616,10 @@ export function TradeModal({
 
               {/* Field 8: Stop Loss */}
               <div>
-                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Stop Loss *</label>
+                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Stop Loss (Optional)</label>
                 <input
                   type="number"
                   step="any"
-                  required
                   placeholder="e.g. 1.0820"
                   value={stopLoss}
                   onChange={(e) => setStopLoss(e.target.value)}
@@ -631,11 +629,10 @@ export function TradeModal({
 
               {/* Field 9: Take Profit */}
               <div>
-                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Take Profit *</label>
+                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Take Profit (Optional)</label>
                 <input
                   type="number"
                   step="any"
-                  required
                   placeholder="e.g. 1.0920"
                   value={takeProfit}
                   onChange={(e) => setTakeProfit(e.target.value)}

@@ -29,10 +29,10 @@ export interface TradeEntry {
   pair: string;
   timeframe: string; // "1M" | "5M" | "15M" | "30M" | "1H" | "4H" | "1D" | "1W" | custom
   direction: "Buy" | "Sell";
-  entryPrice: number;
-  stopLoss: number;
-  takeProfit: number;
-  exitPrice: number;
+  entryPrice?: number | null;
+  stopLoss?: number | null;
+  takeProfit?: number | null;
+  exitPrice?: number | null;
   followedRules: "Yes" | "No";
   pnl: number; // Dollar profit or loss
   riskReward: string; // e.g. "1:2.5"

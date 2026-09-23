@@ -121,19 +121,19 @@ export function TradePrintModal({ trade, book, onClose, isBn = false }: TradePri
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/60 print:bg-slate-100 print:border-slate-300">
             <div>
               <span className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">Entry Price</span>
-              <p className="font-mono text-sm font-bold mt-0.5">{trade.entryPrice}</p>
+              <p className="font-mono text-sm font-bold mt-0.5">{trade.entryPrice != null ? trade.entryPrice : "—"}</p>
             </div>
             <div>
               <span className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">Stop Loss</span>
-              <p className="font-mono text-sm font-bold text-rose-600 dark:text-rose-400 mt-0.5">{trade.stopLoss}</p>
+              <p className="font-mono text-sm font-bold text-rose-600 dark:text-rose-400 mt-0.5">{trade.stopLoss != null ? trade.stopLoss : "—"}</p>
             </div>
             <div>
               <span className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">Take Profit</span>
-              <p className="font-mono text-sm font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{trade.takeProfit}</p>
+              <p className="font-mono text-sm font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">{trade.takeProfit != null ? trade.takeProfit : "—"}</p>
             </div>
             <div>
               <span className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">Exit Price</span>
-              <p className="font-mono text-sm font-bold mt-0.5">{trade.exitPrice}</p>
+              <p className="font-mono text-sm font-bold mt-0.5">{trade.exitPrice != null ? trade.exitPrice : "—"}</p>
             </div>
             <div>
               <span className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">Lot Size</span>
