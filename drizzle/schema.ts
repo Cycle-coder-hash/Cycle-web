@@ -149,30 +149,21 @@ export const journalEntries = mysqlTable("journalEntries", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
-export const supportTickets = mysqlTable("supportTickets", {
+export const supportConversations = mysqlTable("supportConversations", {
   id: int("id").autoincrement().primaryKey(),
-  ticketCode: varchar("ticketCode", { length: 32 }).notNull().unique(),
-  userId: int("userId"),
-  userName: varchar("userName", { length: 255 }).notNull(),
-  userEmail: varchar("userEmail", { length: 320 }).notNull(),
-  category: varchar("category", { length: 64 }).notNull(),
-  subject: varchar("subject", { length: 255 }).notNull(),
-  message: text("message").notNull(),
-  attachmentUrl: text("attachmentUrl"),
-  status: mysqlEnum("status", ["open", "in_progress", "waiting_user", "resolved", "closed"]).default("open").notNull(),
-  assignedStaff: varchar("assignedStaff", { length: 255 }),
+  customerId: int("customerId").notNull().unique(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  lastMessageAt: timestamp("lastMessageAt"),
 });
 
-export const ticketReplies = mysqlTable("ticketReplies", {
+export const supportMessages = mysqlTable("supportMessages", {
   id: int("id").autoincrement().primaryKey(),
-  ticketId: int("ticketId").notNull(),
-  senderRole: mysqlEnum("senderRole", ["user", "support", "admin"]).notNull(),
-  senderName: varchar("senderName", { length: 255 }).notNull(),
-  senderEmail: varchar("senderEmail", { length: 320 }),
+  conversationId: int("conversationId").notNull(),
+  senderId: int("senderId").notNull(),
+  senderRole: mysqlEnum("senderRole", ["user", "customer", "support", "admin"]).notNull(),
   message: text("message").notNull(),
-  attachmentUrl: text("attachmentUrl"),
+  readAt: timestamp("readAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -343,10 +334,10 @@ export type Product = typeof products.$inferSelect;
 export type Bundle = typeof bundles.$inferSelect;
 export type Order = typeof orders.$inferSelect;
 export type DisciplineEntry = typeof disciplineEntries.$inferSelect;
-export type SupportTicket = typeof supportTickets.$inferSelect;
-export type InsertSupportTicket = typeof supportTickets.$inferInsert;
-export type TicketReply = typeof ticketReplies.$inferSelect;
-export type InsertTicketReply = typeof ticketReplies.$inferInsert;
+export type SupportConversation = typeof supportConversations.$inferSelect;
+export type InsertSupportConversation = typeof supportConversations.$inferInsert;
+export type SupportMessage = typeof supportMessages.$inferSelect;
+export type InsertSupportMessage = typeof supportMessages.$inferInsert;
 export type FreeEbook = typeof freeEbooks.$inferSelect;
 export type InsertFreeEbook = typeof freeEbooks.$inferInsert;
 

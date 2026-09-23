@@ -6,20 +6,18 @@ import {
   rejectOrder,
   deleteOrder,
   listAllUsers,
-  listTickets,
-  getTicketById,
-  getTicketReplies,
-  addTicketReply,
+  getOrCreateSupportConversation,
+  getSupportConversation,
+  getSupportConversationById,
+  getSupportMessages,
+  sendSupportMessage,
+  markSupportConversationRead,
+  listAdminSupportConversations,
+  getCustomerSupportContext,
   listAuditLogs,
   updateUserRole,
   grantManualEntitlement,
   revokeEntitlement,
-  updateTicketStatus,
-  getTicketInternalNotes,
-  addTicketInternalNote,
-  updateTicketPriority,
-  assignTicketStaff,
-  calculateSupportMetrics,
   orders,
   users,
   entitlements,
@@ -58,7 +56,8 @@ adminRouter.get("/stats", async (req, res) => {
   try {
     const allOrders = await listAllOrders();
     const allUsers = await listAllUsers();
-    const allTickets = await listTickets();
+    const allConversations = await listAdminSupportConversations();
+    const unreadConversations = allConversations.filter((c: any) => c.unreadCount > 0);
 
     const approvedOrders = allOrders.filter((o: any) => o.orderStatus === "approved");
     const pendingOrders = allOrders.filter((o: any) => o.orderStatus === "pending");
@@ -77,8 +76,10 @@ adminRouter.get("/stats", async (req, res) => {
         pendingOrdersCount: pendingOrders.length,
         rejectedOrdersCount: rejectedOrders.length,
         totalStudents: allUsers.length,
-        openTicketsCount: allTickets.filter((t: any) => t.status === "open").length,
-        resolvedTicketsCount: allTickets.filter((t: any) => t.status === "resolved").length,
+        totalConversationsCount: allConversations.length,
+        unreadConversationsCount: unreadConversations.length,
+        openTicketsCount: unreadConversations.length,
+        resolvedTicketsCount: allConversations.length - unreadConversations.length,
       },
     });
   } catch (err: any) {
@@ -132,19 +133,21 @@ adminRouter.get("/users", async (req, res) => {
   }
 });
 
-// GET /api/admin/tickets
+// GET /api/admin/support/conversations
+adminRouter.get("/support/conversations", async (req, res) => {
+  try {
+    const conversations = await listAdminSupportConversations();
+    return res.json({ success: true, conversations });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Backward compatibility: GET /api/admin/tickets
 adminRouter.get("/tickets", async (req, res) => {
   try {
-    const { status, category, priority, assignedStaff, search, sort } = req.query;
-    const allTickets = await listTickets({
-      status: status ? String(status) : undefined,
-      category: category ? String(category) : undefined,
-      priority: priority ? String(priority) : undefined,
-      assignedStaff: assignedStaff ? String(assignedStaff) : undefined,
-      search: search ? String(search) : undefined,
-      sort: sort as any,
-    });
-    return res.json({ success: true, tickets: allTickets });
+    const conversations = await listAdminSupportConversations();
+    return res.json({ success: true, tickets: conversations });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
@@ -226,53 +229,57 @@ adminRouter.post("/update-role", async (req, res) => {
   }
 });
 
-// GET /api/admin/tickets/:id
-adminRouter.get("/tickets/:id", async (req, res) => {
+// --------------------------------------------------------------------------
+// SUPPORT MESSAGING ROUTES
+// --------------------------------------------------------------------------
+
+// GET /api/admin/support/conversations
+adminRouter.get("/support/conversations", async (req, res) => {
   try {
-    const ticketId = parseInt(req.params.id, 10);
-    if (isNaN(ticketId)) return res.status(400).json({ success: false, error: "Invalid ticketId" });
-
-    const ticket = await getTicketById(ticketId);
-    if (!ticket) return res.status(404).json({ success: false, error: "Ticket not found" });
-
-    const replies = await getTicketReplies(ticketId);
-    const internalNotes = await getTicketInternalNotes(ticketId);
-    return res.json({ success: true, ticket, replies, internalNotes });
+    const conversations = await listAdminSupportConversations();
+    return res.json({ success: true, conversations });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// POST /api/admin/update-ticket
-adminRouter.post("/update-ticket", async (req, res) => {
+// Legacy fallback: GET /api/admin/tickets
+adminRouter.get("/tickets", async (req, res) => {
   try {
-    const { ticketId, status, assignedStaff } = req.body;
-    if (!ticketId || !status) return res.status(400).json({ success: false, error: "ticketId and status are required" });
-
-    await updateTicketStatus(Number(ticketId), status, assignedStaff);
-    return res.json({ success: true });
+    const conversations = await listAdminSupportConversations();
+    return res.json({ success: true, tickets: conversations });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// POST /api/admin/reply-ticket
-adminRouter.post("/reply-ticket", async (req, res) => {
+// GET /api/admin/support/conversations/:id/messages
+adminRouter.get("/support/conversations/:id/messages", async (req, res) => {
   try {
-    const { ticketId, message, status, senderName, attachmentUrl } = req.body;
-    if (!ticketId || !message) return res.status(400).json({ success: false, error: "ticketId and message are required" });
+    const conversationId = parseInt(req.params.id, 10);
+    if (isNaN(conversationId)) return res.status(400).json({ success: false, error: "Invalid conversationId" });
 
-    const reply = await addTicketReply({
-      ticketId: Number(ticketId),
-      senderRole: "support",
-      senderName: senderName || "Support Specialist",
-      senderEmail: "support@cycleofchart.com",
+    const messages = await getSupportMessages(conversationId);
+    return res.json({ success: true, messages });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/admin/support/reply
+adminRouter.post("/support/reply", async (req, res) => {
+  try {
+    const { conversationId, message, senderId } = req.body;
+    if (!conversationId || !message) {
+      return res.status(400).json({ success: false, error: "conversationId and message are required" });
+    }
+
+    const reply = await sendSupportMessage({
+      conversationId: Number(conversationId),
+      senderId: senderId ? Number(senderId) : 1,
+      senderRole: "admin",
       message: String(message).trim(),
-      attachmentUrl: attachmentUrl || null,
     });
-
-    const targetStatus = status || "waiting_customer";
-    await updateTicketStatus(Number(ticketId), targetStatus, senderName || "Support Specialist");
 
     return res.json({ success: true, reply });
   } catch (err: any) {
@@ -280,47 +287,27 @@ adminRouter.post("/reply-ticket", async (req, res) => {
   }
 });
 
-// POST /api/admin/tickets/internal-note
-adminRouter.post("/tickets/internal-note", async (req, res) => {
+// POST /api/admin/support/mark-read
+adminRouter.post("/support/mark-read", async (req, res) => {
   try {
-    const { ticketId, note, authorName, authorEmail, authorRole } = req.body;
-    if (!ticketId || !note) return res.status(400).json({ success: false, error: "ticketId and note are required" });
+    const { conversationId } = req.body;
+    if (!conversationId) return res.status(400).json({ success: false, error: "conversationId is required" });
 
-    const savedNote = await addTicketInternalNote({
-      ticketId: Number(ticketId),
-      authorName: authorName || "Support Specialist",
-      authorEmail: authorEmail || null,
-      authorRole: authorRole || "support",
-      content: String(note).trim(),
-    });
-
-    return res.json({ success: true, note: savedNote });
+    const result = await markSupportConversationRead(Number(conversationId), "admin");
+    return res.json(result);
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// POST /api/admin/tickets/priority
-adminRouter.post("/tickets/priority", async (req, res) => {
+// GET /api/admin/support/customer-context/:customerId
+adminRouter.get("/support/customer-context/:customerId", async (req, res) => {
   try {
-    const { ticketId, priority } = req.body;
-    if (!ticketId || !priority) return res.status(400).json({ success: false, error: "ticketId and priority are required" });
+    const customerId = parseInt(req.params.customerId, 10);
+    if (isNaN(customerId)) return res.status(400).json({ success: false, error: "Invalid customerId" });
 
-    await updateTicketPriority(Number(ticketId), priority);
-    return res.json({ success: true });
-  } catch (err: any) {
-    return res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// POST /api/admin/tickets/assign
-adminRouter.post("/tickets/assign", async (req, res) => {
-  try {
-    const { ticketId, staffName, staffId } = req.body;
-    if (!ticketId || !staffName) return res.status(400).json({ success: false, error: "ticketId and staffName are required" });
-
-    await assignTicketStaff(Number(ticketId), staffName, staffId ? Number(staffId) : null);
-    return res.json({ success: true });
+    const context = await getCustomerSupportContext(customerId);
+    return res.json({ success: true, context });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }
@@ -329,8 +316,17 @@ adminRouter.post("/tickets/assign", async (req, res) => {
 // GET /api/admin/support-metrics
 adminRouter.get("/support-metrics", async (req, res) => {
   try {
-    const metrics = await calculateSupportMetrics();
-    return res.json({ success: true, metrics });
+    const conversations = await listAdminSupportConversations();
+    const unread = conversations.filter((c: any) => c.unreadCount > 0);
+    return res.json({
+      success: true,
+      metrics: {
+        total: conversations.length,
+        open: unread.length,
+        unread: unread.length,
+        solved: conversations.length - unread.length,
+      },
+    });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }

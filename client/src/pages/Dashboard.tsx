@@ -27,6 +27,8 @@ import {
   Lock,
   LogOut,
   Moon,
+  MessageSquare,
+  Headphones,
   NotebookPen,
   Play,
   PlayCircle,
@@ -775,7 +777,7 @@ export default function Dashboard() {
         ? `${orders.length}`
         : undefined,
     },
-    { id: "support", labelEn: "Support Desk", labelBn: "সাপোর্ট ডেস্ক", icon: ShieldCheck },
+    { id: "support", labelEn: "Direct Support", labelBn: "সাপোর্ট চ্যাট", icon: MessageSquare },
   ];
 
   // Filtered Journals
@@ -1766,41 +1768,61 @@ export default function Dashboard() {
           )}
 
           {/* ========================================================================= */}
-          {/* TAB 7: SUPPORT DESK */}
+          {/* TAB 7: DIRECT SUPPORT CHAT */}
           {/* ========================================================================= */}
           {tab === "support" && (
             <div className="space-y-6 animate-in fade-in duration-300">
-              <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                <div>
-                  <h2 className="text-2xl font-extrabold tracking-tight">{isBn ? "সাপোর্ট ও সহায়তা ডেস্ক" : "Student Support & Inquiries"}</h2>
-                  <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                    {isBn ? "পেমেন্ট বা রিসোর্স অ্যাক্সেসে কোনো সমস্যা হলে টিকিট ওপেন করুন।" : "Need help with orders, course materials, or payments? Open a direct inquiry ticket."}
-                  </p>
+              <div className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6 dark:border-slate-800">
+                  <div className="flex items-center gap-3.5">
+                    <div className="flex size-12 items-center justify-center rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-500 dark:text-sky-400 font-black">
+                      <Headphones size={24} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-xl font-black tracking-tight">
+                          {isBn ? "সরাসরি সাপোর্ট চ্যাট" : "Direct Support Chat"}
+                        </h2>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                          <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                          {isBn ? "অনলাইন" : "Active"}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                        {isBn
+                          ? "আপনার সব প্রশ্ন বা সহায়তার জন্য সরাসরি অ্যাডমিনের সাথে কথা বলুন।"
+                          : "Connect directly with Cycle of Chart administration in real-time."}
+                      </p>
+                    </div>
+                  </div>
+
+                  <Link href="/support">
+                    <Button className="gap-2 bg-[#081833] text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 font-bold shrink-0">
+                      <MessageSquare size={16} />
+                      <span>{isBn ? "সাপোর্ট চ্যাট ওপেন করুন" : "Open Full Chat"}</span>
+                    </Button>
+                  </Link>
                 </div>
 
-                <Button onClick={() => setShowNewTicketModal(true)} size="sm" className="gap-1.5 bg-[#081833] text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 font-bold">
-                  <Plus size={16} /> {isBn ? "নতুন টিকিট তৈরি করুন" : "Open Ticket"}
-                </Button>
-              </div>
-
-              <div className="space-y-3">
-                {tickets?.length ? (
-                  tickets.map((t: any) => (
-                    <div key={t.id} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                      <div className="flex items-center justify-between">
-                        <span className="font-extrabold text-base">{t.subject}</span>
-                        <span className="rounded-full bg-slate-100 px-3 py-0.5 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400 uppercase">{t.status}</span>
-                      </div>
-                      <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-300">{t.message}</p>
-                      <div className="mt-4 text-[10px] font-mono text-slate-400">{new Date(t.createdAt).toLocaleDateString()}</div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-3xl border border-dashed border-slate-200 p-12 text-center text-slate-500 dark:border-slate-800">
-                    <ShieldCheck size={36} className="mx-auto text-slate-400 mb-3" />
-                    <h3 className="font-bold text-base">{isBn ? "কোনো ওপেন টিকিট নেই" : "No support tickets found"}</h3>
+                <div className="mt-6 rounded-2xl border border-sky-100 bg-sky-50/50 p-6 sm:p-8 text-center dark:border-sky-900/30 dark:bg-sky-950/20">
+                  <MessageSquare size={36} className="mx-auto text-sky-500 mb-3" />
+                  <h3 className="font-extrabold text-base text-slate-800 dark:text-slate-200">
+                    {isBn ? "১-অন-১ পার্সোনাল সাপোর্ট সিস্টেম" : "Permanent 1-on-1 Support Desk"}
+                  </h3>
+                  <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+                    {isBn
+                      ? "পেমেন্ট ভেরিফিকেশন, কোর্স অ্যাক্সেস বা যেকোনো সহায়তায় আমাদের সাপোর্ট টিম আপনার সেবায় নিয়োজিত। আপনার সম্পূর্ণ চ্যাট হিস্ট্রি স্থায়ীভাবে সংরক্ষিত থাকে।"
+                      : "Need help with orders, study materials, or account access? Send a direct message and get immediate assistance from our dedicated team."}
+                  </p>
+                  <div className="mt-6 flex flex-wrap justify-center gap-3">
+                    <Link href="/support">
+                      <Button className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-black tracking-wide gap-2 px-6">
+                        <Send size={15} />
+                        <span>{isBn ? "মেসেজ পাঠান" : "Send a Message"}</span>
+                      </Button>
+                    </Link>
                   </div>
-                )}
+                </div>
               </div>
             </div>
           )}

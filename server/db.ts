@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, or } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, ne, or } from "drizzle-orm";
 import pg from "pg";
 import { drizzle as drizzlePg } from "drizzle-orm/node-postgres";
 import { drizzle as drizzleMysql } from "drizzle-orm/mysql2";
@@ -16,12 +16,12 @@ import {
   habits,
   disciplineEntries,
   journalEntries,
-  supportTickets,
-  ticketReplies,
-  SupportTicket,
-  InsertSupportTicket,
-  TicketReply,
-  InsertTicketReply,
+  supportConversations,
+  supportMessages,
+  SupportConversation,
+  InsertSupportConversation,
+  SupportMessage,
+  InsertSupportMessage,
   notifications,
   settings,
   auditEvents,
@@ -65,8 +65,8 @@ const inMemoryEntitlements: any[] = [];
 const inMemoryJournal: any[] = [];
 const inMemoryDiscipline: any[] = [];
 const inMemoryProgress: any[] = [];
-const inMemoryTickets: any[] = [];
-const inMemoryReplies: any[] = [];
+const inMemoryConversations: any[] = [];
+const inMemoryMessages: any[] = [];
 const inMemoryAuditEvents: any[] = [];
 const inMemoryFreeEbooks: any[] = [];
 
@@ -335,8 +335,8 @@ let disciplineSettingsAutoId = 1;
 
 let userAutoId = 1;
 let journalAutoId = 1;
-let ticketAutoId = 1001;
-let replyAutoId = 1;
+let conversationAutoId = 1001;
+let messageAutoId = 1;
 let orderAutoId = 1;
 let entitlementAutoId = 1;
 let auditAutoId = 1;
@@ -2545,735 +2545,655 @@ export async function toggleDisciplineEntry(userId: number, label: string, date:
   return true;
 }
 
-export interface TicketFilter {
-  userId?: number;
-  userEmail?: string;
-  status?: string;
-  category?: string;
-  priority?: string;
-  search?: string;
-  sort?: "newest" | "oldest" | "priority" | "updated";
-  assignedStaff?: string;
-}
+// ------------------------------------------------------------------------------
+// REAL-TIME DIRECT CUSTOMER-TO-ADMIN MESSAGING SYSTEM
+// Single permanent conversation per customer lifetime
+// ------------------------------------------------------------------------------
 
-export function canonicalStatus(status?: string): "open" | "pending" | "in_progress" | "waiting_customer" | "solved" | "closed" {
-  if (!status) return "open";
-  const s = status.toLowerCase().trim();
-  if (s === "waiting_user" || s === "waiting" || s === "waiting_customer") return "waiting_customer";
-  if (s === "resolved" || s === "solved") return "solved";
-  if (s === "in_progress" || s === "progress") return "in_progress";
-  if (s === "pending") return "pending";
-  if (s === "closed") return "closed";
-  return "open";
-}
-
-export function canonicalPriority(priority?: string): "low" | "medium" | "high" | "urgent" {
-  if (!priority) return "medium";
-  const p = priority.toLowerCase().trim();
-  if (p === "urgent") return "urgent";
-  if (p === "high") return "high";
-  if (p === "low") return "low";
-  return "medium";
-}
-
-export interface TicketInternalNote {
+export interface SupportConversationRecord {
   id: number;
-  ticketId: number;
-  authorId?: number | null;
-  authorName: string;
-  authorEmail?: string | null;
-  authorRole: string;
-  content: string;
-  createdAt: Date;
+  customerId: number;
+  createdAt: string;
+  updatedAt: string;
+  lastMessageAt: string | null;
 }
 
-export async function getTicketInternalNotes(ticketId: number): Promise<TicketInternalNote[]> {
-  try {
-    const key = `support_ticket_notes_${ticketId}`;
-    const raw = await getSetting(key);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        return parsed
-          .map((n: any) => ({
-            ...n,
-            createdAt: n.createdAt ? new Date(n.createdAt) : new Date(),
-          }))
-          .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-      }
-    }
-  } catch (err) {
-    console.warn("[getTicketInternalNotes error]:", err);
-  }
-  return [];
+export interface SupportMessageRecord {
+  id: number;
+  conversationId: number;
+  senderId: number;
+  senderRole: "customer" | "admin";
+  message: string;
+  readAt: string | null;
+  createdAt: string;
 }
 
-export async function addTicketInternalNote(note: {
-  ticketId: number;
-  authorId?: number | null;
-  authorName: string;
-  authorEmail?: string | null;
-  authorRole?: string;
-  content: string;
-}): Promise<TicketInternalNote> {
-  const existing = await getTicketInternalNotes(note.ticketId);
-  const now = new Date();
-  const newNote: TicketInternalNote = {
-    id: Date.now(),
-    ticketId: note.ticketId,
-    authorId: note.authorId || null,
-    authorName: note.authorName || "Support Specialist",
-    authorEmail: note.authorEmail || null,
-    authorRole: note.authorRole || "support",
-    content: note.content.trim(),
-    createdAt: now,
+export interface AdminSupportConversationSummary {
+  id: number;
+  customerId: number;
+  createdAt: string;
+  updatedAt: string;
+  lastMessageAt: string | null;
+  customer: {
+    id: number;
+    name: string;
+    email: string | null;
+    phone: string | null;
+    avatar: string | null;
+    createdAt: string | null;
   };
-  const updated = [...existing, newNote];
-  await setSetting(`support_ticket_notes_${note.ticketId}`, JSON.stringify(updated));
-  return newNote;
+  lastMessage: SupportMessageRecord | null;
+  unreadCount: number;
+  totalMessages: number;
 }
 
-export interface SupportNotification {
-  id: number;
-  userId?: number | null;
-  recipientRole?: "user" | "support" | "admin" | "all";
-  title: string;
-  message: string;
-  ticketId: number;
-  type: "new_ticket" | "new_reply" | "status_changed" | "ticket_assigned" | "ticket_solved" | "ticket_reopened";
-  isRead: boolean;
-  createdAt: Date;
+export interface CustomerSupportContext {
+  customer: {
+    id: number;
+    openId?: string;
+    name: string;
+    email: string | null;
+    phone: string | null;
+    avatar: string | null;
+    role: string;
+    createdAt: string | null;
+  };
+  entitlements: Array<{
+    id: number;
+    orderId?: number;
+    productId?: number;
+    bundleId?: number;
+    scope: string;
+    productTitle?: string;
+    grantedAt: string;
+  }>;
+  orders: Array<{
+    id: number;
+    amount: string;
+    currency: string;
+    paymentMethod: string;
+    paymentStatus: string;
+    orderStatus: string;
+    bundleId?: number | null;
+    productId?: number | null;
+    selectedPdfIds?: number[];
+    createdAt: string;
+  }>;
+  stats: {
+    totalSpend: number;
+    totalOrders: number;
+    activeEntitlementsCount: number;
+  };
 }
 
-const GLOBAL_SUPPORT_NOTIFICATIONS_KEY = "global_support_notifications";
-
-export async function getSupportNotifications(params?: {
-  userId?: number;
-  isStaff?: boolean;
-}): Promise<SupportNotification[]> {
+/**
+ * Loads all support conversations from persistent settings and memory.
+ */
+async function loadSupportConversationsRegistry(): Promise<SupportConversationRecord[]> {
   try {
-    const raw = await getSetting(GLOBAL_SUPPORT_NOTIFICATIONS_KEY);
+    const raw = await getSetting("support_conversations_registry");
     if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        let list: SupportNotification[] = parsed.map((n: any) => ({
-          ...n,
-          createdAt: n.createdAt ? new Date(n.createdAt) : new Date(),
-        }));
-        if (params?.isStaff) {
-          list = list.filter((n) => n.recipientRole === "support" || n.recipientRole === "admin" || n.recipientRole === "all");
-        } else if (params?.userId) {
-          list = list.filter((n) => n.userId === params.userId || n.recipientRole === "user" || n.recipientRole === "all");
-        }
-        return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 30);
-      }
-    }
-  } catch (err) {
-    console.warn("[getSupportNotifications error]:", err);
-  }
-  return [];
-}
-
-export async function addSupportNotification(notif: {
-  userId?: number | null;
-  recipientRole?: "user" | "support" | "admin" | "all";
-  title: string;
-  message: string;
-  ticketId: number;
-  type: "new_ticket" | "new_reply" | "status_changed" | "ticket_assigned" | "ticket_solved" | "ticket_reopened";
-}): Promise<SupportNotification> {
-  try {
-    const raw = await getSetting(GLOBAL_SUPPORT_NOTIFICATIONS_KEY);
-    const existing: any[] = raw ? JSON.parse(raw) : [];
-    const newNotif: SupportNotification = {
-      id: Date.now(),
-      userId: notif.userId || null,
-      recipientRole: notif.recipientRole || "all",
-      title: notif.title,
-      message: notif.message,
-      ticketId: notif.ticketId,
-      type: notif.type,
-      isRead: false,
-      createdAt: new Date(),
-    };
-    const updated = [newNotif, ...existing.slice(0, 99)];
-    await setSetting(GLOBAL_SUPPORT_NOTIFICATIONS_KEY, JSON.stringify(updated));
-    return newNotif;
-  } catch (err) {
-    console.warn("[addSupportNotification error]:", err);
-    return {
-      id: Date.now(),
-      ...notif,
-      isRead: false,
-      createdAt: new Date(),
-    };
-  }
-}
-
-export async function markSupportNotificationRead(id: number): Promise<boolean> {
-  try {
-    const raw = await getSetting(GLOBAL_SUPPORT_NOTIFICATIONS_KEY);
-    if (raw) {
-      const list: any[] = JSON.parse(raw);
-      const item = list.find((n) => n.id === id);
-      if (item) {
-        item.isRead = true;
-        await setSetting(GLOBAL_SUPPORT_NOTIFICATIONS_KEY, JSON.stringify(list));
-        return true;
-      }
-    }
-  } catch {}
-  return false;
-}
-
-const GLOBAL_SUPPORT_TICKETS_KEY = "global_support_tickets_registry";
-
-async function getPersistentTickets(): Promise<any[]> {
-  try {
-    const raw = await getSetting(GLOBAL_SUPPORT_TICKETS_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        return parsed.map((t: any) => ({
-          ...t,
-          createdAt: t.createdAt ? new Date(t.createdAt) : new Date(),
-          updatedAt: t.updatedAt ? new Date(t.updatedAt) : (t.createdAt ? new Date(t.createdAt) : new Date()),
-        }));
-      }
-    }
-  } catch (err) {
-    console.warn("[getPersistentTickets error]:", err);
-  }
-  return [];
-}
-
-async function savePersistentTickets(tickets: any[]): Promise<void> {
-  try {
-    await setSetting(GLOBAL_SUPPORT_TICKETS_KEY, JSON.stringify(tickets));
-  } catch (err) {
-    console.warn("[savePersistentTickets error]:", err);
-  }
-}
-
-async function getPersistentTicketReplies(ticketId: number): Promise<any[]> {
-  try {
-    const key = `support_ticket_replies_${ticketId}`;
-    const raw = await getSetting(key);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        return parsed.map((r: any) => ({
-          ...r,
-          createdAt: r.createdAt ? new Date(r.createdAt) : new Date(),
-        }));
-      }
-    }
-  } catch (err) {
-    console.warn("[getPersistentTicketReplies error]:", err);
-  }
-  return [];
-}
-
-async function savePersistentTicketReplies(ticketId: number, replies: any[]): Promise<void> {
-  try {
-    const key = `support_ticket_replies_${ticketId}`;
-    await setSetting(key, JSON.stringify(replies));
-  } catch (err) {
-    console.warn("[savePersistentTicketReplies error]:", err);
-  }
-}
-
-export async function listTickets(filterOrUserId?: number | TicketFilter) {
-  const filter: TicketFilter =
-    typeof filterOrUserId === "number" ? { userId: filterOrUserId } : filterOrUserId || {};
-
-  // 1. Sync from persistent settings registry
-  const persistentTickets = await getPersistentTickets();
-  for (const pt of persistentTickets) {
-    const idx = inMemoryTickets.findIndex((item) => item.id === pt.id || item.ticketCode === pt.ticketCode);
-    if (idx >= 0) {
-      inMemoryTickets[idx] = { ...inMemoryTickets[idx], ...pt };
-    } else {
-      inMemoryTickets.push(pt);
-    }
-  }
-
-  // 2. Sync any additional tickets from Supabase SQL table (legacy sync)
-  try {
-    const { supabaseServer } = await import("./supabase");
-    const { data: supaTickets, error } = await supabaseServer
-      .from("supportTickets")
-      .select("*")
-      .order("createdAt", { ascending: false });
-
-    if (!error && Array.isArray(supaTickets) && supaTickets.length > 0) {
-      for (const st of supaTickets) {
-        const match = st.subject ? st.subject.match(/\[#TKT-(\d+)\]/i) : null;
-        const codeInSubject = match ? `#TKT-${match[1]}` : null;
-
-        const existing = inMemoryTickets.find((item) =>
-          item.id === st.id ||
-          (codeInSubject && item.ticketCode?.toUpperCase() === codeInSubject.toUpperCase()) ||
-          item.ticketCode === `#TKT-${st.id}`
-        );
-
-        if (existing) {
-          if (st.status && canonicalStatus(existing.status) !== canonicalStatus(st.status)) {
-            existing.status = canonicalStatus(st.status);
+      const list = JSON.parse(raw);
+      if (Array.isArray(list)) {
+        for (const item of list) {
+          if (!inMemoryConversations.some((c) => c.id === item.id)) {
+            inMemoryConversations.push(item);
           }
-        } else {
-          const syncedItem = {
-            id: st.id,
-            ticketCode: codeInSubject || `#TKT-${st.id}`,
-            userId: st.userId,
-            userName: `Student #${st.userId}`,
-            userEmail: "",
-            category: "General",
-            priority: "medium" as const,
-            subject: st.subject || "Support Inquiry",
-            message: st.message || "",
-            attachmentUrl: null,
-            status: canonicalStatus(st.status || "open"),
-            assignedStaff: null,
-            assignedStaffId: null,
-            firstResponseAt: null,
-            lastReplyAt: st.createdAt ? new Date(st.createdAt) : new Date(),
-            solvedAt: null,
-            closedAt: null,
-            createdAt: st.createdAt ? new Date(st.createdAt) : new Date(),
-            updatedAt: st.createdAt ? new Date(st.createdAt) : new Date(),
-          };
-          inMemoryTickets.push(syncedItem);
         }
+        return list;
       }
     }
   } catch (err) {
-    console.warn("[listTickets Supabase legacy sync notice]:", err);
+    console.warn("[loadSupportConversationsRegistry error]:", err);
   }
-
-  // 3. Filter tickets
-  let results = [...inMemoryTickets];
-
-  // User identity filter: if both userId and userEmail provided, match EITHER
-  if (filter.userId !== undefined && filter.userId !== null && filter.userEmail) {
-    const lowerEmail = filter.userEmail.trim().toLowerCase();
-    results = results.filter(
-      (t) =>
-        t.userId === filter.userId ||
-        (t.userEmail && t.userEmail.trim().toLowerCase() === lowerEmail)
-    );
-  } else if (filter.userId !== undefined && filter.userId !== null) {
-    results = results.filter((t) => t.userId === filter.userId);
-  } else if (filter.userEmail) {
-    const lowerEmail = filter.userEmail.trim().toLowerCase();
-    results = results.filter((t) => t.userEmail && t.userEmail.trim().toLowerCase() === lowerEmail);
-  }
-
-  if (filter.status && filter.status !== "all") {
-    results = results.filter((t) => canonicalStatus(t.status) === canonicalStatus(filter.status));
-  }
-
-  if (filter.category && filter.category !== "all") {
-    results = results.filter((t) => t.category === filter.category);
-  }
-
-  if (filter.priority && filter.priority !== "all") {
-    results = results.filter((t) => canonicalPriority(t.priority) === canonicalPriority(filter.priority));
-  }
-
-  if (filter.assignedStaff && filter.assignedStaff !== "all") {
-    results = results.filter((t) => t.assignedStaff === filter.assignedStaff);
-  }
-
-  if (filter.search && filter.search.trim()) {
-    const q = filter.search.trim().toLowerCase();
-    results = results.filter(
-      (t) =>
-        t.ticketCode?.toLowerCase().includes(q) ||
-        t.subject?.toLowerCase().includes(q) ||
-        t.userName?.toLowerCase().includes(q) ||
-        t.userEmail?.toLowerCase().includes(q) ||
-        t.message?.toLowerCase().includes(q) ||
-        String(t.id).includes(q) ||
-        String(t.userId).includes(q)
-    );
-  }
-
-  const priorityWeight: Record<string, number> = {
-    urgent: 4,
-    high: 3,
-    medium: 2,
-    low: 1,
-  };
-
-  const sort = filter.sort || "updated";
-  return results.sort((a, b) => {
-    if (sort === "newest") {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    }
-    if (sort === "oldest") {
-      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-    }
-    if (sort === "priority") {
-      const pB = priorityWeight[canonicalPriority(b.priority)] || 2;
-      const pA = priorityWeight[canonicalPriority(a.priority)] || 2;
-      if (pB !== pA) return pB - pA;
-      return new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime();
-    }
-    // "updated" (default)
-    const timeB = new Date(b.updatedAt || b.createdAt).getTime();
-    const timeA = new Date(a.updatedAt || a.createdAt).getTime();
-    return timeB - timeA;
-  });
+  return inMemoryConversations;
 }
 
-export async function createSupportTicket(input: {
-  userId?: number | null;
-  userName?: string;
-  name?: string;
-  userEmail?: string;
-  email?: string;
-  category: string;
-  priority?: "low" | "medium" | "high" | "urgent" | string;
-  subject: string;
-  message: string;
-  attachmentUrl?: string | null;
-}) {
-  const persistentTickets = await getPersistentTickets();
-  
-  // Calculate unique integer ID & ticketCode
-  const maxExistingId = Math.max(
-    0,
-    ...inMemoryTickets.map((t) => Number(t.id) || 0),
-    ...persistentTickets.map((t) => Number(t.id) || 0),
-    ticketAutoId
-  );
-  const nextId = maxExistingId + 1;
-  ticketAutoId = nextId + 1;
+/**
+ * Persists support conversations registry to memory and settings.
+ */
+async function saveSupportConversationsRegistry(conversations: SupportConversationRecord[]): Promise<void> {
+  try {
+    await setSetting("support_conversations_registry", JSON.stringify(conversations));
+  } catch (err) {
+    console.warn("[saveSupportConversationsRegistry error]:", err);
+  }
+}
 
-  const code = `#TKT-${1000 + persistentTickets.length + 1}`;
-  const now = new Date();
-  const priority = canonicalPriority(input.priority);
-  const resolvedName = (input.userName || input.name || "Customer").trim();
-  const resolvedEmail = (input.userEmail || input.email || "").trim().toLowerCase();
+/**
+ * Gets or creates the SINGLE permanent support conversation for a customer.
+ * Lifetime guarantee: One customer = One permanent conversation.
+ */
+export async function getOrCreateSupportConversation(customerId: number): Promise<SupportConversationRecord> {
+  const allConversations = await loadSupportConversationsRegistry();
 
-  const ticketObj = {
-    id: nextId,
-    ticketCode: code,
-    userId: input.userId || null,
-    userName: resolvedName,
-    userEmail: resolvedEmail,
-    category: input.category,
-    priority,
-    subject: input.subject.trim(),
-    message: input.message.trim(),
-    attachmentUrl: input.attachmentUrl || null,
-    status: "open" as const,
-    assignedStaff: null,
-    assignedStaffId: null,
-    firstResponseAt: null,
-    lastReplyAt: now,
-    solvedAt: null,
-    closedAt: null,
+  // 1. Check existing in registry
+  const existing = allConversations.find((c) => c.customerId === customerId);
+  if (existing) {
+    return existing;
+  }
+
+  // 2. Check Postgres DB if active
+  const db = await getDb();
+  if (db) {
+    try {
+      const rows = await db
+        .select()
+        .from(supportConversations)
+        .where(eq(supportConversations.customerId, customerId))
+        .limit(1);
+      if (rows && rows[0]) {
+        const conv: SupportConversationRecord = {
+          id: rows[0].id,
+          customerId: rows[0].customerId,
+          createdAt: rows[0].createdAt ? new Date(rows[0].createdAt).toISOString() : new Date().toISOString(),
+          updatedAt: rows[0].updatedAt ? new Date(rows[0].updatedAt).toISOString() : new Date().toISOString(),
+          lastMessageAt: rows[0].lastMessageAt ? new Date(rows[0].lastMessageAt).toISOString() : null,
+        };
+        allConversations.push(conv);
+        await saveSupportConversationsRegistry(allConversations);
+        return conv;
+      }
+    } catch (err) {
+      console.warn("[getOrCreateSupportConversation db select fallback]:", err);
+    }
+  }
+
+  // 3. Create new single permanent conversation record
+  const now = new Date().toISOString();
+  let maxId = 0;
+  for (const c of allConversations) {
+    if (c.id > maxId) maxId = c.id;
+  }
+  const newId = Math.max(maxId + 1, conversationAutoId++);
+
+  const newConv: SupportConversationRecord = {
+    id: newId,
+    customerId,
     createdAt: now,
     updatedAt: now,
+    lastMessageAt: null,
   };
 
-  // 1. Add to in-memory list
-  inMemoryTickets.unshift(ticketObj);
+  allConversations.push(newConv);
+  if (!inMemoryConversations.some((c) => c.id === newConv.id)) {
+    inMemoryConversations.push(newConv);
+  }
+  await saveSupportConversationsRegistry(allConversations);
 
-  // 2. Persist to Supabase settings registry
-  const updatedPersistent = [ticketObj, ...persistentTickets.filter((t) => t.id !== ticketObj.id)];
-  await savePersistentTickets(updatedPersistent);
+  // Try DB insert if available
+  if (db) {
+    try {
+      await db.insert(supportConversations).values({
+        id: newId,
+        customerId,
+        createdAt: new Date(now),
+        updatedAt: new Date(now),
+        lastMessageAt: null,
+      });
+    } catch (err) {
+      console.warn("[getOrCreateSupportConversation db insert notice]:", err);
+    }
+  }
 
-  // 3. Notify support team of new ticket
-  await addSupportNotification({
-    recipientRole: "support",
-    title: `New Ticket: ${ticketObj.ticketCode}`,
-    message: `${input.userName} submitted [${input.category}] with ${priority.toUpperCase()} priority: "${input.subject}"`,
-    ticketId: nextId,
-    type: "new_ticket",
-  });
-
-  // 4. Also safely attempt Supabase supportTickets SQL table insert if userId matches a valid user
+  // Try Supabase table insert
   try {
     const { supabaseServer } = await import("./supabase");
-    if (ticketObj.userId) {
-      await supabaseServer.from("supportTickets").insert({
-        id: ticketObj.id,
-        userId: ticketObj.userId,
-        subject: `[${ticketObj.ticketCode}] [${priority.toUpperCase()}] [${ticketObj.category}] ${ticketObj.subject}`,
-        message: ticketObj.message,
-        status: "open",
-        createdAt: now.toISOString(),
-      });
-    }
-  } catch (supaErr) {
-    console.warn("[createSupportTicket Supabase table notice]:", supaErr);
-  }
+    await supabaseServer.from("supportConversations").insert({
+      id: newId,
+      customerId,
+      createdAt: now,
+      updatedAt: now,
+      lastMessageAt: null,
+    });
+  } catch {}
 
-  // 5. Also try Drizzle DB if connected
-  const db = await getDb();
-  if (db) {
-    try {
-      await db.insert(supportTickets).values(ticketObj);
-    } catch (err) {
-      console.warn("[createSupportTicket Drizzle notice]:", err);
-    }
-  }
-
-  return ticketObj;
+  return newConv;
 }
 
-export async function getTicketById(ticketId: number) {
-  // Check memory first
-  let ticket = inMemoryTickets.find((t) => t.id === ticketId);
-  if (ticket) return ticket;
-
-  // Check persistent storage
-  const persistent = await getPersistentTickets();
-  ticket = persistent.find((t) => t.id === ticketId);
-  if (ticket) {
-    inMemoryTickets.push(ticket);
-    return ticket;
-  }
-
-  // Also check if ticketCode matches or matches formatted #TKT-xxxx
-  ticket = persistent.find((t) => {
-    if (t.ticketCode === `#TKT-${ticketId}` || t.ticketCode === String(ticketId)) return true;
-    const match = t.ticketCode ? t.ticketCode.match(/(\d+)/) : null;
-    return match && parseInt(match[1], 10) === ticketId;
-  });
-  if (ticket) {
-    inMemoryTickets.push(ticket);
-    return ticket;
-  }
-
-  const db = await getDb();
-  if (db) {
-    try {
-      const rows = await db.select().from(supportTickets).where(eq(supportTickets.id, ticketId)).limit(1);
-      if (rows[0]) return rows[0];
-    } catch (err) {
-      console.warn("[getTicketById error]:", err);
-    }
-  }
-
-  return null;
+/**
+ * Gets a support conversation by customerId (or null if not created).
+ */
+export async function getSupportConversation(customerId: number): Promise<SupportConversationRecord | null> {
+  const allConversations = await loadSupportConversationsRegistry();
+  const found = allConversations.find((c) => c.customerId === customerId);
+  return found || null;
 }
 
-export async function getTicketByCode(ticketCode: string) {
-  if (!ticketCode) return null;
-  const raw = ticketCode.trim().toUpperCase();
-  const cleanCode = raw.startsWith("#") ? raw.slice(1) : raw;
-  const formattedCode = `#${cleanCode}`;
-
-  const matchCode = (c?: string) => {
-    if (!c) return false;
-    const upper = c.trim().toUpperCase();
-    return upper === formattedCode || upper === cleanCode || upper.replace(/^#/, "") === cleanCode;
-  };
-
-  // Check memory
-  let ticket = inMemoryTickets.find((t) => matchCode(t.ticketCode));
-  if (ticket) return ticket;
-
-  // Check persistent storage
-  const persistent = await getPersistentTickets();
-  ticket = persistent.find((t) => matchCode(t.ticketCode));
-  if (ticket) {
-    inMemoryTickets.push(ticket);
-    return ticket;
-  }
-
-  const db = await getDb();
-  if (db) {
-    try {
-      const rows = await db
-        .select()
-        .from(supportTickets)
-        .where(
-          or(
-            eq(supportTickets.ticketCode, formattedCode),
-            eq(supportTickets.ticketCode, cleanCode)
-          )
-        )
-        .limit(1);
-      if (rows[0]) return rows[0];
-    } catch (err) {
-      console.warn("[getTicketByCode error]:", err);
-    }
-  }
-
-  return null;
+/**
+ * Gets a support conversation by its conversationId.
+ */
+export async function getSupportConversationById(conversationId: number): Promise<SupportConversationRecord | null> {
+  const allConversations = await loadSupportConversationsRegistry();
+  const found = allConversations.find((c) => c.id === conversationId);
+  return found || null;
 }
 
-export async function getTicketReplies(ticketId: number) {
-  // 1. Fetch persistent replies from Supabase settings
-  let persistentReplies = await getPersistentTicketReplies(ticketId);
+/**
+ * Fetches all messages for a conversation in chronological order (createdAt ASC).
+ */
+export async function getSupportMessages(conversationId: number): Promise<SupportMessageRecord[]> {
+  const key = `support_messages_${conversationId}`;
+  let messages: SupportMessageRecord[] = [];
 
-  // If no replies found by ticketId, check if ticket has an alt id or code
-  if (persistentReplies.length === 0) {
-    const t = await getTicketById(ticketId);
-    if (t) {
-      const match = t.ticketCode ? t.ticketCode.match(/(\d+)/) : null;
-      if (match) {
-        const altId = parseInt(match[1], 10);
-        if (altId && altId !== ticketId) {
-          const altReplies = await getPersistentTicketReplies(altId);
-          if (altReplies.length > 0) {
-            persistentReplies = altReplies;
-          }
-        }
+  try {
+    const raw = await getSetting(key);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        messages = parsed;
       }
     }
+  } catch (err) {
+    console.warn(`[getSupportMessages getSetting error for ${key}]:`, err);
   }
 
-  if (persistentReplies.length > 0) {
-    // Merge into inMemoryReplies
-    for (const pr of persistentReplies) {
-      if (!inMemoryReplies.some((r) => r.id === pr.id && r.ticketId === pr.ticketId)) {
-        inMemoryReplies.push(pr);
-      }
-    }
-    return persistentReplies.sort(
-      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    );
-  }
-
-  // 2. Check Drizzle DB if connected
-  const db = await getDb();
-  if (db) {
+  // If empty, try Supabase table or Drizzle
+  if (messages.length === 0) {
     try {
-      const rows = await db
-        .select()
-        .from(ticketReplies)
-        .where(eq(ticketReplies.ticketId, ticketId))
-        .orderBy(asc(ticketReplies.createdAt));
-      if (rows.length > 0) return rows;
-    } catch (err) {
-      console.warn("[getTicketReplies error]:", err);
+      const { supabaseServer } = await import("./supabase");
+      const { data, error } = await supabaseServer
+        .from("supportMessages")
+        .select("*")
+        .eq("conversationId", conversationId)
+        .order("createdAt", { ascending: true });
+      if (!error && data && data.length > 0) {
+        messages = data.map((m: any) => ({
+          id: m.id,
+          conversationId: m.conversationId,
+          senderId: m.senderId,
+          senderRole: m.senderRole,
+          message: m.message,
+          readAt: m.readAt || null,
+          createdAt: m.createdAt,
+        }));
+        await setSetting(key, JSON.stringify(messages));
+      }
+    } catch {}
+  }
+
+  // Merge any in-memory messages for this conversation
+  const memMsgs = inMemoryMessages.filter((m) => m.conversationId === conversationId);
+  for (const m of memMsgs) {
+    if (!messages.some((existing) => existing.id === m.id)) {
+      messages.push(m);
     }
   }
 
-  // 3. In-memory fallback
-  return inMemoryReplies
-    .filter((r) => r.ticketId === ticketId)
-    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  // Enforce chronological sorting
+  messages.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  return messages;
 }
 
-export async function addTicketReply(reply: {
-  ticketId: number;
-  senderRole: "user" | "support" | "admin";
-  senderName: string;
-  senderEmail?: string | null;
+/**
+ * Sends a new support message (either customer to admin or admin to customer).
+ * Real-time broadcast + persistence + notification + email dispatch.
+ */
+export async function sendSupportMessage(input: {
+  conversationId: number;
+  senderId: number;
+  senderRole: "customer" | "admin";
   message: string;
-  attachmentUrl?: string | null;
-}) {
-  const now = new Date();
-  const existingReplies = await getPersistentTicketReplies(reply.ticketId);
+}): Promise<SupportMessageRecord> {
+  const trimmed = input.message.trim();
+  if (!trimmed) {
+    throw new Error("Message cannot be empty");
+  }
 
-  const maxReplyId = Math.max(
-    0,
-    ...inMemoryReplies.map((r) => Number(r.id) || 0),
-    ...existingReplies.map((r) => Number(r.id) || 0),
-    replyAutoId
-  );
-  const newReplyId = maxReplyId + 1;
-  replyAutoId = newReplyId + 1;
+  const conversation = await getSupportConversationById(input.conversationId);
+  if (!conversation) {
+    throw new Error(`Conversation #${input.conversationId} not found`);
+  }
 
-  const replyObj = {
-    id: newReplyId,
-    ticketId: reply.ticketId,
-    senderRole: reply.senderRole,
-    senderName: reply.senderName.trim(),
-    senderEmail: reply.senderEmail?.trim() || null,
-    message: reply.message.trim(),
-    attachmentUrl: reply.attachmentUrl || null,
+  const now = new Date().toISOString();
+  const existingMessages = await getSupportMessages(input.conversationId);
+
+  let maxId = 0;
+  for (const m of existingMessages) {
+    if (m.id > maxId) maxId = m.id;
+  }
+  for (const m of inMemoryMessages) {
+    if (m.id > maxId) maxId = m.id;
+  }
+  const newMsgId = Math.max(maxId + 1, messageAutoId++);
+
+  const messageRecord: SupportMessageRecord = {
+    id: newMsgId,
+    conversationId: input.conversationId,
+    senderId: input.senderId,
+    senderRole: input.senderRole,
+    message: trimmed,
+    readAt: null,
     createdAt: now,
   };
 
-  // 1. Push to in-memory list
-  inMemoryReplies.push(replyObj);
+  // 1. Save message to settings array
+  existingMessages.push(messageRecord);
+  inMemoryMessages.push(messageRecord);
+  await setSetting(`support_messages_${input.conversationId}`, JSON.stringify(existingMessages));
 
-  // 2. Persist replies to Supabase settings
-  const updatedReplies = [...existingReplies, replyObj];
-  await savePersistentTicketReplies(reply.ticketId, updatedReplies);
-
-  const isStaff = reply.senderRole === "support" || reply.senderRole === "admin";
-  const targetStatus = isStaff ? "waiting_customer" : "open";
-
-  // 3. Update ticket in memory & persistent store
-  const t = inMemoryTickets.find((item) => item.id === reply.ticketId);
-  if (t) {
-    t.updatedAt = now;
-    t.lastReplyAt = now;
-    t.status = targetStatus;
-    if (isStaff && !t.firstResponseAt) {
-      t.firstResponseAt = now;
-    }
+  // 2. Update conversation timestamps
+  conversation.lastMessageAt = now;
+  conversation.updatedAt = now;
+  const allConversations = await loadSupportConversationsRegistry();
+  const idx = allConversations.findIndex((c) => c.id === conversation.id);
+  if (idx !== -1) {
+    allConversations[idx] = conversation;
+  } else {
+    allConversations.push(conversation);
   }
+  await saveSupportConversationsRegistry(allConversations);
 
-  const persistentTickets = await getPersistentTickets();
-  const pt = persistentTickets.find((item) => item.id === reply.ticketId);
-  if (pt) {
-    pt.updatedAt = now;
-    pt.lastReplyAt = now;
-    pt.status = targetStatus;
-    if (isStaff && !pt.firstResponseAt) {
-      pt.firstResponseAt = now;
-    }
-    await savePersistentTickets(persistentTickets);
-  }
-
-  // Also sync status and updatedAt to Supabase supportTickets table
-  try {
-    const { supabaseServer } = await import("./supabase");
-    await supabaseServer
-      .from("supportTickets")
-      .update({
-        status: targetStatus,
-      })
-      .eq("id", reply.ticketId);
-  } catch (err) {}
-
-  // 4. Notifications
-  try {
-    const ticketCode = t?.ticketCode || `#TKT-${reply.ticketId}`;
-    if (isStaff) {
-      await addSupportNotification({
-        userId: t?.userId,
-        recipientRole: "user",
-        title: `Reply from ${reply.senderName} (${ticketCode})`,
-        message: reply.message.length > 120 ? `${reply.message.slice(0, 117)}...` : reply.message,
-        ticketId: reply.ticketId,
-        type: "new_reply",
-      });
-    } else {
-      await addSupportNotification({
-        recipientRole: "support",
-        title: `Customer Reply: ${reply.senderName} (${ticketCode})`,
-        message: reply.message.length > 120 ? `${reply.message.slice(0, 117)}...` : reply.message,
-        ticketId: reply.ticketId,
-        type: "new_reply",
-      });
-    }
-  } catch (notifErr) {
-    console.warn("[addTicketReply notification error]:", notifErr);
-  }
-
-  // 5. Try Drizzle DB insert
+  // 3. Persist to DB / Supabase table if available
   const db = await getDb();
   if (db) {
     try {
-      await db.insert(ticketReplies).values(replyObj);
-      await db.update(supportTickets).set({ updatedAt: now }).where(eq(supportTickets.id, reply.ticketId));
+      await db.insert(supportMessages).values({
+        id: newMsgId,
+        conversationId: input.conversationId,
+        senderId: input.senderId,
+        senderRole: input.senderRole,
+        message: trimmed,
+        readAt: null,
+        createdAt: new Date(now),
+      });
+      await db
+        .update(supportConversations)
+        .set({ lastMessageAt: new Date(now), updatedAt: new Date(now) })
+        .where(eq(supportConversations.id, input.conversationId));
     } catch (err) {
-      console.warn("[addTicketReply Drizzle notice]:", err);
+      console.warn("[sendSupportMessage db insert notice]:", err);
     }
   }
 
-  return replyObj;
+  try {
+    const { supabaseServer } = await import("./supabase");
+    await supabaseServer.from("supportMessages").insert({
+      id: newMsgId,
+      conversationId: input.conversationId,
+      senderId: input.senderId,
+      senderRole: input.senderRole,
+      message: trimmed,
+      readAt: null,
+      createdAt: now,
+    });
+    await supabaseServer
+      .from("supportConversations")
+      .update({ lastMessageAt: now, updatedAt: now })
+      .eq("id", input.conversationId);
+  } catch {}
+
+  // 4. Real-time Broadcast via Supabase channels
+  try {
+    const { supabaseServer } = await import("./supabase");
+    await supabaseServer.channel(`support_chat_${input.conversationId}`).send({
+      type: "broadcast",
+      event: "new_message",
+      payload: messageRecord,
+    });
+    await supabaseServer.channel("admin_support_inbox").send({
+      type: "broadcast",
+      event: "conversation_updated",
+      payload: {
+        conversationId: input.conversationId,
+        lastMessage: messageRecord,
+      },
+    });
+  } catch (broadcastErr) {
+    console.warn("[sendSupportMessage broadcast notice]:", broadcastErr);
+  }
+
+  // 5. Notifications & Email Boundary
+  if (input.senderRole === "admin") {
+    // Admin replied -> Notify customer
+    try {
+      const customer = await getUserById(conversation.customerId);
+      if (customer) {
+        await createUserNotification(
+          customer.id,
+          "New Message from Support",
+          trimmed.length > 80 ? trimmed.slice(0, 77) + "..." : trimmed
+        );
+        if (customer.email) {
+          const { sendEmail } = await import("./email");
+          await sendEmail({
+            to: customer.email,
+            event: "support_reply",
+            templateData: {
+              customerName: customer.name || "Trader",
+              replyMessage: trimmed,
+              supportUrl: `${process.env.APP_URL || ""}/support`,
+            },
+          });
+        }
+      }
+    } catch (notifErr) {
+      console.warn("[sendSupportMessage admin reply notification notice]:", notifErr);
+    }
+  } else {
+    // Customer sent message -> Notify Admin
+    try {
+      const customer = await getUserById(conversation.customerId);
+      const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.SMTP_USER;
+      if (adminEmail) {
+        const { sendEmail } = await import("./email");
+        await sendEmail({
+          to: adminEmail,
+          event: "customer_message",
+          templateData: {
+            customerName: customer?.name || `Customer #${conversation.customerId}`,
+            customerEmail: customer?.email || "Unknown",
+            message: trimmed,
+          },
+        });
+      }
+    } catch (notifErr) {
+      console.warn("[sendSupportMessage customer notification notice]:", notifErr);
+    }
+  }
+
+  return messageRecord;
+}
+
+/**
+ * Marks unread messages in a conversation as read by the specified role.
+ */
+export async function markSupportConversationRead(
+  conversationId: number,
+  readerRole: "customer" | "admin"
+): Promise<{ success: boolean; count: number }> {
+  const key = `support_messages_${conversationId}`;
+  const messages = await getSupportMessages(conversationId);
+  const now = new Date().toISOString();
+  let updatedCount = 0;
+
+  for (const m of messages) {
+    // Mark messages sent by the opposite party that are unread
+    if (m.senderRole !== readerRole && !m.readAt) {
+      m.readAt = now;
+      updatedCount++;
+    }
+  }
+
+  if (updatedCount > 0) {
+    await setSetting(key, JSON.stringify(messages));
+
+    // Update in-memory messages
+    for (const m of inMemoryMessages) {
+      if (m.conversationId === conversationId && m.senderRole !== readerRole && !m.readAt) {
+        m.readAt = now;
+      }
+    }
+
+    // Update DB
+    const db = await getDb();
+    if (db) {
+      try {
+        await db
+          .update(supportMessages)
+          .set({ readAt: new Date(now) })
+          .where(
+            and(
+              eq(supportMessages.conversationId, conversationId),
+              ne(supportMessages.senderRole, readerRole),
+              isNull(supportMessages.readAt)
+            )
+          );
+      } catch {}
+    }
+
+    try {
+      const { supabaseServer } = await import("./supabase");
+      await supabaseServer
+        .from("supportMessages")
+        .update({ readAt: now })
+        .eq("conversationId", conversationId)
+        .neq("senderRole", readerRole)
+        .is("readAt", null);
+
+      await supabaseServer.channel(`support_chat_${conversationId}`).send({
+        type: "broadcast",
+        event: "messages_read",
+        payload: { conversationId, readerRole, readAt: now },
+      });
+    } catch {}
+  }
+
+  return { success: true, count: updatedCount };
+}
+
+/**
+ * Lists all customer conversations for the Admin Support Workspace.
+ * Sorted by latest message / update on top.
+ */
+export async function listAdminSupportConversations(): Promise<AdminSupportConversationSummary[]> {
+  const allConversations = await loadSupportConversationsRegistry();
+  const summaries: AdminSupportConversationSummary[] = [];
+
+  for (const conv of allConversations) {
+    const customer = await getUserById(conv.customerId);
+    const messages = await getSupportMessages(conv.id);
+
+    const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
+    const unreadCount = messages.filter((m) => m.senderRole === "customer" && !m.readAt).length;
+
+    summaries.push({
+      id: conv.id,
+      customerId: conv.customerId,
+      createdAt: conv.createdAt,
+      updatedAt: conv.updatedAt,
+      lastMessageAt: conv.lastMessageAt || (lastMsg ? lastMsg.createdAt : conv.createdAt),
+      customer: {
+        id: conv.customerId,
+        name: customer?.name || `Customer #${conv.customerId}`,
+        email: customer?.email || null,
+        phone: customer?.phone || null,
+        avatar: (customer as any)?.avatar || null,
+        createdAt: customer?.createdAt ? new Date(customer.createdAt).toISOString() : null,
+      },
+      lastMessage: lastMsg,
+      unreadCount,
+      totalMessages: messages.length,
+    });
+  }
+
+  // Sort: Unread messages or newest activity first
+  summaries.sort((a, b) => {
+    const timeA = new Date(a.lastMessageAt || a.updatedAt || a.createdAt).getTime();
+    const timeB = new Date(b.lastMessageAt || b.updatedAt || b.createdAt).getTime();
+    return timeB - timeA;
+  });
+
+  return summaries;
+}
+
+/**
+ * Retrieves the comprehensive customer context panel for the Admin Workspace:
+ * - Customer Profile (Name, Email, Phone, Joined date)
+ * - Purchased Products / Entitlements (Scope, dates)
+ * - Order History (Order ID, Amount, Payment status, date)
+ * - Summary stats (Total spend, total orders, active products)
+ */
+export async function getCustomerSupportContext(customerId: number): Promise<CustomerSupportContext> {
+  const customer = await getUserById(customerId);
+  const entitlementsList = await listEntitlements(customerId);
+  const ordersList = await listOrdersForUser(customerId);
+
+  const approvedOrders = ordersList.filter(
+    (o: any) => o.orderStatus === "approved" || o.paymentStatus === "approved"
+  );
+
+  const totalSpend = approvedOrders.reduce((sum: number, o: any) => {
+    return sum + (parseFloat(o.amount) || 0);
+  }, 0);
+
+  return {
+    customer: {
+      id: customerId,
+      openId: customer?.openId,
+      name: customer?.name || `Customer #${customerId}`,
+      email: customer?.email || null,
+      phone: customer?.phone || null,
+      avatar: (customer as any)?.avatar || null,
+      role: customer?.role || "user",
+      createdAt: customer?.createdAt ? new Date(customer.createdAt).toISOString() : null,
+    },
+    entitlements: entitlementsList.map((e: any) => ({
+      id: e.id,
+      orderId: e.orderId,
+      productId: e.productId,
+      bundleId: e.bundleId,
+      scope: e.scope || "",
+      productTitle: e.scope?.replace("bundle:", "Bundle #")?.replace("product:", "Product #") || "Access Pass",
+      grantedAt: e.grantedAt ? new Date(e.grantedAt).toISOString() : new Date().toISOString(),
+    })),
+    orders: ordersList.map((o: any) => ({
+      id: o.id,
+      amount: String(o.amount || "0"),
+      currency: o.currency || "BDT",
+      paymentMethod: o.paymentMethod || "manual",
+      paymentStatus: o.paymentStatus || "pending",
+      orderStatus: o.orderStatus || "pending",
+      bundleId: o.bundleId || null,
+      productId: o.productId || null,
+      selectedPdfIds: o.selectedPdfIds || [],
+      createdAt: o.createdAt ? new Date(o.createdAt).toISOString() : new Date().toISOString(),
+    })),
+    stats: {
+      totalSpend,
+      totalOrders: ordersList.length,
+      activeEntitlementsCount: entitlementsList.length,
+    },
+  };
+}
+
+/**
+ * Creates an in-app user notification.
+ */
+export async function createUserNotification(userId: number, title: string, message: string) {
+  const now = new Date();
+  const db = await getDb();
+  if (db) {
+    try {
+      await db.insert(notifications).values({
+        userId,
+        title,
+        message,
+        read: false,
+        createdAt: now,
+      });
+    } catch {}
+  }
+  try {
+    const { supabaseServer } = await import("./supabase");
+    await supabaseServer.from("notifications").insert({
+      userId,
+      title,
+      message,
+      read: false,
+      createdAt: now.toISOString(),
+    });
+  } catch {}
 }
 
 export async function listAllUsers() {
@@ -3466,274 +3386,7 @@ export async function revokeEntitlement(entitlementId: number) {
   return true;
 }
 
-export async function updateTicketStatus(
-  ticketId: number,
-  status: "open" | "pending" | "in_progress" | "waiting_customer" | "waiting_user" | "solved" | "resolved" | "closed" | string,
-  assignedStaff?: string
-) {
-  const normStatus = canonicalStatus(status);
-  const now = new Date();
-  const db = await getDb();
-  if (db) {
-    try {
-      const updateData: any = { status: normStatus, updatedAt: now };
-      if (assignedStaff !== undefined) updateData.assignedStaff = assignedStaff;
-      await db.update(supportTickets).set(updateData).where(eq(supportTickets.id, ticketId));
-    } catch (err) {
-      console.warn("[updateTicketStatus error]:", err);
-    }
-  }
 
-  // Supabase update
-  try {
-    const { supabaseServer } = await import("./supabase");
-    await supabaseServer
-      .from("supportTickets")
-      .update({
-        status: normStatus,
-        assignedStaff: assignedStaff || null,
-        updatedAt: now.toISOString(),
-      })
-      .eq("id", ticketId);
-  } catch (err) {
-    console.warn("[updateTicketStatus Supabase error]:", err);
-  }
-
-  const t = inMemoryTickets.find((item) => item.id === ticketId);
-  const prevStatus = t ? t.status : "open";
-  if (t) {
-    t.status = normStatus as any;
-    t.updatedAt = now;
-    if (assignedStaff !== undefined) t.assignedStaff = assignedStaff;
-    if (normStatus === "solved" && !t.solvedAt) t.solvedAt = now;
-    if (normStatus === "closed" && !t.closedAt) t.closedAt = now;
-  }
-
-  // Update persistent registry
-  try {
-    const persistentTickets = await getPersistentTickets();
-    const pt = persistentTickets.find((item) => item.id === ticketId);
-    if (pt) {
-      pt.status = normStatus as any;
-      pt.updatedAt = now;
-      if (assignedStaff !== undefined) pt.assignedStaff = assignedStaff;
-      if (normStatus === "solved" && !pt.solvedAt) pt.solvedAt = now;
-      if (normStatus === "closed" && !pt.closedAt) pt.closedAt = now;
-      await savePersistentTickets(persistentTickets);
-    }
-  } catch (err) {
-    console.warn("[updateTicketStatus persistent error]:", err);
-  }
-
-  // Notifications based on status
-  try {
-    const ticketCode = t?.ticketCode || `#TKT-${ticketId}`;
-    if (normStatus === "solved") {
-      await addSupportNotification({
-        userId: t?.userId,
-        recipientRole: "user",
-        title: `Ticket Solved: ${ticketCode}`,
-        message: `Your ticket "${t?.subject || ticketCode}" has been marked as Solved. You can reopen it if you need further help.`,
-        ticketId,
-        type: "ticket_solved",
-      });
-    } else if (normStatus === "closed") {
-      await addSupportNotification({
-        userId: t?.userId,
-        recipientRole: "user",
-        title: `Ticket Closed: ${ticketCode}`,
-        message: `Your ticket "${t?.subject || ticketCode}" has been closed.`,
-        ticketId,
-        type: "status_changed",
-      });
-    } else if (normStatus === "open" && (prevStatus === "solved" || prevStatus === "closed")) {
-      await addSupportNotification({
-        recipientRole: "support",
-        title: `Ticket Reopened: ${ticketCode}`,
-        message: `Ticket "${t?.subject || ticketCode}" was reopened by customer.`,
-        ticketId,
-        type: "ticket_reopened",
-      });
-    } else {
-      await addSupportNotification({
-        userId: t?.userId,
-        recipientRole: "all",
-        title: `Status Updated: ${ticketCode}`,
-        message: `Ticket status changed to ${normStatus.replace("_", " ").toUpperCase()}`,
-        ticketId,
-        type: "status_changed",
-      });
-    }
-  } catch (notifErr) {
-    console.warn("[updateTicketStatus notification error]:", notifErr);
-  }
-
-  return true;
-}
-
-export async function updateTicketPriority(
-  ticketId: number,
-  priority: "low" | "medium" | "high" | "urgent" | string
-) {
-  const normPriority = canonicalPriority(priority);
-  const now = new Date();
-
-  const db = await getDb();
-  if (db) {
-    try {
-      await db.update(supportTickets).set({ priority: normPriority, updatedAt: now } as any).where(eq(supportTickets.id, ticketId));
-    } catch (err) {
-      console.warn("[updateTicketPriority error]:", err);
-    }
-  }
-
-  const t = inMemoryTickets.find((item) => item.id === ticketId);
-  if (t) {
-    t.priority = normPriority;
-    t.updatedAt = now;
-  }
-
-  try {
-    const persistentTickets = await getPersistentTickets();
-    const pt = persistentTickets.find((item) => item.id === ticketId);
-    if (pt) {
-      pt.priority = normPriority;
-      pt.updatedAt = now;
-      await savePersistentTickets(persistentTickets);
-    }
-  } catch (err) {
-    console.warn("[updateTicketPriority persistent error]:", err);
-  }
-
-  return true;
-}
-
-export async function assignTicketStaff(
-  ticketId: number,
-  staffName: string,
-  staffId?: number | null
-) {
-  const now = new Date();
-  const db = await getDb();
-  if (db) {
-    try {
-      await db.update(supportTickets).set({ assignedStaff: staffName, updatedAt: now } as any).where(eq(supportTickets.id, ticketId));
-    } catch (err) {
-      console.warn("[assignTicketStaff error]:", err);
-    }
-  }
-
-  const t = inMemoryTickets.find((item) => item.id === ticketId);
-  if (t) {
-    t.assignedStaff = staffName;
-    t.assignedStaffId = staffId || null;
-    t.updatedAt = now;
-  }
-
-  try {
-    const persistentTickets = await getPersistentTickets();
-    const pt = persistentTickets.find((item) => item.id === ticketId);
-    if (pt) {
-      pt.assignedStaff = staffName;
-      pt.assignedStaffId = staffId || null;
-      pt.updatedAt = now;
-      await savePersistentTickets(persistentTickets);
-    }
-  } catch (err) {
-    console.warn("[assignTicketStaff persistent error]:", err);
-  }
-
-  await addSupportNotification({
-    recipientRole: "support",
-    title: `Ticket Assigned: ${t?.ticketCode || `#TKT-${ticketId}`}`,
-    message: `Ticket "${t?.subject || ticketId}" has been assigned to ${staffName}`,
-    ticketId,
-    type: "ticket_assigned",
-  });
-
-  return true;
-}
-
-export interface SupportMetrics {
-  total: number;
-  open: number;
-  pending: number;
-  inProgress: number;
-  waitingCustomer: number;
-  solved: number;
-  closed: number;
-  priorities: {
-    low: number;
-    medium: number;
-    high: number;
-    urgent: number;
-  };
-  avgResponseMinutes: number;
-  avgResolutionHours: number;
-}
-
-export async function calculateSupportMetrics(): Promise<SupportMetrics> {
-  const allTickets = await listTickets({ sort: "newest" });
-
-  let open = 0;
-  let pending = 0;
-  let inProgress = 0;
-  let waitingCustomer = 0;
-  let solved = 0;
-  let closed = 0;
-
-  const priorities = { low: 0, medium: 0, high: 0, urgent: 0 };
-  const responseTimes: number[] = [];
-  const resolutionTimes: number[] = [];
-
-  for (const t of allTickets) {
-    const s = canonicalStatus(t.status);
-    if (s === "open") open++;
-    else if (s === "pending") pending++;
-    else if (s === "in_progress") inProgress++;
-    else if (s === "waiting_customer") waitingCustomer++;
-    else if (s === "solved") solved++;
-    else if (s === "closed") closed++;
-
-    const p = canonicalPriority(t.priority);
-    if (p === "low") priorities.low++;
-    else if (p === "medium") priorities.medium++;
-    else if (p === "high") priorities.high++;
-    else if (p === "urgent") priorities.urgent++;
-
-    const createdTime = new Date(t.createdAt).getTime();
-    if (t.firstResponseAt) {
-      const respTime = (new Date(t.firstResponseAt).getTime() - createdTime) / (1000 * 60);
-      if (respTime >= 0) responseTimes.push(respTime);
-    }
-    const endTimestamp = t.solvedAt || (s === "solved" || s === "closed" ? t.updatedAt : null);
-    if (endTimestamp) {
-      const resHours = (new Date(endTimestamp).getTime() - createdTime) / (1000 * 60 * 60);
-      if (resHours >= 0) resolutionTimes.push(resHours);
-    }
-  }
-
-  const avgResponseMinutes = responseTimes.length > 0
-    ? Math.round(responseTimes.reduce((a, b) => a + b, 0) / responseTimes.length)
-    : 15;
-
-  const avgResolutionHours = resolutionTimes.length > 0
-    ? Number((resolutionTimes.reduce((a, b) => a + b, 0) / resolutionTimes.length).toFixed(1))
-    : 2.4;
-
-  return {
-    total: allTickets.length,
-    open,
-    pending,
-    inProgress,
-    waitingCustomer,
-    solved,
-    closed,
-    priorities,
-    avgResponseMinutes,
-    avgResolutionHours,
-  };
-}
 
 export async function addAuditLog(event: {
   actorId: number;
@@ -7198,8 +6851,8 @@ export {
   habits,
   disciplineEntries,
   journalEntries,
-  supportTickets,
-  ticketReplies,
+  supportConversations,
+  supportMessages,
   notifications,
   settings,
   auditEvents,

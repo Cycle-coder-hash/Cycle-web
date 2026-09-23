@@ -30,25 +30,18 @@ import {
   toggleProgressEntry,
   listDiscipline,
   toggleDisciplineEntry,
-  listTickets,
-  createSupportTicket,
-  getTicketById,
-  getTicketByCode,
-  getTicketReplies,
-  addTicketReply,
+  getOrCreateSupportConversation,
+  getSupportConversation,
+  getSupportConversationById,
+  getSupportMessages,
+  sendSupportMessage,
+  markSupportConversationRead,
+  listAdminSupportConversations,
+  getCustomerSupportContext,
   listAllUsers,
   updateUserRole,
   grantManualEntitlement,
   revokeEntitlement,
-  updateTicketStatus,
-  getTicketInternalNotes,
-  addTicketInternalNote,
-  getSupportNotifications,
-  addSupportNotification,
-  markSupportNotificationRead,
-  updateTicketPriority,
-  assignTicketStaff,
-  calculateSupportMetrics,
   listAuditLogs,
   getUserByEmail,
   getUserByOpenId,
@@ -67,8 +60,8 @@ import {
   habits,
   disciplineEntries,
   journalEntries,
-  supportTickets,
-  ticketReplies,
+  supportConversations,
+  supportMessages,
   notifications,
   settings,
   auditEvents,
@@ -497,7 +490,13 @@ export const appRouter = router({
     habits: protectedProcedure
       .input(z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }))
       .query(({ ctx, input }) => listHabits(ctx.user.id, input.date)),
-    tickets: protectedProcedure.query(({ ctx }) => listTickets(ctx.user.id)),
+    tickets: protectedProcedure.query(async ({ ctx }) => {
+      const conv = await getOrCreateSupportConversation(ctx.user.id);
+      return [conv];
+    }),
+    supportConversation: protectedProcedure.query(async ({ ctx }) => {
+      return await getOrCreateSupportConversation(ctx.user.id);
+    }),
     progress: protectedProcedure.query(async ({ ctx }) => {
       return await listProgress(ctx.user.id);
     }),
@@ -749,26 +748,40 @@ export const appRouter = router({
         await toggleHabitEntry(ctx.user.id, input.label, input.date, input.completed);
         return { success: true };
       }),
+    sendSupportMessage: protectedProcedure
+      .input(
+        z.object({
+          message: z.string().min(1),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const conversation = await getOrCreateSupportConversation(ctx.user.id);
+        const msg = await sendSupportMessage({
+          conversationId: conversation.id,
+          senderId: ctx.user.id,
+          senderRole: "customer",
+          message: input.message,
+        });
+        return { success: true, message: msg };
+      }),
     createTicket: protectedProcedure
       .input(
         z.object({
           category: z.string().optional(),
-          subject: z.string().min(1),
+          subject: z.string().optional(),
           message: z.string().min(1),
           attachmentUrl: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const ticket = await createSupportTicket({
-          userId: ctx.user.id,
-          userName: ctx.user.name || "Student",
-          userEmail: ctx.user.email || "student@cycleofchart.com",
-          category: input.category || "General",
-          subject: input.subject,
+        const conversation = await getOrCreateSupportConversation(ctx.user.id);
+        const msg = await sendSupportMessage({
+          conversationId: conversation.id,
+          senderId: ctx.user.id,
+          senderRole: "customer",
           message: input.message,
-          attachmentUrl: input.attachmentUrl,
         });
-        return { success: true, ticket };
+        return { success: true, ticket: { id: conversation.id, message: msg.message } };
       }),
     submitOrder: protectedProcedure
       .input(
@@ -976,250 +989,37 @@ export const appRouter = router({
   }),
 
   support: router({
-    createTicket: publicProcedure
-      .input(
-        z.object({
-          name: z.string().min(2, "Name must be at least 2 characters"),
-          email: z.string().email("Valid email is required"),
-          category: z.string().min(1, "Please select a category"),
-          priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
-          subject: z.string().min(3, "Subject must be at least 3 characters"),
-          message: z.string().min(10, "Message must be at least 10 characters"),
-          attachmentUrl: z.string().optional(),
-        })
-      )
-      .mutation(async ({ ctx, input }) => {
-        const ticket = await createSupportTicket({
-          userId: ctx.user ? ctx.user.id : null,
-          userName: input.name.trim(),
-          userEmail: input.email.trim().toLowerCase(),
-          category: input.category,
-          priority: input.priority || "medium",
-          subject: input.subject.trim(),
-          message: input.message.trim(),
-          attachmentUrl: input.attachmentUrl,
-        });
-
-        return { success: true, ticket };
-      }),
-
-    myTickets: protectedProcedure.query(async ({ ctx }) => {
-      return await listTickets({ userId: ctx.user.id, userEmail: ctx.user.email || undefined, sort: "updated" });
+    getConversation: protectedProcedure.query(async ({ ctx }) => {
+      const conversation = await getOrCreateSupportConversation(ctx.user.id);
+      const messages = await getSupportMessages(conversation.id);
+      return { conversation, messages };
     }),
 
-    trackTicket: publicProcedure
+    sendMessage: protectedProcedure
       .input(
         z.object({
-          ticketCode: z.string().min(1, "Ticket ID is required"),
-          email: z.string().email("Valid email is required"),
-        })
-      )
-      .query(async ({ input }) => {
-        const ticket = await getTicketByCode(input.ticketCode);
-        if (!ticket) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "No support ticket found with this Ticket ID.",
-          });
-        }
-        if (ticket.userEmail?.toLowerCase().trim() !== input.email.trim().toLowerCase()) {
-          throw new TRPCError({
-            code: "UNAUTHORIZED",
-            message: "The email address provided does not match this ticket record.",
-          });
-        }
-        const replies = await getTicketReplies(ticket.id);
-        return { ticket, replies, internalNotes: [] };
-      }),
-
-    getTicket: publicProcedure
-      .input(
-        z.object({
-          ticketId: z.number(),
-          email: z.string().optional(),
-        })
-      )
-      .query(async ({ ctx, input }) => {
-        const ticket = await getTicketById(input.ticketId);
-        if (!ticket) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Ticket not found",
-          });
-        }
-
-        const isStaff = ctx.user?.role === "admin" || ctx.user?.role === "support";
-        const userEmail = (ctx.user?.email || "").trim().toLowerCase();
-        const ticketEmail = (ticket.userEmail || "").trim().toLowerCase();
-        const inputEmail = (input.email || "").trim().toLowerCase();
-
-        const isOwner =
-          (ctx.user && (
-            (ticket.userId && ticket.userId === ctx.user.id) ||
-            (userEmail && ticketEmail && userEmail === ticketEmail)
-          )) ||
-          (inputEmail && ticketEmail && inputEmail === ticketEmail) ||
-          (!ticket.userId && !ticket.userEmail);
-
-        if (!isStaff && !isOwner) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "You are not authorized to view this ticket.",
-          });
-        }
-
-        const replies = await getTicketReplies(ticket.id);
-        const internalNotes = isStaff ? await getTicketInternalNotes(ticket.id) : [];
-        return { ticket, replies, internalNotes };
-      }),
-
-    reply: publicProcedure
-      .input(
-        z.object({
-          ticketId: z.number(),
-          message: z.string().min(1, "Reply message cannot be empty"),
-          senderName: z.string().optional(),
-          senderEmail: z.string().optional(),
-          attachmentUrl: z.string().optional(),
+          message: z.string().min(1, "Message cannot be empty"),
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const ticket = await getTicketById(input.ticketId);
-        if (!ticket) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Ticket not found",
-          });
-        }
-
-        const isStaff = ctx.user?.role === "admin" || ctx.user?.role === "support";
-        const userEmail = (ctx.user?.email || "").trim().toLowerCase();
-        const ticketEmail = (ticket.userEmail || "").trim().toLowerCase();
-        const inputEmail = (input.senderEmail || "").trim().toLowerCase();
-
-        const isOwner =
-          (ctx.user && (
-            (ticket.userId && ticket.userId === ctx.user.id) ||
-            (userEmail && ticketEmail && userEmail === ticketEmail)
-          )) ||
-          (inputEmail && ticketEmail && inputEmail === ticketEmail) ||
-          (!ticket.userId && !ticket.userEmail);
-
-        if (!isStaff && !isOwner) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "You are not authorized to reply to this ticket.",
-          });
-        }
-
-        const senderRole = isStaff ? ("support" as const) : ("user" as const);
-        const senderName = isStaff
-          ? ctx.user?.name || "Support Specialist"
-          : input.senderName || ctx.user?.name || ticket.userName;
-        const senderEmail = isStaff
-          ? ctx.user?.email || "support@cycleofchart.com"
-          : input.senderEmail || ctx.user?.email || ticket.userEmail;
-
-        const reply = await addTicketReply({
-          ticketId: input.ticketId,
-          senderRole,
-          senderName,
-          senderEmail,
-          message: input.message.trim(),
-          attachmentUrl: input.attachmentUrl,
+        const conversation = await getOrCreateSupportConversation(ctx.user.id);
+        const msg = await sendSupportMessage({
+          conversationId: conversation.id,
+          senderId: ctx.user.id,
+          senderRole: "customer",
+          message: input.message,
         });
-
-        // Automatic status transition
-        if (!isStaff) {
-          await updateTicketStatus(input.ticketId, "open");
-        }
-
-        return { success: true, reply };
+        return { success: true, message: msg };
       }),
 
-    closeTicket: publicProcedure
+    markRead: protectedProcedure
       .input(
         z.object({
-          ticketId: z.number(),
-          reason: z.string().optional(),
-          senderEmail: z.string().optional(),
+          conversationId: z.number(),
         })
       )
-      .mutation(async ({ ctx, input }) => {
-        const ticket = await getTicketById(input.ticketId);
-        if (!ticket) throw new TRPCError({ code: "NOT_FOUND", message: "Ticket not found" });
-
-        const isStaff = ctx.user?.role === "admin" || ctx.user?.role === "support";
-        const isOwner =
-          (ctx.user && (ticket.userId === ctx.user.id || (ctx.user.email && ticket.userEmail.toLowerCase() === ctx.user.email.toLowerCase()))) ||
-          (input.senderEmail && ticket.userEmail.toLowerCase() === input.senderEmail.trim().toLowerCase());
-
-        if (!isStaff && !isOwner) throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized to close this ticket" });
-
-        await updateTicketStatus(input.ticketId, "closed", isStaff ? ctx.user?.name || "Staff" : undefined);
-        if (input.reason && input.reason.trim()) {
-          await addTicketReply({
-            ticketId: input.ticketId,
-            senderRole: isStaff ? "support" : "user",
-            senderName: isStaff ? ctx.user?.name || "Staff" : ticket.userName,
-            senderEmail: isStaff ? ctx.user?.email : ticket.userEmail,
-            message: `[Ticket Closed]: ${input.reason.trim()}`,
-          });
-        }
-        return { success: true };
-      }),
-
-    reopenTicket: publicProcedure
-      .input(
-        z.object({
-          ticketId: z.number(),
-          reason: z.string().optional(),
-          senderEmail: z.string().optional(),
-        })
-      )
-      .mutation(async ({ ctx, input }) => {
-        const ticket = await getTicketById(input.ticketId);
-        if (!ticket) throw new TRPCError({ code: "NOT_FOUND", message: "Ticket not found" });
-
-        const isStaff = ctx.user?.role === "admin" || ctx.user?.role === "support";
-        const isOwner =
-          (ctx.user && (ticket.userId === ctx.user.id || (ctx.user.email && ticket.userEmail.toLowerCase() === ctx.user.email.toLowerCase()))) ||
-          (input.senderEmail && ticket.userEmail.toLowerCase() === input.senderEmail.trim().toLowerCase());
-
-        if (!isStaff && !isOwner) throw new TRPCError({ code: "FORBIDDEN", message: "Not authorized to reopen this ticket" });
-
-        await updateTicketStatus(input.ticketId, "open");
-        if (input.reason && input.reason.trim()) {
-          await addTicketReply({
-            ticketId: input.ticketId,
-            senderRole: isStaff ? "support" : "user",
-            senderName: isStaff ? ctx.user?.name || "Staff" : ticket.userName,
-            senderEmail: isStaff ? ctx.user?.email : ticket.userEmail,
-            message: `[Ticket Reopened]: ${input.reason.trim()}`,
-          });
-        }
-        return { success: true };
-      }),
-
-    notifications: publicProcedure
-      .input(z.object({ unreadOnly: z.boolean().optional() }).optional())
-      .query(async ({ ctx, input }) => {
-        const isStaff = ctx.user?.role === "admin" || ctx.user?.role === "support";
-        const notifs = await getSupportNotifications({
-          userId: ctx.user?.id,
-          isStaff,
-        });
-        if (input?.unreadOnly) {
-          return notifs.filter((n) => !n.isRead);
-        }
-        return notifs;
-      }),
-
-    markNotificationRead: publicProcedure
-      .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
-        const ok = await markSupportNotificationRead(input.id);
-        return { success: ok };
+        return await markSupportConversationRead(input.conversationId, "customer");
       }),
   }),
 
@@ -1227,7 +1027,7 @@ export const appRouter = router({
     stats: supportProcedure.query(async () => {
       const allOrders = await listAllOrders();
       const allUsers = await listAllUsers();
-      const allTickets = await listTickets();
+      const allConversations = await listAdminSupportConversations();
 
       const approvedOrders = allOrders.filter((o: any) => o.orderStatus === "approved");
       const pendingOrders = allOrders.filter((o: any) => o.orderStatus === "pending");
@@ -1236,11 +1036,7 @@ export const appRouter = router({
       const totalRevenue = approvedOrders.reduce((sum: number, o: any) => sum + parseFloat(o.amount || "0"), 0);
       const pendingRevenue = pendingOrders.reduce((sum: number, o: any) => sum + parseFloat(o.amount || "0"), 0);
 
-      const openTicketsCount = allTickets.filter((t: any) => t.status === "open").length;
-      const inProgressTicketsCount = allTickets.filter((t: any) => t.status === "in_progress").length;
-      const waitingUserTicketsCount = allTickets.filter((t: any) => t.status === "waiting_user").length;
-      const resolvedTicketsCount = allTickets.filter((t: any) => t.status === "resolved").length;
-      const closedTicketsCount = allTickets.filter((t: any) => t.status === "closed").length;
+      const unreadConversationsCount = allConversations.filter((c: any) => c.unreadCount > 0).length;
 
       return {
         totalRevenue,
@@ -1250,119 +1046,60 @@ export const appRouter = router({
         pendingOrdersCount: pendingOrders.length,
         rejectedOrdersCount: rejectedOrders.length,
         totalStudents: allUsers.length,
-        totalTicketsCount: allTickets.length,
-        openTicketsCount,
-        inProgressTicketsCount,
-        waitingUserTicketsCount,
-        resolvedTicketsCount,
-        closedTicketsCount,
+        totalConversationsCount: allConversations.length,
+        unreadConversationsCount,
+        // Compatibility fallbacks
+        totalTicketsCount: allConversations.length,
+        openTicketsCount: unreadConversationsCount,
+        inProgressTicketsCount: 0,
+        waitingUserTicketsCount: 0,
+        resolvedTicketsCount: 0,
+        closedTicketsCount: 0,
       };
     }),
 
     orders: supportProcedure.query(() => listAllOrders()),
-    tickets: supportProcedure
-      .input(
-        z
-          .object({
-            status: z.string().optional(),
-            category: z.string().optional(),
-            priority: z.string().optional(),
-            assignedStaff: z.string().optional(),
-            search: z.string().optional(),
-            sort: z.enum(["newest", "oldest", "priority", "updated"]).optional(),
-          })
-          .optional()
-      )
+    tickets: supportProcedure.query(async () => {
+      return await listAdminSupportConversations();
+    }),
+    supportConversations: supportProcedure.query(async () => {
+      return await listAdminSupportConversations();
+    }),
+
+    conversationMessages: supportProcedure
+      .input(z.object({ conversationId: z.number() }))
       .query(async ({ input }) => {
-        return await listTickets(input || {});
+        return await getSupportMessages(input.conversationId);
       }),
-    ticketDetails: supportProcedure
-      .input(z.object({ ticketId: z.number() }))
-      .query(async ({ input }) => {
-        const ticket = await getTicketById(input.ticketId);
-        if (!ticket) throw new TRPCError({ code: "NOT_FOUND", message: "Ticket not found" });
-        const replies = await getTicketReplies(input.ticketId);
-        const internalNotes = await getTicketInternalNotes(input.ticketId);
-        return { ticket, replies, internalNotes };
-      }),
-    replyTicket: supportProcedure
+
+    replyMessage: supportProcedure
       .input(
         z.object({
-          ticketId: z.number(),
-          message: z.string().min(1),
-          status: z.enum(["open", "pending", "in_progress", "waiting_customer", "waiting_user", "solved", "resolved", "closed"]).optional(),
-          attachmentUrl: z.string().optional(),
+          conversationId: z.number(),
+          message: z.string().min(1, "Message cannot be empty"),
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const reply = await addTicketReply({
-          ticketId: input.ticketId,
-          senderRole: "support",
-          senderName: ctx.user.name || "Support Specialist",
-          senderEmail: ctx.user.email,
-          message: input.message.trim(),
-          attachmentUrl: input.attachmentUrl,
+        const reply = await sendSupportMessage({
+          conversationId: input.conversationId,
+          senderId: ctx.user.id,
+          senderRole: "admin",
+          message: input.message,
         });
-        const targetStatus = input.status || "waiting_customer";
-        await updateTicketStatus(input.ticketId, targetStatus, ctx.user.name || "Staff");
         return { success: true, reply };
       }),
-    updateTicketStatus: supportProcedure
-      .input(
-        z.object({
-          ticketId: z.number(),
-          status: z.enum(["open", "pending", "in_progress", "waiting_customer", "waiting_user", "solved", "resolved", "closed"]),
-          assignedStaff: z.string().optional(),
-        })
-      )
-      .mutation(async ({ ctx, input }) => {
-        await updateTicketStatus(input.ticketId, input.status, input.assignedStaff || ctx.user.name || "Staff");
-        return { success: true };
-      }),
-    addInternalNote: supportProcedure
-      .input(
-        z.object({
-          ticketId: z.number(),
-          note: z.string().min(1, "Note cannot be empty"),
-        })
-      )
-      .mutation(async ({ ctx, input }) => {
-        const note = await addTicketInternalNote({
-          ticketId: input.ticketId,
-          authorId: ctx.user?.id || 1,
-          authorName: ctx.user?.name || "Support Staff",
-          authorEmail: ctx.user?.email || null,
-          authorRole: (ctx.user?.role as string) || "support",
-          content: input.note.trim(),
-        });
-        return { success: true, note };
-      }),
-    updatePriority: supportProcedure
-      .input(
-        z.object({
-          ticketId: z.number(),
-          priority: z.enum(["low", "medium", "high", "urgent"]),
-        })
-      )
+
+    markConversationRead: supportProcedure
+      .input(z.object({ conversationId: z.number() }))
       .mutation(async ({ input }) => {
-        await updateTicketPriority(input.ticketId, input.priority);
-        return { success: true };
+        return await markSupportConversationRead(input.conversationId, "admin");
       }),
-    assignTicket: supportProcedure
-      .input(
-        z.object({
-          ticketId: z.number(),
-          staffName: z.string().min(1),
-          staffId: z.number().optional().nullable(),
-        })
-      )
-      .mutation(async ({ input }) => {
-        await assignTicketStaff(input.ticketId, input.staffName, input.staffId);
-        return { success: true };
+
+    customerContext: supportProcedure
+      .input(z.object({ customerId: z.number() }))
+      .query(async ({ input }) => {
+        return await getCustomerSupportContext(input.customerId);
       }),
-    supportMetrics: supportProcedure.query(async () => {
-      return await calculateSupportMetrics();
-    }),
     users: supportProcedure.query(async () => {
       const usersList = await listAllUsers();
       const ordersList = await listAllOrders();
@@ -1398,19 +1135,6 @@ export const appRouter = router({
       .input(z.object({ entitlementId: z.number() }))
       .mutation(async ({ input }) => {
         await revokeEntitlement(input.entitlementId);
-        return { success: true };
-      }),
-
-    updateTicket: supportProcedure
-      .input(
-        z.object({
-          ticketId: z.number(),
-          status: z.enum(["open", "pending", "in_progress", "waiting_customer", "waiting_user", "solved", "resolved", "closed"]),
-          assignedStaff: z.string().optional(),
-        })
-      )
-      .mutation(async ({ ctx, input }) => {
-        await updateTicketStatus(input.ticketId, input.status, input.assignedStaff || ctx.user.name || "Staff");
         return { success: true };
       }),
 

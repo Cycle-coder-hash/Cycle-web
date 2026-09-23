@@ -1,4 +1,9 @@
-export type AccessEmailEvent = "payment_approved" | "payment_rejected" | "access_granted";
+export type AccessEmailEvent =
+  | "payment_approved"
+  | "payment_rejected"
+  | "access_granted"
+  | "support_reply"
+  | "customer_message";
 
 /**
  * Credential-safe notification boundary. Configure an email provider later by
@@ -14,4 +19,16 @@ export async function sendAccessEmail(event: AccessEmailEvent, recipient: string
   // Provider-specific delivery belongs behind this boundary. No credentials are
   // fabricated here; adding SMTP integration is an explicit deployment step.
   return { sent: false, reason: "provider-adapter-pending" as const };
+}
+
+export async function sendEmail({
+  to,
+  event,
+  templateData,
+}: {
+  to: string;
+  event: AccessEmailEvent;
+  templateData: Record<string, unknown>;
+}) {
+  return await sendAccessEmail(event, to, templateData);
 }

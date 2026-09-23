@@ -5,6 +5,7 @@ import {
   Users,
   BookOpen,
   ShieldCheck,
+  MessageSquare,
   UserCheck,
   KeyRound,
   Shield,
@@ -51,8 +52,8 @@ export const AdminNavTabs: React.FC<AdminNavTabsProps> = ({
     },
     {
       id: "support",
-      label: "Support Tickets",
-      icon: ShieldCheck,
+      label: "Support Messages",
+      icon: MessageSquare,
       badge: openTicketsCount ? `${openTicketsCount}` : undefined,
     },
     { id: "owner", label: "Owner Profile", icon: UserCheck, badge: undefined },

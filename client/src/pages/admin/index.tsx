@@ -18,7 +18,6 @@ import { AuditTab } from "./tabs/AuditTab";
 
 import { RejectOrderModal } from "./modals/RejectOrderModal";
 import { GrantAccessModal } from "./modals/GrantAccessModal";
-import { TicketDetailsModal } from "./modals/TicketDetailsModal";
 import { EbookModal, EbookFormData } from "./modals/EbookModal";
 import { DeleteEbookModal } from "./modals/DeleteEbookModal";
 
@@ -151,14 +150,6 @@ export default function AdminPage() {
     isLoading: isLoadingPaymentSettings,
   } = trpc.admin.paymentSettings.useQuery();
 
-  const {
-    data: ticketModalData,
-    refetch: refetchTicketModalData,
-    isLoading: isLoadingTicketModalData,
-  } = trpc.admin.ticketDetails.useQuery(
-    { ticketId: (selectedTicketForModal?.id as number) || 0 },
-    { enabled: !!selectedTicketForModal?.id }
-  );
 
   useEffect(() => {
     if (ownerProfileData && !ownerFormInitialized) {
@@ -308,30 +299,6 @@ export default function AdminPage() {
     },
   });
 
-  const updateTicketStatusMutation = trpc.admin.updateTicket.useMutation({
-    onSuccess: () => {
-      refetchTickets();
-      if (selectedTicketForModal) refetchTicketModalData();
-      setActionSuccess("Ticket status updated successfully!");
-      setTimeout(() => setActionSuccess(null), 4000);
-    },
-    onError: (err: any) => {
-      alert(err.message || "Failed to update ticket status");
-    },
-  });
-
-  const staffReplyMutation = trpc.admin.replyTicket.useMutation({
-    onSuccess: () => {
-      refetchTickets();
-      refetchTicketModalData();
-      setStaffReplyText("");
-      setActionSuccess("Reply sent to student successfully!");
-      setTimeout(() => setActionSuccess(null), 4000);
-    },
-    onError: (err: any) => {
-      alert(err.message || "Failed to send reply");
-    },
-  });
 
   const createEbookMutation = trpc.admin.createFreeEbook.useMutation({
     onSuccess: () => {
@@ -739,19 +706,7 @@ export default function AdminPage() {
         )}
 
         {activeTab === "support" && (
-          <SupportTab
-            tickets={tickets || []}
-            ticketFilter={ticketFilter}
-            setTicketFilter={setTicketFilter}
-            ticketCategoryFilter={ticketCategoryFilter}
-            setTicketCategoryFilter={setTicketCategoryFilter}
-            ticketSearch={ticketSearch}
-            setTicketSearch={setTicketSearch}
-            onSelectTicketForModal={(ticket) => setSelectedTicketForModal(ticket)}
-            onUpdateTicketStatus={(ticketId, status) =>
-              updateTicketStatusMutation.mutate({ ticketId, status: status as any })
-            }
-          />
+          <SupportTab />
         )}
 
         {activeTab === "owner" && (
@@ -806,21 +761,6 @@ export default function AdminPage() {
         setGrantScope={setGrantScope}
       />
 
-      {/* Staff Conversation Thread Modal */}
-      <TicketDetailsModal
-        ticket={selectedTicketForModal}
-        ticketModalData={ticketModalData}
-        isLoadingTicketModalData={isLoadingTicketModalData}
-        onClose={() => setSelectedTicketForModal(null)}
-        staffReplyText={staffReplyText}
-        setStaffReplyText={setStaffReplyText}
-        staffReplyStatus={staffReplyStatus}
-        setStaffReplyStatus={setStaffReplyStatus}
-        onSendReply={(ticketId, message, status) =>
-          staffReplyMutation.mutate({ ticketId, message, status: status as any })
-        }
-        isReplying={staffReplyMutation.isPending}
-      />
 
       {/* Add / Edit Free eBook Modal */}
       <EbookModal
