@@ -294,45 +294,6 @@ export default function Checkout() {
               ))}
             </div>
 
-            {/* Selected PDFs Filter (When PDF package chosen) */}
-            {selected === 1 && (
-              <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">Select Included PDFs</div>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400">15-PDF complete institutional library · 100% Free Access</div>
-                  </div>
-                  <span className="text-xs font-extrabold text-[#0284c7] dark:text-[#38bdf8]">
-                    {selectedPdfIds.length} / 15
-                  </span>
-                </div>
-
-                <div className="mt-3 grid grid-cols-3 sm:grid-cols-5 gap-2">
-                  {Array.from({ length: 15 }, (_, i) => i + 1).map((id) => {
-                    const isChecked = selectedPdfIds.includes(id);
-                    return (
-                      <button
-                        type="button"
-                        key={id}
-                        onClick={() =>
-                          setSelectedPdfIds((ids) =>
-                            ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]
-                          )
-                        }
-                        className={`rounded-xl border py-2 text-xs font-bold transition ${
-                          isChecked
-                            ? "border-[#081833] bg-[#081833] text-white dark:bg-sky-500 dark:text-slate-950 dark:border-sky-500"
-                            : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"
-                        }`}
-                      >
-                        PDF {id}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
             {/* Paid vs Free Sections */}
             {!isFree ? (
               <>

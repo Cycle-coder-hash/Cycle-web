@@ -1100,14 +1100,7 @@ export default function Home() {
                 const isFreePackage = item.id === 1 || item.slug === "pdf-package" || item.titleEn?.toLowerCase().includes("free ebook");
 
                 const handleCardClick = () => {
-                  if (isFreePackage) {
-                    if (!user) {
-                      sessionStorage.setItem("cycle_auth_redirect", "/?action=open_free_ebooks#store");
-                      window.location.href = `/login?redirect=${encodeURIComponent("/?action=open_free_ebooks#store")}`;
-                    } else {
-                      setIsFreeEbookModalOpen(true);
-                    }
-                  }
+                  window.location.href = `/checkout?bundle=${item.id}`;
                 };
 
                 return (
@@ -1209,14 +1202,9 @@ export default function Home() {
                         </div>
                       </div>
 
-                      {isFreePackage ? (
+                      <Link href={`/checkout?bundle=${item.id}`} className="block w-full">
                         <Button
-                          type="button"
                           size="lg"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCardClick();
-                          }}
                           className={`group/btn w-full gap-2 rounded-2xl font-extrabold text-sm shadow-md transition-all duration-200 active:scale-[0.98] ${
                             isPopular
                               ? "bg-[#38bdf8] text-slate-950 hover:bg-[#7dd3fc] hover:shadow-lg hover:shadow-sky-500/25"
@@ -1229,24 +1217,7 @@ export default function Home() {
                             className="transition-transform duration-200 group-hover/btn:translate-x-1"
                           />
                         </Button>
-                      ) : (
-                        <Link href={`/checkout?bundle=${item.id}`} className="block w-full">
-                          <Button
-                            size="lg"
-                            className={`group/btn w-full gap-2 rounded-2xl font-extrabold text-sm shadow-md transition-all duration-200 active:scale-[0.98] ${
-                              isPopular
-                                ? "bg-[#38bdf8] text-slate-950 hover:bg-[#7dd3fc] hover:shadow-lg hover:shadow-sky-500/25"
-                                : "bg-[#0d1a2d] text-white hover:bg-[#17365b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400"
-                            }`}
-                          >
-                            <span>{copy.viewBundle}</span>
-                            <ArrowRight
-                              size={16}
-                              className="transition-transform duration-200 group-hover/btn:translate-x-1"
-                            />
-                          </Button>
-                        </Link>
-                      )}
+                      </Link>
                     </div>
                   </div>
                 </div>
