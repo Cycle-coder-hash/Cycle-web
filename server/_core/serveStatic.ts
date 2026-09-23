@@ -21,10 +21,27 @@ export function serveStatic(app: Express) {
     );
   }
 
-  app.use(express.static(distPath));
+  app.use(
+    express.static(distPath, {
+      maxAge: "1d",
+      setHeaders(res, filePath) {
+        if (filePath.includes(path.sep + "assets" + path.sep) || filePath.includes("/assets/")) {
+          res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+        } else if (filePath.endsWith(".html")) {
+          res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
+        }
+      },
+    })
+  );
 
-  // fall through to index.html if the file doesn't exist
-  app.use("*", (_req, res) => {
+  // Fall through to index.html for non-asset client routes
+  app.use("*", (req, res) => {
+    // If a request for a static chunk under /assets/ does not exist on disk, return 404
+    // rather than index.html so the browser module loader can detect chunk failure cleanly
+    if (req.path.startsWith("/assets/")) {
+      return res.status(404).send("Asset not found");
+    }
+    res.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }

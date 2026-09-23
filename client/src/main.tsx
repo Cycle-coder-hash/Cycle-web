@@ -6,7 +6,24 @@ import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
 import { startLogin } from "./const";
+import { handleStaleChunkError, isChunkLoadError } from "./lib/lazyWithRetry";
 import "./index.css";
+
+// Global resilience handler for deployment chunk updates:
+// When a new deployment renders earlier cached chunks obsolete, reload once safely.
+if (typeof window !== "undefined") {
+  window.addEventListener("vite:preloadError", (event) => {
+    event.preventDefault();
+    handleStaleChunkError();
+  });
+
+  window.addEventListener("unhandledrejection", (event) => {
+    if (isChunkLoadError(event.reason)) {
+      event.preventDefault();
+      handleStaleChunkError();
+    }
+  });
+}
 
 const queryClient = new QueryClient();
 

@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
 import { Route, Switch } from "wouter";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,16 +7,17 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { UserPreferencesProvider } from "./contexts/UserPreferencesContext";
 import Home from "./pages/Home";
+import { safeLazy } from "./lib/lazyWithRetry";
 
-// Route-level code splitting: heavy application pages are loaded on demand
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Checkout = lazy(() => import("./pages/Checkout"));
-const Auth = lazy(() => import("./pages/Auth"));
-const Support = lazy(() => import("./pages/Support"));
-const Admin = lazy(() => import("./pages/admin"));
-const Leaderboard = lazy(() => import("./pages/Leaderboard"));
-const Settings = lazy(() => import("./pages/Settings"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+// Route-level code splitting: heavy application pages are loaded on demand with automatic stale-chunk recovery
+const Dashboard = safeLazy(() => import("./pages/Dashboard"));
+const Checkout = safeLazy(() => import("./pages/Checkout"));
+const Auth = safeLazy(() => import("./pages/Auth"));
+const Support = safeLazy(() => import("./pages/Support"));
+const Admin = safeLazy(() => import("./pages/admin"));
+const Leaderboard = safeLazy(() => import("./pages/Leaderboard"));
+const Settings = safeLazy(() => import("./pages/Settings"));
+const NotFound = safeLazy(() => import("./pages/NotFound"));
 
 import { FloatingSupportButton } from "./components/FloatingSupportButton";
 import { StudentTelegramAccessModal } from "./components/StudentTelegramAccessModal";

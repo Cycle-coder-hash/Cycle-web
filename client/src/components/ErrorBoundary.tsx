@@ -1,6 +1,7 @@
 import React, { Component, ReactNode } from "react";
-import { AlertTriangle, RotateCcw, Home, ShieldAlert } from "lucide-react";
+import { AlertTriangle, RotateCcw, Home, ShieldAlert, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { isChunkLoadError, handleStaleChunkError } from "@/lib/lazyWithRetry";
 
 interface Props {
   children: ReactNode;
@@ -24,10 +25,14 @@ class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("ErrorBoundary caught an error:", error, errorInfo);
+    if (isChunkLoadError(error)) {
+      handleStaleChunkError();
+    }
   }
 
   render() {
     if (this.state.hasError) {
+      const isChunk = isChunkLoadError(this.state.error);
       return (
         <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] p-6 text-slate-900 dark:bg-[#060d19] dark:text-slate-100 selection:bg-[#38bdf8]">
           <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-2xl dark:border-slate-800 dark:bg-slate-900">
@@ -39,10 +44,12 @@ class ErrorBoundary extends Component<Props, State> {
             </div>
 
             <h1 className="mt-6 text-2xl font-extrabold tracking-tight sm:text-3xl">
-              Application Notice
+              {isChunk ? "New Version Available" : "Application Notice"}
             </h1>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              একটি অপ্রত্যাশিত সমস্যা হয়েছে। পেজটি পুনরায় রিলোড করুন।
+              {isChunk
+                ? "A new update has been deployed. Please reload the page to load the latest application version."
+                : "একটি অপ্রত্যাশিত সমস্যা হয়েছে। পেজটি পুনরায় রিলোড করুন।"}
             </p>
 
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
