@@ -12,7 +12,6 @@ import {
   Send,
   HelpCircle,
   Lock,
-  BookOpen,
   Award,
   CheckCircle2,
 } from "lucide-react";
@@ -586,13 +585,6 @@ export default function Checkout() {
 
             {/* Inclusions Breakdown */}
             <div className="space-y-2 border-t border-white/10 pt-4 text-xs">
-              <div className="flex items-center justify-between text-slate-300">
-                <span className="flex items-center gap-1.5">
-                  <BookOpen size={13} className="text-sky-400" />
-                  <span>15 Complete Institutional eBooks</span>
-                </span>
-                <span className="font-bold text-emerald-400">Included</span>
-              </div>
               <div className="flex items-center justify-between text-slate-300">
                 <span className="flex items-center gap-1.5">
                   <Award size={13} className="text-sky-400" />
