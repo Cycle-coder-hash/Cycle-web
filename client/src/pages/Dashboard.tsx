@@ -46,6 +46,7 @@ import {
   Trophy,
   Send,
   Settings as SettingsIcon,
+  Calculator,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -62,6 +63,7 @@ import { TraderJournal } from "@/components/journal/TraderJournal";
 import { getStoredTrades } from "@/lib/traderJournalStorage";
 import { getDashboardRoadmapStages, DashboardRoadmapStage } from "@/data/roadmapStages";
 import { DailyDisciplineMaster } from "@/components/discipline/DailyDisciplineMaster";
+import { PositionSizeCalculator } from "@/components/calculator/PositionSizeCalculator";
 import { uploadImage } from "@/lib/mediaUpload";
 import { CourseTelegramModal } from "@/components/CourseTelegramModal";
 import { NewUserOnboardingModal } from "@/components/NewUserOnboardingModal";
@@ -106,14 +108,16 @@ export default function Dashboard() {
 
   // Active Tab
   const [tab, setTab] = useState<
-    "overview" | "roadmap" | "library" | "journal" | "discipline" | "orders" | "support"
+    "overview" | "roadmap" | "library" | "journal" | "discipline" | "calculator" | "orders" | "support"
   >(() => {
     if (typeof window !== "undefined") {
       if (window.location.pathname === "/discipline") return "discipline";
+      if (window.location.pathname === "/calculator") return "calculator";
       const params = new URLSearchParams(window.location.search);
       const tabParam = params.get("tab");
       if (
         tabParam === "discipline" ||
+        tabParam === "calculator" ||
         tabParam === "roadmap" ||
         tabParam === "library" ||
         tabParam === "journal" ||
@@ -132,6 +136,8 @@ export default function Dashboard() {
     if (typeof window !== "undefined") {
       if (window.location.pathname === "/discipline") {
         setTab("discipline");
+      } else if (window.location.pathname === "/calculator") {
+        setTab("calculator");
       }
     }
   }, []);
@@ -781,7 +787,7 @@ export default function Dashboard() {
   }
 
   type NavItem = {
-    id: "overview" | "roadmap" | "library" | "journal" | "discipline" | "orders" | "support";
+    id: "overview" | "roadmap" | "library" | "journal" | "discipline" | "calculator" | "orders" | "support";
     labelEn: string;
     labelBn: string;
     icon: any;
@@ -794,6 +800,7 @@ export default function Dashboard() {
     { id: "library", labelEn: t("dashboard.tabLibrary"), labelBn: "আমার লাইব্রেরি", icon: BookOpen, badge: entitlements?.length ? `${entitlements.length}` : undefined },
     { id: "journal", labelEn: t("dashboard.tabJournal"), labelBn: "ট্রেডিং জার্নাল", icon: NotebookPen, badge: (localTrades?.length || journal?.length) ? `${localTrades?.length || journal?.length}` : undefined },
     { id: "discipline", labelEn: t("dashboard.tabDiscipline"), labelBn: "ডেইলি রুটিন", icon: ClipboardCheck },
+    { id: "calculator", labelEn: "Position Size Calculator", labelBn: "পজিশন সাইজ ক্যালকুলেটর", icon: Calculator },
     {
       id: "orders",
       labelEn: t("dashboard.tabOrders"),
@@ -1718,6 +1725,13 @@ export default function Dashboard() {
           {/* ========================================================================= */}
           {tab === "discipline" && (
             <DailyDisciplineMaster user={user} isBn={isBn} />
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB: POSITION SIZE CALCULATOR */}
+          {/* ========================================================================= */}
+          {tab === "calculator" && (
+            <PositionSizeCalculator />
           )}
 
           {/* ========================================================================= */}
