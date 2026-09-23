@@ -542,6 +542,7 @@ export interface TraderProfileData {
   openId: string;
   name: string;
   avatar: string | null;
+  username?: string | null;
   phone?: string | null;
   role?: string;
   language?: "en" | "bn";
@@ -584,7 +585,7 @@ export async function saveTraderProfile(profile: TraderProfileData): Promise<voi
 export async function updateUserProfile(
   userId: number,
   openId: string | undefined,
-  updates: { name?: string; phone?: string | null; language?: "en" | "bn"; avatar?: string | null }
+  updates: { name?: string; phone?: string | null; language?: "en" | "bn"; avatar?: string | null; username?: string | null }
 ): Promise<void> {
   const resolvedOpenId = openId || (userId ? `usr_${userId}` : "");
 
@@ -595,6 +596,7 @@ export async function updateUserProfile(
       if (updates.phone !== undefined) existing.phone = updates.phone;
       if (updates.language) existing.language = updates.language;
       if (updates.avatar !== undefined) existing.avatar = updates.avatar;
+      if (updates.username !== undefined) existing.username = updates.username;
       existing.updatedAt = new Date();
     }
   }
@@ -604,6 +606,7 @@ export async function updateUserProfile(
       if (updates.phone !== undefined) u.phone = updates.phone;
       if (updates.language) u.language = updates.language;
       if (updates.avatar !== undefined) u.avatar = updates.avatar;
+      if (updates.username !== undefined) u.username = updates.username;
       u.updatedAt = new Date();
     }
   }
@@ -616,6 +619,7 @@ export async function updateUserProfile(
     avatar: updates.avatar !== undefined ? updates.avatar : (existingProf?.avatar || null),
     phone: updates.phone !== undefined ? updates.phone : (existingProf?.phone || null),
     language: updates.language || existingProf?.language || "en",
+    username: updates.username !== undefined ? updates.username : (existingProf?.username || null),
     updatedAt: new Date().toISOString(),
   };
   await saveTraderProfile(newProfile);
@@ -627,6 +631,7 @@ export async function updateUserProfile(
       if (updates.name) supaUpdate.name = updates.name;
       if (updates.phone !== undefined) supaUpdate.phone = updates.phone;
       if (updates.language) supaUpdate.language = updates.language;
+      if (updates.avatar !== undefined) supaUpdate.avatar = updates.avatar;
       await supabaseServer.from("users").update(supaUpdate).eq("openId", resolvedOpenId);
     }
   } catch (supaErr) {
@@ -698,6 +703,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       name: resolvedName,
       email: user.email || null,
       phone: user.phone || null,
+      passwordHash: user.passwordHash || null,
       role: userRecord.role,
       language: userRecord.language,
       lastSignedIn: new Date().toISOString(),
@@ -745,7 +751,8 @@ export async function getUserByOpenId(openId: string): Promise<User | undefined>
       if (rows && rows[0]) {
         const user = rows[0];
         const prof = await getTraderProfile(openId);
-        if (prof?.avatar) (user as any).avatar = prof.avatar;
+        if (prof?.avatar !== undefined) (user as any).avatar = prof.avatar;
+        if (prof?.username) (user as any).username = prof.username;
         inMemoryUsers.set(openId, user);
         return user;
       }
@@ -765,10 +772,12 @@ export async function getUserByOpenId(openId: string): Promise<User | undefined>
         name: prof?.name || data.name || "Trader",
         email: data.email || null,
         phone: data.phone || null,
+        passwordHash: data.passwordHash || inMemoryUsers.get(openId)?.passwordHash || null,
         role: data.role || "user",
         loginMethod: data.loginMethod || "supabase",
         language: data.language || "en",
-        avatar: prof?.avatar || null,
+        avatar: prof?.avatar !== undefined ? prof.avatar : (data.avatar || null),
+        username: prof?.username || null,
         emailVerified: true,
         createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
         updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
@@ -783,10 +792,9 @@ export async function getUserByOpenId(openId: string): Promise<User | undefined>
 
   let user = inMemoryUsers.get(openId);
   if (user) {
-    if (!user.avatar) {
-      const prof = await getTraderProfile(openId);
-      if (prof?.avatar) user.avatar = prof.avatar;
-    }
+    const prof = await getTraderProfile(openId);
+    if (prof?.avatar !== undefined) user.avatar = prof.avatar;
+    if (prof?.username) user.username = prof.username;
     return user;
   }
 
@@ -803,7 +811,8 @@ export async function getUserByEmail(email: string): Promise<User | undefined> {
       if (rows && rows[0]) {
         const u = rows[0];
         const prof = await getTraderProfile(u.openId);
-        if (prof?.avatar) (u as any).avatar = prof.avatar;
+        if (prof?.avatar !== undefined) (u as any).avatar = prof.avatar;
+        if (prof?.username) (u as any).username = prof.username;
         inMemoryUsers.set(u.openId, u);
         return u;
       }
@@ -823,10 +832,12 @@ export async function getUserByEmail(email: string): Promise<User | undefined> {
         name: prof?.name || data.name || "Trader",
         email: data.email,
         phone: data.phone || null,
+        passwordHash: data.passwordHash || inMemoryUsers.get(data.openId)?.passwordHash || null,
         role: data.role || "user",
         loginMethod: data.loginMethod || "supabase",
         language: data.language || "en",
-        avatar: prof?.avatar || null,
+        avatar: prof?.avatar !== undefined ? prof.avatar : (data.avatar || null),
+        username: prof?.username || null,
         emailVerified: true,
         createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
         updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
@@ -841,6 +852,9 @@ export async function getUserByEmail(email: string): Promise<User | undefined> {
 
   for (const u of Array.from(inMemoryUsers.values())) {
     if (u.email && u.email.toLowerCase() === normalizedEmail) {
+      const prof = await getTraderProfile(u.openId);
+      if (prof?.avatar !== undefined) u.avatar = prof.avatar;
+      if (prof?.username) u.username = prof.username;
       return u;
     }
   }
@@ -853,16 +867,32 @@ export async function getUserById(id: number): Promise<User | undefined> {
   if (db) {
     try {
       const rows = await db.select().from(users).where(eq(users.id, id)).limit(1);
-      if (rows.length) return rows[0];
+      if (rows.length) {
+        const u = rows[0];
+        const prof = await getTraderProfile(u.openId || u.id);
+        if (prof?.avatar !== undefined) (u as any).avatar = prof.avatar;
+        if (prof?.username) (u as any).username = prof.username;
+        return u;
+      }
     } catch {}
   }
   try {
     const { supabaseServer } = await import("./supabase");
     const { data } = await supabaseServer.from("users").select("*").eq("id", id).maybeSingle();
-    if (data) return data;
+    if (data) {
+      const prof = await getTraderProfile(data.openId || data.id);
+      if (prof?.avatar !== undefined) (data as any).avatar = prof.avatar;
+      if (prof?.username) (data as any).username = prof.username;
+      return data;
+    }
   } catch {}
   for (const u of Array.from(inMemoryUsers.values())) {
-    if (u.id === id) return u;
+    if (u.id === id) {
+      const prof = await getTraderProfile(u.openId || u.id);
+      if (prof?.avatar !== undefined) (u as any).avatar = prof.avatar;
+      if (prof?.username) (u as any).username = prof.username;
+      return u;
+    }
   }
   return undefined;
 }
@@ -1064,6 +1094,13 @@ export async function updateUserPassword(email: string, passwordHash: string): P
     } catch (err) {
       console.warn("[updateUserPassword error]:", err);
     }
+  }
+
+  try {
+    const { supabaseServer } = await import("./supabase");
+    await supabaseServer.from("users").update({ passwordHash }).eq("email", normalizedEmail);
+  } catch (supaErr) {
+    console.warn("[updateUserPassword Supabase error]:", supaErr);
   }
 
   for (const u of Array.from(inMemoryUsers.values())) {
@@ -7005,6 +7042,127 @@ export async function saveUserOnboarding(
   }
 
   return { success: true, record };
+}
+
+// =========================================================================
+// USER PREFERENCES & ACCOUNT SETTINGS MANAGEMENT
+// =========================================================================
+
+export interface UserPreferences {
+  theme: "dark" | "light";
+  language: string;
+  timezone: string;
+  currency: string;
+}
+
+export const DEFAULT_USER_PREFERENCES: UserPreferences = {
+  theme: "dark",
+  language: "en",
+  timezone: "Asia/Dhaka",
+  currency: "BDT",
+};
+
+export async function getUserPreferences(userKey: string | number): Promise<UserPreferences> {
+  try {
+    const raw = await getSetting(`user_preferences_${userKey}`);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        theme: parsed.theme === "light" ? "light" : "dark",
+        language: parsed.language || "en",
+        timezone: parsed.timezone || "Asia/Dhaka",
+        currency: parsed.currency || "BDT",
+      };
+    }
+  } catch (err) {
+    console.warn("[getUserPreferences error]:", err);
+  }
+  return { ...DEFAULT_USER_PREFERENCES };
+}
+
+export async function saveUserPreferences(userKey: string | number, prefs: Partial<UserPreferences>): Promise<UserPreferences> {
+  const current = await getUserPreferences(userKey);
+  const updated: UserPreferences = {
+    ...current,
+    ...prefs,
+    theme: prefs.theme ? (prefs.theme === "light" ? "light" : "dark") : current.theme,
+  };
+  await setSetting(`user_preferences_${userKey}`, JSON.stringify(updated));
+  return updated;
+}
+
+export async function isUsernameAvailable(username: string, currentUserId: number): Promise<{ available: boolean; reason?: string }> {
+  const clean = username.trim().toLowerCase();
+  if (clean.length < 3) {
+    return { available: false, reason: "Username must be at least 3 characters" };
+  }
+  if (clean.length > 20) {
+    return { available: false, reason: "Username cannot exceed 20 characters" };
+  }
+  if (!/^[a-z0-9_]+$/.test(clean)) {
+    return { available: false, reason: "Username can only contain letters, numbers, and underscores" };
+  }
+
+  try {
+    const raw = await getSetting("global_usernames_registry");
+    if (raw) {
+      const registry: Record<string, number> = JSON.parse(raw);
+      if (registry[clean] && Number(registry[clean]) !== Number(currentUserId)) {
+        return { available: false, reason: "Username is already taken" };
+      }
+    }
+  } catch (err) {
+    console.warn("[isUsernameAvailable error]:", err);
+  }
+
+  for (const u of Array.from(inMemoryUsers.values())) {
+    if (Number(u.id) !== Number(currentUserId) && (u as any).username && (u as any).username.toLowerCase() === clean) {
+      return { available: false, reason: "Username is already taken" };
+    }
+  }
+
+  return { available: true };
+}
+
+export async function claimUsername(username: string, userId: number, openId?: string): Promise<boolean> {
+  const clean = username.trim().toLowerCase();
+  const check = await isUsernameAvailable(clean, userId);
+  if (!check.available) return false;
+
+  try {
+    const raw = await getSetting("global_usernames_registry");
+    const registry: Record<string, number> = raw ? JSON.parse(raw) : {};
+
+    for (const [key, uid] of Object.entries(registry)) {
+      if (Number(uid) === Number(userId)) {
+        delete registry[key];
+      }
+    }
+    registry[clean] = userId;
+    await setSetting("global_usernames_registry", JSON.stringify(registry));
+
+    const userKey = openId || (userId ? `usr_${userId}` : "");
+    if (userKey) {
+      const prof = await getTraderProfile(userKey);
+      if (prof) {
+        prof.username = clean;
+        await saveTraderProfile(prof);
+      }
+      const existing = inMemoryUsers.get(userKey);
+      if (existing) {
+        (existing as any).username = clean;
+      }
+    }
+    for (const u of Array.from(inMemoryUsers.values())) {
+      if (Number(u.id) === Number(userId)) {
+        (u as any).username = clean;
+      }
+    }
+    return true;
+  } catch (err) {
+    console.warn("[claimUsername error]:", err);
+    return false;
+  }
 }
 
 export {

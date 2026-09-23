@@ -298,6 +298,7 @@ export default function Home() {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { t, language, isRTL } = useLanguage();
+  const lang = language;
   const isBn = language === "bn";
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeStage, setActiveStage] = useState(0);
@@ -650,7 +651,7 @@ export default function Home() {
             </div>
 
             <div className="z-10 flex w-full items-center justify-center lg:justify-end">
-              <HeroCandle3D lang={lang} />
+              <HeroCandle3D lang={isBn ? "bn" : "en"} />
             </div>
           </div>
 

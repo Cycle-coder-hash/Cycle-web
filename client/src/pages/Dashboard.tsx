@@ -45,6 +45,7 @@ import {
   TrendingUp,
   Trophy,
   Send,
+  Settings as SettingsIcon,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -125,6 +126,7 @@ export default function Dashboard() {
     return "overview";
   });
   const { t, language, isRTL } = useLanguage();
+  const lang = language;
   const isBn = language === "bn";
 
   useEffect(() => {
@@ -354,6 +356,20 @@ export default function Dashboard() {
       setDisplayName(stored || user.name || "Trader");
     }
   }, [user?.name, user?.email, user?.openId, user?.id]);
+
+  // Synchronize when profile is updated from Settings or other views in real-time
+  useEffect(() => {
+    const handleProfileUpdate = (e: any) => {
+      const detail = e?.detail;
+      if (!detail) return;
+      const currentKey = user?.openId || user?.email || String(user?.id);
+      if (detail.userId && detail.userId !== currentKey) return;
+      if (detail.name !== undefined) setDisplayName(detail.name);
+      if (detail.avatar !== undefined) setProfilePhoto(detail.avatar);
+    };
+    window.addEventListener("cycle_user_profile_updated", handleProfileUpdate);
+    return () => window.removeEventListener("cycle_user_profile_updated", handleProfileUpdate);
+  }, [user]);
 
   const handleStartEditName = () => {
     setNameInput(displayName);
@@ -1001,6 +1017,19 @@ export default function Dashboard() {
                 Rankings
               </span>
             </Link>
+
+            <Link
+              href="/settings"
+              className="flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all duration-200 border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 text-slate-700 hover:bg-slate-200/70 dark:text-slate-300 dark:hover:bg-slate-800 shadow-xs mt-2"
+            >
+              <div className="flex items-center gap-3">
+                <SettingsIcon size={17} className="text-sky-500 shrink-0" />
+                <span>{isBn ? "অ্যাকাউন্ট সেটিংস" : "Account Settings"}</span>
+              </div>
+              <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] font-extrabold text-sky-500 dark:text-sky-400 uppercase tracking-wider">
+                Manage
+              </span>
+            </Link>
           </nav>
         </div>
 
@@ -1086,6 +1115,13 @@ export default function Dashboard() {
               </Button>
             </Link>
 
+            <Link href="/settings">
+              <Button variant="outline" size="sm" className="gap-1 text-xs font-bold border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50" title={isBn ? "অ্যাকাউন্ট সেটিংস" : "Account Settings"}>
+                <SettingsIcon size={13} className="text-sky-500" />
+                <span className="hidden sm:inline">{isBn ? "সেটিংস" : "Settings"}</span>
+              </Button>
+            </Link>
+
             <LanguageSelector variant="compact" />
           </div>
         </header>
@@ -1121,6 +1157,13 @@ export default function Dashboard() {
             >
               <Trophy size={13} className="text-amber-500" />
               <span>{isBn ? "লিডারবোর্ড" : "Leaderboard"}</span>
+            </Link>
+            <Link
+              href="/settings"
+              className="flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-850 px-3 py-1.5 text-xs font-extrabold text-slate-700 dark:text-slate-300"
+            >
+              <SettingsIcon size={13} className="text-sky-500" />
+              <span>{isBn ? "সেটিংস" : "Settings"}</span>
             </Link>
           </div>
         </div>
@@ -2284,7 +2327,7 @@ export default function Dashboard() {
         <CourseTelegramModal
           isOpen={true}
           config={telegramPopupData.config}
-          lang={lang}
+          lang={isBn ? "bn" : "en"}
           onClose={() => setIsTelegramModalDismissedLocally(true)}
           onJoin={async () => {
             try {

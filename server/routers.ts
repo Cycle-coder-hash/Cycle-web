@@ -47,6 +47,13 @@ import {
   listAuditLogs,
   getUserByEmail,
   getUserByOpenId,
+  getUserById,
+  getTraderProfile,
+  getUserPreferences,
+  saveUserPreferences,
+  isUsernameAvailable,
+  claimUsername,
+  setSetting,
   updateUserProfile,
   createUser,
   createVerificationOtp,
@@ -368,19 +375,153 @@ export const appRouter = router({
       return { success: true } as const;
     }),
 
+    getSettings: protectedProcedure.query(async ({ ctx }) => {
+      const user = (await getUserById(ctx.user.id)) || ctx.user;
+      const traderProf = await getTraderProfile(ctx.user.openId || ctx.user.id);
+      const prefs = await getUserPreferences(ctx.user.openId || ctx.user.id);
+
+      return {
+        id: ctx.user.id,
+        openId: ctx.user.openId,
+        name: traderProf?.name || user.name || "Trader",
+        username: traderProf?.username || (user as any).username || null,
+        email: user.email || ctx.user.email || "",
+        avatar: traderProf?.avatar !== undefined ? traderProf.avatar : ((user as any).avatar || null),
+        phone: user.phone || traderProf?.phone || null,
+        role: ctx.user.role,
+        emailVerified: (user as any).emailVerified ?? true,
+        createdAt: user.createdAt,
+        preferences: prefs,
+      };
+    }),
+
+    checkUsername: protectedProcedure
+      .input(z.object({ username: z.string() }))
+      .query(async ({ ctx, input }) => {
+        return await isUsernameAvailable(input.username, ctx.user.id);
+      }),
+
     updateProfile: protectedProcedure
       .input(
         z.object({
-          name: z.string().min(2).optional(),
-          phone: z.string().optional(),
+          name: z.string().min(2, "Name must be at least 2 characters").max(50, "Name cannot exceed 50 characters").optional(),
+          username: z.string().min(3, "Username must be at least 3 characters").max(20, "Username cannot exceed 20 characters").optional(),
+          phone: z.string().optional().nullable(),
           language: language.optional(),
-          avatar: z.string().optional(),
+          avatar: z.string().nullable().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
-        await updateUserProfile(ctx.user.id, ctx.user.openId, input);
+        if (input.username) {
+          const cleanUser = input.username.trim().toLowerCase();
+          const check = await isUsernameAvailable(cleanUser, ctx.user.id);
+          if (!check.available) {
+            throw new TRPCError({
+              code: "CONFLICT",
+              message: check.reason || "Username is already taken",
+            });
+          }
+          await claimUsername(cleanUser, ctx.user.id, ctx.user.openId);
+        }
+
+        await updateUserProfile(ctx.user.id, ctx.user.openId, {
+          name: input.name,
+          phone: input.phone,
+          language: input.language,
+          avatar: input.avatar,
+          username: input.username ? input.username.trim().toLowerCase() : undefined,
+        });
+
         return { success: true };
       }),
+
+    updatePreferences: protectedProcedure
+      .input(
+        z.object({
+          theme: z.enum(["dark", "light"]).optional(),
+          language: z.string().optional(),
+          timezone: z.string().optional(),
+          currency: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const userKey = ctx.user.openId || ctx.user.id;
+        const updated = await saveUserPreferences(userKey, input);
+        return { success: true, preferences: updated };
+      }),
+
+    changePassword: protectedProcedure
+      .input(
+        z.object({
+          currentPassword: z.string().min(1, "Current password is required"),
+          newPassword: z.string().min(6, "New password must be at least 6 characters"),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        let user = await getUserById(ctx.user.id);
+        if (!user || !user.passwordHash) {
+          if (ctx.user.openId) user = await getUserByOpenId(ctx.user.openId);
+        }
+        if (!user || !user.passwordHash) {
+          if (ctx.user.email) user = await getUserByEmail(ctx.user.email);
+        }
+        if (!user) {
+          user = ctx.user as any;
+        }
+        if (!user) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "User account not found" });
+        }
+        if (!user.passwordHash) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "This account does not have a local password set (e.g. social login). Please contact support to set up credentials.",
+          });
+        }
+        const isValid = verifyPassword(input.currentPassword, user.passwordHash);
+        if (!isValid) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Current password is incorrect. Please verify and try again.",
+          });
+        }
+        const newHash = hashPassword(input.newPassword);
+        await updateUserPassword(user.email || ctx.user.email || "", newHash);
+
+        try {
+          const { supabaseServer } = await import("./supabase");
+          if (user.openId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.openId)) {
+            await supabaseServer.auth.admin.updateUserById(user.openId, {
+              password: input.newPassword,
+            });
+          }
+        } catch (supaErr) {
+          console.warn("[changePassword Supabase admin note]:", supaErr);
+        }
+
+        return { success: true, message: "Password updated successfully" };
+      }),
+
+    logoutAllDevices: protectedProcedure.mutation(async ({ ctx }) => {
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+
+      try {
+        await setSetting(`user_session_revocation_${ctx.user.id}`, new Date().toISOString());
+      } catch (err) {
+        console.warn("[logoutAllDevices timestamp note]:", err);
+      }
+
+      try {
+        const { supabaseServer } = await import("./supabase");
+        if (ctx.user.openId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ctx.user.openId)) {
+          await supabaseServer.auth.admin.signOut(ctx.user.openId, "global");
+        }
+      } catch (supaErr) {
+        console.warn("[logoutAllDevices Supabase admin note]:", supaErr);
+      }
+
+      return { success: true, message: "Successfully signed out from all active devices." };
+    }),
 
     setLanguage: protectedProcedure
       .input(z.object({ language }))

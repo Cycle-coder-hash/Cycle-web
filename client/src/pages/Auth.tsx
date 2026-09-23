@@ -64,6 +64,7 @@ export default function Auth() {
     location === "/register" ? "register" : "login"
   );
   const { t, language, isRTL } = useLanguage();
+  const lang = language;
   const isBn = language === "bn";
 
   // Form Fields
@@ -508,7 +509,7 @@ export default function Auth() {
           email: email.trim(),
           password,
           phone: phone.trim() || undefined,
-          language: lang,
+          language: lang === "bn" ? "bn" : "en",
         });
       } catch (serverErr) {
         console.warn("[Server registration notice]:", serverErr);
