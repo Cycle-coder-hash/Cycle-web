@@ -437,7 +437,7 @@ export default function Checkout() {
                             <span>Open App</span>
                           </div>
                           <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                            Open your {activeGatewayMeta.name} app or dial USSD.
+                            Open your {activeGatewayMeta.name} app.
                           </p>
                         </div>
 
