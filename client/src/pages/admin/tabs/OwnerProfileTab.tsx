@@ -950,7 +950,7 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
                 if (ownerForm.showExperienceCard) {
                   activeCards.push({
                     key: "exp",
-                    label: ownerForm.experienceLabel || "Market Experience",
+                    label: ownerForm.experienceLabel || (ownerPreviewLang === "bn" ? "মার্কেট অভিজ্ঞতা" : "Market Experience"),
                     value: ownerForm.experienceYears || "6+ Years",
                     icon: ownerForm.experienceIcon || "clock",
                     colorClass: "bg-sky-500/10 text-sky-400 border-sky-500/20",
@@ -959,7 +959,7 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
                 if (ownerForm.showMentoredCard) {
                   activeCards.push({
                     key: "mentored",
-                    label: ownerForm.mentoredLabel || "Traders Mentored",
+                    label: ownerForm.mentoredLabel || (ownerPreviewLang === "bn" ? "মেন্টর্ড ট্রেডার্স" : "Traders Mentored"),
                     value: ownerForm.studentsCount || "1,500+",
                     icon: ownerForm.mentoredIcon || "users",
                     colorClass: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
@@ -968,8 +968,8 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
                 if (ownerForm.showMethodologyCard) {
                   activeCards.push({
                     key: "methodology",
-                    label: ownerForm.methodologyLabel || "Core Methodology",
-                    value: ownerForm.tradingStyle || "Institutional Order Flow, Liquidity & (SMC)",
+                    label: ownerForm.methodologyLabel || (ownerPreviewLang === "bn" ? "কোর মেথোডলজি" : "Core Methodology"),
+                    value: ownerForm.tradingStyle || (ownerPreviewLang === "bn" ? "ইনস্টিটিউশনাল অর্ডার ফ্লো, লিকুইডিটি ও (SMC)" : "Institutional Order Flow, Liquidity & (SMC)"),
                     icon: ownerForm.methodologyIcon || "award",
                     colorClass: "bg-amber-500/10 text-amber-400 border-amber-500/20",
                   });

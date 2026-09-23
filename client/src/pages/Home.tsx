@@ -298,7 +298,6 @@ export default function Home() {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { t, language, isRTL } = useLanguage();
-  const lang = language;
   const isBn = language === "bn";
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeStage, setActiveStage] = useState(0);
@@ -407,8 +406,8 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    document.documentElement.lang = lang;
-  }, [lang]);
+    document.documentElement.lang = language;
+  }, [language]);
 
   // Handle ESC key to close modal
   useEffect(() => {

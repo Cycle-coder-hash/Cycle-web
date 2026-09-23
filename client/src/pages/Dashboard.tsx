@@ -126,7 +126,6 @@ export default function Dashboard() {
     return "overview";
   });
   const { t, language, isRTL } = useLanguage();
-  const lang = language;
   const isBn = language === "bn";
 
   useEffect(() => {

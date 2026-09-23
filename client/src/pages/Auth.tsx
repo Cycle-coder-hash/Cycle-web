@@ -64,7 +64,6 @@ export default function Auth() {
     location === "/register" ? "register" : "login"
   );
   const { t, language, isRTL } = useLanguage();
-  const lang = language;
   const isBn = language === "bn";
 
   // Form Fields
@@ -376,7 +375,7 @@ export default function Auth() {
               data.user.user_metadata?.avatar ||
               data.user.user_metadata?.picture ||
               null,
-            language: data.user.user_metadata?.language || lang,
+            language: data.user.user_metadata?.language || (language === "bn" ? "bn" : "en"),
             emailVerified: true,
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -421,7 +420,7 @@ export default function Auth() {
               full_name: name.trim(),
               name: name.trim(),
               phone: phone.trim() || null,
-              language: lang,
+              language: language === "bn" ? "bn" : "en",
             },
             emailRedirectTo: `${window.location.origin}/dashboard`,
           },
@@ -483,7 +482,7 @@ export default function Auth() {
                 data.user.user_metadata?.avatar ||
                 data.user.user_metadata?.picture ||
                 null,
-              language: data.user.user_metadata?.language || lang,
+              language: data.user.user_metadata?.language || (language === "bn" ? "bn" : "en"),
               emailVerified: true,
               createdAt: new Date(),
               updatedAt: new Date(),
@@ -509,7 +508,7 @@ export default function Auth() {
           email: email.trim(),
           password,
           phone: phone.trim() || undefined,
-          language: lang === "bn" ? "bn" : "en",
+          language: language === "bn" ? "bn" : "en",
         });
       } catch (serverErr) {
         console.warn("[Server registration notice]:", serverErr);
