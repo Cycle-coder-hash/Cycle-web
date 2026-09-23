@@ -769,160 +769,190 @@ export function JournalAnalyticsShowcase({ isBn }: Props) {
           {/* Performance Analytics & Growth Curve Chart Card */}
           <div
             style={{ transform: isPointerFine ? "translateZ(10px)" : undefined }}
-            className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900/70"
+            className="rounded-3xl border border-cyan-500/20 bg-gradient-to-b from-[#0a1529]/95 via-[#070e1e]/95 to-[#040814]/95 p-5 sm:p-6 shadow-[0_12px_40px_-15px_rgba(2,6,23,0.85),0_0_25px_-5px_rgba(6,182,212,0.1)] relative overflow-hidden backdrop-blur-xl group/analytics-card transition-all duration-300 hover:border-cyan-500/35"
           >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 dark:border-slate-800">
-              <div>
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-cyan-500" />
-                  <h4 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
-                    {isBn ? "পারফরম্যান্স ও গ্রোথ কার্ভ" : "Performance Analytics & Growth Curve"}
-                  </h4>
+            {/* Ambient Highlights */}
+            <div className="pointer-events-none absolute -top-24 -right-24 size-80 rounded-full bg-cyan-500/10 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-24 -left-24 size-80 rounded-full bg-blue-600/10 blur-3xl" />
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
+
+            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
+              <div className="flex items-center gap-3.5">
+                <div className="relative flex size-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500/20 via-blue-500/10 to-indigo-500/20 border border-cyan-500/35 text-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.25)] shrink-0">
+                  <BarChart3 className="size-5 text-cyan-400" />
+                  <span className="absolute inset-0 rounded-2xl bg-cyan-400/20 blur-sm -z-10" />
                 </div>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  {isBn
-                    ? "ক্যাপিটাল প্রবৃদ্ধি ও পর্যায়ভিত্তিক P&L"
-                    : "Real-time balance trajectory & periodic returns"}
-                </p>
+
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h4 className="text-sm sm:text-base font-black tracking-tight text-white">
+                      {isBn ? "পারফরম্যান্স ও গ্রোথ কার্ভ" : "Performance Analytics & Growth Curve"}
+                    </h4>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/25 px-2.5 py-0.5 text-[10px] font-bold text-cyan-400 tracking-wider uppercase">
+                      <span className="size-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                      Live Trajectory
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1 font-medium tracking-normal">
+                    {isBn
+                      ? "ক্যাপিটাল প্রবৃদ্ধি ও পর্যায়ভিত্তিক P&L"
+                      : "Real-time balance trajectory & periodic returns"}
+                  </p>
+                </div>
               </div>
 
               {/* Chart Mode Interactive Tabs */}
-              <div className="flex rounded-xl border border-slate-200 bg-slate-100 p-0.5 dark:border-slate-800 dark:bg-slate-950 self-start sm:self-center">
-                <button
-                  onClick={() => setChartMode("balance")}
-                  className={`rounded-lg px-3 py-1 text-xs font-bold transition-colors ${
-                    chartMode === "balance"
-                      ? "bg-white text-slate-900 shadow-xs dark:bg-slate-800 dark:text-white"
-                      : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                  }`}
-                >
-                  Balance Curve
-                </button>
-                <button
-                  onClick={() => setChartMode("growth")}
-                  className={`rounded-lg px-3 py-1 text-xs font-bold transition-colors ${
-                    chartMode === "growth"
-                      ? "bg-white text-slate-900 shadow-xs dark:bg-slate-800 dark:text-white"
-                      : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                  }`}
-                >
-                  Growth %
-                </button>
-                <button
-                  onClick={() => setChartMode("period")}
-                  className={`rounded-lg px-3 py-1 text-xs font-bold transition-colors ${
-                    chartMode === "period"
-                      ? "bg-white text-slate-900 shadow-xs dark:bg-slate-800 dark:text-white"
-                      : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
-                  }`}
-                >
-                  Period P&L
-                </button>
+              <div className="inline-flex items-center p-1 rounded-2xl bg-[#030712]/90 border border-slate-800/90 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] backdrop-blur-md self-start sm:self-center">
+                {[
+                  { id: "balance", label: "Balance Curve" },
+                  { id: "growth", label: "Growth %" },
+                  { id: "period", label: "Period P&L" },
+                ].map((tab) => {
+                  const isActive = chartMode === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setChartMode(tab.id as any)}
+                      className={`relative rounded-xl px-3 sm:px-3.5 py-1.5 text-xs font-bold transition-all duration-200 select-none ${
+                        isActive
+                          ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-black shadow-[0_0_16px_rgba(6,182,212,0.4)] scale-[1.02]"
+                          : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             {/* Recharts Area Chart */}
-            <div className="mt-6 h-64 sm:h-72 w-full">
-              {chartMode === "period" ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={book.trajectory.slice(1)}
-                    margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.2} />
-                    <XAxis
-                      dataKey="date"
-                      stroke="#64748b"
-                      fontSize={10}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis
-                      stroke="#64748b"
-                      fontSize={10}
-                      tickLine={false}
-                      axisLine={false}
-                      tickFormatter={(v) => `$${v}`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#0f172a",
-                        borderColor: "#334155",
-                        borderRadius: "12px",
-                        color: "#fff",
-                        fontSize: "12px",
-                      }}
-                      formatter={(val: any) => [`$${val}`, "P&L"]}
-                    />
-                    <Bar
-                      dataKey="pnl"
-                      fill="#06b6d4"
-                      radius={[4, 4, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={book.trajectory}
-                    margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
-                  >
-                    <defs>
-                      <linearGradient id="showcaseBalanceGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.45} />
-                        <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" opacity={0.2} />
-                    <XAxis
-                      dataKey="date"
-                      stroke="#64748b"
-                      fontSize={10}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis
-                      stroke="#64748b"
-                      fontSize={10}
-                      tickLine={false}
-                      axisLine={false}
-                      tickFormatter={(v) =>
-                        chartMode === "growth"
-                          ? `+${v}%`
-                          : `$${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}`
-                      }
-                      domain={
-                        chartMode === "growth"
-                          ? [0, "dataMax + 5"]
-                          : ["dataMin - 300", "dataMax + 300"]
-                      }
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "#0f172a",
-                        borderColor: "#334155",
-                        borderRadius: "12px",
-                        color: "#fff",
-                        fontSize: "12px",
-                      }}
-                      formatter={(val: any) => [
-                        chartMode === "growth" ? `+${val}%` : `$${Number(val).toLocaleString()}`,
-                        chartMode === "growth" ? "Net Growth" : "Account Capital",
-                      ]}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey={chartMode === "growth" ? "growth" : "balance"}
-                      stroke="#06b6d4"
-                      strokeWidth={2.5}
-                      fillOpacity={1}
-                      fill="url(#showcaseBalanceGrad)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              )}
+            <div className="relative z-10 mt-6 rounded-2xl border border-slate-800/80 bg-[#040814]/85 p-3 sm:p-4 backdrop-blur-sm overflow-hidden shadow-inner">
+              <div className="h-64 sm:h-72 w-full">
+                {chartMode === "period" ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={book.trajectory.slice(1)}
+                      margin={{ top: 12, right: 12, left: -10, bottom: 4 }}
+                    >
+                      <defs>
+                        <linearGradient id="showcaseBarGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#06b6d4" stopOpacity={0.95} />
+                          <stop offset="100%" stopColor="#0284c7" stopOpacity={0.75} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.45} vertical={false} />
+                      <XAxis
+                        dataKey="date"
+                        stroke="#475569"
+                        fontSize={11}
+                        fontWeight={500}
+                        tickLine={false}
+                        axisLine={{ stroke: "#1e293b" }}
+                        tick={{ fill: "#64748b" }}
+                      />
+                      <YAxis
+                        stroke="#475569"
+                        fontSize={11}
+                        fontWeight={500}
+                        tickLine={false}
+                        axisLine={{ stroke: "#1e293b" }}
+                        tick={{ fill: "#64748b" }}
+                        tickFormatter={(v) => `$${v}`}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#070e1e",
+                          borderColor: "rgba(6,182,212,0.3)",
+                          borderRadius: "16px",
+                          boxShadow: "0 10px 25px -5px rgba(0,0,0,0.6), 0 0 20px rgba(6,182,212,0.15)",
+                          color: "#fff",
+                          fontSize: "12px",
+                          padding: "12px",
+                        }}
+                        formatter={(val: any) => [`$${val}`, "P&L"]}
+                      />
+                      <Bar
+                        dataKey="pnl"
+                        fill="url(#showcaseBarGrad)"
+                        radius={[6, 6, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={book.trajectory}
+                      margin={{ top: 12, right: 12, left: -10, bottom: 4 }}
+                    >
+                      <defs>
+                        <linearGradient id="showcaseBalanceGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#06b6d4" stopOpacity={0.35} />
+                          <stop offset="60%" stopColor="#0284c7" stopOpacity={0.08} />
+                          <stop offset="100%" stopColor="#0284c7" stopOpacity={0.0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.45} vertical={false} />
+                      <XAxis
+                        dataKey="date"
+                        stroke="#475569"
+                        fontSize={11}
+                        fontWeight={500}
+                        tickLine={false}
+                        axisLine={{ stroke: "#1e293b" }}
+                        tick={{ fill: "#64748b" }}
+                      />
+                      <YAxis
+                        stroke="#475569"
+                        fontSize={11}
+                        fontWeight={500}
+                        tickLine={false}
+                        axisLine={{ stroke: "#1e293b" }}
+                        tick={{ fill: "#64748b" }}
+                        tickFormatter={(v) =>
+                          chartMode === "growth"
+                            ? `+${v}%`
+                            : `$${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}`
+                        }
+                        domain={
+                          chartMode === "growth"
+                            ? [0, "dataMax + 5"]
+                            : ["dataMin - 300", "dataMax + 300"]
+                        }
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#070e1e",
+                          borderColor: "rgba(6,182,212,0.3)",
+                          borderRadius: "16px",
+                          boxShadow: "0 10px 25px -5px rgba(0,0,0,0.6), 0 0 20px rgba(6,182,212,0.15)",
+                          color: "#fff",
+                          fontSize: "12px",
+                          padding: "12px",
+                        }}
+                        formatter={(val: any) => [
+                          chartMode === "growth" ? `+${val}%` : `$${Number(val).toLocaleString()}`,
+                          chartMode === "growth" ? "Net Growth" : "Account Capital",
+                        ]}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey={chartMode === "growth" ? "growth" : "balance"}
+                        stroke="#06b6d4"
+                        strokeWidth={3}
+                        fillOpacity={1}
+                        fill="url(#showcaseBalanceGrad)"
+                        dot={{ r: 3, fill: "#040814", stroke: "#06b6d4", strokeWidth: 2 }}
+                        activeDot={{ r: 6, fill: "#06b6d4", stroke: "#ffffff", strokeWidth: 2 }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
             </div>
           </div>
+
 
           {/* Footer Bar inside showcase linking to Roadmap / Dashboard */}
           <div
