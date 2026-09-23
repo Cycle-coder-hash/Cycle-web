@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { LanguageProvider } from "./contexts/LanguageContext";
 import Home from "./pages/Home";
 
 // Route-level code splitting: heavy application pages are loaded on demand
@@ -56,17 +57,19 @@ export default function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="dark">
-        <TooltipProvider>
-          <GlobalPreloader />
-          <WebsiteBackground />
-          <div className="relative z-10">
-            <Toaster position="top-right" richColors />
-            <Router />
-            <FloatingSupportButton />
-            <StudentTelegramAccessModal />
-            <CursorLightTrail />
-          </div>
-        </TooltipProvider>
+        <LanguageProvider>
+          <TooltipProvider>
+            <GlobalPreloader />
+            <WebsiteBackground />
+            <div className="relative z-10">
+              <Toaster position="top-right" richColors />
+              <Router />
+              <FloatingSupportButton />
+              <StudentTelegramAccessModal />
+              <CursorLightTrail />
+            </div>
+          </TooltipProvider>
+        </LanguageProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

@@ -37,6 +37,8 @@ import { TopNavLinks } from "@/components/TopNavLinks";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { LanguageSelector } from "@/components/LanguageSelector";
 import { trpc } from "@/lib/trpc";
 import { LeaderboardTrader } from "../../../server/db";
 
@@ -44,16 +46,9 @@ export default function Leaderboard() {
   const { theme, toggleTheme } = useTheme();
   const { user } = useAuth();
 
-  // Language state (synced with localStorage)
-  const [lang, setLang] = useState<"en" | "bn">(() => {
-    return (localStorage.getItem("cycle-language") as "en" | "bn") || "en";
-  });
-  const isBn = lang === "bn";
-
-  const setLanguage = (next: "en" | "bn") => {
-    setLang(next);
-    localStorage.setItem("cycle-language", next);
-  };
+  // Language state (synced with LanguageContext)
+  const { t, language, isRTL } = useLanguage();
+  const isBn = language === "bn";
 
   // Timeframe filter state: "all" | "month" | "week"
   const [timeframe, setTimeframe] = useState<"all" | "month" | "week">("all");
@@ -174,28 +169,7 @@ export default function Leaderboard() {
             </button>
 
             {/* Language Switcher */}
-            <div className="flex rounded-full border border-slate-300 bg-slate-100 p-0.5 dark:border-slate-700 dark:bg-slate-800">
-              <button
-                onClick={() => setLanguage("en")}
-                className={`rounded-full px-2.5 py-1 text-[11px] font-bold transition ${
-                  lang === "en"
-                    ? "bg-white text-slate-900 shadow-sm dark:bg-sky-500 dark:text-slate-950"
-                    : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-                }`}
-              >
-                EN
-              </button>
-              <button
-                onClick={() => setLanguage("bn")}
-                className={`rounded-full px-2.5 py-1 text-[11px] font-bold transition ${
-                  lang === "bn"
-                    ? "bg-white text-slate-900 shadow-sm dark:bg-sky-500 dark:text-slate-950"
-                    : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-                }`}
-              >
-                বাংলা
-              </button>
-            </div>
+            <LanguageSelector />
 
             {/* User portal / login CTA */}
             {user ? (

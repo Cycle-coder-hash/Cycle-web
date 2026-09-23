@@ -21,6 +21,8 @@ import { startLogin } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/BrandLogo";
+import { LanguageSelector } from "@/components/LanguageSelector";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import { BkashLogo, NagadLogo, RocketLogo } from "@/components/payment/PaymentIcons";
 
@@ -230,9 +232,12 @@ export default function Checkout() {
             <BrandLogo size={36} />
             <span className="hidden sm:inline">CYCLE OF CHART</span>
           </Link>
-          <Link href="/dashboard" className="text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
-            Dashboard →
-          </Link>
+          <div className="flex items-center gap-3">
+            <LanguageSelector variant="compact" />
+            <Link href="/dashboard" className="text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+              Dashboard →
+            </Link>
+          </div>
         </div>
       </header>
 

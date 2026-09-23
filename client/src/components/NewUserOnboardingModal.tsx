@@ -3,6 +3,7 @@ import { Sparkles, CheckCircle2, ArrowRight, Loader2, Compass, ShieldCheck } fro
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface NewUserOnboardingModalProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ export const NewUserOnboardingModal: React.FC<NewUserOnboardingModalProps> = ({
   userKey,
   onSuccess,
 }) => {
+  const { t, isRTL } = useLanguage();
   const [discoverySource, setDiscoverySource] = useState("");
   const [tradingExperience, setTradingExperience] = useState<string>("");
   const [keepsJournal, setKeepsJournal] = useState<string>("");
@@ -107,15 +109,15 @@ export const NewUserOnboardingModal: React.FC<NewUserOnboardingModalProps> = ({
           </div>
 
           <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-            Personalize Your Trading Experience
+            {t("onboarding.title")}
           </h2>
           <p className="mt-1.5 text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
-            Please answer these 3 quick questions to help us tailor institutional resources and setup your dashboard.
+            {t("onboarding.subtitle")}
           </p>
         </div>
 
         {/* Form Container */}
-        <form onSubmit={handleSubmit} className="relative space-y-5">
+        <form onSubmit={handleSubmit} className="relative space-y-5" dir={isRTL ? "rtl" : "ltr"}>
           {/* Question 1: Discovery Source */}
           <div className="space-y-2">
             <label className="flex items-center justify-between text-xs sm:text-sm font-semibold text-slate-200">
@@ -123,7 +125,7 @@ export const NewUserOnboardingModal: React.FC<NewUserOnboardingModalProps> = ({
                 <span className="inline-flex items-center justify-center size-5 rounded-full bg-cyan-500/20 border border-cyan-400/40 text-[11px] font-bold text-cyan-400">
                   1
                 </span>
-                Where did you first discover trading?
+                {t("onboarding.q1")}
               </span>
               <span className="text-[11px] text-cyan-400/80 font-normal">Required</span>
             </label>
@@ -131,7 +133,7 @@ export const NewUserOnboardingModal: React.FC<NewUserOnboardingModalProps> = ({
               type="text"
               value={discoverySource}
               onChange={(e) => setDiscoverySource(e.target.value)}
-              placeholder="e.g. YouTube, Facebook, a friend, Instagram, Books, Search..."
+              placeholder={t("onboarding.q1Placeholder")}
               className="w-full px-3.5 py-2.5 rounded-xl bg-[#030712]/90 border border-slate-700/80 text-white placeholder-slate-500 text-xs sm:text-sm focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"
               disabled={isSubmitting}
               autoFocus
@@ -145,7 +147,7 @@ export const NewUserOnboardingModal: React.FC<NewUserOnboardingModalProps> = ({
                 <span className="inline-flex items-center justify-center size-5 rounded-full bg-cyan-500/20 border border-cyan-400/40 text-[11px] font-bold text-cyan-400">
                   2
                 </span>
-                How long have you been trading?
+                {t("onboarding.q2")}
               </span>
               <span className="text-[11px] text-cyan-400/80 font-normal">Select One</span>
             </label>
@@ -153,6 +155,12 @@ export const NewUserOnboardingModal: React.FC<NewUserOnboardingModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               {EXPERIENCE_OPTIONS.map((opt) => {
                 const isSelected = tradingExperience === opt.id;
+                const translatedLabel =
+                  opt.id === "Complete Beginner"
+                    ? t("onboarding.q2Opt1")
+                    : opt.id === "6 Month+ Experience"
+                    ? t("onboarding.q2Opt2")
+                    : t("onboarding.q2Opt3");
                 return (
                   <button
                     key={opt.id}
@@ -167,7 +175,7 @@ export const NewUserOnboardingModal: React.FC<NewUserOnboardingModalProps> = ({
                   >
                     <div className="flex items-center justify-between gap-1 mb-1">
                       <span className="text-xs sm:text-sm font-bold leading-tight">
-                        {opt.label}
+                        {translatedLabel}
                       </span>
                       {isSelected ? (
                         <CheckCircle2 className="size-4 text-cyan-400 shrink-0" />
@@ -191,7 +199,7 @@ export const NewUserOnboardingModal: React.FC<NewUserOnboardingModalProps> = ({
                 <span className="inline-flex items-center justify-center size-5 rounded-full bg-cyan-500/20 border border-cyan-400/40 text-[11px] font-bold text-cyan-400">
                   3
                 </span>
-                Do you currently keep a trading journal?
+                {t("onboarding.q3")}
               </span>
               <span className="text-[11px] text-cyan-400/80 font-normal">Select One</span>
             </label>
@@ -199,6 +207,7 @@ export const NewUserOnboardingModal: React.FC<NewUserOnboardingModalProps> = ({
             <div className="grid grid-cols-2 gap-2.5">
               {JOURNAL_OPTIONS.map((opt) => {
                 const isSelected = keepsJournal === opt.id;
+                const translatedLabel = opt.id === "Yes" ? t("onboarding.yes") : t("onboarding.no");
                 return (
                   <button
                     key={opt.id}
@@ -213,7 +222,7 @@ export const NewUserOnboardingModal: React.FC<NewUserOnboardingModalProps> = ({
                   >
                     <div>
                       <span className="text-xs sm:text-sm font-bold block">
-                        {opt.label}
+                        {translatedLabel}
                       </span>
                       <span className="text-[10px] sm:text-[11px] text-slate-400">
                         {opt.sublabel}
@@ -251,11 +260,11 @@ export const NewUserOnboardingModal: React.FC<NewUserOnboardingModalProps> = ({
               {isSubmitting ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  <span>Saving Your Answers & Setting Up...</span>
+                  <span>{t("onboarding.saving")}</span>
                 </>
               ) : (
                 <>
-                  <span>Complete Onboarding & Explore Store</span>
+                  <span>{t("onboarding.submit")}</span>
                   <ArrowRight className="size-4" />
                 </>
               )}

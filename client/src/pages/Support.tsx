@@ -21,6 +21,8 @@ import { TopNavLinks } from "@/components/TopNavLinks";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { LanguageSelector } from "@/components/LanguageSelector";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
@@ -28,13 +30,8 @@ import { supabase } from "@/lib/supabase";
 export default function SupportPage() {
   const { user, loading: authLoading } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const [lang, setLang] = useState<"en" | "bn">(() => {
-    if (typeof window !== "undefined") {
-      return (localStorage.getItem("cycle-language") as "en" | "bn") || "en";
-    }
-    return "en";
-  });
-  const isBn = lang === "bn";
+  const { t, language, isRTL } = useLanguage();
+  const isBn = language === "bn";
 
   const [messageText, setMessageText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -194,17 +191,7 @@ export default function SupportPage() {
           </div>
 
           <div className="flex items-center gap-2.5">
-            <button
-              onClick={() => {
-                const next = isBn ? "en" : "bn";
-                setLang(next);
-                localStorage.setItem("cycle-language", next);
-              }}
-              className="rounded-xl border border-slate-700 bg-slate-800/80 px-2.5 py-1 text-xs font-bold text-slate-300 hover:text-white transition"
-              title="Toggle Language"
-            >
-              {isBn ? "EN" : "বাং"}
-            </button>
+            <LanguageSelector variant="compact" />
 
             <Link href={user ? "/dashboard" : "/login"}>
               <Button

@@ -25,6 +25,8 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { LanguageSelector } from "@/components/LanguageSelector";
 import { trpc } from "@/lib/trpc";
 
 function GoogleIcon({ className = "w-5 h-5" }: { className?: string }) {
@@ -61,7 +63,8 @@ export default function Auth() {
   const [mode, setMode] = useState<AuthMode>(() =>
     location === "/register" ? "register" : "login"
   );
-  const [lang, setLang] = useState<"en" | "bn">(() => (localStorage.getItem("cycle-language") as "en" | "bn") || "en");
+  const { t, language, isRTL } = useLanguage();
+  const isBn = language === "bn";
 
   // Form Fields
   const [name, setName] = useState("");
@@ -86,13 +89,6 @@ export default function Auth() {
   const registerMutation = trpc.auth.register.useMutation();
   const verifyOtpMutation = trpc.auth.verifyEmailOtp.useMutation();
   const resendOtpMutation = trpc.auth.resendOtp.useMutation();
-
-  const isBn = lang === "bn";
-
-  const setLanguage = (next: "en" | "bn") => {
-    setLang(next);
-    localStorage.setItem("cycle-language", next);
-  };
 
   // Helper to determine return redirect destination after authentication
   const getRedirectUrl = () => {
@@ -805,28 +801,7 @@ export default function Auth() {
           </button>
 
           {/* Language Switcher */}
-          <div className="flex rounded-full border border-slate-300 bg-white/80 p-0.5 backdrop-blur-md dark:border-slate-700 dark:bg-slate-800">
-            <button
-              onClick={() => setLanguage("en")}
-              className={`rounded-full px-2.5 py-1 text-xs font-bold transition ${
-                lang === "en"
-                  ? "bg-slate-900 text-white shadow-sm dark:bg-slate-700"
-                  : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
-              }`}
-            >
-              EN
-            </button>
-            <button
-              onClick={() => setLanguage("bn")}
-              className={`rounded-full px-2.5 py-1 text-xs font-bold transition ${
-                lang === "bn"
-                  ? "bg-slate-900 text-white shadow-sm dark:bg-slate-700"
-                  : "text-slate-500 hover:text-slate-800 dark:text-slate-400"
-              }`}
-            >
-              বাং
-            </button>
-          </div>
+          <LanguageSelector />
 
           <Link href="/">
             <Button

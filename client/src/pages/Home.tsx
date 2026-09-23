@@ -50,6 +50,8 @@ import { TopNavLinks } from "@/components/TopNavLinks";
 import { NewsHeadlineStats } from "@/components/NewsHeadlineStats";
 import { JournalAnalyticsShowcase } from "@/components/JournalAnalyticsShowcase";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { LanguageSelector } from "@/components/LanguageSelector";
 import { FreeEbookModal } from "@/components/ebook/FreeEbookModal";
 
 import {
@@ -295,7 +297,8 @@ function renderOwnerStatIcon(iconName?: string, className: string = "size-5") {
 export default function Home() {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const [lang, setLang] = useState<"en" | "bn">(() => (localStorage.getItem("cycle-language") as "en" | "bn") || "en");
+  const { t, language, isRTL } = useLanguage();
+  const isBn = language === "bn";
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeStage, setActiveStage] = useState(0);
   const [selectedStageModal, setSelectedStageModal] = useState<number | null>(null);
@@ -417,150 +420,78 @@ export default function Home() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const setLanguage = (next: "en" | "bn") => {
-    setLang(next);
-    localStorage.setItem("cycle-language", next);
-  };
-
-  const isBn = lang === "bn";
-
   const stagesData = isBn ? STAGES_DETAILS_BN : STAGES_DETAILS_EN;
   const activeModalData = selectedStageModal !== null ? stagesData[selectedStageModal] : null;
 
   const copy = useMemo(
-    () =>
-      isBn
-        ? {
-            navRoadmap: "রোডম্যাপ",
-            navStore: "স্টোর",
-            navFree: "ফ্রি বেসিকস",
-            navLeaderboard: "লিডারবোর্ড",
-            navSupport: "সাপোর্ট",
-            signIn: "সাইন ইন",
-            dashboard: "ড্যাশবোর্ড",
-            heroEyebrow: "CYCLE OF CHART • TRADING REALITY",
-            heroTitle: "Trade করার আগে,\nTrading বুঝুন।",
-            heroSubtitle: "ডিপোজিটের আগে মার্কেট স্ট্রাকচার, ক্যান্ডেলস্টিক অ্যানাটমি এবং ডিসিপ্লিন্ড রিস্ক ম্যানেজমেন্ট শিখুন। কোনো সিগন্যাল হাইপ নয়, রিয়েল এডুকেশন।",
-            heroBnSub: "আপনার মূলধন সুরক্ষিত রাখুন। পজিশন সাইজের আগে আপনার নলেজ তৈরি হোক।",
-            primaryCta: "রোডম্যাপ শুরু করুন",
-            secondaryCta: "প্রোডাক্ট দেখুন",
-            trust1: "রিস্ক-ফ্রি লার্নিং",
-            trust2: "নো সিগন্যাল ট্র্যাপ",
-            trust3: "১২টি রিয়েল স্টেজ",
-            shiftEyebrow: "দ্য শিফট",
-            shiftTitle1: "ট্রেডিং হাইপ",
-            shiftTitle2: "বনাম ট্রেডিং রিয়েলিটি।",
-            shiftDesc: "মার্কেট তাড়াহুড়ো করাকে পুরস্কৃত করে না। এটি রিওয়ার্ড দেয় সঠিক কনটেক্সট, রিস্ক কন্ট্রোল এবং একটি সুশৃঙ্খল প্রসেসকে।",
-            hypeHeader: "ট্রেডিং হাইপ (ফাঁদ)",
-            realityHeader: "ট্রেডিং রিয়েলিটি (সত্য)",
-            roadmapEyebrow: "দ্য রোডম্যাপ",
-            roadmapTitle1: "বিগিনার থেকে",
-            roadmapTitle2: "প্রফেশনাল মাইন্ডসেট।",
-            roadmapDesc: "শিখুন → প্র্যাকটিস করুন → জার্নাল লিখুন → রিভিউ করুন। আন্দাজে ট্রেড করার অভ্যাস বাদ দিয়ে প্রসেস তৈরি করুন। প্রতিটি কার্ডে ক্লিক করে বিস্তারিত রোডম্যাপ দেখুন।",
-            freeEyebrow: "ফ্রি ট্রেডিং বেসিকস",
-            freeTitle: "ডিপোজিট দিয়ে নয়,\nশুরু করুন শিক্ষা দিয়ে।",
-            freeDesc: "আপনার জন্য একটি স্ট্রাকচার্ড লার্নিং পথ উপযুক্ত কিনা তা সিদ্ধান্ত নেওয়ার আগে সিলেক্টেড ফ্রি লেসনগুলো দেখে নিন।",
-            freeCta: "ফ্রি লেসনগুলো দেখুন",
-            freeCard1Title: "ক্যান্ডেলস্টিক—নয়েজ ও হাইপ ছাড়া",
-            freeCard1Desc: "অ্যানাটমি, মোমেন্টাম, রিজেকশন এবং প্রতিটি ক্যান্ডেলের পেছনের আসল গল্প।",
-            freeCard2Title: "প্রাইস কেন রিঅ্যাক্ট করল?",
-            freeCard2Desc: "চার্ট রিডিংকে কার্যকর করার সঠিক প্রশ্নগুলো তৈরি করতে শিখুন।",
-            storeEyebrow: "দ্য স্টোর",
-            storeTitle: "একটি সুশৃঙ্খল ট্রেডিং প্র্যাকটিসের\nজন্য প্রয়োজনীয় রিসোর্স।",
-            viewBundle: "বাণ্ডেল দেখুন",
-            ebookNotice: "eBook এক্সেস শুধুমাত্র বাণ্ডেলের সাথেই অন্তর্ভুক্ত। আলাদা কোনো eBook বিক্রি হয় না।",
-            productsReady: "১৫টি ডিজিটাল লার্নিং রিসোর্স স্টোরের জন্য প্রস্তুত রয়েছে।",
-            ctaEyebrow: "আপনার মূলধন, আপনার সিদ্ধান্ত",
-            ctaTitle: "আপনার অতিরিক্ত VIP Group বা Signal-এর প্রয়োজন নেই।\nআপনার প্রয়োজন সঠিকভাবে Market বোঝার ক্ষমতা।",
-            ctaButton: "আপনার প্রসেস তৈরি করুন",
-            platformsEyebrow: "ট্রেডিং অ্যাপস ও প্ল্যাটফর্ম",
-            platformsTitle: "টেকনিক্যাল অ্যানালাইসিস ও ফান্ডামেন্টাল অ্যানালাইসিস টুলস",
-            platformsDesc: "চার্ট অ্যানালাইসিস এবং লাইভ মার্কেট এক্সিকিউশনের জন্য অফিসিয়াল প্ল্যাটফর্মগুলো ডাউনলোড করুন।",
-            platformsDownload: "ডাউনলোড পেজ",
-            ownerEyebrow: "ফাউন্ডার পরিচিতি",
-            ownerTitle: "সাইকেল অব চার্ট-এর রূপকার",
-            ownerDesc: "প্রতিষ্ঠানিক ট্রেডিং অভিজ্ঞতা ও গভীর মার্কেট রিয়ালিটি নিয়ে তৈরি বিশ্বস্ত এডুকেশনাল প্ল্যাটফর্ম।",
-            ownerExpLabel: "ট্রেডিং অভিজ্ঞতা",
-            ownerStudentsLabel: "প্রশিক্ষণপ্রাপ্ত শিক্ষার্থী",
-            ownerStyleLabel: "কোর মেথডোলজি",
-            footerDesc: "ট্রেডিং রিয়েলিটি · স্ট্রাকচার্ড ইন্সটিটিউশনাল এডুকেশন",
-            footerLegal: "শুধুমাত্র শিক্ষামূলক উদ্দেশ্যে তৈরি। কোনো সিগন্যাল বিক্রি, প্রফিট গ্যারান্টি বা ফিন্যান্সিয়াল অ্যাডভাইস দেওয়া হয় না। ডিপোজিটের আগে ট্রেডিং বুঝুন।",
-            modalStageOf: "স্টেজ",
-            modalOutOf: "১২টির মধ্যে",
-            modalKeyTakeaways: "এই স্টেজে যা যা শিখবেন ও আয়ত্ত করবেন:",
-            modalExercise: "প্র্যাকটিক্যাল চার্ট এক্সারসাইজ:",
-            modalEdge: "ইন্সটিটিউশনাল এজ:",
-            modalPrev: "পূর্ববর্তী স্টেজ",
-            modalNext: "পরবর্তী স্টেজ",
-            modalClose: "বন্ধ করুন",
-            clickPrompt: "বিস্তারিত দেখতে ক্লিক করুন",
-          }
-        : {
-            navRoadmap: "Roadmap",
-            navStore: "Store",
-            navFree: "Free Basics",
-            navLeaderboard: "Leaderboard",
-            navSupport: "Support",
-            signIn: "Sign in",
-            dashboard: "Dashboard",
-            heroEyebrow: "CYCLE OF CHART • TRADING REALITY",
-            heroTitle: "BEFORE YOU TRADE,\nUNDERSTAND TRADING.",
-            heroSubtitle: "BEFORE YOU DEPOSIT,\nUNDERSTAND TRADING.",
-            heroBnSub: "Keep your money with you. Build your knowledge before you build your position. No signals. No VIP pressure. No guaranteed returns.",
-            primaryCta: "Start Roadmap",
-            secondaryCta: "Explore Store",
-            trust1: "100% Practical Learning",
-            trust2: "Zero Signal Traps",
-            trust3: "12 Practical Stages",
-            shiftEyebrow: "THE SHIFT",
-            shiftTitle1: "Trading hype",
-            shiftTitle2: "vs. trading reality.",
-            shiftDesc: "A market does not reward urgency. It rewards context, risk awareness, and a repeatable process.",
-            hypeHeader: "TRADING HYPE (TRAP)",
-            realityHeader: "TRADING REALITY (TRUTH)",
-            roadmapEyebrow: "THE ROADMAP",
-            roadmapTitle1: "From beginner",
-            roadmapTitle2: "to professional-minded.",
-            roadmapDesc: "Learn → Practice → Journal → Review → Repeat. Every stage exists to replace guesswork with a process. Click any stage card for full breakdown.",
-            freeEyebrow: "FREE TRADING BASICS",
-            freeTitle: "Start with understanding,\nnot a deposit.",
-            freeDesc: "Explore selected beginner lessons before you decide whether a structured learning path is right for you.",
-            freeCta: "Access free lessons",
-            freeCard1Title: "Candlesticks, without the noise",
-            freeCard1Desc: "Anatomy, momentum, rejection, and the story behind a candle.",
-            freeCard2Title: "Why did price react?",
-            freeCard2Desc: "Build the questions that make chart reading useful.",
-            storeEyebrow: "THE STORE",
-            storeTitle: "Tools for a disciplined\nlearning practice.",
-            viewBundle: "View bundle",
-            ebookNotice: "eBook access is included with bundles only. No separate eBook purchase.",
-            productsReady: "15 digital learning resources are being structured for the store.",
-            ctaEyebrow: "YOUR CAPITAL, YOUR DECISION",
-            ctaTitle: "You do not need more signals.\nYou need more understanding.",
-            ctaButton: "Build your process",
-            platformsEyebrow: "TRADING APPS & PLATFORMS",
-            platformsTitle: "Technical Analysis & Fundamental Analysis Tools",
-            platformsDesc: "Download official desktop and mobile applications for institutional chart analysis and market execution.",
-            platformsDownload: "Download options",
-            ownerEyebrow: "FOUNDER & LEAD MENTOR",
-            ownerTitle: "The Mind Behind Cycle of Chart",
-            ownerDesc: "Dedicated to transforming retail traders through systematic Candle Range Theory, strict risk architecture, and authentic market reality.",
-            ownerExpLabel: "Market Experience",
-            ownerStudentsLabel: "Traders Mentored",
-            ownerStyleLabel: "Core Methodology",
-            footerDesc: "Trading Reality · Structured Institutional Education",
-            footerLegal: "Educational content only. No signal selling, profit guarantees, or financial advice. Before you deposit, understand trading.",
-            modalStageOf: "Stage",
-            modalOutOf: "of 12",
-            modalKeyTakeaways: "What you will master in this stage:",
-            modalExercise: "Practical Chart Exercise:",
-            modalEdge: "Institutional Edge:",
-            modalPrev: "Previous Stage",
-            modalNext: "Next Stage",
-            modalClose: "Close",
-            clickPrompt: "Click for full breakdown",
-          },
-    [isBn]
+    () => ({
+      navRoadmap: t("nav.roadmap"),
+      navStore: t("nav.store"),
+      navFree: t("nav.freeBasics"),
+      navLeaderboard: t("nav.leaderboard"),
+      navSupport: t("nav.support"),
+      signIn: t("nav.signIn"),
+      dashboard: t("nav.dashboard"),
+      heroEyebrow: t("hero.eyebrow"),
+      heroTitle: t("hero.title"),
+      heroSubtitle: t("hero.subtitle"),
+      heroBnSub: t("hero.subtext"),
+      primaryCta: t("hero.startRoadmap"),
+      secondaryCta: t("hero.exploreStore"),
+      trust1: t("hero.trust1"),
+      trust2: t("hero.trust2"),
+      trust3: t("hero.trust3"),
+      shiftEyebrow: t("shift.eyebrow"),
+      shiftTitle1: t("shift.title1"),
+      shiftTitle2: t("shift.title2"),
+      shiftDesc: t("shift.desc"),
+      hypeHeader: t("shift.hypeHeader"),
+      realityHeader: t("shift.realityHeader"),
+      roadmapEyebrow: t("roadmap.eyebrow"),
+      roadmapTitle1: t("roadmap.title1"),
+      roadmapTitle2: t("roadmap.title2"),
+      roadmapDesc: t("roadmap.desc"),
+      freeEyebrow: t("freeBasics.eyebrow"),
+      freeTitle: t("freeBasics.title"),
+      freeDesc: t("freeBasics.desc"),
+      freeCta: t("freeBasics.cta"),
+      freeCard1Title: t("freeBasics.card1Title"),
+      freeCard1Desc: t("freeBasics.card1Desc"),
+      freeCard2Title: t("freeBasics.card2Title"),
+      freeCard2Desc: t("freeBasics.card2Desc"),
+      storeEyebrow: t("store.eyebrow"),
+      storeTitle: t("store.title"),
+      viewBundle: t("store.viewBundle"),
+      ebookNotice: t("store.includedNotice"),
+      productsReady: t("store.productsReady"),
+      ctaEyebrow: isBn ? "আপনার মূলধন, আপনার সিদ্ধান্ত" : "YOUR CAPITAL, YOUR DECISION",
+      ctaTitle: isBn
+        ? "আপনার অতিরিক্ত VIP Group বা Signal-এর প্রয়োজন নেই।\nআপনার প্রয়োজন সঠিকভাবে Market বোঝার ক্ষমতা।"
+        : "You do not need more signals.\nYou need more understanding.",
+      ctaButton: isBn ? "আপনার প্রসেস তৈরি করুন" : "Build your process",
+      platformsEyebrow: t("platforms.eyebrow"),
+      platformsTitle: t("platforms.title"),
+      platformsDesc: t("platforms.desc"),
+      platformsDownload: t("platforms.downloadBtn"),
+      ownerEyebrow: t("founder.eyebrow"),
+      ownerTitle: t("founder.title"),
+      ownerDesc: t("founder.desc"),
+      ownerExpLabel: t("founder.experience"),
+      ownerStudentsLabel: t("founder.students"),
+      ownerStyleLabel: t("founder.methodology"),
+      footerDesc: t("footer.tagline"),
+      footerLegal: t("footer.disclaimer"),
+      modalStageOf: t("roadmap.stageOf"),
+      modalOutOf: t("roadmap.outOf"),
+      modalKeyTakeaways: t("roadmap.whatYouLearn"),
+      modalExercise: t("roadmap.exercise"),
+      modalEdge: t("roadmap.edge"),
+      modalPrev: t("roadmap.prevStage"),
+      modalNext: t("roadmap.nextStage"),
+      modalClose: t("roadmap.close"),
+      clickPrompt: t("roadmap.clickPrompt"),
+    }),
+    [t, isBn]
   );
 
   return (
@@ -595,28 +526,7 @@ export default function Home() {
             </button>
 
             {/* Language Switcher */}
-            <div className="flex rounded-full border border-slate-300 bg-slate-100 p-0.5 dark:border-slate-700 dark:bg-slate-800">
-              <button
-                onClick={() => setLanguage("en")}
-                className={`rounded-full px-2.5 py-1 text-xs font-bold transition ${
-                  lang === "en"
-                    ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
-                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
-                }`}
-              >
-                EN
-              </button>
-              <button
-                onClick={() => setLanguage("bn")}
-                className={`rounded-full px-2.5 py-1 text-xs font-bold transition ${
-                  lang === "bn"
-                    ? "bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white"
-                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
-                }`}
-              >
-                বাং
-              </button>
-            </div>
+            <LanguageSelector />
 
             {user ? (
               <Link href="/dashboard">

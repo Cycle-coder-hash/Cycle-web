@@ -55,6 +55,8 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { LanguageSelector } from "@/components/LanguageSelector";
 import { TraderJournal } from "@/components/journal/TraderJournal";
 import { getStoredTrades } from "@/lib/traderJournalStorage";
 import { getDashboardRoadmapStages, DashboardRoadmapStage } from "@/data/roadmapStages";
@@ -122,7 +124,8 @@ export default function Dashboard() {
     }
     return "overview";
   });
-  const [lang, setLang] = useState<"en" | "bn">(() => (localStorage.getItem("cycle-language") as "en" | "bn") || "en");
+  const { t, language, isRTL } = useLanguage();
+  const isBn = language === "bn";
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -206,13 +209,6 @@ export default function Dashboard() {
 
   // Invoice Modal
   const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState<any | null>(null);
-
-  const isBn = lang === "bn";
-
-  const setLanguage = (next: "en" | "bn") => {
-    setLang(next);
-    localStorage.setItem("cycle-language", next);
-  };
 
   // Queries
   const { data: progress, refetch: refetchProgress } = trpc.customer.progress.useQuery(undefined, { enabled: !!user });
@@ -778,14 +774,14 @@ export default function Dashboard() {
   };
 
   const navItems: NavItem[] = [
-    { id: "overview", labelEn: "Overview", labelBn: "ওভারভিউ", icon: LayoutDashboard },
-    { id: "roadmap", labelEn: "12-Stage Roadmap", labelBn: "১২-স্টেজ রোডম্যাপ", icon: Layers, badge: `${completedStagesCount}/12` },
-    { id: "library", labelEn: "My Library & Resources", labelBn: "আমার লাইব্রেরি", icon: BookOpen, badge: entitlements?.length ? `${entitlements.length}` : undefined },
-    { id: "journal", labelEn: "Trading Journal", labelBn: "ট্রেডিং জার্নাল", icon: NotebookPen, badge: (localTrades?.length || journal?.length) ? `${localTrades?.length || journal?.length}` : undefined },
-    { id: "discipline", labelEn: "Daily Discipline", labelBn: "ডেইলি রুটিন", icon: ClipboardCheck },
+    { id: "overview", labelEn: t("dashboard.tabOverview"), labelBn: "ওভারভিউ", icon: LayoutDashboard },
+    { id: "roadmap", labelEn: t("dashboard.tabRoadmap"), labelBn: "১২-স্টেজ রোডম্যাপ", icon: Layers, badge: `${completedStagesCount}/12` },
+    { id: "library", labelEn: t("dashboard.tabLibrary"), labelBn: "আমার লাইব্রেরি", icon: BookOpen, badge: entitlements?.length ? `${entitlements.length}` : undefined },
+    { id: "journal", labelEn: t("dashboard.tabJournal"), labelBn: "ট্রেডিং জার্নাল", icon: NotebookPen, badge: (localTrades?.length || journal?.length) ? `${localTrades?.length || journal?.length}` : undefined },
+    { id: "discipline", labelEn: t("dashboard.tabDiscipline"), labelBn: "ডেইলি রুটিন", icon: ClipboardCheck },
     {
       id: "orders",
-      labelEn: "Orders & Billing",
+      labelEn: t("dashboard.tabOrders"),
       labelBn: "পেমেন্ট হিস্ট্রি",
       icon: Receipt,
       badge: orders?.some((o: any) => o.orderStatus === "pending")
@@ -794,7 +790,7 @@ export default function Dashboard() {
         ? `${orders.length}`
         : undefined,
     },
-    { id: "support", labelEn: "Direct Support", labelBn: "সাপোর্ট চ্যাট", icon: MessageSquare },
+    { id: "support", labelEn: t("dashboard.tabSupport"), labelBn: "সাপোর্ট চ্যাট", icon: MessageSquare },
   ];
 
   // Filtered Journals
@@ -1022,24 +1018,7 @@ export default function Dashboard() {
             </button>
 
             {/* Language Switcher */}
-            <div className="flex rounded-xl border border-slate-200 bg-slate-100 p-0.5 dark:border-slate-800 dark:bg-slate-900">
-              <button
-                onClick={() => setLanguage("en")}
-                className={`rounded-lg px-2.5 py-1 text-[11px] font-bold ${
-                  lang === "en" ? "bg-white text-slate-900 shadow-xs dark:bg-slate-700 dark:text-white" : "text-slate-500"
-                }`}
-              >
-                EN
-              </button>
-              <button
-                onClick={() => setLanguage("bn")}
-                className={`rounded-lg px-2.5 py-1 text-[11px] font-bold ${
-                  lang === "bn" ? "bg-white text-slate-900 shadow-xs dark:bg-slate-700 dark:text-white" : "text-slate-500"
-                }`}
-              >
-                বাং
-              </button>
-            </div>
+            <LanguageSelector />
 
             {/* Logout */}
             <button
@@ -1106,6 +1085,8 @@ export default function Dashboard() {
                 <span>{isBn ? "স্টোর ব্রাউজ" : "Browse Store"}</span>
               </Button>
             </Link>
+
+            <LanguageSelector variant="compact" />
           </div>
         </header>
 
