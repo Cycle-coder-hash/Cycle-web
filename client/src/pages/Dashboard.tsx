@@ -47,6 +47,8 @@ import {
   Send,
   Settings as SettingsIcon,
   Calculator,
+  PanelLeftClose,
+  PanelLeftOpen,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -142,6 +144,39 @@ export default function Dashboard() {
       }
     }
   }, []);
+
+  // Sidebar open/collapse state (remembers preference, opens on desktop by default)
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("cycle_dashboard_sidebar_open");
+      if (saved !== null) {
+        return saved === "true";
+      }
+      return window.innerWidth >= 1024;
+    }
+    return true;
+  });
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("cycle_dashboard_sidebar_open", String(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  // Close sidebar on Escape key if open on smaller screens
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isSidebarOpen) {
+        setIsSidebarOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isSidebarOpen]);
 
   // User identifier key for strict personal isolation
   const userKey = useMemo(() => {
@@ -849,24 +884,48 @@ export default function Dashboard() {
 
   return (
     <div
-      className={`min-h-screen bg-[#f8fafc] text-slate-900 dark:bg-[#070e1b] dark:text-slate-100 transition-colors duration-300 selection:bg-[#38bdf8] selection:text-slate-950 ${
+      className={`min-h-screen bg-[#f8fafc] text-slate-900 dark:bg-[#070e1b] dark:text-slate-100 transition-colors duration-300 selection:bg-[#38bdf8] selection:text-slate-950 overflow-x-hidden ${
         isBn ? "font-bangla" : ""
       }`}
     >
+      {/* Mobile Drawer Backdrop */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden transition-opacity duration-300"
+          onClick={() => setIsSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* ========================================================================= */}
-      {/* DESKTOP SIDEBAR */}
+      {/* DASHBOARD SIDEBAR */}
       {/* ========================================================================= */}
-      <aside className="fixed inset-y-0 left-0 hidden w-72 flex-col justify-between border-r border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-[#070e1b] lg:flex z-30">
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col justify-between border-r border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-[#070e1b] transition-transform duration-300 ease-in-out ${
+          isSidebarOpen ? "translate-x-0 shadow-2xl lg:shadow-none" : "-translate-x-full pointer-events-none"
+        }`}
+      >
         <div>
-          <Link href="/" className="flex items-center gap-3">
-            <BrandLogo size={42} className="shrink-0" />
-            <div>
-              <span className="text-xs font-extrabold tracking-[0.2em] text-[#0a192f] dark:text-white">
-                CYCLE OF CHART
-              </span>
-              <div className="text-[10px] font-bold text-[#0284c7] dark:text-sky-400">TRADING REALITY PORTAL</div>
-            </div>
-          </Link>
+          <div className="flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-3">
+              <BrandLogo size={42} className="shrink-0" />
+              <div>
+                <span className="text-xs font-extrabold tracking-[0.2em] text-[#0a192f] dark:text-white">
+                  CYCLE OF CHART
+                </span>
+                <div className="text-[10px] font-bold text-[#0284c7] dark:text-sky-400">TRADING REALITY PORTAL</div>
+              </div>
+            </Link>
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              className="flex size-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition-colors cursor-pointer"
+              title={isBn ? "সাইডবার বন্ধ করুন" : "Close Sidebar"}
+              aria-label={isBn ? "সাইডবার বন্ধ করুন" : "Close Sidebar"}
+            >
+              <PanelLeftClose size={16} />
+            </button>
+          </div>
 
           {/* User Profile Snippet */}
           <div className="mt-8 rounded-2xl border border-slate-100 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/60">
@@ -1003,8 +1062,13 @@ export default function Dashboard() {
               return (
                 <button
                   key={item.id}
-                  onClick={() => setTab(item.id as any)}
-                  className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all duration-200 ${
+                  onClick={() => {
+                    setTab(item.id as any);
+                    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+                      setIsSidebarOpen(false);
+                    }
+                  }}
+                  className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all duration-200 cursor-pointer ${
                     isActive
                       ? "bg-[#081833] text-white shadow-md dark:bg-sky-500 dark:text-slate-950"
                       : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-white"
@@ -1031,6 +1095,11 @@ export default function Dashboard() {
 
             <Link
               href="/leaderboard"
+              onClick={() => {
+                if (typeof window !== "undefined" && window.innerWidth < 1024) {
+                  setIsSidebarOpen(false);
+                }
+              }}
               className="flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all duration-200 border border-amber-500/30 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/20 shadow-xs mt-3"
             >
               <div className="flex items-center gap-3">
@@ -1044,6 +1113,11 @@ export default function Dashboard() {
 
             <Link
               href="/settings"
+              onClick={() => {
+                if (typeof window !== "undefined" && window.innerWidth < 1024) {
+                  setIsSidebarOpen(false);
+                }
+              }}
               className="flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all duration-200 border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 text-slate-700 hover:bg-slate-200/70 dark:text-slate-300 dark:hover:bg-slate-800 shadow-xs mt-2"
             >
               <div className="flex items-center gap-3">
@@ -1088,11 +1162,46 @@ export default function Dashboard() {
       {/* ========================================================================= */}
       {/* MAIN CONTENT AREA */}
       {/* ========================================================================= */}
-      <div className="lg:pl-72 flex min-h-screen flex-col">
+      <div
+        className={`flex min-h-screen flex-col transition-[padding] duration-300 ease-in-out ${
+          isSidebarOpen ? "lg:pl-72" : "lg:pl-0"
+        }`}
+      >
         {/* Top Header */}
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200/80 bg-white/90 px-6 backdrop-blur-md dark:border-slate-800 dark:bg-[#070e1b]/90">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="lg:hidden">
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 sm:px-6 backdrop-blur-md dark:border-slate-800 dark:bg-[#070e1b]/90">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            {/* Sidebar Toggle Button (Open / Close) */}
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              className="flex size-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
+              title={
+                isSidebarOpen
+                  ? isBn
+                    ? "সাইডবার বন্ধ করুন"
+                    : "Close Sidebar"
+                  : isBn
+                    ? "সাইডবার খুলুন"
+                    : "Open Sidebar"
+              }
+              aria-label={
+                isSidebarOpen
+                  ? isBn
+                    ? "সাইডবার বন্ধ করুন"
+                    : "Close Sidebar"
+                  : isBn
+                    ? "সাইডবার খুলুন"
+                    : "Open Sidebar"
+              }
+            >
+              {isSidebarOpen ? (
+                <PanelLeftClose size={18} className="text-sky-500" />
+              ) : (
+                <PanelLeftOpen size={18} className="text-slate-600 dark:text-slate-300" />
+              )}
+            </button>
+
+            <Link href="/" className="lg:hidden shrink-0">
               <BrandLogo size={32} />
             </Link>
             <div>
