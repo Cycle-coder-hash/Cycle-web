@@ -183,8 +183,32 @@ export default function Support() {
   const [trackError, setTrackError] = useState<string | null>(null);
   const [isTracking, setIsTracking] = useState(false);
 
-  // Active Selected Ticket for Conversation View
-  const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
+  // Active Selected Ticket for Conversation View (Persisted in sessionStorage & URL)
+  const [selectedTicketId, setSelectedTicketIdState] = useState<number | null>(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const qId = params.get("ticketId");
+      if (qId && !isNaN(Number(qId))) return Number(qId);
+      const stored = sessionStorage.getItem("active_support_ticket_id");
+      if (stored && !isNaN(Number(stored))) return Number(stored);
+    } catch {}
+    return null;
+  });
+
+  const setSelectedTicketId = (id: number | null) => {
+    setSelectedTicketIdState(id);
+    try {
+      const url = new URL(window.location.href);
+      if (id !== null) {
+        sessionStorage.setItem("active_support_ticket_id", String(id));
+        url.searchParams.set("ticketId", String(id));
+      } else {
+        sessionStorage.removeItem("active_support_ticket_id");
+        url.searchParams.delete("ticketId");
+      }
+      window.history.replaceState({}, "", url.toString());
+    } catch {}
+  };
 
   // Close / Reopen Dialog State
   const [statusDialogState, setStatusDialogState] = useState<{
@@ -239,7 +263,7 @@ export default function Support() {
     isLoading: isLoadingMyTickets,
   } = trpc.support.myTickets.useQuery(undefined, {
     enabled: !!user,
-    refetchInterval: selectedTicketId ? 4000 : 15000,
+    refetchInterval: selectedTicketId ? 3000 : 10000,
   });
 
   const {
@@ -250,7 +274,7 @@ export default function Support() {
     { ticketId: selectedTicketId as number, email: user?.email || undefined },
     {
       enabled: !!selectedTicketId,
-      refetchInterval: 4000,
+      refetchInterval: 2500,
     }
   );
 
@@ -324,15 +348,33 @@ export default function Support() {
     onSuccess: (res) => {
       toast.success(isBn ? "উত্তর সফলভাবে পাঠানো হয়েছে" : "Reply sent successfully");
       if (selectedTicketId) {
+        trpcUtils.support.getTicket.setData(
+          { ticketId: selectedTicketId, email: user?.email || undefined },
+          (prev: any) => {
+            if (!prev) return prev;
+            const exists = prev.replies?.some((r: any) => r.id === res.reply.id);
+            return {
+              ...prev,
+              ticket: { ...prev.ticket, status: "open", updatedAt: new Date() },
+              replies: exists ? prev.replies : [...(prev.replies || []), res.reply],
+            };
+          }
+        );
         refetchActiveTicket();
         refetchMyTickets();
         trpcUtils.support.getTicket.invalidate({ ticketId: selectedTicketId });
         trpcUtils.support.myTickets.invalidate();
       }
       if (trackedData) {
-        setTrackedData((prev) =>
-          prev ? { ...prev, replies: [...prev.replies, res.reply] } : null
-        );
+        setTrackedData((prev) => {
+          if (!prev) return null;
+          const exists = prev.replies?.some((r: any) => r.id === res.reply.id);
+          return {
+            ...prev,
+            ticket: { ...prev.ticket, status: "open", updatedAt: new Date() },
+            replies: exists ? prev.replies : [...(prev.replies || []), res.reply],
+          };
+        });
       }
     },
     onError: (err) => {
@@ -341,9 +383,23 @@ export default function Support() {
   });
 
   const adminReplyMutation = trpc.admin.replyTicket.useMutation({
-    onSuccess: () => {
+    onSuccess: (res: any) => {
       toast.success(isBn ? "অফিসিয়াল উত্তর পাঠানো হয়েছে!" : "Support reply dispatched!");
       if (selectedTicketId) {
+        if (res?.reply) {
+          trpcUtils.support.getTicket.setData(
+            { ticketId: selectedTicketId, email: user?.email || undefined },
+            (prev: any) => {
+              if (!prev) return prev;
+              const exists = prev.replies?.some((r: any) => r.id === res.reply.id);
+              return {
+                ...prev,
+                ticket: { ...prev.ticket, status: "waiting_customer", updatedAt: new Date() },
+                replies: exists ? prev.replies : [...(prev.replies || []), res.reply],
+              };
+            }
+          );
+        }
         refetchActiveTicket();
         refetchAdminTickets();
         trpcUtils.support.getTicket.invalidate({ ticketId: selectedTicketId });
@@ -470,6 +526,10 @@ export default function Support() {
             : "No ticket found with this Ticket ID and Email address."
         );
       }
+      try {
+        sessionStorage.setItem("tracked_ticket_code", cleanCode);
+        sessionStorage.setItem("tracked_ticket_email", cleanEmail);
+      } catch {}
       setTrackedData(result);
     } catch (err: any) {
       setTrackError(
@@ -482,6 +542,50 @@ export default function Support() {
       setIsTracking(false);
     }
   };
+
+  // Auto-restore tracked ticket from sessionStorage on mount
+  useEffect(() => {
+    try {
+      const storedCode = sessionStorage.getItem("tracked_ticket_code");
+      const storedEmail = sessionStorage.getItem("tracked_ticket_email");
+      if (storedCode && storedEmail && !trackedData) {
+        setTrackCode(storedCode);
+        setTrackEmail(storedEmail);
+        trpcUtils.support.trackTicket
+          .fetch({ ticketCode: storedCode, email: storedEmail })
+          .then((res) => {
+            if (res?.ticket) setTrackedData(res);
+          })
+          .catch(() => {});
+      }
+    } catch {}
+  }, []);
+
+  // Poll tracked ticket when track tab has a ticket open
+  useEffect(() => {
+    if (activeTab !== "track" || !trackedData?.ticket?.ticketCode) return;
+    const interval = setInterval(async () => {
+      try {
+        const code = trackedData.ticket.ticketCode;
+        const email = trackEmail || trackedData.ticket.userEmail;
+        if (!code || !email) return;
+        const res = await trpcUtils.support.trackTicket.fetch({ ticketCode: code, email });
+        if (res?.ticket) {
+          setTrackedData((prev) => {
+            if (!prev) return res;
+            if (
+              prev.replies?.length !== res.replies?.length ||
+              prev.ticket?.status !== res.ticket?.status
+            ) {
+              return res;
+            }
+            return prev;
+          });
+        }
+      } catch {}
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [activeTab, trackedData?.ticket?.ticketCode, trackEmail]);
 
   // Copy Ticket ID
   const copyTicketId = (code: string) => {
@@ -942,6 +1046,8 @@ export default function Support() {
                         ticketId: activeTicketData.ticket.id,
                         message: msg,
                         attachmentUrl: att,
+                        senderName: user?.name || activeTicketData.ticket.userName || "Customer",
+                        senderEmail: user?.email || activeTicketData.ticket.userEmail || "",
                       });
                     }}
                     isReplying={replyMutation.isPending}
@@ -1510,7 +1616,13 @@ export default function Support() {
             {trackedData ? (
               <div className="space-y-4">
                 <button
-                  onClick={() => setTrackedData(null)}
+                  onClick={() => {
+                    setTrackedData(null);
+                    try {
+                      sessionStorage.removeItem("tracked_ticket_code");
+                      sessionStorage.removeItem("tracked_ticket_email");
+                    } catch {}
+                  }}
                   className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 hover:text-slate-900 transition dark:text-slate-400 dark:hover:text-white"
                 >
                   <ArrowLeft size={16} />
@@ -1528,7 +1640,8 @@ export default function Support() {
                       ticketId: trackedData.ticket.id,
                       message: msg,
                       attachmentUrl: att,
-                      senderEmail: trackEmail,
+                      senderName: trackedData.ticket.userName || "Customer",
+                      senderEmail: trackEmail || trackedData.ticket.userEmail || "",
                     });
                   }}
                   isReplying={replyMutation.isPending}

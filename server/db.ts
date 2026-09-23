@@ -2808,28 +2808,42 @@ export async function listTickets(filterOrUserId?: number | TicketFilter) {
 
     if (!error && Array.isArray(supaTickets) && supaTickets.length > 0) {
       for (const st of supaTickets) {
-        const existing = inMemoryTickets.find((item) => item.id === st.id);
-        if (!existing) {
+        const match = st.subject ? st.subject.match(/\[#TKT-(\d+)\]/i) : null;
+        const codeInSubject = match ? `#TKT-${match[1]}` : null;
+
+        const existing = inMemoryTickets.find((item) =>
+          item.id === st.id ||
+          (codeInSubject && item.ticketCode?.toUpperCase() === codeInSubject.toUpperCase()) ||
+          item.ticketCode === `#TKT-${st.id}`
+        );
+
+        if (existing) {
+          if (st.status && canonicalStatus(existing.status) !== canonicalStatus(st.status)) {
+            existing.status = canonicalStatus(st.status);
+          }
+        } else {
           const syncedItem = {
             id: st.id,
-            ticketCode: `#TKT-${st.id}`,
+            ticketCode: codeInSubject || `#TKT-${st.id}`,
             userId: st.userId,
             userName: `Student #${st.userId}`,
             userEmail: "",
             category: "General",
+            priority: "medium" as const,
             subject: st.subject || "Support Inquiry",
             message: st.message || "",
             attachmentUrl: null,
-            status: st.status || "open",
+            status: canonicalStatus(st.status || "open"),
             assignedStaff: null,
+            assignedStaffId: null,
+            firstResponseAt: null,
+            lastReplyAt: st.createdAt ? new Date(st.createdAt) : new Date(),
+            solvedAt: null,
+            closedAt: null,
             createdAt: st.createdAt ? new Date(st.createdAt) : new Date(),
             updatedAt: st.createdAt ? new Date(st.createdAt) : new Date(),
           };
           inMemoryTickets.push(syncedItem);
-        } else {
-          if (st.status && existing.status !== st.status) {
-            existing.status = st.status;
-          }
         }
       }
     }
@@ -2915,8 +2929,10 @@ export async function listTickets(filterOrUserId?: number | TicketFilter) {
 
 export async function createSupportTicket(input: {
   userId?: number | null;
-  userName: string;
-  userEmail: string;
+  userName?: string;
+  name?: string;
+  userEmail?: string;
+  email?: string;
   category: string;
   priority?: "low" | "medium" | "high" | "urgent" | string;
   subject: string;
@@ -2938,13 +2954,15 @@ export async function createSupportTicket(input: {
   const code = `#TKT-${1000 + persistentTickets.length + 1}`;
   const now = new Date();
   const priority = canonicalPriority(input.priority);
+  const resolvedName = (input.userName || input.name || "Customer").trim();
+  const resolvedEmail = (input.userEmail || input.email || "").trim().toLowerCase();
 
   const ticketObj = {
     id: nextId,
     ticketCode: code,
     userId: input.userId || null,
-    userName: input.userName.trim(),
-    userEmail: input.userEmail.trim(),
+    userName: resolvedName,
+    userEmail: resolvedEmail,
     category: input.category,
     priority,
     subject: input.subject.trim(),
@@ -2982,6 +3000,7 @@ export async function createSupportTicket(input: {
     const { supabaseServer } = await import("./supabase");
     if (ticketObj.userId) {
       await supabaseServer.from("supportTickets").insert({
+        id: ticketObj.id,
         userId: ticketObj.userId,
         subject: `[${ticketObj.ticketCode}] [${priority.toUpperCase()}] [${ticketObj.category}] ${ticketObj.subject}`,
         message: ticketObj.message,
@@ -3014,6 +3033,17 @@ export async function getTicketById(ticketId: number) {
   // Check persistent storage
   const persistent = await getPersistentTickets();
   ticket = persistent.find((t) => t.id === ticketId);
+  if (ticket) {
+    inMemoryTickets.push(ticket);
+    return ticket;
+  }
+
+  // Also check if ticketCode matches or matches formatted #TKT-xxxx
+  ticket = persistent.find((t) => {
+    if (t.ticketCode === `#TKT-${ticketId}` || t.ticketCode === String(ticketId)) return true;
+    const match = t.ticketCode ? t.ticketCode.match(/(\d+)/) : null;
+    return match && parseInt(match[1], 10) === ticketId;
+  });
   if (ticket) {
     inMemoryTickets.push(ticket);
     return ticket;
@@ -3080,7 +3110,25 @@ export async function getTicketByCode(ticketCode: string) {
 
 export async function getTicketReplies(ticketId: number) {
   // 1. Fetch persistent replies from Supabase settings
-  const persistentReplies = await getPersistentTicketReplies(ticketId);
+  let persistentReplies = await getPersistentTicketReplies(ticketId);
+
+  // If no replies found by ticketId, check if ticket has an alt id or code
+  if (persistentReplies.length === 0) {
+    const t = await getTicketById(ticketId);
+    if (t) {
+      const match = t.ticketCode ? t.ticketCode.match(/(\d+)/) : null;
+      if (match) {
+        const altId = parseInt(match[1], 10);
+        if (altId && altId !== ticketId) {
+          const altReplies = await getPersistentTicketReplies(altId);
+          if (altReplies.length > 0) {
+            persistentReplies = altReplies;
+          }
+        }
+      }
+    }
+  }
+
   if (persistentReplies.length > 0) {
     // Merge into inMemoryReplies
     for (const pr of persistentReplies) {
@@ -3153,21 +3201,16 @@ export async function addTicketReply(reply: {
   await savePersistentTicketReplies(reply.ticketId, updatedReplies);
 
   const isStaff = reply.senderRole === "support" || reply.senderRole === "admin";
+  const targetStatus = isStaff ? "waiting_customer" : "open";
 
   // 3. Update ticket in memory & persistent store
   const t = inMemoryTickets.find((item) => item.id === reply.ticketId);
   if (t) {
     t.updatedAt = now;
     t.lastReplyAt = now;
-    if (isStaff) {
-      if (!t.firstResponseAt) t.firstResponseAt = now;
-      if (t.status === "open" || t.status === "in_progress" || t.status === "pending") {
-        t.status = "waiting_customer";
-      }
-    } else {
-      if (t.status === "waiting_customer" || t.status === "waiting_user" || t.status === "solved" || t.status === "closed") {
-        t.status = "open";
-      }
+    t.status = targetStatus;
+    if (isStaff && !t.firstResponseAt) {
+      t.firstResponseAt = now;
     }
   }
 
@@ -3176,18 +3219,23 @@ export async function addTicketReply(reply: {
   if (pt) {
     pt.updatedAt = now;
     pt.lastReplyAt = now;
-    if (isStaff) {
-      if (!pt.firstResponseAt) pt.firstResponseAt = now;
-      if (pt.status === "open" || pt.status === "in_progress" || pt.status === "pending") {
-        pt.status = "waiting_customer";
-      }
-    } else {
-      if (pt.status === "waiting_customer" || pt.status === "waiting_user" || pt.status === "solved" || pt.status === "closed") {
-        pt.status = "open";
-      }
+    pt.status = targetStatus;
+    if (isStaff && !pt.firstResponseAt) {
+      pt.firstResponseAt = now;
     }
     await savePersistentTickets(persistentTickets);
   }
+
+  // Also sync status and updatedAt to Supabase supportTickets table
+  try {
+    const { supabaseServer } = await import("./supabase");
+    await supabaseServer
+      .from("supportTickets")
+      .update({
+        status: targetStatus,
+      })
+      .eq("id", reply.ticketId);
+  } catch (err) {}
 
   // 4. Notifications
   try {

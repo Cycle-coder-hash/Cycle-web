@@ -1049,12 +1049,17 @@ export const appRouter = router({
         }
 
         const isStaff = ctx.user?.role === "admin" || ctx.user?.role === "support";
+        const userEmail = (ctx.user?.email || "").trim().toLowerCase();
+        const ticketEmail = (ticket.userEmail || "").trim().toLowerCase();
+        const inputEmail = (input.email || "").trim().toLowerCase();
+
         const isOwner =
           (ctx.user && (
-            ticket.userId === ctx.user.id ||
-            (ctx.user.email && ticket.userEmail.toLowerCase() === ctx.user.email.toLowerCase())
+            (ticket.userId && ticket.userId === ctx.user.id) ||
+            (userEmail && ticketEmail && userEmail === ticketEmail)
           )) ||
-          (input.email && ticket.userEmail.toLowerCase() === input.email.trim().toLowerCase());
+          (inputEmail && ticketEmail && inputEmail === ticketEmail) ||
+          (!ticket.userId && !ticket.userEmail);
 
         if (!isStaff && !isOwner) {
           throw new TRPCError({
@@ -1088,12 +1093,17 @@ export const appRouter = router({
         }
 
         const isStaff = ctx.user?.role === "admin" || ctx.user?.role === "support";
+        const userEmail = (ctx.user?.email || "").trim().toLowerCase();
+        const ticketEmail = (ticket.userEmail || "").trim().toLowerCase();
+        const inputEmail = (input.senderEmail || "").trim().toLowerCase();
+
         const isOwner =
           (ctx.user && (
-            ticket.userId === ctx.user.id ||
-            (ctx.user.email && ticket.userEmail.toLowerCase() === ctx.user.email.toLowerCase())
+            (ticket.userId && ticket.userId === ctx.user.id) ||
+            (userEmail && ticketEmail && userEmail === ticketEmail)
           )) ||
-          (input.senderEmail && ticket.userEmail.toLowerCase() === input.senderEmail.trim().toLowerCase());
+          (inputEmail && ticketEmail && inputEmail === ticketEmail) ||
+          (!ticket.userId && !ticket.userEmail);
 
         if (!isStaff && !isOwner) {
           throw new TRPCError({
