@@ -1,10 +1,16 @@
 import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from "react";
 import {
+  ACTIVE_LANGUAGES,
   SupportedLanguage,
   TextDirection,
   CountryLanguageOption,
   COUNTRY_LANGUAGE_OPTIONS,
-  TranslationSchema,
+  DEFAULT_LANGUAGE,
+  DEFAULT_OPTION_ID,
+  isSupportedLanguage,
+  normalizeLanguage,
+  getOptionByLanguage,
+  getOptionById,
 } from "../i18n/types";
 import { LOCALES_MAP } from "../i18n/locales";
 
@@ -14,18 +20,48 @@ interface LanguageContextType {
   dir: TextDirection;
   isRTL: boolean;
   setCountryLanguage: (optionId: string) => void;
+  setLanguage: (lang: string) => void;
   t: (path: string, fallback?: string) => string;
   allOptions: CountryLanguageOption[];
+  activeLanguages: readonly ["bn", "en", "ur"];
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-const DEFAULT_OPTION_ID = "us-en";
+// Helper to sanitize cookie values
+function sanitizeCookies() {
+  if (typeof document === "undefined") return;
+  const cookieNames = ["cycle-language", "cycle_language", "language", "locale", "i18nextLng"];
+  for (const name of cookieNames) {
+    const match = document.cookie.match(new RegExp("(^|;\\s*)(" + name + ")=([^;]*)"));
+    if (match) {
+      const val = decodeURIComponent(match[3]).toLowerCase();
+      if (!ACTIVE_LANGUAGES.includes(val as any)) {
+        // Clear or normalize unsupported language cookie
+        document.cookie = `${name}=en; path=/; max-age=31536000; SameSite=Lax`;
+      }
+    }
+  }
+}
 
-export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [currentOptionId, setCurrentOptionId] = useState<string>(() => {
-    if (typeof window === "undefined") return DEFAULT_OPTION_ID;
+function resolveInitialOptionId(): string {
+  if (typeof window === "undefined") return DEFAULT_OPTION_ID;
 
+  // 1. Check URL parameters for explicit language/locale
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const urlLang = params.get("lang") || params.get("locale");
+    if (urlLang) {
+      const normalized = normalizeLanguage(urlLang);
+      const matched = COUNTRY_LANGUAGE_OPTIONS.find((o) => o.langCode === normalized || o.id === urlLang);
+      if (matched) return matched.id;
+    }
+  } catch (e) {
+    // Ignore URL parse failure
+  }
+
+  // 2. Check localStorage for country selection
+  try {
     const storedCountryId = localStorage.getItem("cycle_selected_country");
     if (storedCountryId && COUNTRY_LANGUAGE_OPTIONS.some((o) => o.id === storedCountryId)) {
       return storedCountryId;
@@ -33,24 +69,29 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
     const legacyLang = localStorage.getItem("cycle-language");
     if (legacyLang) {
-      const match = COUNTRY_LANGUAGE_OPTIONS.find((o) => o.langCode === legacyLang);
+      const normalized = normalizeLanguage(legacyLang);
+      const match = COUNTRY_LANGUAGE_OPTIONS.find((o) => o.langCode === normalized);
       if (match) return match.id;
     }
+  } catch (e) {
+    // Ignore storage failure
+  }
 
-    return DEFAULT_OPTION_ID;
-  });
+  return DEFAULT_OPTION_ID;
+}
+
+export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  const [currentOptionId, setCurrentOptionId] = useState<string>(resolveInitialOptionId);
 
   const currentOption = useMemo(() => {
-    return (
-      COUNTRY_LANGUAGE_OPTIONS.find((o) => o.id === currentOptionId) ||
-      COUNTRY_LANGUAGE_OPTIONS.find((o) => o.id === DEFAULT_OPTION_ID)!
-    );
+    return getOptionById(currentOptionId);
   }, [currentOptionId]);
 
   const language = currentOption.langCode;
   const dir = currentOption.dir;
   const isRTL = dir === "rtl";
 
+  // Enforce DOM, cookies, and localStorage normalization
   useEffect(() => {
     if (typeof document !== "undefined") {
       document.documentElement.lang = language;
@@ -61,15 +102,39 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
         document.documentElement.classList.remove("direction-rtl");
       }
     }
-    localStorage.setItem("cycle_selected_country", currentOption.id);
-    localStorage.setItem("cycle-language", language);
+
+    try {
+      localStorage.setItem("cycle_selected_country", currentOption.id);
+      localStorage.setItem("cycle-language", language);
+      // Clean up any legacy or unsupported keys
+      const legacyKeys = ["i18nextLng", "user-locale", "lang"];
+      for (const k of legacyKeys) {
+        const val = localStorage.getItem(k);
+        if (val && !ACTIVE_LANGUAGES.includes(val as any)) {
+          localStorage.removeItem(k);
+        }
+      }
+    } catch (e) {
+      // Storage unavailable
+    }
+
+    sanitizeCookies();
   }, [currentOption, language, dir, isRTL]);
 
   const setCountryLanguage = useCallback((optionId: string) => {
     const exists = COUNTRY_LANGUAGE_OPTIONS.some((o) => o.id === optionId);
     if (exists) {
       setCurrentOptionId(optionId);
+    } else {
+      // Fallback safely to English if unsupported option passed
+      setCurrentOptionId(DEFAULT_OPTION_ID);
     }
+  }, []);
+
+  const setLanguage = useCallback((lang: string) => {
+    const normalized = normalizeLanguage(lang);
+    const opt = getOptionByLanguage(normalized);
+    setCurrentOptionId(opt.id);
   }, []);
 
   const getNestedValue = (obj: any, path: string): string | undefined => {
@@ -107,10 +172,12 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       dir,
       isRTL,
       setCountryLanguage,
+      setLanguage,
       t,
       allOptions: COUNTRY_LANGUAGE_OPTIONS,
+      activeLanguages: ACTIVE_LANGUAGES,
     }),
-    [currentOption, language, dir, isRTL, setCountryLanguage, t]
+    [currentOption, language, dir, isRTL, setCountryLanguage, setLanguage, t]
   );
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;

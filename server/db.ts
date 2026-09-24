@@ -6503,9 +6503,14 @@ export async function saveUserOnboarding(
 // USER PREFERENCES & ACCOUNT SETTINGS MANAGEMENT
 // =========================================================================
 
+export function normalizeUserLanguage(lang?: string | null): "en" | "bn" | "ur" {
+  if (lang === "bn" || lang === "ur" || lang === "en") return lang;
+  return "en";
+}
+
 export interface UserPreferences {
   theme: "dark" | "light";
-  language: string;
+  language: "en" | "bn" | "ur";
   timezone: string;
   currency: string;
 }
@@ -6524,7 +6529,7 @@ export async function getUserPreferences(userKey: string | number): Promise<User
       const parsed = JSON.parse(raw);
       return {
         theme: parsed.theme === "light" ? "light" : "dark",
-        language: parsed.language || "en",
+        language: normalizeUserLanguage(parsed.language),
         timezone: parsed.timezone || "Asia/Dhaka",
         currency: parsed.currency || "BDT",
       };
@@ -6540,6 +6545,7 @@ export async function saveUserPreferences(userKey: string | number, prefs: Parti
   const updated: UserPreferences = {
     ...current,
     ...prefs,
+    language: prefs.language ? normalizeUserLanguage(prefs.language) : current.language,
     theme: prefs.theme ? (prefs.theme === "light" ? "light" : "dark") : current.theme,
   };
   await setSetting(`user_preferences_${userKey}`, JSON.stringify(updated));

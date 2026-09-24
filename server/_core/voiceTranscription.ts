@@ -218,6 +218,8 @@ function getFileExtension(mimeType: string): string {
 function getLanguageName(langCode: string): string {
   const langMap: Record<string, string> = {
     'en': 'English',
+    'bn': 'Bangla',
+    'ur': 'Urdu',
     'es': 'Spanish',
     'fr': 'French',
     'de': 'German',

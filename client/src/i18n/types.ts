@@ -1,7 +1,8 @@
-export type SupportedLanguage =
-  | "bn" // Bangla
-  | "en" // English
-  | "ur"; // Urdu (RTL)
+export const ACTIVE_LANGUAGES = ["bn", "en", "ur"] as const;
+export type SupportedLanguage = (typeof ACTIVE_LANGUAGES)[number];
+
+export const DEFAULT_LANGUAGE: SupportedLanguage = "en";
+export const DEFAULT_OPTION_ID = "us-en";
 
 export type TextDirection = "ltr" | "rtl";
 
@@ -44,6 +45,35 @@ export const COUNTRY_LANGUAGE_OPTIONS: CountryLanguageOption[] = [
     dir: "rtl",
   },
 ];
+
+export function isSupportedLanguage(lang: unknown): lang is SupportedLanguage {
+  return typeof lang === "string" && (ACTIVE_LANGUAGES as readonly string[]).includes(lang);
+}
+
+export function normalizeLanguage(lang: unknown): SupportedLanguage {
+  if (isSupportedLanguage(lang)) return lang;
+  if (typeof lang === "string") {
+    const clean = lang.toLowerCase().trim();
+    if (clean === "bn" || clean === "bd-bn" || clean === "bangla" || clean === "bengali" || clean.startsWith("bn")) {
+      return "bn";
+    }
+    if (clean === "ur" || clean === "pk-ur" || clean === "urdu" || clean.startsWith("ur")) {
+      return "ur";
+    }
+    if (clean === "en" || clean === "us-en" || clean === "english" || clean.startsWith("en")) {
+      return "en";
+    }
+  }
+  return DEFAULT_LANGUAGE;
+}
+
+export function getOptionByLanguage(lang: SupportedLanguage): CountryLanguageOption {
+  return COUNTRY_LANGUAGE_OPTIONS.find((o) => o.langCode === lang) || COUNTRY_LANGUAGE_OPTIONS[1];
+}
+
+export function getOptionById(id: string): CountryLanguageOption {
+  return COUNTRY_LANGUAGE_OPTIONS.find((o) => o.id === id) || COUNTRY_LANGUAGE_OPTIONS[1];
+}
 
 export interface TranslationSchema {
   nav: {

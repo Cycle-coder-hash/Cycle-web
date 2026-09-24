@@ -82,4 +82,72 @@ describe("Language System Integrity (Bangla, English, Urdu Only)", () => {
       expect((LOCALES_MAP as any)[code]).toBeUndefined();
     }
   });
+
+  it("verifies ACTIVE_LANGUAGES constant contains strictly [bn, en, ur]", async () => {
+    const { ACTIVE_LANGUAGES, isSupportedLanguage, normalizeLanguage } = await import("../client/src/i18n/types");
+    expect(ACTIVE_LANGUAGES).toEqual(["bn", "en", "ur"]);
+
+    expect(isSupportedLanguage("bn")).toBe(true);
+    expect(isSupportedLanguage("en")).toBe(true);
+    expect(isSupportedLanguage("ur")).toBe(true);
+    expect(isSupportedLanguage("es")).toBe(false);
+    expect(isSupportedLanguage("ar")).toBe(false);
+    expect(isSupportedLanguage("fr")).toBe(false);
+
+    expect(normalizeLanguage("bn")).toBe("bn");
+    expect(normalizeLanguage("Bangla")).toBe("bn");
+    expect(normalizeLanguage("bd-bn")).toBe("bn");
+    expect(normalizeLanguage("ur")).toBe("ur");
+    expect(normalizeLanguage("Urdu")).toBe("ur");
+    expect(normalizeLanguage("pk-ur")).toBe("ur");
+    expect(normalizeLanguage("en")).toBe("en");
+    expect(normalizeLanguage("English")).toBe("en");
+    expect(normalizeLanguage("us-en")).toBe("en");
+
+    // Unsupported languages must normalize safely to English
+    expect(normalizeLanguage("es")).toBe("en");
+    expect(normalizeLanguage("spanish")).toBe("en");
+    expect(normalizeLanguage("ar")).toBe("en");
+    expect(normalizeLanguage("arabic")).toBe("en");
+    expect(normalizeLanguage("hi")).toBe("en");
+    expect(normalizeLanguage("hindi")).toBe("en");
+    expect(normalizeLanguage("invalid_code")).toBe("en");
+    expect(normalizeLanguage(null)).toBe("en");
+    expect(normalizeLanguage(undefined)).toBe("en");
+  });
+
+  it("verifies server normalizeUserLanguage normalizes unsupported languages to en", async () => {
+    const { normalizeUserLanguage } = await import("./db");
+    expect(normalizeUserLanguage("bn")).toBe("bn");
+    expect(normalizeUserLanguage("ur")).toBe("ur");
+    expect(normalizeUserLanguage("en")).toBe("en");
+    expect(normalizeUserLanguage("es")).toBe("en");
+    expect(normalizeUserLanguage("ar")).toBe("en");
+    expect(normalizeUserLanguage("fr")).toBe("en");
+    expect(normalizeUserLanguage("hi")).toBe("en");
+    expect(normalizeUserLanguage(null)).toBe("en");
+    expect(normalizeUserLanguage(undefined)).toBe("en");
+  }, 15000);
+
+  it("verifies complete translation key symmetry between bn, en, and ur without missing keys", () => {
+    function getKeys(obj: any, prefix = ""): string[] {
+      let keys: string[] = [];
+      for (const k of Object.keys(obj)) {
+        const fullKey = prefix ? `${prefix}.${k}` : k;
+        if (typeof obj[k] === "object" && obj[k] !== null) {
+          keys = keys.concat(getKeys(obj[k], fullKey));
+        } else {
+          keys.push(fullKey);
+        }
+      }
+      return keys.sort();
+    }
+
+    const enKeys = getKeys(LOCALES_MAP.en);
+    const bnKeys = getKeys(LOCALES_MAP.bn);
+    const urKeys = getKeys(LOCALES_MAP.ur);
+
+    expect(bnKeys).toEqual(enKeys);
+    expect(urKeys).toEqual(enKeys);
+  });
 });

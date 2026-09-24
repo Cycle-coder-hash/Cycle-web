@@ -163,7 +163,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
                       </span>
                       <div className="min-w-0">
                         <div className="text-xs sm:text-sm font-semibold truncate flex items-center gap-1.5">
-                          <span>{opt.countryName}</span>
+                          <span>{opt.nativeName}</span>
                           {opt.dir === "rtl" && (
                             <span className="text-[9px] uppercase px-1 py-0.2 rounded bg-amber-500/20 text-amber-300 font-mono">
                               RTL
@@ -171,7 +171,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
                           )}
                         </div>
                         <div className="text-[11px] text-slate-400 group-hover:text-cyan-400/80 truncate">
-                          {opt.nativeName} · {opt.langName}
+                          {opt.langName} · {opt.countryName}
                         </div>
                       </div>
                     </div>

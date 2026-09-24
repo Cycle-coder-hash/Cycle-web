@@ -440,7 +440,7 @@ export const appRouter = router({
       .input(
         z.object({
           theme: z.enum(["dark", "light"]).optional(),
-          language: z.string().optional(),
+          language: language.optional(),
           timezone: z.string().optional(),
           currency: z.string().optional(),
         })

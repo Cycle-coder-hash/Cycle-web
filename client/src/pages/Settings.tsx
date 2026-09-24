@@ -528,8 +528,8 @@ export default function Settings() {
       labelEn: "Language & Region",
       labelBn: "ভাষা ও অঞ্চল",
       icon: Globe,
-      descEn: "18 regions, live timezone clock, currency",
-      descBn: "১৮টি অঞ্চল, টাইমজোন ও কারেন্সি",
+      descEn: "Bangla, English, Urdu, live timezone, currency",
+      descBn: "বাংলা, English, اردو, টাইমজোন ও কারেন্সি",
     },
     {
       id: "security",
@@ -1086,10 +1086,10 @@ export default function Settings() {
                             <span className="text-lg shrink-0">{opt.flag}</span>
                             <div className="truncate">
                               <div className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                                {opt.countryName}
+                                {opt.nativeName}
                               </div>
                               <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                                {opt.nativeName} ({opt.langName})
+                                {opt.langName} · {opt.countryName}
                               </div>
                             </div>
                           </div>

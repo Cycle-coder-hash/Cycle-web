@@ -11,7 +11,7 @@ export const users = mysqlTable("users", {
   loginMethod: varchar("loginMethod", { length: 64 }),
   avatar: text("avatar"),
   role: mysqlEnum("role", ["user", "admin", "support"]).default("user").notNull(),
-  language: mysqlEnum("language", ["en", "bn"]).default("en").notNull(),
+  language: mysqlEnum("language", ["en", "bn", "ur"]).default("en").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),

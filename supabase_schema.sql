@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS users (
     "emailVerified" BOOLEAN DEFAULT FALSE NOT NULL,
     "loginMethod" VARCHAR(64) DEFAULT 'password',
     role VARCHAR(32) DEFAULT 'user' NOT NULL, -- 'user', 'admin', 'support'
-    language VARCHAR(8) DEFAULT 'en' NOT NULL, -- 'en', 'bn'
+    language VARCHAR(8) DEFAULT 'en' NOT NULL, -- 'en', 'bn', 'ur'
     "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     "lastSignedIn" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL

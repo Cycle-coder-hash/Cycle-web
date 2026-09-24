@@ -375,7 +375,9 @@ export default function Auth() {
               data.user.user_metadata?.avatar ||
               data.user.user_metadata?.picture ||
               null,
-            language: data.user.user_metadata?.language || (language === "bn" ? "bn" : language === "ur" ? "ur" : "en"),
+            language: (data.user.user_metadata?.language === "bn" || data.user.user_metadata?.language === "ur" || data.user.user_metadata?.language === "en")
+              ? data.user.user_metadata.language
+              : (language === "bn" ? "bn" : language === "ur" ? "ur" : "en"),
             emailVerified: true,
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -482,7 +484,9 @@ export default function Auth() {
                 data.user.user_metadata?.avatar ||
                 data.user.user_metadata?.picture ||
                 null,
-              language: data.user.user_metadata?.language || (language === "bn" ? "bn" : language === "ur" ? "ur" : "en"),
+              language: (data.user.user_metadata?.language === "bn" || data.user.user_metadata?.language === "ur" || data.user.user_metadata?.language === "en")
+                ? data.user.user_metadata.language
+                : (language === "bn" ? "bn" : language === "ur" ? "ur" : "en"),
               emailVerified: true,
               createdAt: new Date(),
               updatedAt: new Date(),
