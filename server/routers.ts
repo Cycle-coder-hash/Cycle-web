@@ -112,6 +112,7 @@ import {
   getUserTrades,
   getLeaderboardRankings,
   getPublicTraderStats,
+  getUserGlobalRank,
 } from "./db";
 
 import { and, eq, or } from "drizzle-orm";
@@ -1539,6 +1540,14 @@ export const appRouter = router({
         }
         return stats;
       }),
+
+    myRank: protectedProcedure.query(async ({ ctx }) => {
+      const userId = (ctx.user as any)?.id;
+      if (!userId) {
+        return { rank: null, overallScore: null, isRanked: false };
+      }
+      return await getUserGlobalRank(userId);
+    }),
   }),
 });
 

@@ -5688,6 +5688,98 @@ export interface LeaderboardTrader {
   activeDays: number;
   overallScore: number; // 0-100 deterministic composite score
   bestPair: string;
+  overallScoreUnrounded?: number;
+  scoreUpdatedAtTime?: number;
+}
+
+export interface LeaderboardWeights {
+  ruleAdherence: number;
+  disciplineRoutine: number;
+  winRate: number;
+  consistency: number;
+  profitFactor: number;
+}
+
+export const DEFAULT_LEADERBOARD_WEIGHTS: LeaderboardWeights = {
+  ruleAdherence: 25,
+  disciplineRoutine: 25,
+  winRate: 20,
+  consistency: 15,
+  profitFactor: 15,
+};
+
+export async function getLeaderboardWeights(): Promise<LeaderboardWeights> {
+  try {
+    const raw = await getSetting("leaderboard_settings");
+    if (raw) {
+      const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+      if (parsed && typeof parsed === "object") {
+        const ra = Number(parsed.ruleAdherence);
+        const dr = Number(parsed.disciplineRoutine);
+        const wr = Number(parsed.winRate);
+        const cs = Number(parsed.consistency);
+        const pf = Number(parsed.profitFactor);
+        if (
+          !isNaN(ra) && ra >= 0 &&
+          !isNaN(dr) && dr >= 0 &&
+          !isNaN(wr) && wr >= 0 &&
+          !isNaN(cs) && cs >= 0 &&
+          !isNaN(pf) && pf >= 0 &&
+          (ra + dr + wr + cs + pf) > 0
+        ) {
+          return {
+            ruleAdherence: Math.round(ra),
+            disciplineRoutine: Math.round(dr),
+            winRate: Math.round(wr),
+            consistency: Math.round(cs),
+            profitFactor: Math.round(pf),
+          };
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("[getLeaderboardWeights error]:", err);
+  }
+  return { ...DEFAULT_LEADERBOARD_WEIGHTS };
+}
+
+export async function saveLeaderboardWeights(weights: Partial<LeaderboardWeights>): Promise<LeaderboardWeights> {
+  const current = await getLeaderboardWeights();
+  const ra = weights.ruleAdherence !== undefined ? Number(weights.ruleAdherence) : current.ruleAdherence;
+  const dr = weights.disciplineRoutine !== undefined ? Number(weights.disciplineRoutine) : current.disciplineRoutine;
+  const wr = weights.winRate !== undefined ? Number(weights.winRate) : current.winRate;
+  const cs = weights.consistency !== undefined ? Number(weights.consistency) : current.consistency;
+  const pf = weights.profitFactor !== undefined ? Number(weights.profitFactor) : current.profitFactor;
+
+  if (
+    isNaN(ra) || ra < 0 ||
+    isNaN(dr) || dr < 0 ||
+    isNaN(wr) || wr < 0 ||
+    isNaN(cs) || cs < 0 ||
+    isNaN(pf) || pf < 0
+  ) {
+    throw new Error("Leaderboard weights must be non-negative numbers");
+  }
+
+  const sum = ra + dr + wr + cs + pf;
+  if (sum === 0) {
+    throw new Error("At least one leaderboard weight must be greater than zero");
+  }
+
+  const validWeights: LeaderboardWeights = {
+    ruleAdherence: Math.round(ra),
+    disciplineRoutine: Math.round(dr),
+    winRate: Math.round(wr),
+    consistency: Math.round(cs),
+    profitFactor: Math.round(pf),
+  };
+
+  await setSetting("leaderboard_settings", JSON.stringify({
+    ...validWeights,
+    updatedAt: new Date().toISOString(),
+  }));
+
+  return validWeights;
 }
 
 export interface UserJournalConfig {
@@ -6006,7 +6098,7 @@ function parseTimeframeBounds(timeframe: "all" | "month" | "week"): { startDate?
   return {};
 }
 
-export async function getLeaderboardRankings(timeframe: "all" | "month" | "week" = "all"): Promise<LeaderboardTrader[]> {
+export async function getAllLeaderboardRankings(timeframe: "all" | "month" | "week" = "all"): Promise<LeaderboardTrader[]> {
   const allUsers = await listAllUsers();
   const allTrades = await getAllTraderTrades();
   const { startDate, endDate } = parseTimeframeBounds(timeframe);
@@ -6017,17 +6109,34 @@ export async function getLeaderboardRankings(timeframe: "all" | "month" | "week"
     try {
       allCompletions = await db.select().from(disciplineTaskCompletions);
     } catch (err) {
-      console.warn("[getLeaderboardRankings completions db error]:", err);
+      console.warn("[getAllLeaderboardRankings completions db error]:", err);
       allCompletions = inMemoryDisciplineCompletions;
     }
   } else {
     allCompletions = inMemoryDisciplineCompletions;
   }
 
+  const weights = await getLeaderboardWeights();
+  const totalWeight =
+    weights.ruleAdherence +
+    weights.disciplineRoutine +
+    weights.winRate +
+    weights.consistency +
+    weights.profitFactor;
+  const activeTotalWeight = totalWeight > 0 ? totalWeight : 100;
+
   const results: LeaderboardTrader[] = [];
 
   for (const user of allUsers) {
-    // Filter user trades by timeframe
+    // Eligibility Rule 1: Email must be verified
+    const isEmailVerified = user.emailVerified === true || (user as any).emailVerified === 1 || Boolean((user as any).emailVerified);
+    if (!isEmailVerified) continue;
+
+    // Eligibility Rule 2: Active account (not suspended / banned)
+    const isSuspended = (user as any).status === "suspended" || (user as any).status === "banned";
+    if (isSuspended) continue;
+
+    // Filter user trades by timeframe (all-time default)
     let userTrades = allTrades.filter((t) => t.userId === user.id);
     if (startDate && endDate) {
       userTrades = userTrades.filter((t) => t.date >= startDate && t.date <= endDate);
@@ -6079,13 +6188,13 @@ export async function getLeaderboardRankings(timeframe: "all" | "month" | "week"
 
     const winRate = totalTrades > 0 ? Math.round((winningTrades / totalTrades) * 100) : 0;
     const totalPnl = Math.round((totalProfit - totalLoss) * 100) / 100;
-    const profitFactor = totalLoss > 0
+    const profitFactor = totalTrades > 0 && totalLoss > 0
       ? Math.round((totalProfit / totalLoss) * 100) / 100
-      : totalProfit > 0 ? 99.9 : 0;
+      : (totalTrades > 0 && totalProfit > 0 ? 99.9 : 0);
 
     const ruleComplianceRate = totalTrades > 0
       ? Math.round((rulesFollowed / totalTrades) * 100)
-      : 100;
+      : 0;
 
     // Active days count
     const allActiveDates = new Set<string>();
@@ -6097,7 +6206,7 @@ export async function getLeaderboardRankings(timeframe: "all" | "month" | "week"
     });
     const activeDays = allActiveDates.size;
 
-    // Discipline stats computed instantly in-memory from userCompletions and trade logging
+    // Discipline stats computed in-memory
     const completedCount = userCompletions.length;
     const currentStreak = Math.min(30, Math.max(completedCount, activeDays));
     const disciplineScore = Math.min(100, completedCount > 0 ? Math.min(100, completedCount * 10) : Math.min(80, activeDays * 20));
@@ -6105,20 +6214,35 @@ export async function getLeaderboardRankings(timeframe: "all" | "month" | "week"
     // Consistency score (0-100)
     const consistencyScore = Math.min(100, Math.round(activeDays * 8 + Math.min(currentStreak * 4, 30)));
 
-    // Multidimensional deterministic scoring formula (0 - 100):
-    // 1. Rule / Risk Adherence (25%)
-    // 2. Discipline Execution (25%)
-    // 3. Win Rate (20%)
-    // 4. Consistency & Streak (15%)
-    // 5. Profit Factor / P&L Quality (15%)
-    const ruleWeight = (ruleComplianceRate * 0.25);
-    const discWeight = (disciplineScore * 0.25);
-    const winWeight = (winRate * 0.20);
-    const consistWeight = (consistencyScore * 0.15);
-    const normalizedPf = Math.min(100, Math.max(0, (profitFactor / 3) * 100));
-    const pfWeight = (normalizedPf * 0.15);
-    // Only users with real trading performance records appear on the Leaderboard
-    if (totalTrades === 0) continue;
+    // Multidimensional deterministic scoring formula with dynamic weights:
+    // Profit factor normalized to 0-100 bounded scale
+    const normalizedPf = totalTrades > 0 ? Math.min(100, Math.max(0, (profitFactor / 3) * 100)) : 0;
+
+    const ruleContribution = (weights.ruleAdherence * ruleComplianceRate) / activeTotalWeight;
+    const discContribution = (weights.disciplineRoutine * disciplineScore) / activeTotalWeight;
+    const winContribution = (weights.winRate * winRate) / activeTotalWeight;
+    const consistContribution = (weights.consistency * consistencyScore) / activeTotalWeight;
+    const pfContribution = (weights.profitFactor * normalizedPf) / activeTotalWeight;
+
+    const overallScoreUnrounded = ruleContribution + discContribution + winContribution + consistContribution + pfContribution;
+    const overallScore = Math.round(overallScoreUnrounded);
+
+    // Eligibility Rule 3: Must have valid performance data and Overall Score > 0
+    if (overallScore <= 0 || overallScoreUnrounded <= 0) continue;
+
+    // Latest activity timestamp for tie-breaking (earlier score achievement ranks higher)
+    const activityDates: number[] = [];
+    userTrades.forEach((t) => {
+      if (t.createdAt) activityDates.push(new Date(t.createdAt).getTime());
+      else if (t.date) activityDates.push(new Date(t.date).getTime());
+    });
+    userCompletions.forEach((c) => {
+      if (c.createdAt) activityDates.push(new Date(c.createdAt).getTime());
+      else if (c.date) activityDates.push(new Date(c.date).getTime());
+    });
+    const scoreUpdatedAtTime = activityDates.length > 0
+      ? Math.max(...activityDates)
+      : (user.createdAt ? new Date(user.createdAt).getTime() : 0);
 
     const journalConfig = await getUserJournalConfig(user.id);
     const startingBalance = journalConfig.startingBalance || 10000;
@@ -6126,14 +6250,17 @@ export async function getLeaderboardRankings(timeframe: "all" | "month" | "week"
     const currentBalance = Math.round((startingBalance + totalPnl) * 100) / 100;
     const gainPercent = startingBalance > 0 ? Math.round(((currentBalance - startingBalance) / startingBalance) * 1000) / 10 : 0;
 
-    const overallScore = Math.round((ruleWeight + discWeight + winWeight + consistWeight + pfWeight) * 10) / 10;
+    // Synchronize latest custom profile name & avatar independently
+    const prof = await getTraderProfile(user.openId);
+    const resolvedName = prof?.name || user.name || `Trader #${user.id}`;
+    const resolvedAvatar = prof?.avatar !== undefined ? prof.avatar : (user.avatar || null);
 
     results.push({
       rank: 0,
       userId: user.id,
       openId: user.openId,
-      name: user.name || `Trader #${user.id}`,
-      avatar: user.avatar || null,
+      name: resolvedName,
+      avatar: resolvedAvatar,
       role: user.role || "user",
       startingBalance,
       currentBalance,
@@ -6152,823 +6279,74 @@ export async function getLeaderboardRankings(timeframe: "all" | "month" | "week"
       currentStreak,
       activeDays,
       overallScore,
+      overallScoreUnrounded,
+      scoreUpdatedAtTime,
       bestPair,
     });
   }
 
-  // Institutional Community Benchmark Traders (Ensures active Top 30 leaderboard)
-  const BENCHMARK_TRADERS: LeaderboardTrader[] = [
-    {
-      rank: 1,
-      userId: 9001,
-      openId: "inst-9001",
-      name: "Tariqul Islam (SMC Pro)",
-      avatar: null,
-      role: "Funded Institutional Trader",
-      startingBalance: 100000,
-      currentBalance: 129450,
-      gainPercent: 29.5,
-      currency: "$",
-      totalTrades: 46,
-      winningTrades: 36,
-      losingTrades: 8,
-      breakevenTrades: 2,
-      winRate: 78,
-      totalPnl: 29450,
-      profitFactor: 3.85,
-      ruleComplianceRate: 98,
-      disciplineScore: 96,
-      consistencyScore: 95,
-      currentStreak: 21,
-      activeDays: 24,
-      overallScore: 96.8,
-      bestPair: "EUR/USD",
-    },
-    {
-      rank: 2,
-      userId: 9002,
-      openId: "inst-9002",
-      name: "Rahim Chowdhury (ICT Desk)",
-      avatar: null,
-      role: "Prop Challenge Master",
-      startingBalance: 50000,
-      currentBalance: 62800,
-      gainPercent: 25.6,
-      currency: "$",
-      totalTrades: 41,
-      winningTrades: 31,
-      losingTrades: 9,
-      breakevenTrades: 1,
-      winRate: 76,
-      totalPnl: 12800,
-      profitFactor: 3.42,
-      ruleComplianceRate: 96,
-      disciplineScore: 92,
-      consistencyScore: 93,
-      currentStreak: 18,
-      activeDays: 22,
-      overallScore: 94.2,
-      bestPair: "GBP/USD",
-    },
-    {
-      rank: 3,
-      userId: 9003,
-      openId: "inst-9003",
-      name: "Nabila Hasan (CRT Specialist)",
-      avatar: null,
-      role: "Institutional Analyst",
-      startingBalance: 25000,
-      currentBalance: 30450,
-      gainPercent: 21.8,
-      currency: "$",
-      totalTrades: 35,
-      winningTrades: 26,
-      losingTrades: 8,
-      breakevenTrades: 1,
-      winRate: 74,
-      totalPnl: 5450,
-      profitFactor: 3.18,
-      ruleComplianceRate: 95,
-      disciplineScore: 94,
-      consistencyScore: 91,
-      currentStreak: 16,
-      activeDays: 20,
-      overallScore: 92.1,
-      bestPair: "XAU/USD",
-    },
-    {
-      rank: 4,
-      userId: 9004,
-      openId: "inst-9004",
-      name: "Fahim Shahriar (Liquidity Hunter)",
-      avatar: null,
-      role: "Senior Student Trader",
-      startingBalance: 50000,
-      currentBalance: 59750,
-      gainPercent: 19.5,
-      currency: "$",
-      totalTrades: 38,
-      winningTrades: 28,
-      losingTrades: 9,
-      breakevenTrades: 1,
-      winRate: 74,
-      totalPnl: 9750,
-      profitFactor: 2.95,
-      ruleComplianceRate: 94,
-      disciplineScore: 90,
-      consistencyScore: 89,
-      currentStreak: 14,
-      activeDays: 19,
-      overallScore: 90.5,
-      bestPair: "EUR/USD",
-    },
-    {
-      rank: 5,
-      userId: 9005,
-      openId: "inst-9005",
-      name: "Mahmudul Hasan (Order Flow)",
-      avatar: null,
-      role: "Cycle Specialist",
-      startingBalance: 100000,
-      currentBalance: 118200,
-      gainPercent: 18.2,
-      currency: "$",
-      totalTrades: 33,
-      winningTrades: 24,
-      losingTrades: 8,
-      breakevenTrades: 1,
-      winRate: 73,
-      totalPnl: 18200,
-      profitFactor: 2.82,
-      ruleComplianceRate: 93,
-      disciplineScore: 89,
-      consistencyScore: 88,
-      currentStreak: 12,
-      activeDays: 18,
-      overallScore: 89.2,
-      bestPair: "USD/JPY",
-    },
-    {
-      rank: 6,
-      userId: 9006,
-      openId: "inst-9006",
-      name: "Arif Hossain (London Open)",
-      avatar: null,
-      role: "Execution Trader",
-      startingBalance: 10000,
-      currentBalance: 11720,
-      gainPercent: 17.2,
-      currency: "$",
-      totalTrades: 29,
-      winningTrades: 21,
-      losingTrades: 7,
-      breakevenTrades: 1,
-      winRate: 72,
-      totalPnl: 1720,
-      profitFactor: 2.75,
-      ruleComplianceRate: 92,
-      disciplineScore: 88,
-      consistencyScore: 86,
-      currentStreak: 11,
-      activeDays: 17,
-      overallScore: 87.9,
-      bestPair: "EUR/GBP",
-    },
-    {
-      rank: 7,
-      userId: 9007,
-      openId: "inst-9007",
-      name: "Zubair Ahmed (Silver Bullet)",
-      avatar: null,
-      role: "Algorithm Execution",
-      startingBalance: 25000,
-      currentBalance: 28950,
-      gainPercent: 15.8,
-      currency: "$",
-      totalTrades: 28,
-      winningTrades: 20,
-      losingTrades: 7,
-      breakevenTrades: 1,
-      winRate: 71,
-      totalPnl: 3950,
-      profitFactor: 2.65,
-      ruleComplianceRate: 91,
-      disciplineScore: 87,
-      consistencyScore: 85,
-      currentStreak: 10,
-      activeDays: 16,
-      overallScore: 86.8,
-      bestPair: "GBP/USD",
-    },
-    {
-      rank: 8,
-      userId: 9008,
-      openId: "inst-9008",
-      name: "Tanvir Rahman (Institutional PA)",
-      avatar: null,
-      role: "Price Action Lead",
-      startingBalance: 50000,
-      currentBalance: 57400,
-      gainPercent: 14.8,
-      currency: "$",
-      totalTrades: 32,
-      winningTrades: 22,
-      losingTrades: 9,
-      breakevenTrades: 1,
-      winRate: 69,
-      totalPnl: 7400,
-      profitFactor: 2.55,
-      ruleComplianceRate: 90,
-      disciplineScore: 86,
-      consistencyScore: 84,
-      currentStreak: 9,
-      activeDays: 16,
-      overallScore: 85.5,
-      bestPair: "EUR/USD",
-    },
-    {
-      rank: 9,
-      userId: 9009,
-      openId: "inst-9009",
-      name: "Sabbir Khan (Session Trader)",
-      avatar: null,
-      role: "Session Timing Specialist",
-      startingBalance: 10000,
-      currentBalance: 11420,
-      gainPercent: 14.2,
-      currency: "$",
-      totalTrades: 27,
-      winningTrades: 19,
-      losingTrades: 7,
-      breakevenTrades: 1,
-      winRate: 70,
-      totalPnl: 1420,
-      profitFactor: 2.48,
-      ruleComplianceRate: 92,
-      disciplineScore: 85,
-      consistencyScore: 83,
-      currentStreak: 9,
-      activeDays: 15,
-      overallScore: 84.8,
-      bestPair: "XAU/USD",
-    },
-    {
-      rank: 10,
-      userId: 9010,
-      openId: "inst-9010",
-      name: "Shahidul Alam (Market Maker)",
-      avatar: null,
-      role: "MM Model Trader",
-      startingBalance: 100000,
-      currentBalance: 113500,
-      gainPercent: 13.5,
-      currency: "$",
-      totalTrades: 30,
-      winningTrades: 21,
-      losingTrades: 8,
-      breakevenTrades: 1,
-      winRate: 70,
-      totalPnl: 13500,
-      profitFactor: 2.42,
-      ruleComplianceRate: 89,
-      disciplineScore: 84,
-      consistencyScore: 82,
-      currentStreak: 8,
-      activeDays: 15,
-      overallScore: 83.9,
-      bestPair: "USD/CAD",
-    },
-    {
-      rank: 11,
-      userId: 9011,
-      openId: "inst-9011",
-      name: "Mehedi Hasan (Displacement Desk)",
-      avatar: null,
-      role: "Institutional Trader",
-      startingBalance: 25000,
-      currentBalance: 28250,
-      gainPercent: 13.0,
-      currency: "$",
-      totalTrades: 25,
-      winningTrades: 17,
-      losingTrades: 7,
-      breakevenTrades: 1,
-      winRate: 68,
-      totalPnl: 3250,
-      profitFactor: 2.38,
-      ruleComplianceRate: 90,
-      disciplineScore: 83,
-      consistencyScore: 81,
-      currentStreak: 8,
-      activeDays: 14,
-      overallScore: 83.0,
-      bestPair: "GBP/JPY",
-    },
-    {
-      rank: 12,
-      userId: 9012,
-      openId: "inst-9012",
-      name: "Nazmul Huda (Supply & Demand)",
-      avatar: null,
-      role: "S&D Specialist",
-      startingBalance: 50000,
-      currentBalance: 56100,
-      gainPercent: 12.2,
-      currency: "$",
-      totalTrades: 28,
-      winningTrades: 19,
-      losingTrades: 8,
-      breakevenTrades: 1,
-      winRate: 68,
-      totalPnl: 6100,
-      profitFactor: 2.32,
-      ruleComplianceRate: 89,
-      disciplineScore: 82,
-      consistencyScore: 80,
-      currentStreak: 7,
-      activeDays: 14,
-      overallScore: 82.1,
-      bestPair: "AUD/USD",
-    },
-    {
-      rank: 13,
-      userId: 9013,
-      openId: "inst-9013",
-      name: "Ashikur Rahman (Range Expansion)",
-      avatar: null,
-      role: "CRT Execution",
-      startingBalance: 10000,
-      currentBalance: 11180,
-      gainPercent: 11.8,
-      currency: "$",
-      totalTrades: 24,
-      winningTrades: 16,
-      losingTrades: 7,
-      breakevenTrades: 1,
-      winRate: 67,
-      totalPnl: 1180,
-      profitFactor: 2.25,
-      ruleComplianceRate: 88,
-      disciplineScore: 82,
-      consistencyScore: 79,
-      currentStreak: 7,
-      activeDays: 13,
-      overallScore: 81.4,
-      bestPair: "EUR/USD",
-    },
-    {
-      rank: 14,
-      userId: 9014,
-      openId: "inst-9014",
-      name: "Kamrul Islam (Swing Execution)",
-      avatar: null,
-      role: "Macro Swing Trader",
-      startingBalance: 50000,
-      currentBalance: 55650,
-      gainPercent: 11.3,
-      currency: "$",
-      totalTrades: 22,
-      winningTrades: 15,
-      losingTrades: 6,
-      breakevenTrades: 1,
-      winRate: 68,
-      totalPnl: 5650,
-      profitFactor: 2.22,
-      ruleComplianceRate: 91,
-      disciplineScore: 81,
-      consistencyScore: 78,
-      currentStreak: 7,
-      activeDays: 13,
-      overallScore: 80.8,
-      bestPair: "NZD/USD",
-    },
-    {
-      rank: 15,
-      userId: 9015,
-      openId: "inst-9015",
-      name: "Farhan Sadik (CRT Framework)",
-      avatar: null,
-      role: "Price Cycle Trader",
-      startingBalance: 25000,
-      currentBalance: 27700,
-      gainPercent: 10.8,
-      currency: "$",
-      totalTrades: 26,
-      winningTrades: 17,
-      losingTrades: 8,
-      breakevenTrades: 1,
-      winRate: 65,
-      totalPnl: 2700,
-      profitFactor: 2.18,
-      ruleComplianceRate: 88,
-      disciplineScore: 80,
-      consistencyScore: 77,
-      currentStreak: 6,
-      activeDays: 12,
-      overallScore: 79.9,
-      bestPair: "EUR/JPY",
-    },
-    {
-      rank: 16,
-      userId: 9016,
-      openId: "inst-9016",
-      name: "Saifullah Khalid (Asian Sweep)",
-      avatar: null,
-      role: "Session Trader",
-      startingBalance: 10000,
-      currentBalance: 11040,
-      gainPercent: 10.4,
-      currency: "$",
-      totalTrades: 23,
-      winningTrades: 15,
-      losingTrades: 7,
-      breakevenTrades: 1,
-      winRate: 65,
-      totalPnl: 1040,
-      profitFactor: 2.14,
-      ruleComplianceRate: 87,
-      disciplineScore: 80,
-      consistencyScore: 76,
-      currentStreak: 6,
-      activeDays: 12,
-      overallScore: 79.2,
-      bestPair: "GBP/USD",
-    },
-    {
-      rank: 17,
-      userId: 9017,
-      openId: "inst-9017",
-      name: "Imtiaz Ahmed (15M Execution)",
-      avatar: null,
-      role: "Intraday Specialist",
-      startingBalance: 25000,
-      currentBalance: 27450,
-      gainPercent: 9.8,
-      currency: "$",
-      totalTrades: 25,
-      winningTrades: 16,
-      losingTrades: 8,
-      breakevenTrades: 1,
-      winRate: 64,
-      totalPnl: 2450,
-      profitFactor: 2.10,
-      ruleComplianceRate: 88,
-      disciplineScore: 79,
-      consistencyScore: 75,
-      currentStreak: 6,
-      activeDays: 11,
-      overallScore: 78.5,
-      bestPair: "XAU/USD",
-    },
-    {
-      rank: 18,
-      userId: 9018,
-      openId: "inst-9018",
-      name: "Habibur Rahman (Daily Cycle)",
-      avatar: null,
-      role: "Cycle Model Trader",
-      startingBalance: 100000,
-      currentBalance: 109400,
-      gainPercent: 9.4,
-      currency: "$",
-      totalTrades: 26,
-      winningTrades: 17,
-      losingTrades: 8,
-      breakevenTrades: 1,
-      winRate: 65,
-      totalPnl: 9400,
-      profitFactor: 2.05,
-      ruleComplianceRate: 86,
-      disciplineScore: 78,
-      consistencyScore: 74,
-      currentStreak: 5,
-      activeDays: 11,
-      overallScore: 77.8,
-      bestPair: "USD/CHF",
-    },
-    {
-      rank: 19,
-      userId: 9019,
-      openId: "inst-9019",
-      name: "Riaz Mahmud (Prop Risk Manager)",
-      avatar: null,
-      role: "Risk Management Desk",
-      startingBalance: 50000,
-      currentBalance: 54450,
-      gainPercent: 8.9,
-      currency: "$",
-      totalTrades: 21,
-      winningTrades: 14,
-      losingTrades: 6,
-      breakevenTrades: 1,
-      winRate: 67,
-      totalPnl: 4450,
-      profitFactor: 2.15,
-      ruleComplianceRate: 93,
-      disciplineScore: 82,
-      consistencyScore: 74,
-      currentStreak: 5,
-      activeDays: 10,
-      overallScore: 77.2,
-      bestPair: "EUR/USD",
-    },
-    {
-      rank: 20,
-      userId: 9020,
-      openId: "inst-9020",
-      name: "Shakil Ahmed (Breaker Block)",
-      avatar: null,
-      role: "Order Flow Student",
-      startingBalance: 10000,
-      currentBalance: 10860,
-      gainPercent: 8.6,
-      currency: "$",
-      totalTrades: 22,
-      winningTrades: 14,
-      losingTrades: 7,
-      breakevenTrades: 1,
-      winRate: 64,
-      totalPnl: 860,
-      profitFactor: 2.02,
-      ruleComplianceRate: 87,
-      disciplineScore: 77,
-      consistencyScore: 73,
-      currentStreak: 5,
-      activeDays: 10,
-      overallScore: 76.5,
-      bestPair: "GBP/JPY",
-    },
-    {
-      rank: 21,
-      userId: 9021,
-      openId: "inst-9021",
-      name: "Muniruzzaman (Forex Scalper)",
-      avatar: null,
-      role: "London Scalper",
-      startingBalance: 10000,
-      currentBalance: 10820,
-      gainPercent: 8.2,
-      currency: "$",
-      totalTrades: 26,
-      winningTrades: 16,
-      losingTrades: 9,
-      breakevenTrades: 1,
-      winRate: 62,
-      totalPnl: 820,
-      profitFactor: 1.98,
-      ruleComplianceRate: 86,
-      disciplineScore: 76,
-      consistencyScore: 72,
-      currentStreak: 5,
-      activeDays: 10,
-      overallScore: 75.8,
-      bestPair: "EUR/USD",
-    },
-    {
-      rank: 22,
-      userId: 9022,
-      openId: "inst-9022",
-      name: "Al-Amin Hossain (Institutional)",
-      avatar: null,
-      role: "Institutional Swing",
-      startingBalance: 25000,
-      currentBalance: 26950,
-      gainPercent: 7.8,
-      currency: "$",
-      totalTrades: 20,
-      winningTrades: 13,
-      losingTrades: 6,
-      breakevenTrades: 1,
-      winRate: 65,
-      totalPnl: 1950,
-      profitFactor: 2.05,
-      ruleComplianceRate: 89,
-      disciplineScore: 78,
-      consistencyScore: 71,
-      currentStreak: 4,
-      activeDays: 9,
-      overallScore: 75.1,
-      bestPair: "USD/JPY",
-    },
-    {
-      rank: 23,
-      userId: 9023,
-      openId: "inst-9023",
-      name: "Tanzeem Karim (FVG Execution)",
-      avatar: null,
-      role: "Price Action Student",
-      startingBalance: 50000,
-      currentBalance: 53700,
-      gainPercent: 7.4,
-      currency: "$",
-      totalTrades: 22,
-      winningTrades: 14,
-      losingTrades: 7,
-      breakevenTrades: 1,
-      winRate: 64,
-      totalPnl: 3700,
-      profitFactor: 1.94,
-      ruleComplianceRate: 85,
-      disciplineScore: 75,
-      consistencyScore: 70,
-      currentStreak: 4,
-      activeDays: 9,
-      overallScore: 74.4,
-      bestPair: "EUR/USD",
-    },
-    {
-      rank: 24,
-      userId: 9024,
-      openId: "inst-9024",
-      name: "Jawadul Karim (Price Delivery)",
-      avatar: null,
-      role: "Algorithm Student",
-      startingBalance: 10000,
-      currentBalance: 10710,
-      gainPercent: 7.1,
-      currency: "$",
-      totalTrades: 19,
-      winningTrades: 12,
-      losingTrades: 6,
-      breakevenTrades: 1,
-      winRate: 63,
-      totalPnl: 710,
-      profitFactor: 1.90,
-      ruleComplianceRate: 86,
-      disciplineScore: 75,
-      consistencyScore: 69,
-      currentStreak: 4,
-      activeDays: 9,
-      overallScore: 73.8,
-      bestPair: "GBP/USD",
-    },
-    {
-      rank: 25,
-      userId: 9025,
-      openId: "inst-9025",
-      name: "Rashedul Islam (Footprint Desk)",
-      avatar: null,
-      role: "Order Flow Trader",
-      startingBalance: 25000,
-      currentBalance: 26650,
-      gainPercent: 6.6,
-      currency: "$",
-      totalTrades: 21,
-      winningTrades: 13,
-      losingTrades: 7,
-      breakevenTrades: 1,
-      winRate: 62,
-      totalPnl: 1650,
-      profitFactor: 1.88,
-      ruleComplianceRate: 84,
-      disciplineScore: 74,
-      consistencyScore: 68,
-      currentStreak: 4,
-      activeDays: 8,
-      overallScore: 73.0,
-      bestPair: "AUD/USD",
-    },
-    {
-      rank: 26,
-      userId: 9026,
-      openId: "inst-9026",
-      name: "Sadman Sakib (Session Sweep)",
-      avatar: null,
-      role: "NY Open Specialist",
-      startingBalance: 10000,
-      currentBalance: 10620,
-      gainPercent: 6.2,
-      currency: "$",
-      totalTrades: 18,
-      winningTrades: 11,
-      losingTrades: 6,
-      breakevenTrades: 1,
-      winRate: 61,
-      totalPnl: 620,
-      profitFactor: 1.85,
-      ruleComplianceRate: 85,
-      disciplineScore: 73,
-      consistencyScore: 67,
-      currentStreak: 3,
-      activeDays: 8,
-      overallScore: 72.3,
-      bestPair: "XAU/USD",
-    },
-    {
-      rank: 27,
-      userId: 9027,
-      openId: "inst-9027",
-      name: "Naimur Rahman (Institutional CRT)",
-      avatar: null,
-      role: "Range Model Trader",
-      startingBalance: 50000,
-      currentBalance: 52950,
-      gainPercent: 5.9,
-      currency: "$",
-      totalTrades: 20,
-      winningTrades: 12,
-      losingTrades: 7,
-      breakevenTrades: 1,
-      winRate: 60,
-      totalPnl: 2950,
-      profitFactor: 1.82,
-      ruleComplianceRate: 85,
-      disciplineScore: 72,
-      consistencyScore: 66,
-      currentStreak: 3,
-      activeDays: 8,
-      overallScore: 71.6,
-      bestPair: "EUR/JPY",
-    },
-    {
-      rank: 28,
-      userId: 9028,
-      openId: "inst-9028",
-      name: "Mustafizur Rahman (Risk First)",
-      avatar: null,
-      role: "Strict Risk Control",
-      startingBalance: 10000,
-      currentBalance: 10560,
-      gainPercent: 5.6,
-      currency: "$",
-      totalTrades: 17,
-      winningTrades: 10,
-      losingTrades: 6,
-      breakevenTrades: 1,
-      winRate: 59,
-      totalPnl: 560,
-      profitFactor: 1.80,
-      ruleComplianceRate: 90,
-      disciplineScore: 75,
-      consistencyScore: 65,
-      currentStreak: 3,
-      activeDays: 7,
-      overallScore: 71.0,
-      bestPair: "GBP/USD",
-    },
-    {
-      rank: 29,
-      userId: 9029,
-      openId: "inst-9029",
-      name: "Asaduzzaman (HTF Orderflow)",
-      avatar: null,
-      role: "Macro Timeframe Analyst",
-      startingBalance: 100000,
-      currentBalance: 105400,
-      gainPercent: 5.4,
-      currency: "$",
-      totalTrades: 16,
-      winningTrades: 10,
-      losingTrades: 5,
-      breakevenTrades: 1,
-      winRate: 63,
-      totalPnl: 5400,
-      profitFactor: 1.85,
-      ruleComplianceRate: 88,
-      disciplineScore: 73,
-      consistencyScore: 64,
-      currentStreak: 3,
-      activeDays: 7,
-      overallScore: 70.4,
-      bestPair: "USD/CAD",
-    },
-    {
-      rank: 30,
-      userId: 9030,
-      openId: "inst-9030",
-      name: "Zakir Hossain (Discipline Desk)",
-      avatar: null,
-      role: "Rules Execution Trader",
-      startingBalance: 10000,
-      currentBalance: 10510,
-      gainPercent: 5.1,
-      currency: "$",
-      totalTrades: 18,
-      winningTrades: 10,
-      losingTrades: 7,
-      breakevenTrades: 1,
-      winRate: 56,
-      totalPnl: 510,
-      profitFactor: 1.76,
-      ruleComplianceRate: 88,
-      disciplineScore: 74,
-      consistencyScore: 63,
-      currentStreak: 3,
-      activeDays: 7,
-      overallScore: 69.8,
-      bestPair: "EUR/USD",
-    },
-  ];
-
-  // Merge real users with benchmark traders
-  // Real users always take top priority on the leaderboard.
-  // If real users are fewer than 30, we fill the remaining slots with institutional community benchmark traders.
-  const realUserIds = new Set(results.map((r) => r.userId));
-  const availableBenchmarks = BENCHMARK_TRADERS.filter((b) => !realUserIds.has(b.userId));
-  const slotsToFill = Math.max(0, 30 - results.length);
-  const benchmarkAdditions = availableBenchmarks.slice(0, slotsToFill);
-  const combined = [...results, ...benchmarkAdditions];
-
-  // Sort deterministically:
-  // 1. Overall Score desc
-  // 2. Gain Percent desc
-  // 3. Net PnL desc
-  // 4. Win Rate desc
-  combined.sort((a, b) => {
-    if (b.overallScore !== a.overallScore) return b.overallScore - a.overallScore;
-    if (b.gainPercent !== a.gainPercent) return b.gainPercent - a.gainPercent;
-    if (b.totalPnl !== a.totalPnl) return b.totalPnl - a.totalPnl;
-    if (b.winRate !== a.winRate) return b.winRate - a.winRate;
-    return b.totalTrades - a.totalTrades;
+  // Strictly deterministic sorting:
+  // 1. Primary: exact unrounded composite score descending
+  // 2. Secondary: earlier score achievement timestamp ranks higher (ascending timestamp)
+  // 3. Fallback: userId ascending
+  results.sort((a, b) => {
+    const scoreDiff = (b.overallScoreUnrounded ?? b.overallScore) - (a.overallScoreUnrounded ?? a.overallScore);
+    if (Math.abs(scoreDiff) > 0.0001) {
+      return scoreDiff;
+    }
+    const timeA = a.scoreUpdatedAtTime || 0;
+    const timeB = b.scoreUpdatedAtTime || 0;
+    if (timeA !== timeB) {
+      return timeA - timeB;
+    }
+    return a.userId - b.userId;
   });
 
-  // Assign ranks (Strictly 1 to 30)
-  const top30 = combined.slice(0, 30);
-  top30.forEach((item, idx) => {
-    item.rank = idx + 1;
-  });
+  // Assign competition ranking:
+  // Same score + same timestamp = shared rank; subsequent rank skips accordingly (e.g. 1, 2, 2, 4)
+  for (let i = 0; i < results.length; i++) {
+    if (i > 0) {
+      const prev = results[i - 1];
+      const curr = results[i];
+      const scorePrev = prev.overallScoreUnrounded ?? prev.overallScore;
+      const scoreCurr = curr.overallScoreUnrounded ?? curr.overallScore;
+      const isSameScore = Math.abs(scorePrev - scoreCurr) < 0.0001;
+      const isSameTime = (curr.scoreUpdatedAtTime || 0) === (prev.scoreUpdatedAtTime || 0);
 
-  return top30;
+      if (isSameScore && isSameTime) {
+        curr.rank = prev.rank;
+      } else {
+        curr.rank = i + 1;
+      }
+    } else {
+      results[0].rank = 1;
+    }
+  }
+
+  return results;
+}
+
+export async function getLeaderboardRankings(timeframe: "all" | "month" | "week" = "all"): Promise<LeaderboardTrader[]> {
+  const allRanked = await getAllLeaderboardRankings(timeframe);
+  // Strictly Top 30 only, without padding any fake/mock traders
+  return allRanked.slice(0, 30);
+}
+
+export async function getUserGlobalRank(userId: number): Promise<{
+  rank: number | null;
+  overallScore: number | null;
+  isRanked: boolean;
+}> {
+  const allRanked = await getAllLeaderboardRankings("all");
+  const entry = allRanked.find((r) => r.userId === userId);
+  if (!entry) {
+    return { rank: null, overallScore: null, isRanked: false };
+  }
+  return {
+    rank: entry.rank,
+    overallScore: Math.round(entry.overallScore),
+    isRanked: true,
+  };
 }
 
 export async function getPublicTraderStats(userId: number, timeframe: "all" | "month" | "week" = "all") {

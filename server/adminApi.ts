@@ -34,6 +34,9 @@ import {
   updatePaymentGateways,
   getCourseTelegramPopupConfig,
   setCourseTelegramPopupConfig,
+  getLeaderboardWeights,
+  saveLeaderboardWeights,
+  getLeaderboardRankings,
 } from "./db";
 import { eq } from "drizzle-orm";
 import { sendAccessEmail } from "./email";
@@ -474,6 +477,36 @@ adminRouter.post("/course-telegram-settings", async (req, res) => {
   try {
     const updated = await setCourseTelegramPopupConfig(req.body);
     return res.json({ success: true, config: updated });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/admin/leaderboard-settings
+adminRouter.get("/leaderboard-settings", async (_req, res) => {
+  try {
+    const weights = await getLeaderboardWeights();
+    return res.json({ success: true, weights });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/admin/leaderboard-settings
+adminRouter.post("/leaderboard-settings", async (req, res) => {
+  try {
+    const updated = await saveLeaderboardWeights(req.body);
+    return res.json({ success: true, weights: updated });
+  } catch (err: any) {
+    return res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/admin/leaderboard/recalculate
+adminRouter.post("/leaderboard/recalculate", async (_req, res) => {
+  try {
+    const rankings = await getLeaderboardRankings("all");
+    return res.json({ success: true, count: rankings.length, recalculatedAt: new Date().toISOString() });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }

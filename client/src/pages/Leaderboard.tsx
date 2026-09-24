@@ -1,35 +1,19 @@
-import React, { useState, useMemo } from "react";
-import { Link } from "wouter";
+import React, { useState, useMemo, useEffect } from "react";
+import { Link, useLocation } from "wouter";
 import {
   Trophy,
   Medal,
   Crown,
   Flame,
-  ShieldCheck,
-  TrendingUp,
-  TrendingDown,
-  Calendar,
-  Clock,
-  Target,
   CheckCircle2,
   AlertCircle,
-  ArrowUpRight,
-  Percent,
-  DollarSign,
-  Activity,
-  User as UserIcon,
-  ExternalLink,
   Search,
   Layers,
-  Award,
   Sparkles,
   ChevronRight,
   Sun,
   Moon,
   X,
-  BookOpen,
-  ClipboardCheck,
-  BarChart3,
   Lock,
 } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -44,14 +28,19 @@ import { LeaderboardTrader } from "../../../server/db";
 
 export default function Leaderboard() {
   const { theme, toggleTheme } = useTheme();
-  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+  const { user, loading: isAuthLoading } = useAuth({ redirectOnUnauthenticated: true, redirectPath: "/login" });
 
   // Language state (synced with LanguageContext)
-  const { t, language, isRTL } = useLanguage();
+  const { language } = useLanguage();
   const isBn = language === "bn";
 
-  // Timeframe filter state: "all" | "month" | "week"
-  const [timeframe, setTimeframe] = useState<"all" | "month" | "week">("all");
+  // Auth gate fallback
+  useEffect(() => {
+    if (!isAuthLoading && !user) {
+      setLocation("/login");
+    }
+  }, [user, isAuthLoading, setLocation]);
 
   // Search filter
   const [searchQuery, setSearchQuery] = useState("");
@@ -59,19 +48,13 @@ export default function Leaderboard() {
   // Selected trader for performance breakdown modal
   const [selectedTrader, setSelectedTrader] = useState<LeaderboardTrader | null>(null);
 
-  // Fetch real rankings from server
+  // Fetch real all-time rankings from server
   const { data: rankings, isLoading, isError, refetch } = trpc.leaderboard.rankings.useQuery(
-    { timeframe },
-    { refetchOnWindowFocus: false, staleTime: 10000 }
+    { timeframe: "all" },
+    { enabled: !!user, refetchOnWindowFocus: false, staleTime: 10000 }
   );
 
-  // Detailed profile query for selected trader modal
-  const { data: traderDetailedProfile, isLoading: isProfileLoading } = trpc.leaderboard.traderProfile.useQuery(
-    { userId: selectedTrader?.userId || 0, timeframe },
-    { enabled: !!selectedTrader?.userId }
-  );
-
-  // Strictly restrict to the Global Top 30 ranked traders
+  // Strictly restrict to the Global Top 30 ranked real traders
   const top30Global = useMemo(() => {
     if (!rankings) return [];
     return rankings.slice(0, 30);
@@ -101,9 +84,8 @@ export default function Leaderboard() {
     return filteredRankings.slice(3, 30);
   }, [filteredRankings]);
 
-  // Get podium arrangement:
+  // Podium arrangement:
   // Desktop: #2 Second Place (left), #1 First Place (center elevated), #3 Third Place (right)
-  // Mobile: #1 First Place (top), #2 Second Place (second), #3 Third Place (third)
   const podiumTraders = useMemo(() => {
     if (!topThree.length) return [];
     const first = topThree[0] || null;
@@ -131,6 +113,14 @@ export default function Leaderboard() {
     ].filter((item) => item.trader !== null);
   }, [topThree, isBn]);
 
+  if (isAuthLoading || !user) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] dark:bg-[#070e1b] flex items-center justify-center">
+        <div className="size-10 border-4 border-sky-500/20 border-t-sky-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div
       className={`min-h-screen bg-[#f8fafc] text-[#09111f] dark:bg-[#070e1b] dark:text-slate-100 transition-colors duration-300 ${
@@ -149,7 +139,7 @@ export default function Leaderboard() {
                 CYCLE OF CHART
               </span>
               <span className="text-[10px] font-bold text-[#0284c7] dark:text-sky-400">
-                {isBn ? "ইন্সটিটিউশনাল লিডারবোর্ড" : "INSTITUTIONAL LEADERBOARD"}
+                {isBn ? "গ্লোবাল লিডারবোর্ড" : "GLOBAL LEADERBOARD"}
               </span>
             </div>
           </Link>
@@ -171,20 +161,12 @@ export default function Leaderboard() {
             {/* Language Switcher */}
             <LanguageSelector />
 
-            {/* User portal / login CTA */}
-            {user ? (
-              <Link href="/dashboard">
-                <Button size="sm" className="hidden sm:inline-flex bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs rounded-xl">
-                  {isBn ? "আমার পোর্টাল" : "My Portal"}
-                </Button>
-              </Link>
-            ) : (
-              <Link href="/login">
-                <Button size="sm" className="hidden sm:inline-flex bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl">
-                  {isBn ? "লগইন" : "Sign In"}
-                </Button>
-              </Link>
-            )}
+            {/* User portal CTA */}
+            <Link href="/dashboard">
+              <Button size="sm" className="hidden sm:inline-flex bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs rounded-xl">
+                {isBn ? "আমার ড্যাশবোর্ড" : "My Dashboard"}
+              </Button>
+            </Link>
           </div>
         </div>
       </header>
@@ -226,8 +208,8 @@ export default function Leaderboard() {
 
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
               {isBn
-                ? "সাইকেল অব চার্ট লিডারবোর্ড শুধুমাত্র লাভের অঙ্কে নির্ধারণ করা হয় না। ট্রেডিং রুলস অনুসরণ, দৈনিক ডিসিপ্লিন রুটিন, ধারাবাহিক জার্নালিং এবং সুশৃঙ্খল রিস্ক ম্যানেজমেন্টের ওপর ভিত্তি করে এই স্কোর নির্ণয় করা হয়।"
-                : "The Cycle of Chart Leaderboard is not dictated by raw profit alone. Rankings are calculated through a multi-dimensional scoring matrix combining Risk Adherence, Daily Discipline, Win Consistency, and Risk-to-Reward Quality."}
+                ? "সাইকেল অব চার্ট লিডারবোর্ড শুধুমাত্র লাভের অঙ্কে নির্ধারণ করা হয় না। ট্রেডিং রুলস অনুসরণ, দৈনিক ডিসিপ্লিন রুটিন, ধারাবাহিক জার্নালিং এবং সুশৃঙ্খল রিস্ক ম্যানেজমেন্টের ওপর ভিত্তি করে অল-টাইম স্কোর নির্ণয় করা হয়।"
+                : "The Cycle of Chart Global Leaderboard is not dictated by raw profit alone. Real rankings are computed from verified trader adherence, daily discipline habits, consistency streaks, and risk management quality."}
             </p>
 
             {/* 5-Pillar Score Formula Breakdown Pills */}
@@ -237,7 +219,7 @@ export default function Leaderboard() {
                   {isBn ? "রিস্ক মেনে চলা" : "Rule Adherence"}
                 </div>
                 <div className="text-base font-extrabold text-slate-900 dark:text-white">25%</div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400">Max Weight</div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400">Base Weight</div>
               </div>
 
               <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-2.5 dark:border-emerald-500/30 dark:bg-emerald-500/10">
@@ -245,7 +227,7 @@ export default function Leaderboard() {
                   {isBn ? "ডেইলি ডিসিপ্লিন" : "Discipline Routine"}
                 </div>
                 <div className="text-base font-extrabold text-slate-900 dark:text-white">25%</div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400">Execution Score</div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400">Execution Habit</div>
               </div>
 
               <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-2.5 dark:border-cyan-500/30 dark:bg-cyan-500/10">
@@ -253,7 +235,7 @@ export default function Leaderboard() {
                   {isBn ? "উইন রেট" : "Win Rate"}
                 </div>
                 <div className="text-base font-extrabold text-slate-900 dark:text-white">20%</div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400">Quality Setups</div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400">Trade Quality</div>
               </div>
 
               <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-2.5 dark:border-purple-500/30 dark:bg-purple-500/10">
@@ -261,7 +243,7 @@ export default function Leaderboard() {
                   {isBn ? "ধারাবাহিকতা" : "Consistency"}
                 </div>
                 <div className="text-base font-extrabold text-slate-900 dark:text-white">15%</div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400">Streaks & Logs</div>
+                <div className="text-[10px] text-slate-500 dark:text-slate-400">Streaks & Days</div>
               </div>
 
               <div className="col-span-2 sm:col-span-1 rounded-xl border border-amber-500/20 bg-amber-500/5 p-2.5 dark:border-amber-500/30 dark:bg-amber-500/10">
@@ -276,46 +258,12 @@ export default function Leaderboard() {
         </section>
 
         {/* ======================================================================= */}
-        {/* TIMEFRAME SELECTOR & SEARCH BAR */}
+        {/* ALL-TIME BADGE & SEARCH BAR */}
         {/* ======================================================================= */}
         <section className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-          {/* Timeframe Tabs */}
-          <div className="inline-flex rounded-2xl border border-slate-200 bg-white p-1.5 dark:border-slate-800 dark:bg-[#070e1b] shadow-sm">
-            <button
-              onClick={() => setTimeframe("all")}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
-                timeframe === "all"
-                  ? "bg-sky-500 text-slate-950 shadow-md font-extrabold"
-                  : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-              }`}
-            >
-              <Calendar size={14} />
-              <span>{isBn ? "সর্বকালের (All Time)" : "All Time"}</span>
-            </button>
-
-            <button
-              onClick={() => setTimeframe("month")}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
-                timeframe === "month"
-                  ? "bg-sky-500 text-slate-950 shadow-md font-extrabold"
-                  : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-              }`}
-            >
-              <Clock size={14} />
-              <span>{isBn ? "চলতি মাস (Monthly)" : "This Month"}</span>
-            </button>
-
-            <button
-              onClick={() => setTimeframe("week")}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition-all ${
-                timeframe === "week"
-                  ? "bg-sky-500 text-slate-950 shadow-md font-extrabold"
-                  : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
-              }`}
-            >
-              <Flame size={14} />
-              <span>{isBn ? "চলতি সপ্তাহ (Weekly)" : "This Week"}</span>
-            </button>
+          <div className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-black text-slate-700 dark:border-slate-800 dark:bg-[#070e1b] dark:text-slate-300 shadow-sm">
+            <Trophy size={14} className="text-amber-500" />
+            <span>{isBn ? "সর্বকালের র‍্যাঙ্কিং (All-Time Leaderboard)" : "All-Time Global Rankings"}</span>
           </div>
 
           {/* Search Box */}
@@ -354,17 +302,17 @@ export default function Leaderboard() {
           </div>
         )}
 
-        {/* Empty state */}
+        {/* Clean Empty state */}
         {!isLoading && !isError && filteredRankings.length === 0 && (
-          <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center dark:border-slate-800 dark:bg-[#070e1b]/80 space-y-4">
+          <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center dark:border-slate-800 dark:bg-[#070e1b]/80 space-y-4 shadow-sm">
             <Trophy size={48} className="mx-auto text-slate-400 dark:text-slate-600" />
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-              {isBn ? "কোনো ট্রেডার পাওয়া যায়নি" : "No Active Traders Found For This Period"}
+              {isBn ? "এখনো কোনো লিডারবোর্ড তথ্য উপলব্ধ নেই।" : "No leaderboard data available yet."}
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
               {isBn
-                ? "এই সময়সীমার মধ্যে কোনো ট্রেড বা ডিসিপ্লিন লগ পাওয়া যায়নি। আপনার জার্নালে ট্রেড এন্ট্রি করুন এবং লিডারবোর্ডে যুক্ত হন।"
-                : "No trade entries or discipline logs have been recorded for this timeframe yet. Open your Trading Journal to log trades and qualify for the leaderboard."}
+                ? "ভেরিফায়েড ট্রেডার পারফরম্যান্স রেকর্ড হওয়ার সাথে সাথেই এখানে শীর্ষ ট্রেডারদের তালিকা প্রদর্শিত হবে। আপনার জার্নালে ট্রেড এন্ট্রি করুন এবং লিডারবোর্ডে যুক্ত হন।"
+                : "Eligible registered traders with verified performance will appear here. Log trades in your Trading Journal and maintain daily routines to qualify."}
             </p>
             <Link href="/dashboard">
               <Button size="sm" className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs rounded-xl mt-2">
@@ -375,7 +323,7 @@ export default function Leaderboard() {
         )}
 
         {/* ======================================================================= */}
-        {/* TOP 3 PODIUM (PROMINENT ELEVATION) */}
+        {/* TOP 3 PODIUM */}
         {/* ======================================================================= */}
         {!isLoading && !isError && topThree.length > 0 && (
           <section className="space-y-4">
@@ -391,9 +339,7 @@ export default function Leaderboard() {
                 if (!trader) return null;
                 const isChampion = position === 1;
                 const isSilver = position === 2;
-                const isBronze = position === 3;
 
-                // Color themes
                 const borderColor = isChampion
                   ? "border-amber-400/60 dark:border-amber-400/80 shadow-amber-500/20"
                   : isSilver
@@ -412,6 +358,8 @@ export default function Leaderboard() {
                   ? "bg-gradient-to-r from-slate-300 to-slate-400 text-slate-950 shadow-md"
                   : "bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-md";
 
+                const hasPositiveProfit = trader.totalPnl > 0;
+
                 return (
                   <div
                     key={trader.userId}
@@ -429,7 +377,7 @@ export default function Leaderboard() {
                     </div>
 
                     <div className="pt-3 text-center space-y-3">
-                      {/* Avatar */}
+                      {/* Profile Photo */}
                       <div className="relative mx-auto size-20 rounded-full overflow-hidden border-2 border-white/80 dark:border-slate-700 shadow-lg bg-slate-800 flex items-center justify-center text-xl font-black text-white">
                         {trader.avatar ? (
                           <img src={trader.avatar} alt={trader.name} className="size-full object-cover" />
@@ -438,64 +386,61 @@ export default function Leaderboard() {
                         )}
                       </div>
 
-                      {/* Name & Role */}
+                      {/* Name */}
                       <div>
                         <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center justify-center gap-1.5">
                           <span>{trader.name}</span>
                           <CheckCircle2 size={16} className="text-sky-400 shrink-0" />
                         </h3>
                         <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                          {trader.bestPair} · {trader.role.toUpperCase()}
+                          {trader.bestPair}
                         </div>
                       </div>
 
-                      {/* Overall Composite Score */}
+                      {/* Overall Composite Score (Whole Number / 100) */}
                       <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-3 dark:border-slate-800/80 dark:bg-[#071124]/90 shadow-inner">
                         <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                          {isBn ? "লিডারবোর্ড স্কোর" : "Leaderboard Score"}
+                          {isBn ? "সামগ্রিক স্কোর" : "Overall Score"}
                         </div>
                         <div className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-emerald-400">
-                          {trader.overallScore} <span className="text-xs font-bold text-slate-400">/ 100</span>
-                        </div>
-                      </div>
-
-                      {/* Live Capital & Account Growth */}
-                      <div className="rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-3 dark:border-emerald-500/30 dark:bg-emerald-500/10 text-left space-y-1.5 shadow-sm">
-                        <div className="flex items-center justify-between text-[11px] font-bold">
-                          <span className="text-slate-500 dark:text-slate-400">
-                            {isBn ? "প্রারম্ভিক ব্যালেন্স" : "Starting Balance"}
-                          </span>
-                          <span className="font-mono text-slate-700 dark:text-slate-300">
-                            {(trader.currency || "$")}{(trader.startingBalance || 10000).toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-xs font-black">
-                          <span className="text-slate-900 dark:text-white">
-                            {isBn ? "বর্তমান ব্যালেন্স" : "Current Equity"}
-                          </span>
-                          <span className="font-mono text-emerald-600 dark:text-emerald-400 text-sm">
-                            {(trader.currency || "$")}{(trader.currentBalance || ((trader.startingBalance || 10000) + trader.totalPnl)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between text-[11px] font-extrabold pt-1 border-t border-emerald-500/20">
-                          <span className="text-slate-500 dark:text-slate-400">
-                            {isBn ? "লাইভ রিটার্ন" : "Capital Return"}
-                          </span>
-                          <span
-                            className={`inline-flex items-center gap-0.5 font-mono ${
-                              (trader.gainPercent ?? 0) >= 0
-                                ? "text-emerald-600 dark:text-emerald-400"
-                                : "text-rose-600 dark:text-rose-400"
-                            }`}
-                          >
-                            {(trader.gainPercent ?? 0) >= 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                            <span>{(trader.gainPercent ?? 0) >= 0 ? "+" : ""}{(trader.gainPercent ?? 0).toFixed(1)}%</span>
-                          </span>
+                          {Math.round(trader.overallScore)} <span className="text-xs font-bold text-slate-400">/ 100</span>
                         </div>
                       </div>
 
                       {/* Key Performance Metrics Grid */}
                       <div className="grid grid-cols-2 gap-2 text-left pt-1">
+                        {/* Rule Adherence */}
+                        <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
+                          <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                            {isBn ? "রিস্ক মেনে চলা" : "Rule Adherence"}
+                          </div>
+                          <div className="text-sm font-extrabold text-sky-600 dark:text-sky-400">
+                            {trader.ruleComplianceRate}%
+                          </div>
+                        </div>
+
+                        {/* Discipline Routine */}
+                        <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
+                          <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                            {isBn ? "ডিসিপ্লিন রুটিন" : "Discipline"}
+                          </div>
+                          <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
+                            {trader.disciplineScore}%
+                          </div>
+                        </div>
+
+                        {/* Consistency */}
+                        <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
+                          <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                            {isBn ? "ধারাবাহিকতা" : "Consistency"}
+                          </div>
+                          <div className="text-sm font-extrabold text-purple-600 dark:text-purple-400">
+                            {trader.consistencyScore}%
+                          </div>
+                          <div className="text-[10px] text-slate-400">{trader.currentStreak}d streak</div>
+                        </div>
+
+                        {/* Win Rate */}
                         <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
                           <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
                             {isBn ? "উইন রেট" : "Win Rate"}
@@ -508,53 +453,35 @@ export default function Leaderboard() {
                           </div>
                         </div>
 
+                        {/* Total Trades */}
                         <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
                           <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                            {isBn ? "নেট P&L" : "Net P&L"}
+                            {isBn ? "মোট ট্রেড" : "Total Trades"}
                           </div>
-                          <div
-                            className={`text-sm font-extrabold ${
-                              trader.totalPnl >= 0
-                                ? "text-emerald-600 dark:text-emerald-400"
-                                : "text-rose-600 dark:text-rose-400"
-                            }`}
-                          >
-                            {trader.totalPnl >= 0 ? `+$${trader.totalPnl.toFixed(2)}` : `-$${Math.abs(trader.totalPnl).toFixed(2)}`}
-                          </div>
-                          <div className="text-[10px] text-slate-400">
-                            PF: {trader.profitFactor}
+                          <div className="text-sm font-extrabold text-slate-800 dark:text-slate-200">
+                            {trader.totalTrades}
                           </div>
                         </div>
 
-                        <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
-                          <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                            {isBn ? "রিস্ক ম্যানেজমেন্ট" : "Rule Adherence"}
+                        {/* Profit (Rendered ONLY if positive) */}
+                        {hasPositiveProfit ? (
+                          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-2.5 dark:border-emerald-500/30 dark:bg-emerald-500/10">
+                            <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                              {isBn ? "প্রফিট" : "Profit"}
+                            </div>
+                            <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
+                              +${trader.totalPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </div>
                           </div>
-                          <div className="text-sm font-extrabold text-sky-600 dark:text-sky-400">
-                            {trader.ruleComplianceRate}%
-                          </div>
-                          <div className="text-[10px] text-slate-400">Discipline</div>
-                        </div>
-
-                        <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
-                          <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                            {isBn ? "রুটিন স্কোর" : "Discipline Log"}
-                          </div>
-                          <div className="text-sm font-extrabold text-purple-600 dark:text-purple-400">
-                            {trader.disciplineScore}%
-                          </div>
-                          <div className="text-[10px] text-slate-400">
-                            {trader.currentStreak}d streak
-                          </div>
-                        </div>
+                        ) : null}
                       </div>
 
-                      {/* Action Button */}
+                      {/* Breakdown Action */}
                       <button
                         type="button"
                         className="w-full mt-2 rounded-xl py-2 text-xs font-extrabold text-sky-500 hover:text-sky-400 hover:bg-sky-500/10 transition flex items-center justify-center gap-1.5"
                       >
-                        <span>{isBn ? "পারফরম্যান্স বিশদ দেখুন" : "View Performance Breakdown"}</span>
+                        <span>{isBn ? "পারফরম্যান্স বিশদ" : "View Breakdown"}</span>
                         <ChevronRight size={14} />
                       </button>
                     </div>
@@ -578,7 +505,7 @@ export default function Leaderboard() {
                 </h2>
               </div>
               <span className="text-xs font-bold text-slate-500">
-                {restRankings.length} {isBn ? "জন ট্রেডার (টপ ৩০ সিস্টেম)" : "traders (Top 30 System)"}
+                {restRankings.length} {isBn ? "জন ট্রেডার" : "traders"}
               </span>
             </div>
 
@@ -589,15 +516,13 @@ export default function Leaderboard() {
                   <tr className="border-b border-slate-200 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-900/60 text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     <th className="py-3.5 pl-6 pr-3">Rank</th>
                     <th className="py-3.5 px-3">Trader</th>
-                    <th className="py-3.5 px-3 text-right">{isBn ? "প্রারম্ভিক ব্যালেন্স" : "Starting Bal"}</th>
-                    <th className="py-3.5 px-3 text-right">{isBn ? "বর্তমান ব্যালেন্স" : "Current Equity"}</th>
-                    <th className="py-3.5 px-3 text-center">{isBn ? "গ্রোথ" : "Gain %"}</th>
-                    <th className="py-3.5 px-3 text-right">{isBn ? "নেট লাভ/ক্ষতি" : "Net P&L"}</th>
-                    <th className="py-3.5 px-3 text-center">{isBn ? "স্কোর" : "Score"}</th>
+                    <th className="py-3.5 px-3 text-center">{isBn ? "স্কোর" : "Overall Score"}</th>
+                    <th className="py-3.5 px-3 text-center">{isBn ? "রিস্ক মেনে চলা" : "Rule Adherence"}</th>
+                    <th className="py-3.5 px-3 text-center">{isBn ? "ডিসিপ্লিন" : "Discipline Routine"}</th>
+                    <th className="py-3.5 px-3 text-center">{isBn ? "ধারাবাহিকতা" : "Consistency"}</th>
+                    <th className="py-3.5 px-3 text-center">{isBn ? "মোট ট্রেড" : "Total Trades"}</th>
                     <th className="py-3.5 px-3 text-center">{isBn ? "উইন রেট" : "Win Rate"}</th>
-                    <th className="py-3.5 px-3 text-center">{isBn ? "ট্রেডস" : "Trades"}</th>
-                    <th className="py-3.5 px-3 text-center">{isBn ? "রুলস" : "Rules"}</th>
-                    <th className="py-3.5 px-3 text-center">{isBn ? "স্ট্রিক" : "Streak"}</th>
+                    <th className="py-3.5 px-3 text-right">{isBn ? "প্রফিট" : "Profit"}</th>
                     <th className="py-3.5 pr-6 pl-3 text-right">{isBn ? "অ্যাকশন" : "Action"}</th>
                   </tr>
                 </thead>
@@ -631,65 +556,16 @@ export default function Leaderboard() {
                               <CheckCircle2 size={13} className="text-sky-400" />
                             </div>
                             <div className="text-[10px] text-slate-400">
-                              {t.bestPair} · {t.role}
+                              {t.bestPair}
                             </div>
                           </div>
                         </div>
                       </td>
 
-                      {/* Starting Balance */}
-                      <td className="py-4 px-3 text-right font-mono text-slate-500 dark:text-slate-400">
-                        {(t.currency || "$")}{(t.startingBalance || 10000).toLocaleString()}
-                      </td>
-
-                      {/* Current Balance */}
-                      <td className="py-4 px-3 text-right font-mono font-bold text-slate-900 dark:text-white">
-                        {(t.currency || "$")}{(t.currentBalance || ((t.startingBalance || 10000) + t.totalPnl)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </td>
-
-                      {/* Gain % */}
-                      <td className="py-4 px-3 text-center">
-                        <span
-                          className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-mono font-black ${
-                            (t.gainPercent ?? 0) >= 0
-                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                              : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
-                          }`}
-                        >
-                          {(t.gainPercent ?? 0) >= 0 ? "+" : ""}{(t.gainPercent ?? 0).toFixed(1)}%
-                        </span>
-                      </td>
-
-                      {/* Net P&L */}
-                      <td className="py-4 px-3 text-right">
-                        <span
-                          className={`font-black ${
-                            t.totalPnl >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
-                          }`}
-                        >
-                          {t.totalPnl >= 0 ? `+$${t.totalPnl.toFixed(2)}` : `-$${Math.abs(t.totalPnl).toFixed(2)}`}
-                        </span>
-                      </td>
-
-                      {/* Composite Score */}
+                      {/* Overall Composite Score */}
                       <td className="py-4 px-3 text-center">
                         <span className="inline-flex rounded-full bg-cyan-500/10 px-2.5 py-1 text-xs font-black text-cyan-500">
-                          {t.overallScore}
-                        </span>
-                      </td>
-
-                      {/* Win Rate */}
-                      <td className="py-4 px-3 text-center">
-                        <span className="font-extrabold text-emerald-600 dark:text-emerald-400">
-                          {t.winRate}%
-                        </span>
-                      </td>
-
-                      {/* Trades (W/L) */}
-                      <td className="py-4 px-3 text-center text-slate-600 dark:text-slate-300">
-                        <span className="font-bold">{t.totalTrades}</span>{" "}
-                        <span className="text-[10px] text-slate-400">
-                          ({t.winningTrades}W / {t.losingTrades}L)
+                          {Math.round(t.overallScore)} / 100
                         </span>
                       </td>
 
@@ -700,12 +576,45 @@ export default function Leaderboard() {
                         </span>
                       </td>
 
-                      {/* Streak */}
+                      {/* Discipline Routine */}
+                      <td className="py-4 px-3 text-center">
+                        <span className="inline-flex rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-extrabold text-emerald-600 dark:text-emerald-400">
+                          {t.disciplineScore}%
+                        </span>
+                      </td>
+
+                      {/* Consistency & Streak */}
                       <td className="py-4 px-3 text-center">
                         <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-amber-500">
                           <Flame size={12} />
                           <span>{t.currentStreak}d</span>
                         </span>
+                      </td>
+
+                      {/* Total Trades */}
+                      <td className="py-4 px-3 text-center text-slate-600 dark:text-slate-300">
+                        <span className="font-bold">{t.totalTrades}</span>{" "}
+                        <span className="text-[10px] text-slate-400">
+                          ({t.winningTrades}W / {t.losingTrades}L)
+                        </span>
+                      </td>
+
+                      {/* Win Rate */}
+                      <td className="py-4 px-3 text-center">
+                        <span className="font-extrabold text-emerald-600 dark:text-emerald-400">
+                          {t.winRate}%
+                        </span>
+                      </td>
+
+                      {/* Profit (ONLY positive displayed) */}
+                      <td className="py-4 px-3 text-right">
+                        {t.totalPnl > 0 ? (
+                          <span className="font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                            +${t.totalPnl.toFixed(2)}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 font-mono">-</span>
+                        )}
                       </td>
 
                       {/* Action */}
@@ -754,48 +663,36 @@ export default function Leaderboard() {
                     </div>
 
                     <div className="text-right">
-                      <div className="text-xs font-black text-cyan-500">{t.overallScore} pts</div>
-                      <div className="text-[10px] text-slate-400">Score</div>
+                      <span className="inline-flex rounded-full bg-cyan-500/10 px-2 py-0.5 text-xs font-black text-cyan-500">
+                        {Math.round(t.overallScore)} / 100
+                      </span>
                     </div>
                   </div>
 
-                  {/* Starting vs Current Capital */}
-                  <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 border-t border-slate-100 dark:border-slate-850">
-                    <div className="rounded-lg bg-slate-50 p-2 dark:bg-slate-900/60">
-                      <div className="text-slate-400 text-[10px]">{isBn ? "প্রারম্ভিক" : "Start Capital"}</div>
-                      <div className="font-mono font-bold text-slate-700 dark:text-slate-300">
-                        {(t.currency || "$")}{(t.startingBalance || 10000).toLocaleString()}
+                  {/* Metrics grid */}
+                  <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 dark:border-slate-800/80">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Rule Adherence:</span>
+                      <span className="font-bold text-sky-500">{t.ruleComplianceRate}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Discipline:</span>
+                      <span className="font-bold text-emerald-500">{t.disciplineScore}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Win Rate:</span>
+                      <span className="font-bold text-emerald-500">{t.winRate}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Trades:</span>
+                      <span className="font-bold">{t.totalTrades}</span>
+                    </div>
+                    {t.totalPnl > 0 ? (
+                      <div className="col-span-2 flex justify-between font-mono pt-1 border-t border-slate-100 dark:border-slate-800/60">
+                        <span className="text-slate-400">Profit:</span>
+                        <span className="font-extrabold text-emerald-500">+${t.totalPnl.toFixed(2)}</span>
                       </div>
-                    </div>
-                    <div className="rounded-lg bg-slate-50 p-2 dark:bg-slate-900/60">
-                      <div className="text-slate-400 text-[10px]">{isBn ? "বর্তমান ব্যালেন্স" : "Current Equity"}</div>
-                      <div className="font-mono font-black text-emerald-500">
-                        {(t.currency || "$")}{(t.currentBalance || ((t.startingBalance || 10000) + t.totalPnl)).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-1.5 text-center text-[10px]">
-                    <div className="rounded-lg bg-slate-50 p-1.5 dark:bg-slate-900/60">
-                      <div className="text-slate-400">Gain %</div>
-                      <div className={`font-extrabold ${(t.gainPercent ?? 0) >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
-                        {(t.gainPercent ?? 0) >= 0 ? "+" : ""}{(t.gainPercent ?? 0).toFixed(1)}%
-                      </div>
-                    </div>
-                    <div className="rounded-lg bg-slate-50 p-1.5 dark:bg-slate-900/60">
-                      <div className="text-slate-400">Win Rate</div>
-                      <div className="font-extrabold text-emerald-500">{t.winRate}%</div>
-                    </div>
-                    <div className="rounded-lg bg-slate-50 p-1.5 dark:bg-slate-900/60">
-                      <div className="text-slate-400">Net P&L</div>
-                      <div
-                        className={`font-extrabold ${
-                          t.totalPnl >= 0 ? "text-emerald-500" : "text-rose-500"
-                        }`}
-                      >
-                        ${t.totalPnl.toFixed(0)}
-                      </div>
-                    </div>
+                    ) : null}
                   </div>
                 </div>
               ))}
@@ -834,7 +731,7 @@ export default function Leaderboard() {
                     Rank #{selectedTrader.rank}
                   </span>
                   <span className="text-xs font-extrabold text-slate-400 uppercase">
-                    {timeframe === "all" ? "All Time" : timeframe === "month" ? "This Month" : "This Week"}
+                    All-Time
                   </span>
                 </div>
                 <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-1.5 mt-0.5">
@@ -842,7 +739,7 @@ export default function Leaderboard() {
                   <CheckCircle2 size={18} className="text-sky-400 shrink-0" />
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {selectedTrader.role.toUpperCase()} · Verified Cycle of Chart Student
+                  {selectedTrader.bestPair} · Verified Real Trader
                 </p>
               </div>
             </div>
@@ -854,7 +751,7 @@ export default function Leaderboard() {
                   {isBn ? "সামগ্রিক লিডারবোর্ড স্কোর" : "Composite Leaderboard Score"}
                 </div>
                 <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white mt-0.5">
-                  {selectedTrader.overallScore}{" "}
+                  {Math.round(selectedTrader.overallScore)}{" "}
                   <span className="text-sm font-bold text-slate-400">/ 100</span>
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
@@ -865,58 +762,11 @@ export default function Leaderboard() {
               </div>
 
               <div className="size-16 rounded-full border-4 border-cyan-400 flex items-center justify-center font-black text-lg text-cyan-400 shadow-lg shadow-cyan-500/20 shrink-0">
-                {selectedTrader.overallScore}
+                {Math.round(selectedTrader.overallScore)}
               </div>
             </div>
 
-            {/* Account Capital & Growth Progress */}
-            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 sm:p-5 space-y-3 dark:border-emerald-500/20 dark:bg-emerald-500/10">
-              <div className="flex items-center justify-between">
-                <div className="text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                  {isBn ? "মূলধন বৃদ্ধি ও ব্যালেন্স হিসেব" : "Account Capital & Live Balance Progress"}
-                </div>
-                <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                  {selectedTrader.bestPair} Journal Book
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
-                <div className="rounded-xl border border-slate-200/80 bg-white/90 p-3 dark:border-slate-800 dark:bg-slate-900/60 shadow-sm">
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    {isBn ? "প্রারম্ভিক মূলধন" : "Starting Capital"}
-                  </div>
-                  <div className="text-base sm:text-lg font-mono font-black text-slate-900 dark:text-white mt-1">
-                    {(selectedTrader.currency || "$")}{(selectedTrader.startingBalance || 10000).toLocaleString()}
-                  </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">Initial Journal Balance</div>
-                </div>
-
-                <div className="rounded-xl border border-slate-200/80 bg-white/90 p-3 dark:border-slate-800 dark:bg-slate-900/60 shadow-sm">
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    {isBn ? "বর্তমান ব্যালেন্স" : "Current Equity"}
-                  </div>
-                  <div className="text-base sm:text-lg font-mono font-black text-emerald-600 dark:text-emerald-400 mt-1">
-                    {(selectedTrader.currency || "$")}{(selectedTrader.currentBalance || ((selectedTrader.startingBalance || 10000) + selectedTrader.totalPnl)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">Live Account Value</div>
-                </div>
-
-                <div className="rounded-xl border border-slate-200/80 bg-white/90 p-3 dark:border-slate-800 dark:bg-slate-900/60 shadow-sm">
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    {isBn ? "মোট গ্রোথ / রিটার্ন" : "Capital Gain %"}
-                  </div>
-                  <div className={`text-base sm:text-lg font-black mt-1 flex items-center justify-center gap-1 ${(selectedTrader.gainPercent ?? 0) >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
-                    {(selectedTrader.gainPercent ?? 0) >= 0 ? <TrendingUp size={16} /> : <TrendingDown size={16} />}
-                    <span>{(selectedTrader.gainPercent ?? 0) >= 0 ? "+" : ""}{(selectedTrader.gainPercent ?? 0).toFixed(1)}%</span>
-                  </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">
-                    Net: {selectedTrader.totalPnl >= 0 ? "+" : ""}${(selectedTrader.totalPnl || 0).toFixed(2)}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 5-Pillar Score Bars */}
+            {/* Score Pillar Breakdown */}
             <div className="space-y-3">
               <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
                 {isBn ? "স্কোর বিশ্লেষণ কাঠামো" : "Score Pillar Breakdown"}
@@ -927,7 +777,7 @@ export default function Leaderboard() {
                 <div className="space-y-1">
                   <div className="flex justify-between text-xs font-bold">
                     <span className="text-slate-600 dark:text-slate-300">
-                      {isBn ? "রিস্ক ও ট্রেডিং রুলস মান্যতা (25%)" : "Rule & Risk Adherence (25%)"}
+                      {isBn ? "রিস্ক ও ট্রেডিং রুলস মান্যতা" : "Rule & Risk Adherence"}
                     </span>
                     <span className="text-sky-500 font-extrabold">{selectedTrader.ruleComplianceRate}%</span>
                   </div>
@@ -943,7 +793,7 @@ export default function Leaderboard() {
                 <div className="space-y-1">
                   <div className="flex justify-between text-xs font-bold">
                     <span className="text-slate-600 dark:text-slate-300">
-                      {isBn ? "দৈনিক ডিসিপ্লিন রুটিন (25%)" : "Daily Discipline Routine (25%)"}
+                      {isBn ? "দৈনিক ডিসিপ্লিন রুটিন" : "Daily Discipline Routine"}
                     </span>
                     <span className="text-emerald-500 font-extrabold">{selectedTrader.disciplineScore}%</span>
                   </div>
@@ -959,7 +809,7 @@ export default function Leaderboard() {
                 <div className="space-y-1">
                   <div className="flex justify-between text-xs font-bold">
                     <span className="text-slate-600 dark:text-slate-300">
-                      {isBn ? "উইন রেট কোয়ালিটি (20%)" : "Win Rate Quality (20%)"}
+                      {isBn ? "উইন রেট কোয়ালিটি" : "Win Rate Quality"}
                     </span>
                     <span className="text-cyan-500 font-extrabold">{selectedTrader.winRate}%</span>
                   </div>
@@ -975,7 +825,7 @@ export default function Leaderboard() {
                 <div className="space-y-1">
                   <div className="flex justify-between text-xs font-bold">
                     <span className="text-slate-600 dark:text-slate-300">
-                      {isBn ? "জার্নালিং ধারাবাহিকতা ও স্ট্রিক (15%)" : "Journal & Habit Consistency (15%)"}
+                      {isBn ? "ধারাবাহিকতা ও স্ট্রিক" : "Habit Consistency & Streaks"}
                     </span>
                     <span className="text-purple-500 font-extrabold">{selectedTrader.consistencyScore}%</span>
                   </div>
@@ -983,22 +833,6 @@ export default function Leaderboard() {
                     <div
                       className="h-full rounded-full bg-purple-500 transition-all duration-500"
                       style={{ width: `${selectedTrader.consistencyScore}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Profit Factor */}
-                <div className="space-y-1">
-                  <div className="flex justify-between text-xs font-bold">
-                    <span className="text-slate-600 dark:text-slate-300">
-                      {isBn ? "প্রফিট ফ্যাক্টর কোয়ালিটি (15%)" : "Profit Factor Quality (15%)"}
-                    </span>
-                    <span className="text-amber-500 font-extrabold">PF {selectedTrader.profitFactor}</span>
-                  </div>
-                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-amber-500 transition-all duration-500"
-                      style={{ width: `${Math.min(100, (selectedTrader.profitFactor / 3) * 100)}%` }}
                     />
                   </div>
                 </div>
@@ -1022,17 +856,15 @@ export default function Leaderboard() {
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/40">
-                  <div className="text-[10px] font-bold text-slate-400">Net Profit/Loss</div>
-                  <div
-                    className={`text-base font-extrabold ${
-                      selectedTrader.totalPnl >= 0 ? "text-emerald-500" : "text-rose-500"
-                    }`}
-                  >
-                    ${selectedTrader.totalPnl.toFixed(2)}
+                {selectedTrader.totalPnl > 0 ? (
+                  <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 dark:border-emerald-500/30 dark:bg-emerald-500/10">
+                    <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">Recorded Profit</div>
+                    <div className="text-base font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">
+                      +${selectedTrader.totalPnl.toFixed(2)}
+                    </div>
+                    <div className="text-[10px] text-slate-400">Real PnL</div>
                   </div>
-                  <div className="text-[10px] text-slate-400">Recorded Real PnL</div>
-                </div>
+                ) : null}
 
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/40">
                   <div className="text-[10px] font-bold text-slate-400">Active Discipline</div>

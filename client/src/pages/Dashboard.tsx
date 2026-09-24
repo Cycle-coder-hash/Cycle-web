@@ -282,6 +282,10 @@ export default function Dashboard() {
     enabled: !!user,
     staleTime: 1000 * 60 * 5,
   });
+  const { data: myRankData } = trpc.leaderboard.myRank.useQuery(undefined, {
+    enabled: !!user,
+    staleTime: 10000,
+  });
 
   const isOnboardingCompleted = useMemo(() => {
     if (!user) return true;
@@ -1359,7 +1363,7 @@ export default function Dashboard() {
               )}
 
               {/* Top Banner KPI Grid */}
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                 {/* 1. Total Documented Trades */}
                 <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                   <div className="flex items-center justify-between text-slate-400">
@@ -1420,6 +1424,33 @@ export default function Dashboard() {
                     <ChevronRight size={14} className="text-[#38bdf8]" />
                   </div>
                 </button>
+
+                {/* 5. Your Global Rank */}
+                <Link href="/leaderboard">
+                  <div className="rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-white to-slate-50 p-6 shadow-sm dark:border-amber-500/30 dark:from-[#141d2e] dark:via-[#0c1527] dark:to-[#070e1b] transition-all hover:ring-2 hover:ring-amber-500/50 cursor-pointer h-full flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between text-slate-400">
+                        <span className="text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                          {isBn ? "আপনার গ্লোবাল র‍্যাঙ্ক" : "YOUR GLOBAL RANK"}
+                        </span>
+                        <Trophy size={18} className="text-amber-500" />
+                      </div>
+                      <div className="mt-4 flex items-baseline gap-2">
+                        <span className="text-3xl font-black text-slate-900 dark:text-white">
+                          {myRankData?.isRanked && myRankData.rank ? `#${myRankData.rank}` : "Unranked"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
+                      <span>
+                        {myRankData?.isRanked && myRankData.overallScore !== null
+                          ? `${isBn ? "স্কোর" : "Overall Score"}: ${myRankData.overallScore} / 100`
+                          : (isBn ? "র‌্যাঙ্ক পেতে ট্রেড লগ করুন" : "Log trades to qualify")}
+                      </span>
+                      <ChevronRight size={14} className="text-amber-500" />
+                    </div>
+                  </div>
+                </Link>
               </div>
 
               {/* Recent Order Status Alert Banner */}
