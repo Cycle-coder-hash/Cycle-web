@@ -1,17 +1,7 @@
 export type SupportedLanguage =
-  | "en" // English
   | "bn" // Bangla
-  | "hi" // Hindi
-  | "ar" // Arabic (RTL)
-  | "es" // Spanish
-  | "fr" // French
-  | "de" // German
-  | "it" // Italian
-  | "ja" // Japanese
-  | "ru" // Russian
-  | "zh" // Chinese
-  | "ur" // Urdu (RTL)
-  | "ko"; // Korean
+  | "en" // English
+  | "ur"; // Urdu (RTL)
 
 export type TextDirection = "ltr" | "rtl";
 
@@ -41,88 +31,7 @@ export const COUNTRY_LANGUAGE_OPTIONS: CountryLanguageOption[] = [
     flag: "🇺🇸",
     langCode: "en",
     langName: "English",
-    nativeName: "English (US)",
-    dir: "ltr",
-  },
-  {
-    id: "in-hi",
-    countryName: "India",
-    flag: "🇮🇳",
-    langCode: "hi",
-    langName: "Hindi",
-    nativeName: "हिन्दी",
-    dir: "ltr",
-  },
-  {
-    id: "sa-ar",
-    countryName: "Saudi Arabia",
-    flag: "🇸🇦",
-    langCode: "ar",
-    langName: "Arabic",
-    nativeName: "العربية",
-    dir: "rtl",
-  },
-  {
-    id: "es-es",
-    countryName: "Spain",
-    flag: "🇪🇸",
-    langCode: "es",
-    langName: "Spanish",
-    nativeName: "Español",
-    dir: "ltr",
-  },
-  {
-    id: "fr-fr",
-    countryName: "France",
-    flag: "🇫🇷",
-    langCode: "fr",
-    langName: "French",
-    nativeName: "Français",
-    dir: "ltr",
-  },
-  {
-    id: "de-de",
-    countryName: "Germany",
-    flag: "🇩🇪",
-    langCode: "de",
-    langName: "German",
-    nativeName: "Deutsch",
-    dir: "ltr",
-  },
-  {
-    id: "it-it",
-    countryName: "Italy",
-    flag: "🇮🇹",
-    langCode: "it",
-    langName: "Italian",
-    nativeName: "Italiano",
-    dir: "ltr",
-  },
-  {
-    id: "jp-ja",
-    countryName: "Japan",
-    flag: "🇯🇵",
-    langCode: "ja",
-    langName: "Japanese",
-    nativeName: "日本語",
-    dir: "ltr",
-  },
-  {
-    id: "ru-ru",
-    countryName: "Russia",
-    flag: "🇷🇺",
-    langCode: "ru",
-    langName: "Russian",
-    nativeName: "Русский",
-    dir: "ltr",
-  },
-  {
-    id: "cn-zh",
-    countryName: "China",
-    flag: "🇨🇳",
-    langCode: "zh",
-    langName: "Chinese",
-    nativeName: "中文",
+    nativeName: "English",
     dir: "ltr",
   },
   {
@@ -133,87 +42,6 @@ export const COUNTRY_LANGUAGE_OPTIONS: CountryLanguageOption[] = [
     langName: "Urdu",
     nativeName: "اردو",
     dir: "rtl",
-  },
-  {
-    id: "gb-en",
-    countryName: "United Kingdom",
-    flag: "🇬🇧",
-    langCode: "en",
-    langName: "English",
-    nativeName: "English (UK)",
-    dir: "ltr",
-  },
-  {
-    id: "ca-en",
-    countryName: "Canada (EN)",
-    flag: "🇨🇦",
-    langCode: "en",
-    langName: "English",
-    nativeName: "English (CA)",
-    dir: "ltr",
-  },
-  {
-    id: "ca-fr",
-    countryName: "Canada (FR)",
-    flag: "🇨🇦",
-    langCode: "fr",
-    langName: "French",
-    nativeName: "Français (CA)",
-    dir: "ltr",
-  },
-  {
-    id: "ch-de",
-    countryName: "Switzerland (DE)",
-    flag: "🇨🇭",
-    langCode: "de",
-    langName: "German",
-    nativeName: "Deutsch (CH)",
-    dir: "ltr",
-  },
-  {
-    id: "ch-fr",
-    countryName: "Switzerland (FR)",
-    flag: "🇨🇭",
-    langCode: "fr",
-    langName: "French",
-    nativeName: "Français (CH)",
-    dir: "ltr",
-  },
-  {
-    id: "ch-it",
-    countryName: "Switzerland (IT)",
-    flag: "🇨🇭",
-    langCode: "it",
-    langName: "Italian",
-    nativeName: "Italiano (CH)",
-    dir: "ltr",
-  },
-  {
-    id: "ae-ar",
-    countryName: "United Arab Emirates",
-    flag: "🇦🇪",
-    langCode: "ar",
-    langName: "Arabic",
-    nativeName: "العربية (الإمارات)",
-    dir: "rtl",
-  },
-  {
-    id: "kr-ko",
-    countryName: "South Korea",
-    flag: "🇰🇷",
-    langCode: "ko",
-    langName: "Korean",
-    nativeName: "한국어",
-    dir: "ltr",
-  },
-  {
-    id: "au-en",
-    countryName: "Australia",
-    flag: "🇦🇺",
-    langCode: "en",
-    langName: "English",
-    nativeName: "English (AU)",
-    dir: "ltr",
   },
 ];
 

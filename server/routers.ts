@@ -122,7 +122,7 @@ import { hashPassword, verifyPassword } from "./_core/password";
 import { sdk } from "./_core/sdk";
 
 const paymentMethod = z.enum(["bkash", "nagad", "rocket"]);
-const language = z.enum(["en", "bn"]);
+const language = z.enum(["en", "bn", "ur"]);
 const supportProcedure = publicProcedure.use(({ ctx, next }) => {
   if (ctx.user && ctx.user.role === "user") {
     throw new TRPCError({ code: "FORBIDDEN", message: NOT_ADMIN_ERR_MSG });

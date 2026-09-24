@@ -375,7 +375,7 @@ export default function Auth() {
               data.user.user_metadata?.avatar ||
               data.user.user_metadata?.picture ||
               null,
-            language: data.user.user_metadata?.language || (language === "bn" ? "bn" : "en"),
+            language: data.user.user_metadata?.language || (language === "bn" ? "bn" : language === "ur" ? "ur" : "en"),
             emailVerified: true,
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -420,7 +420,7 @@ export default function Auth() {
               full_name: name.trim(),
               name: name.trim(),
               phone: phone.trim() || null,
-              language: language === "bn" ? "bn" : "en",
+              language: language === "bn" ? "bn" : language === "ur" ? "ur" : "en",
             },
             emailRedirectTo: `${window.location.origin}/dashboard`,
           },
@@ -482,7 +482,7 @@ export default function Auth() {
                 data.user.user_metadata?.avatar ||
                 data.user.user_metadata?.picture ||
                 null,
-              language: data.user.user_metadata?.language || (language === "bn" ? "bn" : "en"),
+              language: data.user.user_metadata?.language || (language === "bn" ? "bn" : language === "ur" ? "ur" : "en"),
               emailVerified: true,
               createdAt: new Date(),
               updatedAt: new Date(),
@@ -508,7 +508,7 @@ export default function Auth() {
           email: email.trim(),
           password,
           phone: phone.trim() || undefined,
-          language: language === "bn" ? "bn" : "en",
+          language: language === "bn" ? "bn" : language === "ur" ? "ur" : "en",
         });
       } catch (serverErr) {
         console.warn("[Server registration notice]:", serverErr);

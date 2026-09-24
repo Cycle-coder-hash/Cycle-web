@@ -113,7 +113,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
                 <Globe className="w-3.5 h-3.5" />
                 Select Country & Language
               </span>
-              <span className="text-[10px] text-slate-500 font-mono">18 Regions</span>
+              <span className="text-[10px] text-slate-500 font-mono">{allOptions.length} Languages</span>
             </div>
             <div className="relative">
               <Search className="w-3.5 h-3.5 absolute top-1/2 -translate-y-1/2 left-2.5 text-slate-400 pointer-events-none" />

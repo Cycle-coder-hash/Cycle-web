@@ -545,7 +545,7 @@ export interface TraderProfileData {
   username?: string | null;
   phone?: string | null;
   role?: string;
-  language?: "en" | "bn";
+  language?: "en" | "bn" | "ur";
   updatedAt?: string;
 }
 
@@ -585,7 +585,7 @@ export async function saveTraderProfile(profile: TraderProfileData): Promise<voi
 export async function updateUserProfile(
   userId: number,
   openId: string | undefined,
-  updates: { name?: string; phone?: string | null; language?: "en" | "bn"; avatar?: string | null; username?: string | null }
+  updates: { name?: string; phone?: string | null; language?: "en" | "bn" | "ur"; avatar?: string | null; username?: string | null }
 ): Promise<void> {
   const resolvedOpenId = openId || (userId ? `usr_${userId}` : "");
 
@@ -903,7 +903,7 @@ export async function createUser(data: {
   passwordHash: string;
   phone?: string;
   role?: "user" | "admin" | "support";
-  language?: "en" | "bn";
+  language?: "en" | "bn" | "ur";
   emailVerified?: boolean;
   avatar?: string;
 }): Promise<User> {

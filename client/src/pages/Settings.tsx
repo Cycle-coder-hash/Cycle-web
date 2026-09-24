@@ -1059,8 +1059,8 @@ export default function Settings() {
                     </h2>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                       {isBn
-                        ? "১৮টি দেশের সম্পূর্ণ কার্যকরী মাল্টি-ল্যাঙ্গুয়েজ সিস্টেম। যেকোনো ভাষা নির্বাচন করলেই পুরো ওয়েবসাইট সেই ভাষায় পরিবর্তিত হবে।"
-                        : "Active multi-language system supporting 18 global regions with immediate site-wide translation."}
+                        ? "সম্পূর্ণ কার্যকরী মাল্টি-ল্যাঙ্গুয়েজ সিস্টেম (বাংলা, English, اردو)। যেকোনো ভাষা নির্বাচন করলেই পুরো ওয়েবসাইট সেই ভাষায় পরিবর্তিত হবে।"
+                        : "Active multi-language system supporting Bangla, English, and Urdu with immediate site-wide translation."}
                     </p>
                   </div>
 
