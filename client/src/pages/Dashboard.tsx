@@ -13,6 +13,7 @@ import {
   Circle,
   ClipboardCheck,
   Clock,
+  Globe,
   Download,
   Edit2,
   ExternalLink,
@@ -60,6 +61,7 @@ import { trpc } from "@/lib/trpc";
 import { supabase } from "@/lib/supabase";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { TraderJournal } from "@/components/journal/TraderJournal";
 import { getStoredTrades } from "@/lib/traderJournalStorage";
@@ -134,6 +136,45 @@ export default function Dashboard() {
   });
   const { t, language, isRTL } = useLanguage();
   const isBn = language === "bn";
+  const { timezone, currentTimezone } = useUserPreferences();
+  const [liveMarketTime, setLiveMarketTime] = useState<{ time: string; date: string }>({
+    time: "",
+    date: "",
+  });
+
+  useEffect(() => {
+    const updateTime = () => {
+      try {
+        const now = new Date();
+        const timeStr = new Intl.DateTimeFormat(undefined, {
+          timeZone: timezone,
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: true,
+        }).format(now);
+
+        const dateStr = new Intl.DateTimeFormat(undefined, {
+          timeZone: timezone,
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }).format(now);
+
+        setLiveMarketTime({ time: timeStr, date: dateStr });
+      } catch (err) {
+        setLiveMarketTime({
+          time: new Date().toLocaleTimeString(),
+          date: new Date().toLocaleDateString(),
+        });
+      }
+    };
+
+    updateTime();
+    const timer = setInterval(updateTime, 1000);
+    return () => clearInterval(timer);
+  }, [timezone]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -1361,6 +1402,81 @@ export default function Dashboard() {
                   </div>
                 </div>
               )}
+
+              {/* Financial Market Time Zone Information Widget (Read-Only Source of Truth) */}
+              <div className="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white/95 p-5 sm:p-6 shadow-sm dark:border-slate-800/90 dark:bg-gradient-to-r dark:from-[#0a1628] dark:via-[#091424] dark:to-[#07101e] backdrop-blur-sm transition-all">
+                {/* Background decorative glow */}
+                <div className="absolute -top-12 -right-12 size-48 rounded-full bg-sky-500/10 blur-3xl pointer-events-none" />
+
+                <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                  {/* Left: Timezone details */}
+                  <div className="flex items-start sm:items-center gap-3.5 sm:gap-4 min-w-0">
+                    <div className="flex size-12 sm:size-14 shrink-0 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-500 dark:bg-sky-500/15 border border-sky-500/20 shadow-xs">
+                      <Clock size={24} className="text-sky-500" />
+                    </div>
+
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className="text-[11px] font-black uppercase tracking-wider text-sky-600 dark:text-sky-400">
+                          {isBn ? "ফিনান্সিয়াল মার্কেট টাইমজোন" : "Financial Market Time Zone"}
+                        </span>
+                        <span className="inline-flex items-center gap-1 rounded-full bg-sky-500/10 px-2.5 py-0.5 text-[10px] font-bold text-sky-700 dark:text-sky-300 border border-sky-500/20">
+                          <Globe size={10} />
+                          <span>{currentTimezone.market}</span>
+                        </span>
+                        <span className="inline-flex items-center rounded-md bg-slate-100 dark:bg-slate-800/80 px-2 py-0.5 text-[10px] font-mono font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                          UTC {currentTimezone.offset}
+                        </span>
+                      </div>
+
+                      <div className="flex items-baseline gap-2 flex-wrap">
+                        <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                          {currentTimezone.city}
+                        </h2>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">
+                          · {currentTimezone.label}
+                        </span>
+                      </div>
+
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        {isBn
+                          ? "ট্রেড লগিং, মার্কেট সেশন এবং দৈনিক ডিসিপ্লিন রিসেটের সক্রিয় রেফারেন্স টাইমজোন।"
+                          : "Active reference timezone for trade journaling, market session timing, and daily resets."}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Right: Live Digital Clock & Settings Link */}
+                  <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between sm:justify-start lg:justify-center gap-3 shrink-0 pt-2 lg:pt-0 border-t border-slate-100 dark:border-slate-800/70 lg:border-t-0">
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-2xl border border-sky-500/30 bg-sky-500/5 dark:bg-sky-500/10 px-4 py-2 text-left sm:text-right">
+                        <div className="flex items-center gap-2 justify-start sm:justify-end">
+                          <span className="relative flex size-2">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                            <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+                          </span>
+                          <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                            {liveMarketTime.date || "..."}
+                          </span>
+                        </div>
+                        <div className="text-xl sm:text-2xl font-black font-mono tracking-widest text-slate-900 dark:text-sky-400 mt-0.5">
+                          {liveMarketTime.time || "--:--:-- --"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <Link
+                      href="/settings?tab=region"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400 hover:underline transition-colors cursor-pointer"
+                      title={isBn ? "টাইমজোন পরিবর্তন করতে সেটিংস → ভাষা ও অঞ্চলে যান" : "Change time zone in Settings → Language & Region"}
+                    >
+                      <SettingsIcon size={12} className="text-sky-500" />
+                      <span>{isBn ? "সেটিংস থেকে পরিবর্তন করুন" : "Manage in Settings"}</span>
+                      <ChevronRight size={12} />
+                    </Link>
+                  </div>
+                </div>
+              </div>
 
               {/* Top Banner KPI Grid */}
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">

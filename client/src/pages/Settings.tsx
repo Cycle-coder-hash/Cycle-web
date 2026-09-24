@@ -45,7 +45,7 @@ import {
 type SettingsTab = "account" | "appearance" | "region" | "security" | "support";
 
 export default function Settings() {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { user, loading: authLoading, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const { t, language, currentOption, setCountryLanguage, allOptions, isRTL } = useLanguage();
@@ -62,7 +62,26 @@ export default function Settings() {
     allCurrencies,
   } = useUserPreferences();
 
-  const [activeTab, setActiveTab] = useState<SettingsTab>("account");
+  const [activeTab, setActiveTab] = useState<SettingsTab>(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+      if (tabParam === "region" || tabParam === "appearance" || tabParam === "security" || tabParam === "support" || tabParam === "account") {
+        return tabParam;
+      }
+    }
+    return "account";
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+      if (tabParam === "region" || tabParam === "appearance" || tabParam === "security" || tabParam === "support" || tabParam === "account") {
+        setActiveTab(tabParam);
+      }
+    }
+  }, [location]);
   const utils = trpc.useUtils();
 
   // Queries
