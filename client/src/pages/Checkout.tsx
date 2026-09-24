@@ -14,6 +14,7 @@ import {
   Lock,
   Award,
   CheckCircle2,
+  CreditCard,
 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
@@ -44,7 +45,7 @@ export default function Checkout() {
   });
   const [error, setError] = useState("");
   const [selectedPdfIds, setSelectedPdfIds] = useState<number[]>(Array.from({ length: 15 }, (_, i) => i + 1));
-  const [method, setMethod] = useState<"bkash" | "nagad" | "rocket">("bkash");
+  const [method, setMethod] = useState<"bkash" | "nagad" | "rocket" | "other">("bkash");
   const [tx, setTx] = useState("");
   const [ack, setAck] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -128,14 +129,15 @@ export default function Checkout() {
 
   // Automatically select first available method if current one gets disabled
   useEffect(() => {
+    if (method === "other") return;
     if (availableGateways.length > 0 && !availableGateways.some((g) => g.id === method)) {
       setMethod(availableGateways[0].id);
     }
   }, [gatewaysConfig, method]);
 
   const activeGatewayMeta = allGatewaysList.find((g) => g.id === method) || allGatewaysList[0];
-  const activeGatewayConfig = gatewaysConfig?.[method];
-  const currentWalletNumber = activeGatewayConfig?.number || settings?.[method] || "01961079326";
+  const activeGatewayConfig = method !== "other" ? gatewaysConfig?.[method] : undefined;
+  const currentWalletNumber = activeGatewayConfig?.number || (method !== "other" ? settings?.[method] : "") || "01961079326";
   const currentAccountType = activeGatewayConfig?.accountType || "Personal";
   const currentInstructions =
     activeGatewayConfig?.instructions ||
@@ -317,7 +319,7 @@ export default function Checkout() {
                       Payment gateways are temporarily offline for scheduled system maintenance. Please contact our support team to complete your enrollment manually.
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {availableGateways.map((g) => {
                         const isSelected = method === g.id;
                         const Logo = g.logo;
@@ -369,160 +371,260 @@ export default function Checkout() {
                           </button>
                         );
                       })}
-                    </div>
-                  )}
 
-                  {/* Payment Details Guidance Card */}
-                  <div className="rounded-3xl border border-slate-200/90 bg-slate-50/70 p-5 sm:p-6 dark:border-slate-800/90 dark:bg-[#0c182c]/80 shadow-xs space-y-4">
-                    {/* Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200/70 dark:border-slate-800">
-                      <div className="flex items-center gap-2.5">
-                        <div className="flex h-8 px-2.5 items-center justify-center rounded-lg bg-white shadow-xs border border-slate-200 shrink-0">
-                          {React.createElement(activeGatewayMeta.logo, { size: 18 })}
-                        </div>
-                        <span className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                          Official {activeGatewayMeta.name} Payment Details
-                        </span>
-                      </div>
-                      <span className={`inline-flex items-center gap-1 text-[11px] font-black px-2.5 py-0.5 rounded-full border ${activeGatewayMeta.badgeBg}`}>
-                        {currentAccountType === "Personal" ? "Personal (Send Money)" : "Merchant (Payment)"}
-                      </span>
-                    </div>
-
-                    {/* Prominent Wallet Number with 1-Click Copy */}
-                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-[#070e1b] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div>
-                        <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                          {currentAccountType === "Personal" ? "Send Money to this Official Number:" : "Make Payment to this Official Number:"}
-                        </div>
-                        <div className="text-xl sm:text-2xl font-black font-mono tracking-widest text-slate-900 dark:text-white mt-0.5">
-                          {currentWalletNumber}
-                        </div>
-                      </div>
-
-                      <Button
+                      {/* Other Payment Option */}
+                      <button
                         type="button"
-                        size="sm"
-                        onClick={() => copyToClipboard(currentWalletNumber)}
-                        className={`h-10 px-4 gap-2 font-bold text-xs rounded-xl shadow-xs transition-all ${
-                          copiedNumber
-                            ? "bg-emerald-600 text-white hover:bg-emerald-600"
-                            : "bg-[#081833] text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400"
+                        onClick={() => setMethod("other")}
+                        className={`relative flex items-center sm:flex-col justify-between sm:justify-center p-3.5 sm:p-4 rounded-2xl border text-left sm:text-center transition-all cursor-pointer ${
+                          method === "other"
+                            ? "border-sky-500 dark:border-sky-400 bg-white dark:bg-[#0c1c38] shadow-md ring-2 ring-sky-500/30"
+                            : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-[#070e1b] dark:hover:border-slate-700"
                         }`}
                       >
-                        {copiedNumber ? (
-                          <>
-                            <Check size={14} />
-                            <span>Copied!</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy size={14} />
-                            <span>Copy Number</span>
-                          </>
+                        {/* Desktop Checkmark */}
+                        {method === "other" && (
+                          <div className="absolute top-2.5 right-2.5 hidden sm:flex size-5 items-center justify-center rounded-full bg-emerald-500 text-white shadow-xs">
+                            <Check size={12} strokeWidth={3} />
+                          </div>
                         )}
-                      </Button>
+
+                        <div className="flex items-center gap-3 sm:flex-col sm:gap-2">
+                          <div className="flex h-11 sm:h-12 w-24 sm:w-28 items-center justify-center rounded-xl bg-white p-1.5 shadow-xs border border-slate-200 shrink-0 text-sky-600 dark:text-sky-400">
+                            <CreditCard size={24} />
+                          </div>
+                          <div>
+                            <div className="font-black text-sm sm:text-base text-slate-900 dark:text-white flex items-center gap-1.5 sm:justify-center">
+                              <span>Other Payment</span>
+                            </div>
+                            <span className="mt-0.5 inline-block text-[10px] font-extrabold px-2 py-0.5 rounded-full border bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/25">
+                              Manual Contact
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Mobile checkmark indicator */}
+                        <div className="sm:hidden">
+                          {method === "other" ? (
+                            <div className="size-5 rounded-full bg-emerald-500 text-white flex items-center justify-center">
+                              <Check size={12} strokeWidth={3} />
+                            </div>
+                          ) : (
+                            <div className="size-5 rounded-full border border-slate-300 dark:border-slate-700" />
+                          )}
+                        </div>
+                      </button>
                     </div>
-
-                    {/* Step-by-Step Payment Instructions */}
-                    <div className="space-y-2 pt-1 text-xs">
-                      <div className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        Quick Payment Steps:
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        <div className="rounded-xl border border-slate-200/60 bg-white/70 p-3 dark:border-slate-800 dark:bg-slate-900/60">
-                          <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white text-[11px]">
-                            <span className="flex size-4 items-center justify-center rounded-full bg-sky-500/20 text-sky-600 dark:text-sky-400 text-[10px] font-black">1</span>
-                            <span>Open App</span>
-                          </div>
-                          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                            Open your {activeGatewayMeta.name} app.
-                          </p>
-                        </div>
-
-                        <div className="rounded-xl border border-slate-200/60 bg-white/70 p-3 dark:border-slate-800 dark:bg-slate-900/60">
-                          <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white text-[11px]">
-                            <span className="flex size-4 items-center justify-center rounded-full bg-sky-500/20 text-sky-600 dark:text-sky-400 text-[10px] font-black">2</span>
-                            <span>Send ৳{price}</span>
-                          </div>
-                          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                            {currentAccountType === "Personal" ? "Send Money" : "Payment"} of ৳{price} to {currentWalletNumber}.
-                          </p>
-                        </div>
-
-                        <div className="rounded-xl border border-slate-200/60 bg-white/70 p-3 dark:border-slate-800 dark:bg-slate-900/60">
-                          <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white text-[11px]">
-                            <span className="flex size-4 items-center justify-center rounded-full bg-sky-500/20 text-sky-600 dark:text-sky-400 text-[10px] font-black">3</span>
-                            <span>Paste TrxID</span>
-                          </div>
-                          <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                            Copy Transaction ID from SMS/receipt & submit below.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Admin Custom Instruction */}
-                    {currentInstructions && (
-                      <div className="flex items-start gap-2 rounded-xl bg-sky-500/10 p-3 text-xs text-sky-800 dark:text-sky-300 border border-sky-500/20">
-                        <Info size={15} className="shrink-0 text-sky-500 mt-0.5" />
-                        <span className="text-[11px] leading-relaxed">{currentInstructions}</span>
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
 
-                {/* Transaction ID */}
-                <div className="mt-6">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                      Transaction ID (TrxID) *
+                {/* Conditional: Other Payment Info Panel vs Gateway Details & Form */}
+                {method === "other" ? (
+                    <div className="rounded-3xl border border-sky-500/30 bg-sky-500/5 p-5 sm:p-6 dark:border-sky-500/20 dark:bg-[#0c1c38]/80 shadow-xs space-y-5 animate-in fade-in duration-200">
+                      {/* Header */}
+                      <div className="flex items-center gap-2.5 pb-3 border-b border-slate-200/70 dark:border-slate-800">
+                        <div className="flex h-8 px-2.5 items-center justify-center rounded-lg bg-sky-500/10 text-sky-500 border border-sky-500/20 shrink-0">
+                          <Send size={16} />
+                        </div>
+                        <span className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                          Alternative Payment Method
+                        </span>
+                      </div>
+
+                      {/* Required Message */}
+                      <p className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200 leading-relaxed">
+                        If you do not use bKash, Nagad, or Rocket, please contact us for an alternative payment method.
+                      </p>
+
+                      {/* Telegram Contact Card */}
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-[#070e1b] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-3.5">
+                          <div className="flex size-11 items-center justify-center rounded-xl bg-sky-500/10 text-sky-500 border border-sky-500/20 shrink-0">
+                            <Send size={20} />
+                          </div>
+                          <div>
+                            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                              Telegram:
+                            </div>
+                            <div className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-mono">
+                              @cycleofchart
+                            </div>
+                          </div>
+                        </div>
+
+                        <a
+                          href="https://t.me/cycleofchart"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex h-11 items-center justify-center gap-2 px-5 rounded-xl font-bold text-xs sm:text-sm bg-sky-500 hover:bg-sky-400 text-slate-950 shadow-md shadow-sky-500/20 transition-all cursor-pointer shrink-0"
+                        >
+                          <Send size={14} />
+                          <span>Contact on Telegram</span>
+                        </a>
+                      </div>
+
+                      {/* Helpful reassurance info */}
+                      <div className="flex items-start gap-2 pt-1 text-xs text-slate-500 dark:text-slate-400">
+                        <Info size={14} className="text-sky-500 shrink-0 mt-0.5" />
+                        <span>
+                          We support international payment cards, bank wire transfers, crypto (USDT), or other custom arrangements. Direct message us on Telegram for immediate setup.
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Payment Details Guidance Card */}
+                      <div className="rounded-3xl border border-slate-200/90 bg-slate-50/70 p-5 sm:p-6 dark:border-slate-800/90 dark:bg-[#0c182c]/80 shadow-xs space-y-4">
+                        {/* Header */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200/70 dark:border-slate-800">
+                          <div className="flex items-center gap-2.5">
+                            <div className="flex h-8 px-2.5 items-center justify-center rounded-lg bg-white shadow-xs border border-slate-200 shrink-0">
+                              {React.createElement(activeGatewayMeta.logo, { size: 18 })}
+                            </div>
+                            <span className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                              Official {activeGatewayMeta.name} Payment Details
+                            </span>
+                          </div>
+                          <span className={`inline-flex items-center gap-1 text-[11px] font-black px-2.5 py-0.5 rounded-full border ${activeGatewayMeta.badgeBg}`}>
+                            {currentAccountType === "Personal" ? "Personal (Send Money)" : "Merchant (Payment)"}
+                          </span>
+                        </div>
+
+                        {/* Prominent Wallet Number with 1-Click Copy */}
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-[#070e1b] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div>
+                            <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                              {currentAccountType === "Personal" ? "Send Money to this Official Number:" : "Make Payment to this Official Number:"}
+                            </div>
+                            <div className="text-xl sm:text-2xl font-black font-mono tracking-widest text-slate-900 dark:text-white mt-0.5">
+                              {currentWalletNumber}
+                            </div>
+                          </div>
+
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => copyToClipboard(currentWalletNumber)}
+                            className={`h-10 px-4 gap-2 font-bold text-xs rounded-xl shadow-xs transition-all ${
+                              copiedNumber
+                                ? "bg-emerald-600 text-white hover:bg-emerald-600"
+                                : "bg-[#081833] text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400"
+                            }`}
+                          >
+                            {copiedNumber ? (
+                              <>
+                                <Check size={14} />
+                                <span>Copied!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy size={14} />
+                                <span>Copy Number</span>
+                              </>
+                            )}
+                          </Button>
+                        </div>
+
+                        {/* Step-by-Step Payment Instructions */}
+                        <div className="space-y-2 pt-1 text-xs">
+                          <div className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                            Quick Payment Steps:
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <div className="rounded-xl border border-slate-200/60 bg-white/70 p-3 dark:border-slate-800 dark:bg-slate-900/60">
+                              <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white text-[11px]">
+                                <span className="flex size-4 items-center justify-center rounded-full bg-sky-500/20 text-sky-600 dark:text-sky-400 text-[10px] font-black">1</span>
+                                <span>Open App</span>
+                              </div>
+                              <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                                Open your {activeGatewayMeta.name} app.
+                              </p>
+                            </div>
+
+                            <div className="rounded-xl border border-slate-200/60 bg-white/70 p-3 dark:border-slate-800 dark:bg-slate-900/60">
+                              <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white text-[11px]">
+                                <span className="flex size-4 items-center justify-center rounded-full bg-sky-500/20 text-sky-600 dark:text-sky-400 text-[10px] font-black">2</span>
+                                <span>Send ৳{price}</span>
+                              </div>
+                              <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                                {currentAccountType === "Personal" ? "Send Money" : "Payment"} of ৳{price} to {currentWalletNumber}.
+                              </p>
+                            </div>
+
+                            <div className="rounded-xl border border-slate-200/60 bg-white/70 p-3 dark:border-slate-800 dark:bg-slate-900/60">
+                              <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white text-[11px]">
+                                <span className="flex size-4 items-center justify-center rounded-full bg-sky-500/20 text-sky-600 dark:text-sky-400 text-[10px] font-black">3</span>
+                                <span>Paste TrxID</span>
+                              </div>
+                              <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+                                Copy Transaction ID from SMS/receipt & submit below.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Admin Custom Instruction */}
+                        {currentInstructions && (
+                          <div className="flex items-start gap-2 rounded-xl bg-sky-500/10 p-3 text-xs text-sky-800 dark:text-sky-300 border border-sky-500/20">
+                            <Info size={15} className="shrink-0 text-sky-500 mt-0.5" />
+                            <span className="text-[11px] leading-relaxed">{currentInstructions}</span>
+                          </div>
+                        )}
+                      </div>
+
+                    {/* Transaction ID */}
+                    <div className="mt-6">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                          Transaction ID (TrxID) *
+                        </label>
+                        <span className="text-[11px] text-slate-400">
+                          Found on your payment confirmation SMS
+                        </span>
+                      </div>
+                      <input
+                        value={tx}
+                        onChange={(e) => setTx(e.target.value.toUpperCase())}
+                        placeholder="e.g. 8A1B2C3D9E"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-base font-bold font-mono tracking-wider outline-none focus:border-[#0284c7] focus:bg-white focus:ring-2 focus:ring-sky-500/20 dark:border-slate-800 dark:bg-slate-950 dark:text-white uppercase"
+                      />
+                      <p className="mt-1.5 text-[11px] text-slate-400">
+                        Make sure to enter the exact Transaction ID provided by {activeGatewayMeta.name}.
+                      </p>
+                    </div>
+
+                    {/* No Refund Ack */}
+                    <label className="mt-6 flex items-start gap-3 text-xs text-slate-600 dark:text-slate-400 font-medium cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={ack}
+                        onChange={(e) => setAck(e.target.checked)}
+                        className="mt-0.5 size-4 accent-[#081833] dark:accent-sky-500 rounded"
+                      />
+                      <span>
+                        I understand that this is a digital institutional education product and access is permanently granted to my account upon verification.
+                      </span>
                     </label>
-                    <span className="text-[11px] text-slate-400">
-                      Found on your payment confirmation SMS
-                    </span>
-                  </div>
-                  <input
-                    value={tx}
-                    onChange={(e) => setTx(e.target.value.toUpperCase())}
-                    placeholder="e.g. 8A1B2C3D9E"
-                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-base font-bold font-mono tracking-wider outline-none focus:border-[#0284c7] focus:bg-white focus:ring-2 focus:ring-sky-500/20 dark:border-slate-800 dark:bg-slate-950 dark:text-white uppercase"
-                  />
-                  <p className="mt-1.5 text-[11px] text-slate-400">
-                    Make sure to enter the exact Transaction ID provided by {activeGatewayMeta.name}.
-                  </p>
-                </div>
 
-                {/* No Refund Ack */}
-                <label className="mt-6 flex items-start gap-3 text-xs text-slate-600 dark:text-slate-400 font-medium cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={ack}
-                    onChange={(e) => setAck(e.target.checked)}
-                    className="mt-0.5 size-4 accent-[#081833] dark:accent-sky-500 rounded"
-                  />
-                  <span>
-                    I understand that this is a digital institutional education product and access is permanently granted to my account upon verification.
-                  </span>
-                </label>
-
-                {/* Paid Submit Button */}
-                <Button
-                  disabled={!tx.trim() || !ack || submit.isPending}
-                  onClick={() =>
-                    submit.mutate({
-                      bundleId: selected,
-                      selectedPdfIds,
-                      amount: Number(price),
-                      paymentMethod: method,
-                      transactionId: tx.trim(),
-                      noRefundAcknowledged: true,
-                    })
-                  }
-                  className="mt-6 w-full h-12 bg-[#081833] text-white font-extrabold text-sm hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 active:scale-[0.99] disabled:opacity-50 shadow-lg shadow-sky-950/20"
-                >
-                  {submit.isPending ? "Submitting for Verification..." : "Submit Order for Verification →"}
-                </Button>
+                    {/* Paid Submit Button */}
+                    <Button
+                      disabled={!tx.trim() || !ack || submit.isPending}
+                      onClick={() =>
+                        submit.mutate({
+                          bundleId: selected,
+                          selectedPdfIds,
+                          amount: Number(price),
+                          paymentMethod: method as "bkash" | "nagad" | "rocket",
+                          transactionId: tx.trim(),
+                          noRefundAcknowledged: true,
+                        })
+                      }
+                      className="mt-6 w-full h-12 bg-[#081833] text-white font-extrabold text-sm hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 active:scale-[0.99] disabled:opacity-50 shadow-lg shadow-sky-950/20"
+                    >
+                      {submit.isPending ? "Submitting for Verification..." : "Submit Order for Verification →"}
+                    </Button>
+                  </>
+                )}
               </>
             ) : (
               <>
