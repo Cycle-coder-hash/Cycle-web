@@ -5585,6 +5585,15 @@ export interface OwnerProfile {
   methodologyLabel?: string;
   methodologyIcon?: string;
   showDetailsParagraph?: boolean;
+  profile2Name?: string;
+  profile2Role?: string;
+  profile2RoleBn?: string;
+  profile2PhotoUrl?: string;
+  profile2Telegram?: string;
+  profile2Youtube?: string;
+  profile2Facebook?: string;
+  profile2Twitter?: string;
+  profile2Email?: string;
 }
 
 export const DEFAULT_OWNER_PROFILE: OwnerProfile = {
@@ -5617,6 +5626,15 @@ export const DEFAULT_OWNER_PROFILE: OwnerProfile = {
   methodologyLabel: "Core Methodology",
   methodologyIcon: "award",
   showDetailsParagraph: false,
+  profile2Name: "Cycle of Chart",
+  profile2Role: "Institutional Trading Mentor",
+  profile2RoleBn: "ইন্সটিটিউশনাল ট্রেডিং মেন্টর",
+  profile2PhotoUrl: "/logo.jpg",
+  profile2Telegram: "https://t.me/cycleofchart",
+  profile2Youtube: "https://youtube.com/@cycleofchart",
+  profile2Facebook: "https://facebook.com/cycleofchart",
+  profile2Twitter: "",
+  profile2Email: "contact@cycleofchart.com",
 };
 
 export async function getOwnerProfile(): Promise<OwnerProfile> {

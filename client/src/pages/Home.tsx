@@ -1250,15 +1250,15 @@ export default function Home() {
             {ownerProfile && (
               <div className="relative rounded-3xl border border-slate-200/90 bg-white/85 p-6 sm:p-10 lg:p-12 backdrop-blur-md shadow-xl dark:border-slate-800/90 dark:bg-[#0b162a]/80 dark:shadow-2xl dark:shadow-sky-950/30 transition-all">
                 <AnimatedRgbBorder />
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center relative z-10">
-                  {/* Left Column: Photo & Name & Role & Socials */}
-                  <div className="lg:col-span-4 flex flex-col items-center text-center">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 xl:gap-10 items-center relative z-10">
+                  {/* Left Column: Profile 1 */}
+                  <div className="lg:col-span-3 flex flex-col items-center text-center">
                     <div className="relative group">
                       {/* Ambient Glow */}
                       <div className="absolute -inset-1 rounded-[28px] bg-gradient-to-r from-sky-500 via-cyan-400 to-blue-600 opacity-60 blur-md group-hover:opacity-85 transition duration-500" />
 
                       {/* Photo Container */}
-                      <div className="relative w-48 h-48 sm:w-56 sm:h-56 rounded-[24px] overflow-hidden p-1 bg-gradient-to-tr from-sky-500 via-cyan-400 to-blue-600 shadow-xl shadow-sky-500/20">
+                      <div className="relative w-44 h-44 sm:w-52 sm:h-52 lg:w-40 lg:h-40 xl:w-48 xl:h-48 rounded-[24px] overflow-hidden p-1 bg-gradient-to-tr from-sky-500 via-cyan-400 to-blue-600 shadow-xl shadow-sky-500/20">
                         <img
                           src={ownerProfile.photoUrl}
                           alt={ownerProfile.name}
@@ -1341,8 +1341,8 @@ export default function Home() {
                     )}
                   </div>
 
-                  {/* Right Column: Bio, Methodology & Metrics */}
-                  <div className="lg:col-span-8 space-y-6">
+                  {/* Center Column: Description / Content & Credentials */}
+                  <div className="lg:col-span-6 space-y-6 text-center">
                     {/* Bio Text */}
                     <div className="space-y-4 text-sm sm:text-base leading-relaxed text-slate-700 dark:text-slate-300">
                       <p className="font-medium whitespace-pre-line">
@@ -1399,7 +1399,7 @@ export default function Home() {
                               <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${card.iconBg}`}>
                                 {renderOwnerStatIcon(card.icon, "size-5")}
                               </div>
-                              <div className="min-w-0">
+                              <div className="min-w-0 text-left">
                                 <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
                                   {card.label}
                                 </div>
@@ -1415,15 +1415,15 @@ export default function Home() {
                       return (
                         <div className={`grid grid-cols-1 ${activeCards.length === 2 ? "sm:grid-cols-2" : "sm:grid-cols-3"} gap-3 pt-2`}>
                           {activeCards.map((card) => (
-                            <div key={card.key} className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-3.5 dark:border-slate-800 dark:bg-slate-900/70">
-                              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${card.iconBg}`}>
-                                {renderOwnerStatIcon(card.icon, "size-5")}
+                            <div key={card.key} className="flex items-center gap-2.5 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-3 dark:border-slate-800 dark:bg-slate-900/70 text-left">
+                              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${card.iconBg}`}>
+                                {renderOwnerStatIcon(card.icon, "size-4 sm:size-5")}
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">
                                   {card.label}
                                 </div>
-                                <div className="text-sm font-black text-slate-900 dark:text-white truncate">
+                                <div className="text-xs sm:text-sm font-black text-slate-900 dark:text-white truncate">
                                   {card.value}
                                 </div>
                               </div>
@@ -1433,6 +1433,112 @@ export default function Home() {
                       );
                     })()}
                   </div>
+
+                  {/* Right Column: Profile 2 */}
+                  {(() => {
+                    const p2 = ownerProfile as any;
+                    const p2Name = p2.profile2Name || "Cycle of Chart";
+                    const p2Role = isBn && p2.profile2RoleBn
+                      ? p2.profile2RoleBn
+                      : (p2.profile2Role || (isBn ? "ইন্সটিটিউশনাল ট্রেডিং মেন্টর" : "Institutional Trading Mentor"));
+                    const p2Photo = p2.profile2PhotoUrl || "/logo.jpg";
+                    const p2Telegram = p2.profile2Telegram !== undefined ? p2.profile2Telegram : ownerProfile.telegram;
+                    const p2Youtube = p2.profile2Youtube !== undefined ? p2.profile2Youtube : ownerProfile.youtube;
+                    const p2Facebook = p2.profile2Facebook !== undefined ? p2.profile2Facebook : ownerProfile.facebook;
+                    const p2Twitter = p2.profile2Twitter !== undefined ? p2.profile2Twitter : ownerProfile.twitter;
+                    const p2Email = p2.profile2Email !== undefined ? p2.profile2Email : ownerProfile.email;
+
+                    return (
+                      <div className="lg:col-span-3 flex flex-col items-center text-center">
+                        <div className="relative group">
+                          {/* Ambient Glow */}
+                          <div className="absolute -inset-1 rounded-[28px] bg-gradient-to-r from-sky-500 via-cyan-400 to-blue-600 opacity-60 blur-md group-hover:opacity-85 transition duration-500" />
+
+                          {/* Photo Container */}
+                          <div className="relative w-44 h-44 sm:w-52 sm:h-52 lg:w-40 lg:h-40 xl:w-48 xl:h-48 rounded-[24px] overflow-hidden p-1 bg-gradient-to-tr from-sky-500 via-cyan-400 to-blue-600 shadow-xl shadow-sky-500/20">
+                            <img
+                              src={p2Photo}
+                              alt={p2Name}
+                              className="w-full h-full object-cover object-top rounded-[20px] transition-transform duration-500 group-hover:scale-105"
+                              loading="lazy"
+                            />
+                          </div>
+                        </div>
+
+                        <h3 className="mt-5 text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                          {p2Name}
+                        </h3>
+
+                        <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-sky-500/10 text-sky-600 dark:bg-sky-400/15 dark:text-sky-300 border border-sky-500/20">
+                          <ShieldCheck size={14} className="text-sky-500 shrink-0" />
+                          <span>{p2Role}</span>
+                        </div>
+
+                        {/* Social Media & Contact Links */}
+                        {(p2Telegram ||
+                          p2Youtube ||
+                          p2Facebook ||
+                          p2Twitter ||
+                          p2Email) && (
+                          <div className="mt-5 flex items-center justify-center gap-2.5">
+                            {p2Telegram && (
+                              <a
+                                href={p2Telegram}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-sky-500/15 hover:text-sky-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-400 transition-all shadow-sm"
+                                title="Telegram"
+                              >
+                                <Send size={15} />
+                              </a>
+                            )}
+                            {p2Youtube && (
+                              <a
+                                href={p2Youtube}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-rose-500/15 hover:text-rose-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-rose-500/20 dark:hover:text-rose-400 transition-all shadow-sm"
+                                title="YouTube"
+                              >
+                                <ExternalLink size={15} />
+                              </a>
+                            )}
+                            {p2Facebook && (
+                              <a
+                                href={p2Facebook}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-blue-500/15 hover:text-blue-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-blue-500/20 dark:hover:text-blue-400 transition-all shadow-sm"
+                                title="Facebook"
+                              >
+                                <Globe size={15} />
+                              </a>
+                            )}
+                            {p2Twitter && (
+                              <a
+                                href={p2Twitter}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-sky-500/15 hover:text-sky-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-400 transition-all shadow-sm"
+                                title="Twitter / X"
+                              >
+                                <ExternalLink size={15} />
+                              </a>
+                            )}
+                            {p2Email && (
+                              <a
+                                href={`mailto:${p2Email}`}
+                                className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-emerald-500/15 hover:text-emerald-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-emerald-500/20 dark:hover:text-emerald-400 transition-all shadow-sm"
+                                title="Email"
+                              >
+                                <Mail size={15} />
+                              </a>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             )}
