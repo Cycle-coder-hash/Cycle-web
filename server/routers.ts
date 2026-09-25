@@ -1249,15 +1249,6 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin" && ctx.user.role !== "support") {
-          const access = await canAccessMentorSupport(ctx.user.id);
-          if (!access.allowed) {
-            throw new TRPCError({
-              code: "FORBIDDEN",
-              message: access.reason || "Mentor Support & Owner Personal Chat is available exclusively with Premium.",
-            });
-          }
-        }
         const conversation = await getOrCreateSupportConversation(ctx.user.id, ctx.user);
         const msg = await sendSupportMessage({
           conversationId: conversation.id,
