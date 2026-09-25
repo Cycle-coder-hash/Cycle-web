@@ -138,13 +138,15 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
   const [activeSection, setActiveSection] = useState<"all" | "profile1" | "profile2" | "center">("all");
 
   const p2Name = ownerForm.profile2Name || "Cycle of Chart";
-  const p2Role = ownerPreviewLang === "bn" && ownerForm.profile2RoleBn
-    ? ownerForm.profile2RoleBn
-    : (ownerForm.profile2Role || (ownerPreviewLang === "bn" ? "ইন্সটিটিউশনাল ট্রেডিং মেন্টর" : "Institutional Trading Mentor"));
+  const p2Role =
+    ownerPreviewLang === "bn" && ownerForm.profile2RoleBn
+      ? ownerForm.profile2RoleBn
+      : ownerForm.profile2Role || (ownerPreviewLang === "bn" ? "ইন্সটিটিউশনাল ট্রেডিং মেন্টর" : "Institutional Trading Mentor");
   const p2Photo = ownerForm.profile2PhotoUrl || "/logo.jpg";
-  const p2Bio = ownerPreviewLang === "bn" && ownerForm.profile2BioBn
-    ? ownerForm.profile2BioBn
-    : (ownerForm.profile2BioEn || "");
+  const p2Bio =
+    ownerPreviewLang === "bn" && ownerForm.profile2BioBn
+      ? ownerForm.profile2BioBn
+      : ownerForm.profile2BioEn || "";
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
@@ -166,7 +168,7 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
             )}
           </div>
           <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Independently manage both visible profiles displayed in the public dual-profile section: Founder (Left) and Cycle of Chart Brand (Right).
+            Independently manage both visible profiles displayed in the public dual-profile section: Founder / Owner (Left) and Cycle of Chart Brand (Right).
           </p>
         </div>
 
@@ -318,28 +320,45 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
             {/* PROFILE 1: FOUNDER / OWNER PROFILE (LEFT) */}
             {/* ========================================================================= */}
             {(activeSection === "all" || activeSection === "profile1") && (
-              <div className="space-y-6 pt-2">
-                <div className="flex items-center gap-2 px-1">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
-                    <UserCheck size={14} />
+              <div className="rounded-3xl border border-sky-200/80 bg-white p-6 sm:p-7 shadow-sm dark:border-sky-950/60 dark:bg-slate-900/90 space-y-6">
+                {/* Profile 1 Header Banner */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-sky-100 dark:border-sky-950/60">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-600 dark:bg-sky-400/15 dark:text-sky-400 shadow-sm">
+                      <UserCheck size={20} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                          FOUNDER / OWNER PROFILE
+                        </h3>
+                        <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-700 dark:text-sky-300 uppercase tracking-wider">
+                          Left Column
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Public founder identity, image, designation, bio narrative, and direct social links.
+                      </p>
+                    </div>
                   </div>
-                  <h3 className="text-xs font-black uppercase tracking-widest text-sky-600 dark:text-sky-400">
-                    Profile 1 — Founder / Owner Profile (Left Column)
-                  </h3>
+
+                  <span className="text-[11px] font-bold text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40 px-2.5 py-1 rounded-xl self-start sm:self-center border border-sky-200/60 dark:border-sky-900/40">
+                    Profile 1 Controls
+                  </span>
                 </div>
 
-                {/* Profile 1 Photo Management */}
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-4">
-                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-                    <Camera size={18} className="text-sky-500" />
-                    <h4 className="text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                      Founder Profile Photo
-                    </h4>
+                {/* 1. [Image] */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Camera size={16} className="text-sky-500" />
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      [Image] Founder Profile Photo
+                    </label>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row items-center gap-5 pt-2">
+                  <div className="flex flex-col sm:flex-row items-center gap-5 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/70 dark:border-slate-800">
                     <div className="relative shrink-0">
-                      <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden border-2 border-sky-500/50 bg-slate-100 dark:bg-slate-800 shadow-md flex items-center justify-center">
+                      <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border-2 border-sky-500/50 bg-slate-100 dark:bg-slate-800 shadow-md flex items-center justify-center">
                         {ownerForm.photoUrl ? (
                           <img
                             src={ownerForm.photoUrl}
@@ -347,14 +366,14 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
                             className="w-full h-full object-cover object-top"
                           />
                         ) : (
-                          <UserCheck size={36} className="text-slate-400" />
+                          <UserCheck size={32} className="text-slate-400" />
                         )}
                       </div>
                     </div>
 
-                    <div className="flex-1 w-full space-y-3">
+                    <div className="flex-1 w-full space-y-2.5">
                       <div className="flex flex-wrap items-center gap-2">
-                        <label className="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-[#0284c7] px-4 py-2 text-xs font-bold text-white shadow hover:bg-sky-600 transition-colors">
+                        <label className="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-sky-600 px-3.5 py-2 text-xs font-bold text-white shadow hover:bg-sky-700 transition-colors">
                           <Upload size={14} />
                           <span>Upload Founder Photo</span>
                           <input
@@ -380,15 +399,15 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">
-                          Or paste direct image URL
+                        <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                          Direct Image URL
                         </label>
                         <input
                           type="url"
                           placeholder="https://images.unsplash.com/..."
                           value={ownerForm.photoUrl}
                           onChange={(e) => setOwnerForm((prev) => ({ ...prev, photoUrl: e.target.value }))}
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                          className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-mono outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                         />
                         {ownerForm.photoUrl?.startsWith("data:image/") && (
                           <div className="mt-1.5 flex items-center gap-1.5 rounded-lg bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400 border border-amber-500/20">
@@ -401,206 +420,212 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
                   </div>
                 </div>
 
-                {/* Profile 1 Name & Title */}
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-4">
-                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-                    <UserCheck size={18} className="text-sky-500" />
-                    <h4 className="text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                      Founder Name & Title
-                    </h4>
-                  </div>
+                {/* 2. [Name] */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    [Name] Founder / Owner Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Al-Amin Islam"
+                    value={ownerForm.name}
+                    onChange={(e) => setOwnerForm((prev) => ({ ...prev, name: e.target.value }))}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-bold outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                  />
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Changing this name updates only the Founder profile on the left column.
+                  </p>
+                </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                      Founder Full Name *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Al-Amin Islam"
-                      value={ownerForm.name}
-                      onChange={(e) => setOwnerForm((prev) => ({ ...prev, name: e.target.value }))}
-                      className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-bold outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                    />
-                  </div>
-
+                {/* 3. [Role] */}
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    [Role] Founder Designation & Title *
+                  </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Title / Role (English) *
-                      </label>
+                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                        Role / Title (English) *
+                      </span>
                       <input
                         type="text"
                         required
                         placeholder="e.g. Founder & Lead Institutional Analyst"
                         value={ownerForm.role}
                         onChange={(e) => setOwnerForm((prev) => ({ ...prev, role: e.target.value }))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-semibold outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-semibold outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Title / Role (Bengali)
-                      </label>
+                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                        Role / Title (Bengali)
+                      </span>
                       <input
                         type="text"
                         placeholder="e.g. প্রতিষ্ঠাতা ও লিড ইন্সটিটিউশনাল অ্যানালিস্ট"
                         value={ownerForm.roleBn || ""}
                         onChange={(e) => setOwnerForm((prev) => ({ ...prev, roleBn: e.target.value }))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-semibold outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-semibold outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* Profile 1 Biography */}
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-4">
-                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-                    <FileText size={18} className="text-sky-500" />
-                    <div>
-                      <h4 className="text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                        Founder Description / Bio
-                      </h4>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                        Primary biography text displayed in the center column on the Home page.
-                      </p>
-                    </div>
+                {/* 4. [Description] */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <FileText size={16} className="text-sky-500" />
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      [Description] Founder Biography / Bio *
+                    </label>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Primary Description (English) *
-                      </label>
+                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                        Founder Description (English) *
+                      </span>
                       <textarea
-                        rows={4}
+                        rows={3}
                         required
                         placeholder="Specializing in institutional price delivery, market structure, liquidity dynamics, and price action..."
                         value={ownerForm.bioEn}
                         onChange={(e) => setOwnerForm((prev) => ({ ...prev, bioEn: e.target.value }))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs font-medium leading-relaxed outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs font-medium leading-relaxed outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Primary Description (Bengali)
-                      </label>
+                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                        Founder Description (Bengali)
+                      </span>
                       <textarea
-                        rows={4}
+                        rows={3}
                         placeholder="ইন্সটিটিউশনাল প্রাইস ডেলিভারি, মার্কেট স্ট্রাকচার, লিকুইডিটি ডায়নামিক্স এবং প্রাইস অ্যাকশন স্পেশালিস্ট..."
                         value={ownerForm.bioBn || ""}
                         onChange={(e) => setOwnerForm((prev) => ({ ...prev, bioBn: e.target.value }))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs font-medium leading-relaxed outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs font-medium leading-relaxed outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* Profile 1 Methodology / Trading Style */}
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-4">
-                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-                    <Award size={18} className="text-sky-500" />
-                    <div>
-                      <h4 className="text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                        Founder Core Methodology / Trading Style
-                      </h4>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                        Methodology displayed in the Core Methodology credential card.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                      Founder Trading Methodology
+                {/* 5. [Methodology] */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <Award size={16} className="text-sky-500" />
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      [Methodology] Founder Core Methodology / Trading Style
                     </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Institutional Order Flow, Liquidity & (SMC)"
-                      value={ownerForm.tradingStyle || ""}
-                      onChange={(e) => setOwnerForm((prev) => ({ ...prev, tradingStyle: e.target.value }))}
-                      className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-semibold outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                    />
                   </div>
+                  <input
+                    type="text"
+                    placeholder="e.g. Institutional Order Flow, Liquidity & (SMC)"
+                    value={ownerForm.tradingStyle || ""}
+                    onChange={(e) => setOwnerForm((prev) => ({ ...prev, tradingStyle: e.target.value }))}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-semibold outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                  />
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Institutional trading methodology and execution focus attributed to the founder.
+                  </p>
                 </div>
 
-                {/* Profile 1 Social Channels */}
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-4">
-                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-                    <Globe size={18} className="text-sky-500" />
-                    <h4 className="text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                      Founder Social & Contact Channels
-                    </h4>
+                {/* 6. [Social Links] */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Globe size={16} className="text-sky-500" />
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      [Social Links] Founder Channels & Direct Contact Links
+                    </label>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Telegram Link / Username
-                      </label>
+                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                        Telegram Channel / Username
+                      </span>
                       <input
                         type="text"
                         placeholder="https://t.me/cycleofchart"
                         value={ownerForm.telegram || ""}
                         onChange={(e) => setOwnerForm((prev) => ({ ...prev, telegram: e.target.value }))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                        YouTube Channel Link
-                      </label>
+                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                        YouTube Channel URL
+                      </span>
                       <input
                         type="url"
                         placeholder="https://youtube.com/@cycleofchart"
                         value={ownerForm.youtube || ""}
                         onChange={(e) => setOwnerForm((prev) => ({ ...prev, youtube: e.target.value }))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Facebook Profile Link
-                      </label>
+                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                        Facebook Profile URL
+                      </span>
                       <input
                         type="url"
                         placeholder="https://facebook.com/cycleofchart"
                         value={ownerForm.facebook || ""}
                         onChange={(e) => setOwnerForm((prev) => ({ ...prev, facebook: e.target.value }))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Twitter / X Profile Link
-                      </label>
+                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                        Twitter / X Profile URL
+                      </span>
                       <input
                         type="url"
                         placeholder="https://twitter.com/cycleofchart"
                         value={ownerForm.twitter || ""}
                         onChange={(e) => setOwnerForm((prev) => ({ ...prev, twitter: e.target.value }))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                       />
                     </div>
 
                     <div className="sm:col-span-2">
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Founder Direct Email
-                      </label>
+                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                        Founder Direct Email Address
+                      </span>
                       <input
                         type="email"
                         placeholder="contact@cycleofchart.com"
                         value={ownerForm.email || ""}
                         onChange={(e) => setOwnerForm((prev) => ({ ...prev, email: e.target.value }))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                       />
                     </div>
                   </div>
+                </div>
+
+                {/* 7. [Save] */}
+                <div className="pt-4 border-t border-sky-100 dark:border-sky-950/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Saves all changes made to the Founder / Owner Profile immediately.
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={isSaving}
+                    className="w-full sm:w-auto bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs py-2.5 px-6 rounded-xl shadow-md gap-2"
+                  >
+                    {isSaving ? (
+                      <RefreshCw size={14} className="animate-spin" />
+                    ) : (
+                      <CheckCircle2 size={14} />
+                    )}
+                    <span>Save Founder Profile</span>
+                  </Button>
                 </div>
               </div>
             )}
@@ -609,45 +634,62 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
             {/* PROFILE 2: CYCLE OF CHART / BRAND PROFILE (RIGHT) */}
             {/* ========================================================================= */}
             {(activeSection === "all" || activeSection === "profile2") && (
-              <div className="space-y-6 pt-4">
-                <div className="flex items-center gap-2 px-1">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
-                    <Building2 size={14} />
+              <div className="rounded-3xl border border-cyan-200/80 bg-white p-6 sm:p-7 shadow-sm dark:border-cyan-950/60 dark:bg-slate-900/90 space-y-6">
+                {/* Profile 2 Header Banner */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-cyan-100 dark:border-cyan-950/60">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-600 dark:bg-cyan-400/15 dark:text-cyan-400 shadow-sm">
+                      <Building2 size={20} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                          CYCLE OF CHART PROFILE
+                        </h3>
+                        <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 uppercase tracking-wider">
+                          Right Column
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Brand identity, logo/image, institutional role, narrative statement, and official channels.
+                      </p>
+                    </div>
                   </div>
-                  <h3 className="text-xs font-black uppercase tracking-widest text-cyan-600 dark:text-cyan-400">
-                    Profile 2 — Cycle of Chart / Brand Profile (Right Column)
-                  </h3>
+
+                  <span className="text-[11px] font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/40 px-2.5 py-1 rounded-xl self-start sm:self-center border border-cyan-200/60 dark:border-cyan-900/40">
+                    Profile 2 Controls
+                  </span>
                 </div>
 
-                {/* Profile 2 Photo / Brand Logo */}
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-4">
-                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-                    <Camera size={18} className="text-cyan-500" />
-                    <h4 className="text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                      Brand / Profile 2 Photo & Logo
-                    </h4>
+                {/* 1. [Logo/Image] */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Camera size={16} className="text-cyan-500" />
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      [Logo/Image] Brand / Profile 2 Image & Logo
+                    </label>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row items-center gap-5 pt-2">
+                  <div className="flex flex-col sm:flex-row items-center gap-5 p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/70 dark:border-slate-800">
                     <div className="relative shrink-0">
-                      <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl overflow-hidden border-2 border-cyan-500/50 bg-slate-100 dark:bg-slate-800 shadow-md flex items-center justify-center">
+                      <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border-2 border-cyan-500/50 bg-slate-100 dark:bg-slate-800 shadow-md flex items-center justify-center">
                         {ownerForm.profile2PhotoUrl ? (
                           <img
                             src={ownerForm.profile2PhotoUrl}
-                            alt="Brand Profile"
+                            alt="Brand"
                             className="w-full h-full object-cover object-top"
                           />
                         ) : (
-                          <Building2 size={36} className="text-slate-400" />
+                          <Building2 size={32} className="text-slate-400" />
                         )}
                       </div>
                     </div>
 
-                    <div className="flex-1 w-full space-y-3">
+                    <div className="flex-1 w-full space-y-2.5">
                       <div className="flex flex-wrap items-center gap-2">
-                        <label className="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-4 py-2 text-xs font-bold text-white shadow hover:bg-cyan-700 transition-colors">
+                        <label className="cursor-pointer inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-3.5 py-2 text-xs font-bold text-white shadow hover:bg-cyan-700 transition-colors">
                           <Upload size={14} />
-                          <span>Upload Brand Photo</span>
+                          <span>Upload Brand Image</span>
                           <input
                             type="file"
                             accept="image/*"
@@ -671,15 +713,15 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
                       </div>
 
                       <div>
-                        <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">
-                          Or paste direct image URL
+                        <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                          Direct Logo / Image URL
                         </label>
                         <input
                           type="url"
                           placeholder="https://images.unsplash.com/..."
                           value={ownerForm.profile2PhotoUrl || ""}
                           onChange={(e) => setOwnerForm((prev) => ({ ...prev, profile2PhotoUrl: e.target.value }))}
-                          className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                          className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-mono outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                         />
                         {ownerForm.profile2PhotoUrl?.startsWith("data:image/") && (
                           <div className="mt-1.5 flex items-center gap-1.5 rounded-lg bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400 border border-amber-500/20">
@@ -692,203 +734,209 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
                   </div>
                 </div>
 
-                {/* Profile 2 Name & Institutional Title */}
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-4">
-                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-                    <Building2 size={18} className="text-cyan-500" />
-                    <h4 className="text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                      Brand / Profile 2 Identity & Title
-                    </h4>
-                  </div>
+                {/* 2. [Name] */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    [Name] Brand Profile Name (e.g. Cycle of Chart) *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Cycle of Chart"
+                    value={ownerForm.profile2Name || ""}
+                    onChange={(e) => setOwnerForm((prev) => ({ ...prev, profile2Name: e.target.value }))}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-bold outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                  />
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Changing this name updates only the Brand profile on the right column. It will never overwrite the Founder name.
+                  </p>
+                </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                      Brand / Identity Name (e.g. Cycle of Chart)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Cycle of Chart"
-                      value={ownerForm.profile2Name || ""}
-                      onChange={(e) => setOwnerForm((prev) => ({ ...prev, profile2Name: e.target.value }))}
-                      className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm font-bold outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                    />
-                  </div>
-
+                {/* 3. [Role] */}
+                <div className="space-y-2">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    [Role] Brand Designation & Title
+                  </label>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
                         Title / Role (English)
-                      </label>
+                      </span>
                       <input
                         type="text"
                         placeholder="e.g. Institutional Trading Mentor"
                         value={ownerForm.profile2Role || ""}
                         onChange={(e) => setOwnerForm((prev) => ({ ...prev, profile2Role: e.target.value }))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-semibold outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-semibold outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
                         Title / Role (Bengali)
-                      </label>
+                      </span>
                       <input
                         type="text"
                         placeholder="e.g. ইন্সটিটিউশনাল ট্রেডিং মেন্টর"
                         value={ownerForm.profile2RoleBn || ""}
                         onChange={(e) => setOwnerForm((prev) => ({ ...prev, profile2RoleBn: e.target.value }))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-semibold outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-semibold outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* Profile 2 Description / Bio */}
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-4">
-                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-                    <FileText size={18} className="text-cyan-500" />
-                    <div>
-                      <h4 className="text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                        Brand / Profile 2 Description & Statement
-                      </h4>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                        Optional brand narrative or institutional mission statement displayed in the center section.
-                      </p>
-                    </div>
+                {/* 4. [Description] */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <FileText size={16} className="text-cyan-500" />
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      [Description] Brand Narrative / Mission Statement
+                    </label>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
                         Brand Description (English)
-                      </label>
+                      </span>
                       <textarea
                         rows={3}
-                        placeholder="Cycle of Chart is an institutional trading education and market research initiative..."
+                        placeholder="Cycle of Chart is an institutional trading education and market research initiative committed to mentoring traders in SMC, liquidity engineering, and rule-based execution."
                         value={ownerForm.profile2BioEn || ""}
                         onChange={(e) => setOwnerForm((prev) => ({ ...prev, profile2BioEn: e.target.value }))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs font-medium leading-relaxed outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs font-medium leading-relaxed outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
                         Brand Description (Bengali)
-                      </label>
+                      </span>
                       <textarea
                         rows={3}
-                        placeholder="সাইকেল অব চার্ট একটি প্রাতিষ্ঠানিক ট্রেডিং শিক্ষা ও মার্কেট রিসার্চ প্ল্যাটফর্ম..."
+                        placeholder="সাইকেল অব চার্ট একটি প্রাতিষ্ঠানিক ট্রেডিং শিক্ষা ও মার্কেট রিসার্চ প্ল্যাটফর্ম যা এসএমসি, লিকুইডিটি ইঞ্জিনিয়ারিং এবং নিয়মতান্ত্রিক এক্সিকিউশনে ট্রেডারদের প্রশিক্ষণ দেয়।"
                         value={ownerForm.profile2BioBn || ""}
                         onChange={(e) => setOwnerForm((prev) => ({ ...prev, profile2BioBn: e.target.value }))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs font-medium leading-relaxed outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs font-medium leading-relaxed outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* Profile 2 Core Methodology */}
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-4">
-                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-                    <Award size={18} className="text-cyan-500" />
-                    <div>
-                      <h4 className="text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                        Brand Methodology / Core Focus
-                      </h4>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                        Institutional focus and trading style for the brand profile.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                      Brand Methodology / Trading Style
+                {/* 5. [Methodology] */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <Award size={16} className="text-cyan-500" />
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      [Methodology] Brand Core Methodology / Trading Style
                     </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. SMC, Liquidity & Order Flow Delivery"
-                      value={ownerForm.profile2TradingStyle || ""}
-                      onChange={(e) => setOwnerForm((prev) => ({ ...prev, profile2TradingStyle: e.target.value }))}
-                      className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-semibold outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                    />
                   </div>
+                  <input
+                    type="text"
+                    placeholder="e.g. SMC, Liquidity & Order Flow Delivery"
+                    value={ownerForm.profile2TradingStyle || ""}
+                    onChange={(e) => setOwnerForm((prev) => ({ ...prev, profile2TradingStyle: e.target.value }))}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-semibold outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                  />
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Institutional focus and trading methodology for the Cycle of Chart brand profile.
+                  </p>
                 </div>
 
-                {/* Profile 2 Social Channels */}
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-4">
-                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-                    <Globe size={18} className="text-cyan-500" />
-                    <h4 className="text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                      Brand Official Channels & Contact Links
-                    </h4>
+                {/* 6. [Social Links] */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Globe size={16} className="text-cyan-500" />
+                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      [Social Links] Brand Official Channels & Contact Links
+                    </label>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
                         Official Telegram Channel
-                      </label>
+                      </span>
                       <input
                         type="text"
                         placeholder="https://t.me/cycleofchart"
                         value={ownerForm.profile2Telegram || ""}
                         onChange={(e) => setOwnerForm((prev) => ({ ...prev, profile2Telegram: e.target.value }))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Official YouTube Channel
-                      </label>
+                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                        Official YouTube Channel URL
+                      </span>
                       <input
                         type="url"
                         placeholder="https://youtube.com/@cycleofchart"
                         value={ownerForm.profile2Youtube || ""}
                         onChange={(e) => setOwnerForm((prev) => ({ ...prev, profile2Youtube: e.target.value }))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Official Facebook Page
-                      </label>
+                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                        Official Facebook Page URL
+                      </span>
                       <input
                         type="url"
                         placeholder="https://facebook.com/cycleofchart"
                         value={ownerForm.profile2Facebook || ""}
                         onChange={(e) => setOwnerForm((prev) => ({ ...prev, profile2Facebook: e.target.value }))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                        Official Twitter / X
-                      </label>
+                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                        Official Twitter / X URL
+                      </span>
                       <input
                         type="url"
                         placeholder="https://twitter.com/cycleofchart"
                         value={ownerForm.profile2Twitter || ""}
                         onChange={(e) => setOwnerForm((prev) => ({ ...prev, profile2Twitter: e.target.value }))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                       />
                     </div>
 
                     <div className="sm:col-span-2">
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
                         Official Contact Email
-                      </label>
+                      </span>
                       <input
                         type="email"
                         placeholder="contact@cycleofchart.com"
                         value={ownerForm.profile2Email || ""}
                         onChange={(e) => setOwnerForm((prev) => ({ ...prev, profile2Email: e.target.value }))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                       />
                     </div>
                   </div>
+                </div>
+
+                {/* 7. [Save] */}
+                <div className="pt-4 border-t border-cyan-100 dark:border-cyan-950/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Saves all changes made to the Cycle of Chart / Brand Profile immediately.
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={isSaving}
+                    className="w-full sm:w-auto bg-cyan-600 hover:bg-cyan-700 text-white font-extrabold text-xs py-2.5 px-6 rounded-xl shadow-md gap-2"
+                  >
+                    {isSaving ? (
+                      <RefreshCw size={14} className="animate-spin" />
+                    ) : (
+                      <CheckCircle2 size={14} />
+                    )}
+                    <span>Save Cycle of Chart Profile</span>
+                  </Button>
                 </div>
               </div>
             )}
@@ -897,27 +945,44 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
             {/* CENTER SECTION: CREDENTIALS & STATS */}
             {/* ========================================================================= */}
             {(activeSection === "all" || activeSection === "center") && (
-              <div className="space-y-6 pt-4">
-                <div className="flex items-center gap-2 px-1">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                    <Award size={14} />
+              <div className="rounded-3xl border border-amber-200/80 bg-white p-6 sm:p-7 shadow-sm dark:border-amber-950/60 dark:bg-slate-900/90 space-y-6">
+                {/* Center Section Header Banner */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-amber-100 dark:border-amber-950/60">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-600 dark:bg-amber-400/15 dark:text-amber-400 shadow-sm">
+                      <Award size={20} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                          CENTER SECTION — NARRATIVE & CREDENTIAL CARDS
+                        </h3>
+                        <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 uppercase tracking-wider">
+                          Center Content
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Extended experience narrative paragraph and the 3 dynamic statistic credential cards.
+                      </p>
+                    </div>
                   </div>
-                  <h3 className="text-xs font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">
-                    Center Section — Narrative & Credential Cards
-                  </h3>
+
+                  <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-1 rounded-xl self-start sm:self-center border border-amber-200/60 dark:border-amber-900/40">
+                    Center Section
+                  </span>
                 </div>
 
                 {/* Experience Narrative Paragraph Card */}
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-4">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50/60 p-5 dark:border-slate-800 dark:bg-slate-950/40 space-y-4">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200/80 dark:border-slate-800">
                     <div className="flex items-center gap-2">
-                      <Clock size={18} className="text-amber-500" />
+                      <Clock size={16} className="text-amber-500" />
                       <div>
-                        <h4 className="text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                        <h4 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
                           Experience Narrative Paragraph
                         </h4>
                         <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                          Optional extended narrative paragraph displayed beneath the primary description.
+                          Optional extended narrative paragraph displayed beneath the primary descriptions.
                         </p>
                       </div>
                     </div>
@@ -926,7 +991,7 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
                         className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
                           ownerForm.showDetailsParagraph
                             ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                            : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                            : "bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
                         }`}
                       >
                         {ownerForm.showDetailsParagraph ? "Shown on Home" : "Hidden (Disabled)"}
@@ -941,50 +1006,49 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
                     </div>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-3 pt-1">
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
                         Experience Narrative (English)
-                      </label>
+                      </span>
                       <textarea
                         rows={3}
                         placeholder="Over 6+ years of specialized market experience researching interbank price delivery algorithms..."
                         value={ownerForm.detailsEn || ""}
-                        onChange={(e) => setOwnerForm((prev) => ({ ...prev, detailsEn: e.target.value }))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs font-medium leading-relaxed outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                        onChange={(e) =>
+                          setOwnerForm((prev) => ({ ...prev, detailsEn: e.target.value }))
+                        }
+                        className="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs font-medium leading-relaxed outline-none focus:border-amber-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
                         Experience Narrative (Bengali)
-                      </label>
+                      </span>
                       <textarea
                         rows={3}
-                        placeholder="৬+ বছরের বিশেষায়িত প্রাতিষ্ঠানিক মার্কেট অভিজ্ঞতা..."
+                        placeholder="মার্কেট এক্সপেরিয়েন্স বিস্তারিত বাংলায়..."
                         value={ownerForm.detailsBn || ""}
-                        onChange={(e) => setOwnerForm((prev) => ({ ...prev, detailsBn: e.target.value }))}
-                        className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs font-medium leading-relaxed outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                        onChange={(e) =>
+                          setOwnerForm((prev) => ({ ...prev, detailsBn: e.target.value }))
+                        }
+                        className="w-full rounded-xl border border-slate-200 bg-white p-3 text-xs font-medium leading-relaxed outline-none focus:border-amber-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* Statistic & Credential Cards Management */}
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-5">
-                  <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-                    <Award size={18} className="text-amber-500" />
-                    <div>
-                      <h4 className="text-sm font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                        Statistic & Credential Cards
-                      </h4>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                        Configure visibility, labels, values, and icons. Active cards reflow seamlessly between both profiles.
-                      </p>
-                    </div>
+                {/* Credential Stat Cards Controls */}
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center gap-2">
+                    <Sparkles size={16} className="text-amber-500" />
+                    <h4 className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
+                      Dynamic Credential & Statistic Cards
+                    </h4>
                   </div>
 
-                  {/* Card 1: Market Experience */}
+                  {/* Card 1: Experience Card */}
                   <div className="rounded-2xl border border-slate-200/90 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/50 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -1057,15 +1121,15 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
                         >
                           <option value="clock">Clock (Default)</option>
                           <option value="calendar">Calendar</option>
-                          <option value="award">Award</option>
                           <option value="trending">Trending Up</option>
                           <option value="shield">Shield</option>
+                          <option value="award">Award</option>
                         </select>
                       </div>
                     </div>
                   </div>
 
-                  {/* Card 2: Traders Mentored */}
+                  {/* Card 2: Students Mentored */}
                   <div className="rounded-2xl border border-slate-200/90 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/50 space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -1226,15 +1290,38 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
                     </div>
                   </div>
                 </div>
+
+                {/* Center Section Save */}
+                <div className="pt-4 border-t border-amber-100 dark:border-amber-950/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Saves narrative paragraph and credential stat card settings.
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={isSaving}
+                    className="w-full sm:w-auto bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs py-2.5 px-6 rounded-xl shadow-md gap-2"
+                  >
+                    {isSaving ? (
+                      <RefreshCw size={14} className="animate-spin" />
+                    ) : (
+                      <CheckCircle2 size={14} />
+                    )}
+                    <span>Save Section Settings & Credentials</span>
+                  </Button>
+                </div>
               </div>
             )}
 
-            {/* Unified Submit Button */}
-            <div className="flex items-center gap-3 pt-4 border-t border-slate-200/80 dark:border-slate-800">
+            {/* Bottom Unified Master Action Bar */}
+            <div className="flex items-center justify-between gap-3 p-4 rounded-3xl bg-slate-900 text-white shadow-xl border border-slate-800">
+              <div className="hidden sm:block">
+                <div className="text-xs font-extrabold">Dual-Profile CMS Ready</div>
+                <div className="text-[11px] text-slate-400">Changes save directly to PostgreSQL settings and sync immediately.</div>
+              </div>
               <Button
                 type="submit"
                 disabled={isSaving}
-                className="w-full sm:w-auto min-w-[220px] bg-[#0284c7] hover:bg-sky-600 font-extrabold text-white text-sm shadow-md py-3 gap-2"
+                className="w-full sm:w-auto min-w-[220px] bg-[#0284c7] hover:bg-sky-600 font-extrabold text-white text-sm shadow-md py-3 px-6 rounded-2xl gap-2"
               >
                 {isSaving ? (
                   <RefreshCw size={15} className="animate-spin" />
@@ -1364,6 +1451,11 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
                         <ExternalLink size={10} />
                       </span>
                     )}
+                    {ownerForm.facebook && (
+                      <span className="p-1 rounded bg-slate-800 text-blue-400" title="Facebook">
+                        <Globe size={10} />
+                      </span>
+                    )}
                     {ownerForm.email && (
                       <span className="p-1 rounded bg-slate-800 text-emerald-400" title="Email">
                         <Mail size={10} />
@@ -1411,6 +1503,11 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
                     {ownerForm.profile2Youtube && (
                       <span className="p-1 rounded bg-slate-800 text-rose-400" title="YouTube">
                         <ExternalLink size={10} />
+                      </span>
+                    )}
+                    {ownerForm.profile2Facebook && (
+                      <span className="p-1 rounded bg-slate-800 text-blue-400" title="Facebook">
+                        <Globe size={10} />
                       </span>
                     )}
                     {ownerForm.profile2Email && (
