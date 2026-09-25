@@ -51,6 +51,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Crown,
+  Menu,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -135,6 +136,7 @@ export default function Dashboard() {
     }
     return "overview";
   });
+  const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
   const { t, language, isRTL } = useLanguage();
   const isBn = language === "bn";
   const { timezone, currentTimezone } = useUserPreferences();
@@ -1268,12 +1270,12 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3">
             {hasApprovedPurchase && (
               <Button
                 onClick={() => window.dispatchEvent(new CustomEvent("open-telegram-modal"))}
                 size="sm"
-                className="gap-1.5 text-xs font-black bg-gradient-to-r from-sky-500 to-blue-600 text-white hover:from-sky-400 hover:to-blue-500 shadow-md shadow-sky-500/20"
+                className="gap-1.5 text-xs font-black bg-gradient-to-r from-sky-500 to-blue-600 text-white hover:from-sky-400 hover:to-blue-500 shadow-md shadow-sky-500/20 px-2 sm:px-3 h-8 sm:h-9"
                 title={isBn ? "ভিআইপি টেলিগ্রাম গ্রুপ" : "VIP Telegram Community"}
               >
                 <Send size={13} className="translate-x-0.5 -translate-y-0.5" />
@@ -1281,29 +1283,29 @@ export default function Dashboard() {
               </Button>
             )}
 
-            <Link href="/leaderboard">
-              <Button size="sm" className="gap-1.5 text-xs font-extrabold bg-amber-500/15 text-amber-600 hover:bg-amber-500/25 dark:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/30 border border-amber-500/30">
+            <Link href="/leaderboard" className="hidden sm:inline-flex">
+              <Button size="sm" className="gap-1.5 text-xs font-extrabold bg-amber-500/15 text-amber-600 hover:bg-amber-500/25 dark:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/30 border border-amber-500/30 h-8 sm:h-9">
                 <Trophy size={13} className="text-amber-500 shrink-0" />
                 <span>{isBn ? "লিডারবোর্ড" : "Leaderboard"}</span>
               </Button>
             </Link>
 
-            <Link href="/">
-              <Button variant="outline" size="sm" className="gap-1 text-xs font-bold border-slate-300 dark:border-slate-700">
+            <Link href="/" className="hidden sm:inline-flex">
+              <Button variant="outline" size="sm" className="gap-1 text-xs font-bold border-slate-300 dark:border-slate-700 h-8 sm:h-9">
                 <ArrowLeft size={13} />
-                <span className="hidden sm:inline">{isBn ? "মূল ওয়েবসাইট" : "Main Website"}</span>
+                <span>{isBn ? "মূল ওয়েবসাইট" : "Main Website"}</span>
               </Button>
             </Link>
 
             <Link href="/checkout">
-              <Button size="sm" className="gap-1 text-xs font-extrabold bg-[#081833] text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400">
+              <Button size="sm" className="gap-1 text-xs font-extrabold bg-[#081833] text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 px-2.5 sm:px-3 h-8 sm:h-9">
                 <Sparkles size={13} />
-                <span>{isBn ? "স্টোর ব্রাউজ" : "Browse Store"}</span>
+                <span className="hidden sm:inline">{isBn ? "স্টোর ব্রাউজ" : "Browse Store"}</span>
               </Button>
             </Link>
 
             <Link href="/settings">
-              <Button variant="outline" size="sm" className="gap-1 text-xs font-bold border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50" title={isBn ? "অ্যাকাউন্ট সেটিংস" : "Account Settings"}>
+              <Button variant="outline" size="sm" className="gap-1 text-xs font-bold border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50 px-2.5 sm:px-3 h-8 sm:h-9" title={isBn ? "অ্যাকাউন্ট সেটিংস" : "Account Settings"}>
                 <SettingsIcon size={13} className="text-sky-500" />
                 <span className="hidden sm:inline">{isBn ? "সেটিংস" : "Settings"}</span>
               </Button>
@@ -1313,50 +1315,8 @@ export default function Dashboard() {
           </div>
         </header>
 
-        {/* Mobile Horizontal Tab Navigation */}
-        <div className="border-b border-slate-200 bg-white px-4 py-2.5 lg:hidden overflow-x-auto touch-pan-x overscroll-contain dark:border-slate-800 dark:bg-[#070e1b]">
-          <div className="flex gap-2 items-center">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setTab(item.id as any)}
-                className={`whitespace-nowrap rounded-xl px-3.5 py-1.5 text-xs font-bold transition shrink-0 ${
-                  tab === item.id
-                    ? "bg-[#081833] text-white dark:bg-sky-500 dark:text-slate-950"
-                    : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-                }`}
-              >
-                {isBn ? item.labelBn : item.labelEn}
-              </button>
-            ))}
-            {hasApprovedPurchase && (
-              <button
-                onClick={() => window.dispatchEvent(new CustomEvent("open-telegram-modal"))}
-                className="flex shrink-0 items-center gap-1.5 rounded-xl border border-sky-500/30 bg-sky-500/10 px-3 py-1.5 text-xs font-extrabold text-sky-600 dark:text-sky-400"
-              >
-                <Send size={13} className="text-sky-500" />
-                <span>{isBn ? "টেলিগ্রাম" : "Telegram"}</span>
-              </button>
-            )}
-            <Link
-              href="/leaderboard"
-              className="flex shrink-0 items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-extrabold text-amber-600 dark:text-amber-400"
-            >
-              <Trophy size={13} className="text-amber-500" />
-              <span>{isBn ? "লিডারবোর্ড" : "Leaderboard"}</span>
-            </Link>
-            <Link
-              href="/settings"
-              className="flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-850 px-3 py-1.5 text-xs font-extrabold text-slate-700 dark:text-slate-300"
-            >
-              <SettingsIcon size={13} className="text-sky-500" />
-              <span>{isBn ? "সেটিংস" : "Settings"}</span>
-            </Link>
-          </div>
-        </div>
-
         {/* Body Content */}
-        <main className="flex-1 p-5 sm:p-8 max-w-7xl w-full mx-auto space-y-8">
+        <main className="flex-1 p-3.5 sm:p-8 max-w-7xl w-full mx-auto space-y-6 sm:space-y-8 pb-24 lg:pb-8">
           {/* ========================================================================= */}
           {/* TAB 1: OVERVIEW */}
           {/* ========================================================================= */}
@@ -1675,91 +1635,91 @@ export default function Dashboard() {
               </div>
 
               {/* Top Banner KPI Grid */}
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2.5 sm:gap-4">
                 {/* 1. Total Documented Trades */}
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <div className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
                   <div className="flex items-center justify-between text-slate-400">
-                    <span className="text-xs font-extrabold uppercase tracking-wider">{isBn ? "মোট ট্রেড জার্নাল" : "Journal Entries"}</span>
-                    <NotebookPen size={18} className="text-[#0284c7] dark:text-sky-400" />
+                    <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider">{isBn ? "মোট ট্রেড জার্নাল" : "Journal Entries"}</span>
+                    <NotebookPen size={16} className="text-[#0284c7] dark:text-sky-400 sm:w-[18px] sm:h-[18px]" />
                   </div>
-                  <div className="mt-4 flex items-baseline gap-2">
-                    <span className="text-3xl font-black">{journalStats.total}</span>
-                    <span className="text-sm font-bold text-slate-400">{isBn ? "টি ট্রেড" : "Trades"}</span>
+                  <div className="mt-2.5 sm:mt-4 flex items-baseline gap-1.5 sm:gap-2">
+                    <span className="text-xl sm:text-3xl font-black">{journalStats.total}</span>
+                    <span className="text-xs sm:text-sm font-bold text-slate-400">{isBn ? "টি ট্রেড" : "Trades"}</span>
                   </div>
-                  <div className="mt-3 text-xs font-medium text-slate-500 dark:text-slate-400">
+                  <div className="mt-2 sm:mt-3 text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">
                     {journalStats.wins} {isBn ? "উইন" : "Wins"} · {journalStats.losses} {isBn ? "লস" : "Losses"}
                   </div>
                 </div>
 
                 {/* 2. Win Rate */}
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <div className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
                   <div className="flex items-center justify-between text-slate-400">
-                    <span className="text-xs font-extrabold uppercase tracking-wider">{isBn ? "ট্রেড উইনরেট" : "Trade Win Rate"}</span>
-                    <Flame size={18} className="text-amber-500" />
+                    <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider">{isBn ? "ট্রেড উইনরেট" : "Trade Win Rate"}</span>
+                    <Flame size={16} className="text-amber-500 sm:w-[18px] sm:h-[18px]" />
                   </div>
-                  <div className="mt-4 flex items-baseline gap-2">
-                    <span className="text-3xl font-black">{journalStats.winRate}%</span>
-                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">({journalStats.wins}W / {journalStats.losses}L)</span>
+                  <div className="mt-2.5 sm:mt-4 flex items-baseline gap-1.5 sm:gap-2">
+                    <span className="text-xl sm:text-3xl font-black">{journalStats.winRate}%</span>
+                    <span className="text-[10px] sm:text-xs font-bold text-emerald-600 dark:text-emerald-400">({journalStats.wins}W / {journalStats.losses}L)</span>
                   </div>
-                  <div className="mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                    {journalStats.total} {isBn ? "টি ট্রেড জার্নালে লিপিবদ্ধ" : "documented trade logs"}
+                  <div className="mt-2 text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate">
+                    {journalStats.total} {isBn ? "টি ট্রেড" : "documented logs"}
                   </div>
                 </div>
 
                 {/* 3. Journal Logs */}
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+                <div className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
                   <div className="flex items-center justify-between text-slate-400">
-                    <span className="text-xs font-extrabold uppercase tracking-wider">{isBn ? "আনলকড রিসোর্স" : "My Resources"}</span>
-                    <BookOpen size={18} className="text-purple-500" />
+                    <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider">{isBn ? "আনলকড রিসোর্স" : "My Resources"}</span>
+                    <BookOpen size={16} className="text-purple-500 sm:w-[18px] sm:h-[18px]" />
                   </div>
-                  <div className="mt-4 text-3xl font-black">{entitlements?.length || 0}</div>
-                  <div className="mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                    {isBn ? "সক্রিয় PDF ও কোর্স অ্যাক্সেস" : "Active package entitlements"}
+                  <div className="mt-2.5 sm:mt-4 text-xl sm:text-3xl font-black">{entitlements?.length || 0}</div>
+                  <div className="mt-2 text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate">
+                    {isBn ? "সক্রিয় PDF ও কোর্স" : "Active entitlements"}
                   </div>
                 </div>
 
                 {/* 4. Today's Discipline */}
                 <button
                   onClick={() => setTab("discipline")}
-                  className="rounded-3xl bg-[#081833] p-6 text-white shadow-xl shadow-[#081833]/15 dark:bg-slate-800 text-left transition-all hover:ring-2 hover:ring-[#38bdf8]/50 cursor-pointer"
+                  className="rounded-2xl sm:rounded-3xl bg-[#081833] p-3.5 sm:p-6 text-white shadow-xl shadow-[#081833]/15 dark:bg-slate-800 text-left transition-all hover:ring-2 hover:ring-[#38bdf8]/50 cursor-pointer"
                 >
                   <div className="flex items-center justify-between text-slate-400">
-                    <span className="text-xs font-extrabold uppercase tracking-wider text-[#38bdf8]">{isBn ? "আজকের রুটিন" : "Today's Discipline"}</span>
-                    <ClipboardCheck size={18} className="text-[#38bdf8]" />
+                    <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider text-[#38bdf8]">{isBn ? "আজকের রুটিন" : "Today's Discipline"}</span>
+                    <ClipboardCheck size={16} className="text-[#38bdf8] sm:w-[18px] sm:h-[18px]" />
                   </div>
-                  <div className="mt-4 flex items-baseline gap-2">
-                    <span className="text-3xl font-black">{discipline?.filter((d: any) => d.completed).length || 0}</span>
-                    <span className="text-sm font-bold text-slate-400">/ 6 {isBn ? "রুলস" : "Rules"}</span>
+                  <div className="mt-2.5 sm:mt-4 flex items-baseline gap-1.5 sm:gap-2">
+                    <span className="text-xl sm:text-3xl font-black">{discipline?.filter((d: any) => d.completed).length || 0}</span>
+                    <span className="text-xs sm:text-sm font-bold text-slate-400">/ 6 {isBn ? "রুলস" : "Rules"}</span>
                   </div>
-                  <div className="mt-2 flex items-center justify-between text-xs font-medium text-slate-300">
-                    <span>{isBn ? "ডিসিপ্লিনই ট্রেডারের মূল শক্তি" : "Process over emotion"}</span>
-                    <ChevronRight size={14} className="text-[#38bdf8]" />
+                  <div className="mt-2 flex items-center justify-between text-[11px] sm:text-xs font-medium text-slate-300">
+                    <span className="truncate">{isBn ? "ডিসিপ্লিনই শক্তি" : "Process over emotion"}</span>
+                    <ChevronRight size={14} className="text-[#38bdf8] shrink-0" />
                   </div>
                 </button>
 
                 {/* 5. Your Global Rank */}
-                <Link href="/leaderboard">
-                  <div className="rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-white to-slate-50 p-6 shadow-sm dark:border-amber-500/30 dark:from-[#141d2e] dark:via-[#0c1527] dark:to-[#070e1b] transition-all hover:ring-2 hover:ring-amber-500/50 cursor-pointer h-full flex flex-col justify-between">
+                <Link href="/leaderboard" className="col-span-2 sm:col-span-1">
+                  <div className="rounded-2xl sm:rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-white to-slate-50 p-3.5 sm:p-6 shadow-xs dark:border-amber-500/30 dark:from-[#141d2e] dark:via-[#0c1527] dark:to-[#070e1b] transition-all hover:ring-2 hover:ring-amber-500/50 cursor-pointer h-full flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between text-slate-400">
-                        <span className="text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                        <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
                           {isBn ? "আপনার গ্লোবাল র‍্যাঙ্ক" : "YOUR GLOBAL RANK"}
                         </span>
-                        <Trophy size={18} className="text-amber-500" />
+                        <Trophy size={16} className="text-amber-500 sm:w-[18px] sm:h-[18px]" />
                       </div>
-                      <div className="mt-4 flex items-baseline gap-2">
-                        <span className="text-3xl font-black text-slate-900 dark:text-white">
+                      <div className="mt-2.5 sm:mt-4 flex items-baseline gap-2">
+                        <span className="text-xl sm:text-3xl font-black text-slate-900 dark:text-white">
                           {myRankData?.isRanked && myRankData.rank ? `#${myRankData.rank}` : "Unranked"}
                         </span>
                       </div>
                     </div>
-                    <div className="mt-3 flex items-center justify-between text-xs font-medium text-slate-500 dark:text-slate-400">
-                      <span>
+                    <div className="mt-2 sm:mt-3 flex items-center justify-between text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">
+                      <span className="truncate">
                         {myRankData?.isRanked && myRankData.overallScore !== null
                           ? `${isBn ? "স্কোর" : "Overall Score"}: ${myRankData.overallScore} / 100`
                           : (isBn ? "র‌্যাঙ্ক পেতে ট্রেড লগ করুন" : "Log trades to qualify")}
                       </span>
-                      <ChevronRight size={14} className="text-amber-500" />
+                      <ChevronRight size={14} className="text-amber-500 shrink-0" />
                     </div>
                   </div>
                 </Link>
@@ -2301,6 +2261,328 @@ export default function Dashboard() {
           )}
         </main>
       </div>
+
+      {/* ========================================================================= */}
+      {/* MOBILE FIXED BOTTOM NAVIGATION BAR */}
+      {/* ========================================================================= */}
+      <nav
+        aria-label="Mobile Bottom Navigation"
+        className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-[#070e1b]/95 backdrop-blur-xl border-t border-slate-800/90 shadow-2xl safe-bottom"
+      >
+        <div className="flex items-center justify-around px-1.5 py-1.5">
+          {/* 1. Overview */}
+          <button
+            type="button"
+            onClick={() => {
+              setTab("overview");
+              setIsMobileMoreOpen(false);
+            }}
+            className={`flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl transition-all cursor-pointer min-h-[44px] ${
+              tab === "overview" && !isMobileMoreOpen
+                ? "text-sky-400 font-extrabold"
+                : "text-slate-400 hover:text-slate-200 font-medium"
+            }`}
+          >
+            <LayoutDashboard size={19} className={tab === "overview" && !isMobileMoreOpen ? "text-sky-400 scale-105" : "text-slate-400"} />
+            <span className="text-[10px] mt-0.5 tracking-tight truncate max-w-[62px]">
+              {isBn ? "ওভারভিউ" : "Overview"}
+            </span>
+          </button>
+
+          {/* 2. Trade Journal */}
+          <button
+            type="button"
+            onClick={() => {
+              setTab("journal");
+              setIsMobileMoreOpen(false);
+            }}
+            className={`flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl transition-all cursor-pointer min-h-[44px] relative ${
+              tab === "journal" && !isMobileMoreOpen
+                ? "text-sky-400 font-extrabold"
+                : "text-slate-400 hover:text-slate-200 font-medium"
+            }`}
+          >
+            <NotebookPen size={19} className={tab === "journal" && !isMobileMoreOpen ? "text-sky-400 scale-105" : "text-slate-400"} />
+            <span className="text-[10px] mt-0.5 tracking-tight truncate max-w-[62px]">
+              {isBn ? "জার্নাল" : "Journal"}
+            </span>
+            {Boolean(localTrades?.length || journal?.length) && (
+              <span className="absolute top-1 right-2.5 size-2 rounded-full bg-sky-500 ring-2 ring-[#070e1b]" />
+            )}
+          </button>
+
+          {/* 3. Daily Routine */}
+          <button
+            type="button"
+            onClick={() => {
+              setTab("discipline");
+              setIsMobileMoreOpen(false);
+            }}
+            className={`flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl transition-all cursor-pointer min-h-[44px] ${
+              tab === "discipline" && !isMobileMoreOpen
+                ? "text-sky-400 font-extrabold"
+                : "text-slate-400 hover:text-slate-200 font-medium"
+            }`}
+          >
+            <ClipboardCheck size={19} className={tab === "discipline" && !isMobileMoreOpen ? "text-sky-400 scale-105" : "text-slate-400"} />
+            <span className="text-[10px] mt-0.5 tracking-tight truncate max-w-[62px]">
+              {isBn ? "রুটিন" : "Routine"}
+            </span>
+          </button>
+
+          {/* 4. Global Leaderboard */}
+          <Link
+            href="/leaderboard"
+            onClick={() => setIsMobileMoreOpen(false)}
+            className="flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl transition-all cursor-pointer min-h-[44px] text-amber-400/90 hover:text-amber-300 font-medium"
+          >
+            <Trophy size={19} className="text-amber-400" />
+            <span className="text-[10px] mt-0.5 tracking-tight truncate max-w-[62px]">
+              {isBn ? "র‍্যাঙ্ক" : "Rank"}
+            </span>
+          </Link>
+
+          {/* 5. More Sections Drawer Trigger */}
+          <button
+            type="button"
+            onClick={() => setIsMobileMoreOpen((prev) => !prev)}
+            className={`flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl transition-all cursor-pointer min-h-[44px] ${
+              isMobileMoreOpen || (!["overview", "journal", "discipline"].includes(tab))
+                ? "text-sky-400 font-extrabold"
+                : "text-slate-400 hover:text-slate-200 font-medium"
+            }`}
+          >
+            <Menu size={19} className={isMobileMoreOpen ? "text-sky-400 rotate-90 transition-transform" : "text-slate-400 transition-transform"} />
+            <span className="text-[10px] mt-0.5 tracking-tight truncate max-w-[62px]">
+              {isBn ? "মেনু" : "More"}
+            </span>
+          </button>
+        </div>
+      </nav>
+
+      {/* ========================================================================= */}
+      {/* MOBILE "MORE" BOTTOM DRAWER */}
+      {/* ========================================================================= */}
+      {isMobileMoreOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          {/* Backdrop */}
+          <div
+            onClick={() => setIsMobileMoreOpen(false)}
+            className="absolute inset-0 bg-black/70 backdrop-blur-xs transition-opacity animate-in fade-in"
+          />
+
+          {/* Bottom Sheet */}
+          <div className="absolute inset-x-0 bottom-0 rounded-t-3xl border-t border-slate-800 bg-[#0b162a] p-5 shadow-2xl space-y-4 animate-in slide-in-from-bottom duration-200 max-h-[85vh] overflow-y-auto pb-8 safe-bottom">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+              <div className="flex items-center gap-2">
+                <BrandLogo size={24} />
+                <span className="text-xs font-black uppercase tracking-wider text-slate-300">
+                  {isBn ? "সকল সেকশন ও টুলস" : "All Sections & Tools"}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsMobileMoreOpen(false)}
+                className="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white cursor-pointer"
+                aria-label="Close drawer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              {/* 12-Stage Roadmap */}
+              <button
+                type="button"
+                onClick={() => {
+                  setTab("roadmap");
+                  setIsMobileMoreOpen(false);
+                }}
+                className={`flex items-center gap-3 p-3 rounded-2xl border text-left text-xs font-bold transition-all cursor-pointer ${
+                  tab === "roadmap"
+                    ? "border-sky-500/50 bg-sky-500/15 text-sky-400"
+                    : "border-slate-800/80 bg-slate-900/70 text-slate-300 hover:bg-slate-800"
+                }`}
+              >
+                <div className="size-9 rounded-xl bg-sky-500/10 flex items-center justify-center shrink-0 text-sky-400">
+                  <Layers size={18} />
+                </div>
+                <div className="min-w-0">
+                  <div className="truncate font-extrabold">{isBn ? "১২-স্টেজ রোডম্যাপ" : "Roadmap"}</div>
+                  <div className="text-[10px] text-slate-400 font-normal">{completedStagesCount}/12 completed</div>
+                </div>
+              </button>
+
+              {/* My Library */}
+              <button
+                type="button"
+                onClick={() => {
+                  setTab("library");
+                  setIsMobileMoreOpen(false);
+                }}
+                className={`flex items-center gap-3 p-3 rounded-2xl border text-left text-xs font-bold transition-all cursor-pointer ${
+                  tab === "library"
+                    ? "border-sky-500/50 bg-sky-500/15 text-sky-400"
+                    : "border-slate-800/80 bg-slate-900/70 text-slate-300 hover:bg-slate-800"
+                }`}
+              >
+                <div className="size-9 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0 text-purple-400">
+                  <BookOpen size={18} />
+                </div>
+                <div className="min-w-0">
+                  <div className="truncate font-extrabold">{isBn ? "আমার লাইব্রেরি" : "My Library"}</div>
+                  <div className="text-[10px] text-slate-400 font-normal">{entitlements?.length || 0} active</div>
+                </div>
+              </button>
+
+              {/* Position Calculator */}
+              <button
+                type="button"
+                onClick={() => {
+                  setTab("calculator");
+                  setIsMobileMoreOpen(false);
+                }}
+                className={`flex items-center gap-3 p-3 rounded-2xl border text-left text-xs font-bold transition-all cursor-pointer ${
+                  tab === "calculator"
+                    ? "border-sky-500/50 bg-sky-500/15 text-sky-400"
+                    : "border-slate-800/80 bg-slate-900/70 text-slate-300 hover:bg-slate-800"
+                }`}
+              >
+                <div className="size-9 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0 text-emerald-400">
+                  <Calculator size={18} />
+                </div>
+                <div className="min-w-0">
+                  <div className="truncate font-extrabold">{isBn ? "ক্যালকুলেটর" : "Calculator"}</div>
+                  <div className="text-[10px] text-slate-400 font-normal">Risk & Sizing</div>
+                </div>
+              </button>
+
+              {/* Payment History / Orders */}
+              <button
+                type="button"
+                onClick={() => {
+                  setTab("orders");
+                  setIsMobileMoreOpen(false);
+                }}
+                className={`flex items-center gap-3 p-3 rounded-2xl border text-left text-xs font-bold transition-all cursor-pointer ${
+                  tab === "orders"
+                    ? "border-sky-500/50 bg-sky-500/15 text-sky-400"
+                    : "border-slate-800/80 bg-slate-900/70 text-slate-300 hover:bg-slate-800"
+                }`}
+              >
+                <div className="size-9 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0 text-amber-400">
+                  <Receipt size={18} />
+                </div>
+                <div className="min-w-0">
+                  <div className="truncate font-extrabold">{isBn ? "পেমেন্ট হিস্ট্রি" : "Orders"}</div>
+                  <div className="text-[10px] text-slate-400 font-normal">{orders?.length || 0} orders</div>
+                </div>
+              </button>
+
+              {/* Support Chat */}
+              <button
+                type="button"
+                onClick={() => {
+                  setTab("support");
+                  setIsMobileMoreOpen(false);
+                }}
+                className={`flex items-center gap-3 p-3 rounded-2xl border text-left text-xs font-bold transition-all cursor-pointer ${
+                  tab === "support"
+                    ? "border-sky-500/50 bg-sky-500/15 text-sky-400"
+                    : "border-slate-800/80 bg-slate-900/70 text-slate-300 hover:bg-slate-800"
+                }`}
+              >
+                <div className="size-9 rounded-xl bg-sky-500/10 flex items-center justify-center shrink-0 text-sky-400">
+                  <MessageSquare size={18} />
+                </div>
+                <div className="min-w-0">
+                  <div className="truncate font-extrabold">{isBn ? "সাপোর্ট চ্যাট" : "Support"}</div>
+                  <div className="text-[10px] text-slate-400 font-normal">
+                    {unreadSupportCount > 0 ? `${unreadSupportCount} unread` : "Helpdesk"}
+                  </div>
+                </div>
+              </button>
+
+              {/* VIP Telegram */}
+              {hasApprovedPurchase && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileMoreOpen(false);
+                    window.dispatchEvent(new CustomEvent("open-telegram-modal"));
+                  }}
+                  className="flex items-center gap-3 p-3 rounded-2xl border border-sky-500/30 bg-sky-500/10 text-left text-xs font-bold text-sky-400 hover:bg-sky-500/20 transition-all cursor-pointer"
+                >
+                  <div className="size-9 rounded-xl bg-sky-500/20 flex items-center justify-center shrink-0 text-sky-300">
+                    <Send size={18} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="truncate font-extrabold">{isBn ? "টেলিগ্রাম ভিআইপি" : "Telegram VIP"}</div>
+                    <div className="text-[10px] text-sky-400/70 font-normal">Community</div>
+                  </div>
+                </button>
+              )}
+
+              {/* Store Browse */}
+              <Link
+                href="/#store"
+                onClick={() => setIsMobileMoreOpen(false)}
+                className="flex items-center gap-3 p-3 rounded-2xl border border-slate-800/80 bg-slate-900/70 text-left text-xs font-bold text-slate-300 hover:bg-slate-800 transition-all"
+              >
+                <div className="size-9 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0 text-amber-400">
+                  <Sparkles size={18} />
+                </div>
+                <div className="min-w-0">
+                  <div className="truncate font-extrabold">{isBn ? "ব্রাউজ স্টোর" : "Browse Store"}</div>
+                  <div className="text-[10px] text-slate-400 font-normal">Books & Packages</div>
+                </div>
+              </Link>
+
+              {/* Settings */}
+              <Link
+                href="/settings"
+                onClick={() => setIsMobileMoreOpen(false)}
+                className="flex items-center gap-3 p-3 rounded-2xl border border-slate-800/80 bg-slate-900/70 text-left text-xs font-bold text-slate-300 hover:bg-slate-800 transition-all"
+              >
+                <div className="size-9 rounded-xl bg-slate-800 flex items-center justify-center shrink-0 text-slate-300">
+                  <SettingsIcon size={18} />
+                </div>
+                <div className="min-w-0">
+                  <div className="truncate font-extrabold">{isBn ? "অ্যাকাউন্ট সেটিংস" : "Settings"}</div>
+                  <div className="text-[10px] text-slate-400 font-normal">Security & Pass</div>
+                </div>
+              </Link>
+            </div>
+
+            {/* Quick Actions Footer inside Drawer */}
+            <div className="flex items-center justify-between pt-3 border-t border-slate-800/80">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={toggleTheme}
+                  className="flex size-9 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/80 text-yellow-400 cursor-pointer"
+                  title="Toggle theme"
+                >
+                  {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+                </button>
+                <LanguageSelector />
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMobileMoreOpen(false);
+                  handleLogout();
+                }}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-rose-900/40 bg-rose-950/20 text-xs font-bold text-rose-400 hover:bg-rose-950/40 cursor-pointer"
+              >
+                <LogOut size={14} />
+                <span>{isBn ? "লগআউট" : "Sign Out"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* 12-STAGE ROADMAP DEEP DIVE MODAL */}

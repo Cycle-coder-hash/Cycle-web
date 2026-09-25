@@ -576,27 +576,27 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
       )}
 
       {/* TOP KPI CARDS GRID */}
-      <div className="grid gap-4 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-2.5 sm:gap-4 grid-cols-2 lg:grid-cols-4">
         {/* Card 1: Starting & Current Balance */}
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider">
+            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider">
               {isBn ? "ব্যালেন্স প্রবৃদ্ধি" : "Account Capital"}
             </span>
-            <DollarSign className="h-4 w-4 text-cyan-500" />
+            <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-cyan-500" />
           </div>
-          <div className="mt-3">
-            <div className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+          <div className="mt-2 sm:mt-3">
+            <div className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
               {currencySymbol}{stats.currentBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
-            <div className="mt-1 flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+            <div className="mt-1 flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400">
               <span>{isBn ? "প্রারম্ভিক:" : "Initial:"}</span>
               <span className="font-mono">{currencySymbol}{stats.startingBalance.toLocaleString()}</span>
             </div>
           </div>
-          <div className="mt-3 flex items-center gap-1.5 text-xs font-bold">
+          <div className="mt-2.5 sm:mt-3 flex items-center gap-1.5 text-xs font-bold">
             <span
-              className={`inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-[11px] font-black ${
+              className={`inline-flex items-center gap-1 rounded-lg px-1.5 py-0.5 text-[10px] sm:text-[11px] font-black ${
                 stats.growthPercent >= 0
                   ? "bg-emerald-500/10 text-emerald-500"
                   : "bg-rose-500/10 text-rose-500"
@@ -605,54 +605,54 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
               {stats.growthPercent >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
               {stats.growthPercent >= 0 ? `+${stats.growthPercent}%` : `${stats.growthPercent}%`}
             </span>
-            <span className="text-[11px] text-slate-400">Net Growth</span>
+            <span className="text-[10px] sm:text-[11px] text-slate-400">Net Growth</span>
           </div>
         </div>
 
         {/* Card 2: Total P&L */}
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider">
+            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider">
               {isBn ? "মোট নিট লাভ / ক্ষতি" : "Total Net P&L"}
             </span>
-            <Percent className="h-4 w-4 text-emerald-500" />
+            <Percent className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-500" />
           </div>
-          <div className="mt-3">
+          <div className="mt-2 sm:mt-3">
             <div
-              className={`text-2xl sm:text-3xl font-black tracking-tight ${
+              className={`text-xl sm:text-2xl lg:text-3xl font-black tracking-tight ${
                 stats.totalPnl >= 0 ? "text-emerald-500" : "text-rose-500"
               }`}
             >
               {stats.totalPnl >= 0 ? `+${currencySymbol}${stats.totalPnl.toFixed(2)}` : `-${currencySymbol}${Math.abs(stats.totalPnl).toFixed(2)}`}
             </div>
-            <div className="mt-1 flex items-center gap-3 text-xs font-bold">
+            <div className="mt-1 flex flex-wrap items-center gap-1.5 sm:gap-3 text-[10px] sm:text-xs font-bold">
               <span className="text-emerald-500">+{currencySymbol}{stats.totalProfit.toFixed(2)}</span>
               <span className="text-rose-500">-{currencySymbol}{stats.totalLoss.toFixed(2)}</span>
             </div>
           </div>
-          <div className="mt-3 flex items-center justify-between text-[11px] font-medium text-slate-400">
+          <div className="mt-2.5 sm:mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-0.5 text-[10px] sm:text-[11px] font-medium text-slate-400">
             <span>Avg Win: {currencySymbol}{stats.averageWin.toFixed(1)}</span>
             <span>Avg Loss: {currencySymbol}{stats.averageLoss.toFixed(1)}</span>
           </div>
         </div>
 
         {/* Card 3: Win Rate & Profit Factor */}
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider">
+            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider">
               {isBn ? "উইনরেট ও ফ্যাক্টর" : "Win Rate & Factor"}
             </span>
-            <Flame className="h-4 w-4 text-amber-500" />
+            <Flame className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-500" />
           </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <div className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+          <div className="mt-2 sm:mt-3 flex items-baseline gap-1.5 sm:gap-2">
+            <div className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
               {stats.winRate}%
             </div>
-            <span className="text-xs font-bold text-slate-500">
+            <span className="text-[10px] sm:text-xs font-bold text-slate-500">
               PF: {stats.profitFactor}
             </span>
           </div>
-          <div className="mt-3 flex items-center gap-1.5 text-[11px] font-bold">
+          <div className="mt-2.5 sm:mt-3 flex flex-wrap items-center gap-1 text-[10px] sm:text-[11px] font-bold">
             <span className="rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-emerald-500 font-mono">
               {stats.winningTrades}W
             </span>
@@ -664,7 +664,7 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
                 {stats.breakevenTrades}BE
               </span>
             )}
-            <span className="text-slate-400 ml-auto">{stats.totalTrades} Trades</span>
+            <span className="text-slate-400 ml-auto hidden sm:inline">{stats.totalTrades} Trades</span>
           </div>
           <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
             <div
@@ -675,25 +675,25 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
         </div>
 
         {/* Card 4: Strategy Discipline Adherence */}
-        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[11px] font-extrabold uppercase tracking-wider">
-              {isBn ? "রুলস ডিসিপ্লিন স্কোর" : "Rule Discipline"}
+            <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider">
+              {isBn ? "রুলস ডিসিপ্লিন" : "Rule Discipline"}
             </span>
-            <ShieldCheck className="h-4 w-4 text-cyan-400" />
+            <ShieldCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-cyan-400" />
           </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <div className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+          <div className="mt-2 sm:mt-3 flex items-baseline gap-1.5 sm:gap-2">
+            <div className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
               {stats.ruleComplianceRate}%
             </div>
-            <span className="text-xs font-bold text-slate-400">
+            <span className="text-[10px] sm:text-xs font-bold text-slate-400">
               {isBn ? "অনুমোদন" : "Adherence"}
             </span>
           </div>
-          <div className="mt-3 text-xs font-semibold text-slate-500 dark:text-slate-400">
+          <div className="mt-2.5 sm:mt-3 text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">
             {stats.totalTrades > 0
-              ? `${Math.round((stats.ruleComplianceRate / 100) * stats.totalTrades)} of ${stats.totalTrades} setups strictly obeyed strategy rules`
-              : "Log trades with discipline verification"}
+              ? `${Math.round((stats.ruleComplianceRate / 100) * stats.totalTrades)} of ${stats.totalTrades} obeyed rules`
+              : "Log trades with verification"}
           </div>
           <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
             <div

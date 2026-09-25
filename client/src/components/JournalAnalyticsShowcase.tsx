@@ -609,74 +609,74 @@ export function JournalAnalyticsShowcase({ isBn }: Props) {
           {/* 4 Key Metric Cards (KPIs) */}
           <div
             style={{ transform: isPointerFine ? "translateZ(16px)" : undefined }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+            className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-6"
           >
             {/* Card 1: Account Capital */}
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900/80">
+            <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900/80">
               <div className="flex items-center justify-between text-slate-400">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   {isBn ? "ব্যালেন্স প্রবৃদ্ধি" : "Account Capital"}
                 </span>
-                <DollarSign className="h-4 w-4 text-cyan-500" />
+                <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-cyan-500" />
               </div>
-              <div className="mt-2.5">
-                <div className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+              <div className="mt-2 sm:mt-2.5">
+                <div className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
                   ${book.currentBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
-                <div className="mt-1 flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                <div className="mt-1 flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400">
                   <span>{isBn ? "প্রারম্ভিক:" : "Initial:"}</span>
                   <span className="font-mono">${book.startingBalance.toLocaleString()}</span>
                 </div>
               </div>
-              <div className="mt-3 flex items-center gap-1.5 text-xs font-bold">
-                <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/10 px-2 py-0.5 text-[11px] font-black text-emerald-500">
+              <div className="mt-2.5 sm:mt-3 flex items-center gap-1.5 text-xs font-bold">
+                <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/10 px-1.5 py-0.5 text-[10px] sm:text-[11px] font-black text-emerald-500">
                   <TrendingUp className="h-3 w-3" />
                   +{book.netGrowth}%
                 </span>
-                <span className="text-[11px] text-slate-400">Net Growth</span>
+                <span className="text-[10px] sm:text-[11px] text-slate-400">Net Growth</span>
               </div>
             </div>
 
             {/* Card 2: Total Net P&L */}
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900/80">
+            <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900/80">
               <div className="flex items-center justify-between text-slate-400">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   {isBn ? "মোট নিট লাভ" : "Total Net P&L"}
                 </span>
-                <Percent className="h-4 w-4 text-emerald-500" />
+                <Percent className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-500" />
               </div>
-              <div className="mt-2.5">
-                <div className="text-2xl sm:text-3xl font-black tracking-tight text-emerald-500">
+              <div className="mt-2 sm:mt-2.5">
+                <div className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-emerald-500">
                   +${book.totalPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
-                <div className="mt-1 flex items-center gap-2.5 text-xs font-bold">
+                <div className="mt-1 flex flex-wrap items-center gap-1.5 sm:gap-2.5 text-[10px] sm:text-xs font-bold">
                   <span className="text-emerald-500">+${book.totalProfit.toLocaleString()}</span>
                   <span className="text-rose-500">-${book.totalLoss.toLocaleString()}</span>
                 </div>
               </div>
-              <div className="mt-3 flex items-center justify-between text-[11px] font-medium text-slate-400">
+              <div className="mt-2.5 sm:mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-0.5 text-[10px] sm:text-[11px] font-medium text-slate-400">
                 <span>Avg Win: ${book.avgWin.toFixed(1)}</span>
                 <span>Avg Loss: ${book.avgLoss.toFixed(1)}</span>
               </div>
             </div>
 
             {/* Card 3: Win Rate & Factor */}
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900/80">
+            <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900/80">
               <div className="flex items-center justify-between text-slate-400">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   {isBn ? "উইনরেট ও ফ্যাক্টর" : "Win Rate & Factor"}
                 </span>
-                <Flame className="h-4 w-4 text-amber-500" />
+                <Flame className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-500" />
               </div>
-              <div className="mt-2.5 flex items-baseline gap-2">
-                <div className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+              <div className="mt-2 sm:mt-2.5 flex items-baseline gap-1.5 sm:gap-2">
+                <div className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
                   {book.winRate}%
                 </div>
-                <span className="text-xs font-bold text-slate-500">
+                <span className="text-[10px] sm:text-xs font-bold text-slate-500">
                   PF: {book.profitFactor}
                 </span>
               </div>
-              <div className="mt-3 flex items-center gap-1.5 text-[11px] font-bold">
+              <div className="mt-2.5 sm:mt-3 flex flex-wrap items-center gap-1 text-[10px] sm:text-[11px] font-bold">
                 <span className="rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-emerald-500 font-mono">
                   {book.winningTrades}W
                 </span>
@@ -688,7 +688,7 @@ export function JournalAnalyticsShowcase({ isBn }: Props) {
                     {book.breakevenTrades}BE
                   </span>
                 )}
-                <span className="text-slate-400 ml-auto">{book.totalTrades} Trades</span>
+                <span className="text-slate-400 ml-auto hidden sm:inline">{book.totalTrades} Trades</span>
               </div>
               <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                 <div
@@ -699,23 +699,23 @@ export function JournalAnalyticsShowcase({ isBn }: Props) {
             </div>
 
             {/* Card 4: Rule Discipline Adherence */}
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900/80">
+            <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900/80">
               <div className="flex items-center justify-between text-slate-400">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  {isBn ? "রুলস ডিসিপ্লিন স্কোর" : "Rule Discipline"}
+                <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  {isBn ? "রুলস ডিসিপ্লিন" : "Rule Discipline"}
                 </span>
-                <ShieldCheck className="h-4 w-4 text-cyan-400" />
+                <ShieldCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-cyan-400" />
               </div>
-              <div className="mt-2.5 flex items-baseline gap-2">
-                <div className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+              <div className="mt-2 sm:mt-2.5 flex items-baseline gap-1.5 sm:gap-2">
+                <div className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
                   {book.ruleComplianceRate}%
                 </div>
-                <span className="text-xs font-bold text-slate-400">
+                <span className="text-[10px] sm:text-xs font-bold text-slate-400">
                   {isBn ? "অনুমোদন" : "Adherence"}
                 </span>
               </div>
-              <div className="mt-3 text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">
-                {book.compliantTrades} of {book.totalTrades} setups strictly obeyed rules
+              <div className="mt-2.5 sm:mt-3 text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">
+                {book.compliantTrades} of {book.totalTrades} obeyed rules
               </div>
               <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                 <div
@@ -814,7 +814,7 @@ export function JournalAnalyticsShowcase({ isBn }: Props) {
                       key={tab.id}
                       type="button"
                       onClick={() => setChartMode(tab.id as any)}
-                      className={`relative rounded-xl px-3 sm:px-3.5 py-1.5 text-xs font-bold transition-all duration-200 select-none ${
+                      className={`relative rounded-xl px-2.5 sm:px-3.5 py-2 sm:py-1.5 min-h-[38px] text-[11px] sm:text-xs font-bold transition-all duration-200 select-none ${
                         isActive
                           ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-black shadow-[0_0_16px_rgba(6,182,212,0.4)] scale-[1.02]"
                           : "text-slate-400 hover:text-white hover:bg-slate-800/50"

@@ -613,7 +613,7 @@ export default function Home() {
                 {copy.heroEyebrow}
               </div>
 
-              <h1 className="max-w-xl whitespace-pre-line text-4xl font-extrabold leading-[1.08] tracking-[-0.03em] text-[#071a36] dark:text-white sm:text-5xl lg:text-[4.2rem]">
+              <h1 className="max-w-xl whitespace-pre-line text-3xl font-extrabold leading-[1.12] tracking-[-0.03em] text-[#071a36] dark:text-white sm:text-5xl lg:text-[4.2rem]">
                 {copy.heroTitle}
               </h1>
 
@@ -631,22 +631,22 @@ export default function Home() {
                 {copy.heroBnSub}
               </p>
 
-              <div className="mt-8 flex flex-wrap items-center gap-3.5 sm:mt-10">
-                <a href="#roadmap">
+              <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 sm:mt-10 w-full sm:w-auto">
+                <a href="#roadmap" className="w-full sm:w-auto">
                   <Button
                     size="lg"
-                    className="h-12 rounded-xl bg-[#081833] px-7 text-base font-bold text-white shadow-lg shadow-[#081833]/25 transition hover:bg-[#0c244b] hover:shadow-xl active:scale-[0.98] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 dark:shadow-sky-500/20"
+                    className="w-full sm:w-auto h-12 rounded-xl bg-[#081833] px-7 text-base font-bold text-white shadow-lg shadow-[#081833]/25 transition hover:bg-[#0c244b] hover:shadow-xl active:scale-[0.98] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 dark:shadow-sky-500/20"
                   >
                     <Compass size={18} className="mr-2" />
                     {copy.primaryCta}
                   </Button>
                 </a>
 
-                <a href="#store">
+                <a href="#store" className="w-full sm:w-auto">
                   <Button
                     size="lg"
                     variant="outline"
-                    className="h-12 rounded-xl border border-slate-300 bg-white/80 px-7 text-base font-bold text-slate-800 shadow-sm backdrop-blur-md transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100 dark:hover:bg-slate-700 active:scale-[0.98]"
+                    className="w-full sm:w-auto h-12 rounded-xl border border-slate-300 bg-white/80 px-7 text-base font-bold text-slate-800 shadow-sm backdrop-blur-md transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100 dark:hover:bg-slate-700 active:scale-[0.98]"
                   >
                     <ShoppingBag size={18} className="mr-2 text-[#0284c7] dark:text-sky-400" />
                     {copy.secondaryCta}
@@ -1459,8 +1459,8 @@ export default function Home() {
                 </div>
 
                 {/* Detailed Table */}
-                <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
-                  <table className="w-full text-left text-xs">
+                <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800 -mx-1 sm:mx-0">
+                  <table className="min-w-[500px] w-full text-left text-xs">
                     <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
                       <tr>
                         <th className="p-3">Feature</th>
@@ -1787,7 +1787,7 @@ export default function Home() {
                                 href={item.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className={`flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-2xl bg-slate-100/90 text-slate-600 dark:bg-slate-800/90 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60 shadow-sm transition-all hover:scale-105 active:scale-95 ${item.hoverColor}`}
+                                className={`flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-2xl bg-slate-100/90 text-slate-600 dark:bg-slate-800/90 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60 shadow-sm transition-all hover:scale-105 active:scale-95 ${item.hoverColor}`}
                                 title={item.label}
                                 aria-label={item.label}
                               >
