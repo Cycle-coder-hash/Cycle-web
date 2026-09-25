@@ -26,10 +26,26 @@ import {
   Building2,
   Layers,
   CheckCircle2,
+  Youtube,
+  Instagram,
+  Facebook,
+  Share2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { AnimatedRgbBorder } from "@/components/AnimatedRgbBorder";
+
+export const TikTokIcon = ({ className = "size-4" }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.33 6.33 0 0 0-1-.08A6.34 6.34 0 0 0 3 15.66a6.34 6.34 0 0 0 10.86 4.43 6.27 6.27 0 0 0 1.93-4.52V8.69a8.18 8.18 0 0 0 4.79 1.54V6.78a4.85 4.85 0 0 1-.99-.09Z" />
+  </svg>
+);
+
+export const XTwitterIcon = ({ className = "size-4" }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  </svg>
+);
 
 export interface OwnerFormData {
   isVisible: boolean;
@@ -47,7 +63,9 @@ export interface OwnerFormData {
   signatureQuoteEn?: string;
   signatureQuoteBn?: string;
   telegram?: string;
+  tiktok?: string;
   youtube?: string;
+  instagram?: string;
   facebook?: string;
   twitter?: string;
   email?: string;
@@ -135,7 +153,7 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
   isLoading,
   isSaving,
 }) => {
-  const [activeSection, setActiveSection] = useState<"all" | "profile1" | "profile2" | "center">("all");
+  const [activeSection, setActiveSection] = useState<"all" | "profile1" | "profile2" | "socials" | "center">("all");
 
   const p2Name = ownerForm.profile2Name || "Cycle of Chart";
   const p2Role =
@@ -168,7 +186,7 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
             )}
           </div>
           <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Independently manage both visible profiles displayed in the public dual-profile section: Founder / Owner (Left) and Cycle of Chart Brand (Right).
+            Independently manage both visible profiles and the centralized social media links displayed in the dual-profile section.
           </p>
         </div>
 
@@ -304,6 +322,19 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
 
               <button
                 type="button"
+                onClick={() => setActiveSection("socials")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  activeSection === "socials"
+                    ? "bg-white text-slate-900 shadow-sm dark:bg-slate-900 dark:text-white"
+                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                }`}
+              >
+                <Share2 size={14} className="text-violet-500" />
+                <span>Social Media Links (Center)</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setActiveSection("center")}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
                   activeSection === "center"
@@ -337,7 +368,7 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
                         </span>
                       </div>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Public founder identity, image, designation, bio narrative, and direct social links.
+                        Public founder identity, image, designation, bio narrative, and execution methodology.
                       </p>
                     </div>
                   </div>
@@ -532,84 +563,7 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
                   </p>
                 </div>
 
-                {/* 6. [Social Links] */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Globe size={16} className="text-sky-500" />
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                      [Social Links] Founder Channels & Direct Contact Links
-                    </label>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div>
-                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                        Telegram Channel / Username
-                      </span>
-                      <input
-                        type="text"
-                        placeholder="https://t.me/cycleofchart"
-                        value={ownerForm.telegram || ""}
-                        onChange={(e) => setOwnerForm((prev) => ({ ...prev, telegram: e.target.value }))}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                        YouTube Channel URL
-                      </span>
-                      <input
-                        type="url"
-                        placeholder="https://youtube.com/@cycleofchart"
-                        value={ownerForm.youtube || ""}
-                        onChange={(e) => setOwnerForm((prev) => ({ ...prev, youtube: e.target.value }))}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                        Facebook Profile URL
-                      </span>
-                      <input
-                        type="url"
-                        placeholder="https://facebook.com/cycleofchart"
-                        value={ownerForm.facebook || ""}
-                        onChange={(e) => setOwnerForm((prev) => ({ ...prev, facebook: e.target.value }))}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                        Twitter / X Profile URL
-                      </span>
-                      <input
-                        type="url"
-                        placeholder="https://twitter.com/cycleofchart"
-                        value={ownerForm.twitter || ""}
-                        onChange={(e) => setOwnerForm((prev) => ({ ...prev, twitter: e.target.value }))}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                      />
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                        Founder Direct Email Address
-                      </span>
-                      <input
-                        type="email"
-                        placeholder="contact@cycleofchart.com"
-                        value={ownerForm.email || ""}
-                        onChange={(e) => setOwnerForm((prev) => ({ ...prev, email: e.target.value }))}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* 7. [Save] */}
+                {/* 6. [Save] */}
                 <div className="pt-4 border-t border-sky-100 dark:border-sky-950/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="text-[11px] text-slate-500 dark:text-slate-400">
                     Saves all changes made to the Founder / Owner Profile immediately.
@@ -651,7 +605,7 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
                         </span>
                       </div>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Brand identity, logo/image, institutional role, narrative statement, and official channels.
+                        Brand identity, logo/image, institutional role, and narrative statement.
                       </p>
                     </div>
                   </div>
@@ -843,84 +797,7 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
                   </p>
                 </div>
 
-                {/* 6. [Social Links] */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Globe size={16} className="text-cyan-500" />
-                    <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                      [Social Links] Brand Official Channels & Contact Links
-                    </label>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div>
-                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                        Official Telegram Channel
-                      </span>
-                      <input
-                        type="text"
-                        placeholder="https://t.me/cycleofchart"
-                        value={ownerForm.profile2Telegram || ""}
-                        onChange={(e) => setOwnerForm((prev) => ({ ...prev, profile2Telegram: e.target.value }))}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                        Official YouTube Channel URL
-                      </span>
-                      <input
-                        type="url"
-                        placeholder="https://youtube.com/@cycleofchart"
-                        value={ownerForm.profile2Youtube || ""}
-                        onChange={(e) => setOwnerForm((prev) => ({ ...prev, profile2Youtube: e.target.value }))}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                        Official Facebook Page URL
-                      </span>
-                      <input
-                        type="url"
-                        placeholder="https://facebook.com/cycleofchart"
-                        value={ownerForm.profile2Facebook || ""}
-                        onChange={(e) => setOwnerForm((prev) => ({ ...prev, profile2Facebook: e.target.value }))}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                        Official Twitter / X URL
-                      </span>
-                      <input
-                        type="url"
-                        placeholder="https://twitter.com/cycleofchart"
-                        value={ownerForm.profile2Twitter || ""}
-                        onChange={(e) => setOwnerForm((prev) => ({ ...prev, profile2Twitter: e.target.value }))}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                      />
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <span className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
-                        Official Contact Email
-                      </span>
-                      <input
-                        type="email"
-                        placeholder="contact@cycleofchart.com"
-                        value={ownerForm.profile2Email || ""}
-                        onChange={(e) => setOwnerForm((prev) => ({ ...prev, profile2Email: e.target.value }))}
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-mono outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* 7. [Save] */}
+                {/* 6. [Save] */}
                 <div className="pt-4 border-t border-cyan-100 dark:border-cyan-950/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="text-[11px] text-slate-500 dark:text-slate-400">
                     Saves all changes made to the Cycle of Chart / Brand Profile immediately.
@@ -936,6 +813,146 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
                       <CheckCircle2 size={14} />
                     )}
                     <span>Save Cycle of Chart Profile</span>
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* ========================================================================= */}
+            {/* CENTRAL SOCIAL MEDIA LINKS SECTION */}
+            {/* ========================================================================= */}
+            {(activeSection === "all" || activeSection === "socials") && (
+              <div className="rounded-3xl border border-violet-200/80 bg-white p-6 sm:p-7 shadow-sm dark:border-violet-950/60 dark:bg-slate-900/90 space-y-6">
+                {/* Social Media Header Banner */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-violet-100 dark:border-violet-950/60">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-600 dark:bg-violet-400/15 dark:text-violet-400 shadow-sm">
+                      <Share2 size={20} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-base font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                          SOCIAL MEDIA LINKS
+                        </h3>
+                        <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-violet-500/15 text-violet-700 dark:text-violet-300 uppercase tracking-wider">
+                          Centralized Middle Row
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Controls the 5 centralized social media links shown in the middle area between the Founder and Brand profiles.
+                      </p>
+                    </div>
+                  </div>
+
+                  <span className="text-[11px] font-bold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/40 px-2.5 py-1 rounded-xl self-start sm:self-center border border-violet-200/60 dark:border-violet-900/40">
+                    5 Central Channels
+                  </span>
+                </div>
+
+                {/* 5 Social Media Inputs */}
+                <div className="space-y-4">
+                  {/* 1. TikTok */}
+                  <div>
+                    <label className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-900">
+                        <TikTokIcon className="size-3.5" />
+                      </div>
+                      <span>TikTok URL</span>
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://tiktok.com/@cycleofchart"
+                      value={ownerForm.tiktok || ""}
+                      onChange={(e) => setOwnerForm((prev) => ({ ...prev, tiktok: e.target.value }))}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs font-mono outline-none focus:border-violet-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                    />
+                  </div>
+
+                  {/* 2. YouTube */}
+                  <div>
+                    <label className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-rose-500/15 text-rose-600 dark:text-rose-400">
+                        <Youtube size={15} />
+                      </div>
+                      <span>YouTube URL</span>
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://youtube.com/@cycleofchart"
+                      value={ownerForm.youtube || ""}
+                      onChange={(e) => setOwnerForm((prev) => ({ ...prev, youtube: e.target.value }))}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs font-mono outline-none focus:border-violet-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                    />
+                  </div>
+
+                  {/* 3. Instagram */}
+                  <div>
+                    <label className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-pink-500/15 text-pink-600 dark:text-pink-400">
+                        <Instagram size={15} />
+                      </div>
+                      <span>Instagram URL</span>
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://instagram.com/cycleofchart"
+                      value={ownerForm.instagram || ""}
+                      onChange={(e) => setOwnerForm((prev) => ({ ...prev, instagram: e.target.value }))}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs font-mono outline-none focus:border-violet-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                    />
+                  </div>
+
+                  {/* 4. X / Twitter */}
+                  <div>
+                    <label className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-sky-500/15 text-sky-600 dark:text-sky-400">
+                        <XTwitterIcon className="size-3.5" />
+                      </div>
+                      <span>X / Twitter URL</span>
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://x.com/cycleofchart"
+                      value={ownerForm.twitter || ""}
+                      onChange={(e) => setOwnerForm((prev) => ({ ...prev, twitter: e.target.value }))}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs font-mono outline-none focus:border-violet-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                    />
+                  </div>
+
+                  {/* 5. Facebook */}
+                  <div>
+                    <label className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                      <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400">
+                        <Facebook size={15} />
+                      </div>
+                      <span>Facebook URL</span>
+                    </label>
+                    <input
+                      type="url"
+                      placeholder="https://facebook.com/cycleofchart"
+                      value={ownerForm.facebook || ""}
+                      onChange={(e) => setOwnerForm((prev) => ({ ...prev, facebook: e.target.value }))}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs font-mono outline-none focus:border-violet-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+                    />
+                  </div>
+                </div>
+
+                {/* Save Social Media Links Button */}
+                <div className="pt-4 border-t border-violet-100 dark:border-violet-950/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Saves all 5 centralized social media links. Leave empty to hide any icon.
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={isSaving}
+                    className="w-full sm:w-auto bg-violet-600 hover:bg-violet-700 text-white font-extrabold text-xs py-2.5 px-6 rounded-xl shadow-md gap-2"
+                  >
+                    {isSaving ? (
+                      <RefreshCw size={14} className="animate-spin" />
+                    ) : (
+                      <CheckCircle2 size={14} />
+                    )}
+                    <span>Save Social Media Links</span>
                   </Button>
                 </div>
               </div>
@@ -1438,30 +1455,6 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
                       ? ownerForm.roleBn
                       : ownerForm.role || "Lead Trader"}
                   </div>
-
-                  {/* Profile 1 Socials */}
-                  <div className="flex items-center gap-1.5 mt-2 text-slate-400">
-                    {ownerForm.telegram && (
-                      <span className="p-1 rounded bg-slate-800 text-sky-400" title="Telegram">
-                        <Send size={10} />
-                      </span>
-                    )}
-                    {ownerForm.youtube && (
-                      <span className="p-1 rounded bg-slate-800 text-rose-400" title="YouTube">
-                        <ExternalLink size={10} />
-                      </span>
-                    )}
-                    {ownerForm.facebook && (
-                      <span className="p-1 rounded bg-slate-800 text-blue-400" title="Facebook">
-                        <Globe size={10} />
-                      </span>
-                    )}
-                    {ownerForm.email && (
-                      <span className="p-1 rounded bg-slate-800 text-emerald-400" title="Email">
-                        <Mail size={10} />
-                      </span>
-                    )}
-                  </div>
                 </div>
 
                 {/* Profile 2 (Right): Brand / Institutional */}
@@ -1492,30 +1485,6 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
                   <div className="mt-0.5 text-[10px] font-bold text-cyan-400 line-clamp-1">
                     {p2Role}
                   </div>
-
-                  {/* Profile 2 Socials */}
-                  <div className="flex items-center gap-1.5 mt-2 text-slate-400">
-                    {ownerForm.profile2Telegram && (
-                      <span className="p-1 rounded bg-slate-800 text-sky-400" title="Telegram">
-                        <Send size={10} />
-                      </span>
-                    )}
-                    {ownerForm.profile2Youtube && (
-                      <span className="p-1 rounded bg-slate-800 text-rose-400" title="YouTube">
-                        <ExternalLink size={10} />
-                      </span>
-                    )}
-                    {ownerForm.profile2Facebook && (
-                      <span className="p-1 rounded bg-slate-800 text-blue-400" title="Facebook">
-                        <Globe size={10} />
-                      </span>
-                    )}
-                    {ownerForm.profile2Email && (
-                      <span className="p-1 rounded bg-slate-800 text-emerald-400" title="Email">
-                        <Mail size={10} />
-                      </span>
-                    )}
-                  </div>
                 </div>
               </div>
 
@@ -1542,6 +1511,36 @@ export const OwnerProfileTab: React.FC<OwnerProfileTabProps> = ({
                   </p>
                 )}
               </div>
+
+              {/* Central Social Media Links in Preview */}
+              {(() => {
+                const previewSocials = [
+                  { key: "tiktok", label: "TikTok", url: ownerForm.tiktok, icon: TikTokIcon, color: "text-white bg-slate-800" },
+                  { key: "youtube", label: "YouTube", url: ownerForm.youtube, icon: Youtube, color: "text-rose-400 bg-slate-800" },
+                  { key: "instagram", label: "Instagram", url: ownerForm.instagram, icon: Instagram, color: "text-pink-400 bg-slate-800" },
+                  { key: "twitter", label: "X / Twitter", url: ownerForm.twitter, icon: XTwitterIcon, color: "text-sky-400 bg-slate-800" },
+                  { key: "facebook", label: "Facebook", url: ownerForm.facebook, icon: Facebook, color: "text-blue-400 bg-slate-800" },
+                ].filter((item) => item.url && item.url.trim() !== "");
+
+                if (previewSocials.length === 0) return null;
+
+                return (
+                  <div className="flex items-center justify-center gap-2 pt-1 border-t border-slate-800/60">
+                    {previewSocials.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <span
+                          key={item.key}
+                          className={`p-1.5 rounded-lg border border-slate-700/60 shadow-sm ${item.color}`}
+                          title={item.label}
+                        >
+                          <Icon className="size-3.5" />
+                        </span>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
 
               {/* Dynamic Credentials & Statistic Cards */}
               {(() => {

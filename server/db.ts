@@ -5681,7 +5681,9 @@ export interface OwnerProfile {
   signatureQuoteEn?: string;
   signatureQuoteBn?: string;
   telegram?: string;
+  tiktok?: string;
   youtube?: string;
+  instagram?: string;
   facebook?: string;
   twitter?: string;
   email?: string;
@@ -5725,9 +5727,11 @@ export const DEFAULT_OWNER_PROFILE: OwnerProfile = {
   signatureQuoteEn: "Before you trade, understand trading. Before you deposit, understand trading.",
   signatureQuoteBn: "ট্রেড করার আগে ট্রেডিং বুঝুন। ডিপোজিট করার আগে ট্রেডিং বুঝুন।",
   telegram: "https://t.me/cycleofchart",
+  tiktok: "https://tiktok.com/@cycleofchart",
   youtube: "https://youtube.com/@cycleofchart",
+  instagram: "https://instagram.com/cycleofchart",
   facebook: "https://facebook.com/cycleofchart",
-  twitter: "",
+  twitter: "https://x.com/cycleofchart",
   email: "contact@cycleofchart.com",
   showExperienceCard: false,
   experienceLabel: "Market Experience",

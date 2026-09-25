@@ -41,6 +41,9 @@ import {
   Video,
   Dumbbell,
   MessageSquare,
+  Youtube,
+  Instagram,
+  Facebook,
 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
@@ -84,6 +87,18 @@ const ROADMAP_CARD_FLOAT_DELAYS = [
   "4.0s",
   "4.4s",
 ];
+
+const TikTokIcon = ({ className = "size-4" }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.298-.002.595.042.88.13V9.4a6.33 6.33 0 0 0-1-.08A6.34 6.34 0 0 0 3 15.66a6.34 6.34 0 0 0 10.86 4.43 6.27 6.27 0 0 0 1.93-4.52V8.69a8.18 8.18 0 0 0 4.79 1.54V6.78a4.85 4.85 0 0 1-.99-.09Z" />
+  </svg>
+);
+
+const XTwitterIcon = ({ className = "size-4" }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  </svg>
+);
 
 const HYPE_ITEMS_EN = [
   "Social media luxury lifestyle show-off",
@@ -1689,69 +1704,6 @@ export default function Home() {
                       <ShieldCheck size={14} className="text-sky-500 shrink-0" />
                       <span>{isBn && ownerProfile.roleBn ? ownerProfile.roleBn : ownerProfile.role}</span>
                     </div>
-
-                    {/* Social Media & Contact Links */}
-                    {(ownerProfile.telegram ||
-                      ownerProfile.youtube ||
-                      ownerProfile.facebook ||
-                      ownerProfile.twitter ||
-                      ownerProfile.email) && (
-                      <div className="mt-5 flex items-center justify-center gap-2.5">
-                        {ownerProfile.telegram && (
-                          <a
-                            href={ownerProfile.telegram}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-sky-500/15 hover:text-sky-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-400 transition-all shadow-sm"
-                            title="Telegram"
-                          >
-                            <Send size={15} />
-                          </a>
-                        )}
-                        {ownerProfile.youtube && (
-                          <a
-                            href={ownerProfile.youtube}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-rose-500/15 hover:text-rose-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-rose-500/20 dark:hover:text-rose-400 transition-all shadow-sm"
-                            title="YouTube"
-                          >
-                            <ExternalLink size={15} />
-                          </a>
-                        )}
-                        {ownerProfile.facebook && (
-                          <a
-                            href={ownerProfile.facebook}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-blue-500/15 hover:text-blue-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-blue-500/20 dark:hover:text-blue-400 transition-all shadow-sm"
-                            title="Facebook"
-                          >
-                            <Globe size={15} />
-                          </a>
-                        )}
-                        {ownerProfile.twitter && (
-                          <a
-                            href={ownerProfile.twitter}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-sky-500/15 hover:text-sky-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-400 transition-all shadow-sm"
-                            title="Twitter / X"
-                          >
-                            <ExternalLink size={15} />
-                          </a>
-                        )}
-                        {ownerProfile.email && (
-                          <a
-                            href={`mailto:${ownerProfile.email}`}
-                            className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-emerald-500/15 hover:text-emerald-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-emerald-500/20 dark:hover:text-emerald-400 transition-all shadow-sm"
-                            title="Email"
-                          >
-                            <Mail size={15} />
-                          </a>
-                        )}
-                      </div>
-                    )}
                   </div>
 
                   {/* Center Column: Description / Content & Credentials */}
@@ -1781,6 +1733,71 @@ export default function Home() {
                         </p>
                       )}
                     </div>
+
+                    {/* Centralized Social Media Links Row */}
+                    {(() => {
+                      const op = ownerProfile as any;
+                      const socials = [
+                        {
+                          key: "tiktok",
+                          label: "TikTok",
+                          url: op.tiktok,
+                          icon: TikTokIcon,
+                          hoverColor: "hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-black dark:hover:text-white hover:border-black/30 dark:hover:border-white/30",
+                        },
+                        {
+                          key: "youtube",
+                          label: "YouTube",
+                          url: op.youtube,
+                          icon: Youtube,
+                          hoverColor: "hover:bg-rose-500/15 hover:text-rose-600 dark:hover:bg-rose-500/20 dark:hover:text-rose-400 hover:border-rose-500/30",
+                        },
+                        {
+                          key: "instagram",
+                          label: "Instagram",
+                          url: op.instagram,
+                          icon: Instagram,
+                          hoverColor: "hover:bg-pink-500/15 hover:text-pink-600 dark:hover:bg-pink-500/20 dark:hover:text-pink-400 hover:border-pink-500/30",
+                        },
+                        {
+                          key: "twitter",
+                          label: "X / Twitter",
+                          url: op.twitter,
+                          icon: XTwitterIcon,
+                          hoverColor: "hover:bg-sky-500/15 hover:text-sky-600 dark:hover:bg-sky-500/20 dark:hover:text-sky-400 hover:border-sky-500/30",
+                        },
+                        {
+                          key: "facebook",
+                          label: "Facebook",
+                          url: op.facebook,
+                          icon: Facebook,
+                          hoverColor: "hover:bg-blue-500/15 hover:text-blue-600 dark:hover:bg-blue-500/20 dark:hover:text-blue-400 hover:border-blue-500/30",
+                        },
+                      ].filter((item) => item.url && item.url.trim() !== "");
+
+                      if (socials.length === 0) return null;
+
+                      return (
+                        <div className="flex items-center justify-center gap-2.5 sm:gap-3 py-1">
+                          {socials.map((item) => {
+                            const Icon = item.icon;
+                            return (
+                              <a
+                                key={item.key}
+                                href={item.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={`flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-2xl bg-slate-100/90 text-slate-600 dark:bg-slate-800/90 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60 shadow-sm transition-all hover:scale-105 active:scale-95 ${item.hoverColor}`}
+                                title={item.label}
+                                aria-label={item.label}
+                              >
+                                <Icon className="size-4 sm:size-5 shrink-0" />
+                              </a>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
 
                     {/* Dynamic Credentials & Statistic Cards */}
                     {(() => {
@@ -1897,69 +1914,6 @@ export default function Home() {
                           <ShieldCheck size={14} className="text-sky-500 shrink-0" />
                           <span>{p2Role}</span>
                         </div>
-
-                        {/* Social Media & Contact Links */}
-                        {(p2Telegram ||
-                          p2Youtube ||
-                          p2Facebook ||
-                          p2Twitter ||
-                          p2Email) && (
-                          <div className="mt-5 flex items-center justify-center gap-2.5">
-                            {p2Telegram && (
-                              <a
-                                href={p2Telegram}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-sky-500/15 hover:text-sky-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-400 transition-all shadow-sm"
-                                title="Telegram"
-                              >
-                                <Send size={15} />
-                              </a>
-                            )}
-                            {p2Youtube && (
-                              <a
-                                href={p2Youtube}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-rose-500/15 hover:text-rose-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-rose-500/20 dark:hover:text-rose-400 transition-all shadow-sm"
-                                title="YouTube"
-                              >
-                                <ExternalLink size={15} />
-                              </a>
-                            )}
-                            {p2Facebook && (
-                              <a
-                                href={p2Facebook}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-blue-500/15 hover:text-blue-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-blue-500/20 dark:hover:text-blue-400 transition-all shadow-sm"
-                                title="Facebook"
-                              >
-                                <Globe size={15} />
-                              </a>
-                            )}
-                            {p2Twitter && (
-                              <a
-                                href={p2Twitter}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-sky-500/15 hover:text-sky-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-sky-500/20 dark:hover:text-sky-400 transition-all shadow-sm"
-                                title="Twitter / X"
-                              >
-                                <ExternalLink size={15} />
-                              </a>
-                            )}
-                            {p2Email && (
-                              <a
-                                href={`mailto:${p2Email}`}
-                                className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-emerald-500/15 hover:text-emerald-600 dark:bg-slate-800/80 dark:text-slate-300 dark:hover:bg-emerald-500/20 dark:hover:text-emerald-400 transition-all shadow-sm"
-                                title="Email"
-                              >
-                                <Mail size={15} />
-                              </a>
-                            )}
-                          </div>
-                        )}
                       </div>
                     );
                   })()}
