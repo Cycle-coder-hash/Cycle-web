@@ -50,6 +50,7 @@ import {
   Calculator,
   PanelLeftClose,
   PanelLeftOpen,
+  Crown,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -305,6 +306,11 @@ export default function Dashboard() {
     refetchInterval: 3000,
   });
 
+  const { data: subUsage } = trpc.subscription.getMyUsage.useQuery(undefined, {
+    enabled: !!user,
+    refetchInterval: 30000,
+  });
+
   const unreadSupportCount = useMemo(() => {
     if (!supportData?.messages) return 0;
     return supportData.messages.filter(
@@ -349,20 +355,23 @@ export default function Dashboard() {
   }, [ownerProfile]);
 
   // Strictly check that student has an actual paid & approved course purchase.
-  // Free claims or pending/unapproved orders NEVER qualify.
+  // Directly respects server-side calculated course access (manual grants, orders, lifetime, admin overrides)
   const hasApprovedPurchase = useMemo(() => {
+    if (subUsage && typeof (subUsage as any).hasCourseAccess === "boolean") {
+      return (subUsage as any).hasCourseAccess;
+    }
     const hasApprovedPaidOrder = (orders || []).some((o: any) => {
       const isApproved = o.paymentStatus === "approved" || o.orderStatus === "approved";
       const isPaid = Number(o.amount || 0) > 0 || (o.bundleId != null && Number(o.bundleId) > 0);
       return isApproved && isPaid;
     });
     const hasPaidEntitlement = (entitlements || []).some((e: any) => {
-      const isPaidScope = e.scope && !e.scope.includes("free") && (e.scope.startsWith("bundle:") || e.scope.startsWith("product:"));
-      const hasValidOrder = e.orderId && Number(e.orderId) > 0;
+      const isPaidScope = e.scope && !e.scope.includes("free") && (e.scope.startsWith("bundle:") || e.scope.startsWith("product:") || e.scope === "course");
+      const hasValidOrder = (e.orderId && Number(e.orderId) > 0) || (e as any).isVirtualManual;
       return isPaidScope && hasValidOrder;
     });
     return hasApprovedPaidOrder || hasPaidEntitlement;
-  }, [orders, entitlements]);
+  }, [subUsage, orders, entitlements]);
 
   // Course Access Telegram Community Popup Query & State
   const { data: telegramPopupData, refetch: refetchTelegramPopup } = trpc.customer.courseTelegramPopup.useQuery(undefined, {
@@ -1353,6 +1362,193 @@ export default function Dashboard() {
           {/* ========================================================================= */}
           {tab === "overview" && (
             <div className="space-y-8 animate-in fade-in duration-300">
+              {/* Subscription Status & Usage Widget */}
+              {subUsage && (
+                <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm dark:border-slate-800/80 dark:bg-[#0b162a]">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-5 border-b border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center gap-3.5">
+                      <div
+                        className={`size-12 rounded-2xl flex items-center justify-center shrink-0 shadow-md ${
+                          subUsage.plan === "premium"
+                            ? "bg-gradient-to-tr from-amber-400 to-yellow-500 text-black shadow-amber-500/20"
+                            : subUsage.plan === "pro"
+                            ? "bg-gradient-to-tr from-sky-500 to-indigo-600 text-white shadow-sky-500/20"
+                            : subUsage.plan === "free_trial"
+                            ? "bg-gradient-to-tr from-cyan-500 to-blue-500 text-white shadow-cyan-500/20"
+                            : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                        }`}
+                      >
+                        {subUsage.plan === "premium" ? (
+                          <Crown size={24} />
+                        ) : subUsage.plan === "pro" ? (
+                          <Sparkles size={22} />
+                        ) : subUsage.plan === "free_trial" ? (
+                          <Clock size={22} />
+                        ) : (
+                          <ShieldCheck size={22} />
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {/* Plan Badge */}
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black tracking-wider uppercase border ${
+                              subUsage.plan === "free_trial"
+                                ? "bg-cyan-500/15 text-cyan-400 border-cyan-500/30"
+                                : subUsage.plan === "free_after_trial"
+                                ? "bg-slate-500/15 text-slate-400 border-slate-500/30"
+                                : subUsage.plan === "pro"
+                                ? "bg-sky-500/20 text-sky-300 border-sky-500/40 shadow-sm shadow-sky-500/20"
+                                : "bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm shadow-amber-500/25"
+                            }`}
+                          >
+                            <span className="size-2 rounded-full bg-current animate-pulse" />
+                            {subUsage.plan === "free_trial" && `FREE TRIAL · ${subUsage.daysLeft} DAYS LEFT`}
+                            {subUsage.plan === "free_after_trial" && "FREE PLAN · 5 JOURNAL / 30 DAYS"}
+                            {subUsage.plan === "pro" && `PRO · ${subUsage.daysLeft} DAYS LEFT`}
+                            {subUsage.plan === "premium" && `PREMIUM · ${subUsage.daysLeft} DAYS LEFT`}
+                          </span>
+
+                          {subUsage.isLeaderboardEligible && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                              ✓ LEADERBOARD ACTIVE
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                          {subUsage.plan === "free_trial" &&
+                            "30-day Free Trial is strictly anchored to your account registration. Upgrading adds +5 Bonus Days!"}
+                          {subUsage.plan === "free_after_trial" &&
+                            "Permanent Free tier: 5 trades and 5 discipline days per rolling 30-day cycle."}
+                          {subUsage.plan === "pro" &&
+                            "Pro Plan Active. Dedicated 5 books, 30 videos/mo, workout routine & community chat enabled."}
+                          {subUsage.plan === "premium" &&
+                            "Premium Institutional Plan Active. Unlimited scale, 1-on-1 mentor support & direct owner chat enabled."}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Upgrade CTAs */}
+                    <div className="flex items-center gap-2.5 shrink-0">
+                      {subUsage.plan !== "premium" && (
+                        <Link href="/checkout?plan=premium">
+                          <Button
+                            size="sm"
+                            className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black font-black text-xs h-9 shadow-md shadow-amber-500/20 gap-1.5"
+                          >
+                            <Crown size={14} />
+                            {subUsage.plan === "pro" ? "Upgrade to Premium (৳999)" : "Get Premium (৳999)"}
+                          </Button>
+                        </Link>
+                      )}
+                      {(subUsage.plan === "free_trial" || subUsage.plan === "free_after_trial") && (
+                        <Link href="/checkout?plan=pro">
+                          <Button
+                            size="sm"
+                            className="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-xs h-9 shadow-md shadow-sky-500/20"
+                          >
+                            Get Pro (৳599)
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Quota Counters Grid */}
+                  <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+                    {/* Journal Entries */}
+                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Journal Trades</div>
+                      <div className="mt-1 text-sm font-extrabold text-slate-900 dark:text-white">
+                        {subUsage.journalEntriesLimit === "unlimited"
+                          ? "Unlimited"
+                          : `${subUsage.journalEntriesCount} / ${subUsage.journalEntriesLimit}`}
+                      </div>
+                    </div>
+
+                    {/* Journal Books */}
+                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Journal Books</div>
+                      <div className="mt-1 text-sm font-extrabold text-slate-900 dark:text-white">
+                        {subUsage.journalBooksLimit === "unlimited"
+                          ? "Unlimited"
+                          : `${subUsage.journalBooksCount} / ${subUsage.journalBooksLimit}`}
+                      </div>
+                    </div>
+
+                    {/* Saved Videos */}
+                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Saved Videos</div>
+                      <div className="mt-1 text-sm font-extrabold text-slate-900 dark:text-white">
+                        {subUsage.journalVideosLimit === "unlimited"
+                          ? "Unlimited"
+                          : subUsage.journalVideosLimit === 0
+                          ? "Locked"
+                          : `${subUsage.journalVideosCount} / ${subUsage.journalVideosLimit}`}
+                      </div>
+                    </div>
+
+                    {/* Notebook Pages */}
+                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Notebook Pages</div>
+                      <div className="mt-1 text-sm font-extrabold text-slate-900 dark:text-white">
+                        {subUsage.notebookPagesLimit === "unlimited"
+                          ? "Unlimited"
+                          : subUsage.notebookPagesLimit === 0
+                          ? "Templates"
+                          : `${subUsage.notebookPagesCount} / ${subUsage.notebookPagesLimit}`}
+                      </div>
+                    </div>
+
+                    {/* Discipline Days */}
+                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Discipline Days</div>
+                      <div className="mt-1 text-sm font-extrabold text-slate-900 dark:text-white">
+                        {subUsage.disciplineDaysLimit === "unlimited"
+                          ? "Unlimited"
+                          : `${subUsage.disciplineDaysCount} / ${subUsage.disciplineDaysLimit}`}
+                      </div>
+                    </div>
+
+                    {/* Workout Routine */}
+                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Workout Routine</div>
+                      <div
+                        className={`mt-1 text-sm font-extrabold ${
+                          subUsage.isWorkoutLocked ? "text-slate-400 dark:text-slate-500" : "text-emerald-500"
+                        }`}
+                      >
+                        {subUsage.isWorkoutLocked ? "Locked" : "Active"}
+                      </div>
+                    </div>
+
+                    {/* Community Chat */}
+                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Community Chat</div>
+                      <div
+                        className={`mt-1 text-sm font-extrabold ${
+                          subUsage.isCommunityLocked ? "text-slate-400 dark:text-slate-500" : "text-emerald-500"
+                        }`}
+                      >
+                        {subUsage.isCommunityLocked ? "Locked" : "Active"}
+                      </div>
+                    </div>
+
+                    {/* Mentor Support */}
+                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Mentor Support</div>
+                      <div
+                        className={`mt-1 text-sm font-extrabold ${
+                          subUsage.isMentorSupportLocked ? "text-slate-400 dark:text-slate-500" : "text-amber-500 font-black"
+                        }`}
+                      >
+                        {subUsage.isMentorSupportLocked ? "Locked" : "Active"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Verified Student VIP Telegram Banner */}
               {hasApprovedPurchase && (
                 <div className="relative overflow-hidden rounded-3xl border border-sky-500/40 bg-gradient-to-r from-[#081f3d] via-[#09172c] to-[#071324] p-5 sm:p-7 shadow-xl shadow-sky-950/40 backdrop-blur-sm">

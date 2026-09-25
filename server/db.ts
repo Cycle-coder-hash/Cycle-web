@@ -384,11 +384,17 @@ export async function getDb() {
 const inMemorySettings: Map<string, string> = new Map();
 
 export async function getSetting(key: string): Promise<string | null> {
+  if (inMemorySettings.has(key)) {
+    return inMemorySettings.get(key) || null;
+  }
   const db = await getDb();
   if (db) {
     try {
       const rows = await db.select().from(settings).where(eq(settings.key, key)).limit(1);
-      if (rows.length) return rows[0].value;
+      if (rows.length) {
+        inMemorySettings.set(key, rows[0].value);
+        return rows[0].value;
+      }
     } catch (err) {
       console.warn("[getSetting error]:", err);
     }
@@ -923,6 +929,7 @@ export async function createUser(data: {
         emailVerified: data.emailVerified ?? false,
         loginMethod: "password",
         role: data.role || "user",
+        accountStatus: (data as any).accountStatus || "active",
         language: data.language || "en",
         lastSignedIn: new Date(),
       });
@@ -935,34 +942,36 @@ export async function createUser(data: {
 
   let resolvedId = userAutoId++;
 
-  try {
-    const { supabaseServer } = await import("./supabase");
-    const { data: supaUser, error: supaErr } = await supabaseServer
-      .from("users")
-      .upsert(
-        {
-          openId,
-          name: data.name,
-          email: normalizedEmail,
-          passwordHash: data.passwordHash,
-          phone: data.phone || null,
-          role: data.role || "user",
-          language: data.language || "en",
-          loginMethod: "password",
-          lastSignedIn: new Date().toISOString(),
-        },
-        { onConflict: "openId" }
-      )
-      .select()
-      .single();
+  if (process.env.NODE_ENV !== "test") {
+    try {
+      const { supabaseServer } = await import("./supabase");
+      const { data: supaUser, error: supaErr } = await supabaseServer
+        .from("users")
+        .upsert(
+          {
+            openId,
+            name: data.name,
+            email: normalizedEmail,
+            passwordHash: data.passwordHash,
+            phone: data.phone || null,
+            role: data.role || "user",
+            language: data.language || "en",
+            loginMethod: "password",
+            lastSignedIn: new Date().toISOString(),
+          },
+          { onConflict: "openId" }
+        )
+        .select()
+        .single();
 
-    if (!supaErr && supaUser?.id) {
-      resolvedId = supaUser.id;
-    } else if (supaErr) {
-      console.warn("[createUser Supabase upsert error]:", supaErr.message);
+      if (!supaErr && supaUser?.id) {
+        resolvedId = supaUser.id;
+      } else if (supaErr) {
+        console.warn("[createUser Supabase upsert error]:", supaErr.message);
+      }
+    } catch (err) {
+      console.warn("[createUser Supabase exception]:", err);
     }
-  } catch (err) {
-    console.warn("[createUser Supabase exception]:", err);
   }
 
   const newUser: any = {
@@ -976,6 +985,7 @@ export async function createUser(data: {
     emailVerified: data.emailVerified ?? false,
     loginMethod: "password",
     role: data.role || "user",
+    accountStatus: (data as any).accountStatus || "active",
     language: data.language || "en",
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -1768,6 +1778,13 @@ export async function getPendingCourseTelegramPopupForUser(
     return null;
   }
 
+  // Canonical course access check (honors manual grants, dates, lifetime, and admin override blocks)
+  const { hasUserCourseAccess } = await import("./userManagement");
+  const canAccessCourse = await hasUserCourseAccess(candidateIds[0]);
+  if (!canAccessCourse) {
+    return null;
+  }
+
   // Get user's orders
   const orders = await listOrdersForUser(userIdentifier);
   // Find approved course orders
@@ -1781,12 +1798,30 @@ export async function getPendingCourseTelegramPopupForUser(
     }
   }
 
-  if (approvedCourseOrders.length === 0) {
-    return null;
-  }
-
   // Fetch all recorded events for user
   const events = await getCourseTelegramEventsForUser(candidateIds);
+
+  // If no order but user has manual Course access, allow popup via virtual order 0
+  if (approvedCourseOrders.length === 0) {
+    let ev = events.find((e) => candidateIds.includes(e.userId));
+    if (!ev) {
+      ev = await createCourseTelegramPopupEvent({
+        userId: candidateIds[0],
+        orderId: 0,
+      });
+    }
+
+    if (config.displayMode === "once") {
+      if (ev.status === "pending") {
+        return { event: ev, config };
+      }
+    } else if (config.displayMode === "until_joined") {
+      if (ev.status !== "joined") {
+        return { event: ev, config };
+      }
+    }
+    return null;
+  }
 
   for (const order of approvedCourseOrders) {
     let ev = events.find((e) => e.orderId === order.id);
@@ -1905,6 +1940,20 @@ export async function approveOrder(orderId: number, approvedBy: number = 1) {
   // Check if this order grants course access
   const isCourse = await orderGrantsCourseAccess(targetOrder);
   const telegramConfig = await getCourseTelegramPopupConfig();
+
+  // Check if this order is for a subscription plan
+  const isProPlan = targetOrder.bundleId === 101 || targetOrder.productId === 101 || targetOrder.scope?.includes("plan:pro") || (targetOrder as any).plan === "pro";
+  const isPremiumPlan = targetOrder.bundleId === 102 || targetOrder.productId === 102 || targetOrder.scope?.includes("plan:premium") || (targetOrder as any).plan === "premium";
+
+  if (isProPlan || isPremiumPlan) {
+    try {
+      const planToActivate = isPremiumPlan ? "premium" : "pro";
+      const { activateSubscription } = await import("./subscription");
+      await activateSubscription(targetOrder.customerId, planToActivate);
+    } catch (subErr) {
+      console.warn("[approveOrder activateSubscription error]:", subErr);
+    }
+  }
 
   // 1. Update Drizzle database if active
   if (db) {
@@ -2179,28 +2228,64 @@ export async function listEntitlements(
     }
   }
 
-  try {
-    const { supabaseServer } = await import("./supabase");
-    let query = supabaseServer.from("entitlements").select("*");
-    if (candidateIds.length === 1) {
-      query = query.eq("userId", candidateIds[0]);
-    } else if (candidateIds.length > 1) {
-      query = query.in("userId", candidateIds);
-    } else {
-      query = query.eq("userId", primaryId);
+  let rawList: any[] = [];
+  if (process.env.NODE_ENV !== "test") {
+    try {
+      const { supabaseServer } = await import("./supabase");
+      let query = supabaseServer.from("entitlements").select("*");
+      if (candidateIds.length === 1) {
+        query = query.eq("userId", candidateIds[0]);
+      } else if (candidateIds.length > 1) {
+        query = query.in("userId", candidateIds);
+      } else {
+        query = query.eq("userId", primaryId);
+      }
+      const { data, error } = await query.order("grantedAt", { ascending: false });
+      if (!error && data) {
+        rawList = data.map((e) => ({
+          ...e,
+          grantedAt: e.grantedAt ? new Date(e.grantedAt) : new Date(),
+        }));
+      }
+    } catch (err) {
+      console.warn("[listEntitlements Supabase error]:", err);
     }
-    const { data, error } = await query.order("grantedAt", { ascending: false });
-    if (!error && data) {
-      return data.map((e) => ({
-        ...e,
-        grantedAt: e.grantedAt ? new Date(e.grantedAt) : new Date(),
-      }));
-    }
-  } catch (err) {
-    console.warn("[listEntitlements Supabase error]:", err);
   }
 
-  return inMemoryEntitlements.filter((e) => candidateIds.includes(e.userId) || e.userId === primaryId);
+  if (rawList.length === 0) {
+    rawList = inMemoryEntitlements.filter((e) => candidateIds.includes(e.userId) || e.userId === primaryId);
+  }
+
+    try {
+      const { getManualAccessRecord, isManualRecordActive } = await import("./userManagement");
+      const manualCourse = await getManualAccessRecord(primaryId, "course");
+      if (manualCourse?.isOverrideBlocked) {
+        rawList = rawList.filter((e: any) =>
+          e.scope !== "course" && e.scope !== "bundle:2" && e.bundleId !== 2
+        );
+      } else if (isManualRecordActive(manualCourse)) {
+        const hasCourse = rawList.some((e: any) =>
+          e.scope === "course" || e.scope === "bundle:2" || e.bundleId === 2
+        );
+        if (!hasCourse) {
+          rawList = [
+            {
+              id: 999000 + primaryId,
+              userId: primaryId,
+              orderId: 99999,
+              bundleId: 2,
+              bundleSlug: "course-ebook",
+              scope: "course",
+              grantedAt: manualCourse.startDate ? new Date(manualCourse.startDate) : new Date(),
+              isVirtualManual: true,
+            },
+            ...rawList,
+          ];
+        }
+      }
+    } catch (err) {}
+
+    return rawList;
 }
 
 export async function listNotifications(
@@ -3377,39 +3462,41 @@ export async function createUserNotification(userId: number, title: string, mess
 export async function listAllUsers() {
   initInstitutionalSeedData();
 
-  // 1. Sync any users from Supabase users table
-  try {
-    const { supabaseServer } = await import("./supabase");
-    const { data: supaUsers } = await supabaseServer.from("users").select("*");
-    if (supaUsers && supaUsers.length > 0) {
-      for (const su of supaUsers) {
-        if (su.openId) {
-          const prof = await getTraderProfile(su.openId);
-          const existing = inMemoryUsers.get(su.openId);
-          if (existing) {
-            if (prof?.name) existing.name = prof.name;
-            if (prof?.avatar !== undefined) existing.avatar = prof.avatar;
-          } else {
-            inMemoryUsers.set(su.openId, {
-              id: su.id || deriveNumericIdFromOpenId(su.openId),
-              openId: su.openId,
-              name: prof?.name || su.name || "Trader",
-              email: su.email || null,
-              phone: su.phone || null,
-              avatar: prof?.avatar || null,
-              role: su.role || "user",
-              language: su.language || "en",
-              loginMethod: "supabase",
-              createdAt: su.createdAt ? new Date(su.createdAt) : new Date(),
-              updatedAt: su.updatedAt ? new Date(su.updatedAt) : new Date(),
-              lastSignedIn: su.lastSignedIn ? new Date(su.lastSignedIn) : new Date(),
-            });
+  // 1. Sync any users from Supabase users table (bypassed in test environment for instant execution)
+  if (process.env.NODE_ENV !== "test") {
+    try {
+      const { supabaseServer } = await import("./supabase");
+      const { data: supaUsers } = await supabaseServer.from("users").select("*");
+      if (supaUsers && supaUsers.length > 0) {
+        for (const su of supaUsers) {
+          if (su.openId) {
+            const prof = await getTraderProfile(su.openId);
+            const existing = inMemoryUsers.get(su.openId);
+            if (existing) {
+              if (prof?.name) existing.name = prof.name;
+              if (prof?.avatar !== undefined) existing.avatar = prof.avatar;
+            } else {
+              inMemoryUsers.set(su.openId, {
+                id: su.id || deriveNumericIdFromOpenId(su.openId),
+                openId: su.openId,
+                name: prof?.name || su.name || "Trader",
+                email: su.email || null,
+                phone: su.phone || null,
+                avatar: prof?.avatar || null,
+                role: su.role || "user",
+                language: su.language || "en",
+                loginMethod: "supabase",
+                createdAt: su.createdAt ? new Date(su.createdAt) : new Date(),
+                updatedAt: su.updatedAt ? new Date(su.updatedAt) : new Date(),
+                lastSignedIn: su.lastSignedIn ? new Date(su.lastSignedIn) : new Date(),
+              });
+            }
           }
         }
       }
+    } catch (err) {
+      console.warn("[listAllUsers Supabase notice]:", err);
     }
-  } catch (err) {
-    console.warn("[listAllUsers Supabase notice]:", err);
   }
 
   // 2. Sync any additional registered users from persistent settings
@@ -3464,7 +3551,19 @@ export async function listAllUsers() {
     }
   }
 
-  return Array.from(inMemoryUsers.values());
+  const allUsersList = Array.from(inMemoryUsers.values());
+  for (const u of allUsersList) {
+    if (u.openId) {
+      try {
+        const prof = await getTraderProfile(u.openId);
+        if (prof?.name && (!u.name || u.name === "Trader")) u.name = prof.name;
+        if (prof?.avatar !== undefined && prof?.avatar !== null) u.avatar = prof.avatar;
+        if (prof?.username) (u as any).username = prof.username;
+      } catch {}
+    }
+  }
+
+  return allUsersList;
 }
 
 export async function updateUserRole(userId: number, role: "user" | "admin" | "support") {
@@ -3886,8 +3985,30 @@ export async function getCustomerLibraryPdfs(
       o.paymentMethod === "free"
   );
 
-  // If user has NO approved orders and NO entitlements, they own 0 PDFs
-  if (approvedOrders.length === 0 && (!entitlementsList || entitlementsList.length === 0)) {
+  const candidateIds = await resolveUserCandidateIds(userIdentifier);
+  const primaryId = typeof userIdentifier === "number" ? userIdentifier : (userIdentifier?.id || candidateIds[0] || 1);
+
+  // Canonical course access check (honors manual grants, dates, lifetime, and admin override blocks)
+  let hasCourseBundle = false;
+  try {
+    const { hasUserCourseAccess } = await import("./userManagement");
+    hasCourseBundle = await hasUserCourseAccess(primaryId);
+  } catch {
+    hasCourseBundle =
+      approvedOrders.some(
+        (o: any) =>
+          o.bundleId === 2 ||
+          o.bundleSlug === "course-ebook" ||
+          o.bundle?.slug === "course-ebook" ||
+          o.bundle?.includesEbook === true
+      ) ||
+      (entitlementsList || []).some(
+        (e: any) => e.bundleId === 2 || e.scope === "bundle:2" || e.scope === "course"
+      );
+  }
+
+  // If user has NO approved orders, NO entitlements, and NO active course bundle, they own 0 PDFs
+  if (approvedOrders.length === 0 && (!entitlementsList || entitlementsList.length === 0) && !hasCourseBundle) {
     return [];
   }
 
@@ -3915,18 +4036,7 @@ export async function getCustomerLibraryPdfs(
     return allPdfs;
   }
 
-  // 2. Check Course + eBook Bundle (Bundle 2)
-  const hasCourseBundle =
-    approvedOrders.some(
-      (o: any) =>
-        o.bundleId === 2 ||
-        o.bundleSlug === "course-ebook" ||
-        o.bundle?.slug === "course-ebook" ||
-        o.bundle?.includesEbook === true
-    ) ||
-    (entitlementsList || []).some(
-      (e: any) => e.bundleId === 2 || e.scope === "bundle:2"
-    );
+  // 2. Check Course + eBook Bundle (Bundle 2) evaluated above with canonical hasUserCourseAccess
 
   // 3. Check Free eBook Package (Bundle 1)
   const hasFreePackage =
@@ -5589,6 +5699,9 @@ export interface OwnerProfile {
   profile2Role?: string;
   profile2RoleBn?: string;
   profile2PhotoUrl?: string;
+  profile2BioEn?: string;
+  profile2BioBn?: string;
+  profile2TradingStyle?: string;
   profile2Telegram?: string;
   profile2Youtube?: string;
   profile2Facebook?: string;
@@ -5630,6 +5743,9 @@ export const DEFAULT_OWNER_PROFILE: OwnerProfile = {
   profile2Role: "Institutional Trading Mentor",
   profile2RoleBn: "ইন্সটিটিউশনাল ট্রেডিং মেন্টর",
   profile2PhotoUrl: "/logo.jpg",
+  profile2BioEn: "Cycle of Chart is an institutional trading education and market research initiative committed to mentoring traders in SMC, liquidity engineering, and rule-based execution.",
+  profile2BioBn: "সাইকেল অব চার্ট একটি প্রাতিষ্ঠানিক ট্রেডিং শিক্ষা ও মার্কেট রিসার্চ প্ল্যাটফর্ম যা এসএমসি, লিকুইডিটি ইঞ্জিনিয়ারিং এবং নিয়মতান্ত্রিক এক্সিকিউশনে ট্রেডারদের প্রশিক্ষণ দেয়।",
+  profile2TradingStyle: "SMC, Liquidity & Order Flow Delivery",
   profile2Telegram: "https://t.me/cycleofchart",
   profile2Youtube: "https://youtube.com/@cycleofchart",
   profile2Facebook: "https://facebook.com/cycleofchart",
@@ -6151,7 +6267,7 @@ export async function getAllLeaderboardRankings(timeframe: "all" | "month" | "we
     if (!isEmailVerified) continue;
 
     // Eligibility Rule 2: Active account (not suspended / banned)
-    const isSuspended = (user as any).status === "suspended" || (user as any).status === "banned";
+    const isSuspended = (user as any).status === "suspended" || (user as any).status === "banned" || (user as any).accountStatus === "suspended" || (user as any).accountStatus === "banned";
     if (isSuspended) continue;
 
     // Filter user trades by timeframe (all-time default)
@@ -6159,6 +6275,12 @@ export async function getAllLeaderboardRankings(timeframe: "all" | "month" | "we
     if (startDate && endDate) {
       userTrades = userTrades.filter((t) => t.date >= startDate && t.date <= endDate);
     }
+    if (userTrades.length === 0) continue;
+
+    // Eligibility Rule 3: Must have an ACTIVE PRO or ACTIVE PREMIUM subscription
+    const { isEligibleForLeaderboard } = await import("./subscription");
+    const hasPaidPlan = await isEligibleForLeaderboard(user.id, user);
+    if (!hasPaidPlan) continue;
 
     // Filter user discipline completions by timeframe
     let userCompletions = allCompletions.filter((c) => c.userId === user.id && c.completed);

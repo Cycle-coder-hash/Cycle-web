@@ -36,6 +36,9 @@ export default function Checkout() {
 
   const [selected, setSelected] = useState(() => {
     const params = new URLSearchParams(window.location.search);
+    const planParam = params.get("plan");
+    if (planParam === "pro") return 101;
+    if (planParam === "premium") return 102;
     const bundleParam = params.get("bundle");
     if (bundleParam) {
       const parsed = parseInt(bundleParam);
@@ -68,6 +71,8 @@ export default function Checkout() {
   });
 
   const baseBundles = [
+    { id: 101, titleEn: "CYCLE OF CHART — PRO PLAN (MONTHLY)", descriptionEn: "Unlimited trades · 5 books · 30 videos · Workout · Community", price: "599" },
+    { id: 102, titleEn: "CYCLE OF CHART — PREMIUM PLAN (MONTHLY)", descriptionEn: "Unlimited institutional access · Mentor support · Owner chat", price: "999" },
     { id: 1, titleEn: "Free eBook Package", descriptionEn: "15 PDFs · fixed package price", price: "00" },
     { id: 2, titleEn: "CYCLE OF CHART BASIC TO ADVANCE COURSE", descriptionEn: "Structured course · eBook included", price: "2499" },
     { id: 4, titleEn: "CYCLE OF CHART — PROFESSIONAL TRADING BLUEPRINT", descriptionEn: "Complete A–Z Trading Blueprint", originalPrice: "5550", price: "3999" },
@@ -79,7 +84,7 @@ export default function Checkout() {
   });
 
   const chosen = bundlesList.find((b: any) => b.id === selected);
-  const price = chosen?.price || (selected === 1 ? "00" : selected === 2 ? "2499" : "3999");
+  const price = chosen?.price || (selected === 1 ? "00" : selected === 101 ? "599" : selected === 102 ? "999" : selected === 2 ? "2499" : "3999");
   const isFree = Number(price) === 0 || price === "00" || price === "0" || selected === 1;
   const isAlreadyClaimed = Boolean(
     isFree && entitlements?.some((e: any) => e.bundleId === selected || e.scope === `bundle:${selected}`)

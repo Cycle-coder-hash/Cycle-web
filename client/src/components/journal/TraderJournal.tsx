@@ -74,6 +74,7 @@ import { JournalCalendar } from "./JournalCalendar";
 import { printTrade, exportTradePdf } from "@/lib/tradePdfExport";
 import { TraderNotebook } from "@/components/notebook/TraderNotebook";
 import { parseVideoUrl } from "@/lib/mediaUpload";
+import { UpgradeModal, UpgradeFeatureType } from "@/components/subscription/UpgradeModal";
 
 interface TraderJournalProps {
   isBn?: boolean;
@@ -121,6 +122,36 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
   const [deleteBookConfirmId, setDeleteBookConfirmId] = useState<string | null>(null);
   const [deleteTradeConfirmId, setDeleteTradeConfirmId] = useState<string | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+
+  // Subscription Usage & Upgrade Modal
+  const { data: subUsage } = trpc.subscription.getMyUsage.useQuery(undefined, { enabled: !!user });
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [upgradeFeature, setUpgradeFeature] = useState<UpgradeFeatureType>("generic");
+
+  const handleOpenNewBook = () => {
+    if (subUsage && subUsage.journalBooksLimit !== "unlimited") {
+      if (books.length >= subUsage.journalBooksLimit) {
+        setUpgradeFeature("journal_books");
+        setIsUpgradeModalOpen(true);
+        return;
+      }
+    }
+    setEditingBook(null);
+    setIsBookModalOpen(true);
+  };
+
+  const handleOpenNewTrade = (datePrefill?: string) => {
+    if (subUsage && subUsage.journalEntriesLimit !== "unlimited") {
+      if (subUsage.journalEntriesCount >= subUsage.journalEntriesLimit) {
+        setUpgradeFeature("trade_limit");
+        setIsUpgradeModalOpen(true);
+        return;
+      }
+    }
+    setCalendarPrefillDate(datePrefill);
+    setEditingTrade(null);
+    setIsTradeModalOpen(true);
+  };
 
   // Synchronize state when user changes
   useEffect(() => {
@@ -359,7 +390,7 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
       </div>
 
       {activeSection === "notebook" ? (
-        <TraderNotebook user={user} isBn={isBn} />
+        <TraderNotebook user={user} isBn={isBn} subUsage={subUsage} />
       ) : (
         <>
           {/* Top Header & Strategy Book Switcher */}
@@ -384,10 +415,7 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
 
         <div className="flex flex-wrap items-center gap-2.5">
           <Button
-            onClick={() => {
-              setEditingBook(null);
-              setIsBookModalOpen(true);
-            }}
+            onClick={handleOpenNewBook}
             variant="outline"
             className="rounded-2xl border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-800 text-xs font-bold gap-1.5 shadow-xs hover:border-cyan-500 hover:text-cyan-500 transition-colors"
           >
@@ -397,10 +425,7 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
 
           {books.length > 0 && (
             <Button
-              onClick={() => {
-                setEditingTrade(null);
-                setIsTradeModalOpen(true);
-              }}
+              onClick={() => handleOpenNewTrade()}
               className="rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500 text-xs font-black gap-2 shadow-lg shadow-cyan-500/25 px-4 py-2"
             >
               <Plus className="h-4 w-4" />
@@ -424,10 +449,7 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
               : "Create your first journal book to start tracking your trades."}
           </p>
           <Button
-            onClick={() => {
-              setEditingBook(null);
-              setIsBookModalOpen(true);
-            }}
+            onClick={handleOpenNewBook}
             className="rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500 text-xs font-black gap-2 shadow-lg shadow-cyan-500/25 px-6 py-3"
           >
             <Plus className="h-4 w-4" />
@@ -1193,11 +1215,7 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
 
         <div className="flex items-center gap-2">
           <Button
-            onClick={() => {
-              setCalendarPrefillDate(undefined);
-              setEditingTrade(null);
-              setIsTradeModalOpen(true);
-            }}
+            onClick={() => handleOpenNewTrade()}
             size="sm"
             className="rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500 text-xs font-black gap-1.5 shadow-md shadow-cyan-500/20 px-4 py-2"
           >
@@ -1220,11 +1238,7 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
           }}
           onDeleteTrade={(id) => setDeleteTradeConfirmId(id)}
           onPrintTrade={(t) => setPrintingTrade(t)}
-          onLogTradeForDate={(d) => {
-            setCalendarPrefillDate(d);
-            setEditingTrade(null);
-            setIsTradeModalOpen(true);
-          }}
+          onLogTradeForDate={(d) => handleOpenNewTrade(d)}
         />
       ) : (
         /* TRADE HISTORY AUDIT TABLE & FILTERS */
@@ -1243,10 +1257,7 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
             </div>
 
             <Button
-              onClick={() => {
-                setEditingTrade(null);
-                setIsTradeModalOpen(true);
-              }}
+              onClick={() => handleOpenNewTrade()}
               size="sm"
               className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 font-bold text-white text-xs gap-1.5 self-start sm:self-center"
             >
@@ -1996,6 +2007,14 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
           </div>
         </div>
       )}
+
+      {/* Subscription Access / Upgrade Modal */}
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        feature={upgradeFeature}
+        currentPlan={subUsage?.plan}
+      />
     </div>
   );
 }

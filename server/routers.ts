@@ -120,6 +120,31 @@ import { assertCheckoutAcknowledgement } from "@shared/commerce";
 import { sendAccessEmail } from "./email";
 import { hashPassword, verifyPassword } from "./_core/password";
 import { sdk } from "./_core/sdk";
+import {
+  getUserSubscription,
+  getUserUsage,
+  activateSubscription,
+  setAccountStatus,
+  canCreateJournalBook,
+  canCreateTradeEntry,
+  canSaveVideo,
+  canCreateNotebookPage,
+  canAccessWorkout,
+  canLogDiscipline,
+  canAccessCommunity,
+  canAccessMentorSupport,
+  canAccessOwnerChat,
+  recordNotebookPage,
+  removeNotebookPage,
+} from "./subscription";
+import {
+  listUsersForManagement,
+  getUserDetailsForManagement,
+  setUserAccess,
+  clearUserAccessOverride,
+  getUserAuditLogs,
+} from "./userManagement";
+
 
 const paymentMethod = z.enum(["bkash", "nagad", "rocket"]);
 const language = z.enum(["en", "bn", "ur"]);
@@ -577,6 +602,21 @@ export const appRouter = router({
         if (!ebook) {
           throw new TRPCError({ code: "NOT_FOUND", message: "Resource not found" });
         }
+        const isFree = ebook.isFree === true || Number(ebook.price) === 0 || !ebook.price || ebook.price === "0";
+        if (!isFree) {
+          const unlockedPdfs = await getCustomerLibraryPdfs({
+            id: ctx.user.id,
+            openId: ctx.user.openId,
+            email: ctx.user.email || undefined,
+          });
+          const hasAccess = unlockedPdfs.some((p: any) => p.id === ebook.id);
+          if (!hasAccess) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "You do not have access to this resource or access has been restricted.",
+            });
+          }
+        }
         return {
           success: true,
           ebook,
@@ -747,6 +787,13 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
+        const check = await canLogDiscipline(ctx.user.id, input.date);
+        if (!check.allowed && input.completed) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: check.reason || "Daily discipline limit reached.",
+          });
+        }
         return await toggleDisciplineTaskCompletion(ctx.user.id, input.taskId, input.date, input.completed);
       }),
     disciplineWorkouts: protectedProcedure
@@ -762,6 +809,13 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
+        const check = await canAccessWorkout(ctx.user.id);
+        if (!check.allowed) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: check.reason || "Workout Routine is available with Pro and Premium.",
+          });
+        }
         return await addDisciplineExercise(ctx.user.id, input);
       }),
     updateDisciplineExercise: protectedProcedure
@@ -775,6 +829,13 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
+        const check = await canAccessWorkout(ctx.user.id);
+        if (!check.allowed) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: check.reason || "Workout Routine is available with Pro and Premium.",
+          });
+        }
         return await updateDisciplineExercise(ctx.user.id, input.id, input.updates);
       }),
     deleteDisciplineExercise: protectedProcedure
@@ -791,6 +852,13 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
+        const check = await canAccessWorkout(ctx.user.id);
+        if (!check.allowed) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: check.reason || "Workout Routine is available with Pro and Premium.",
+          });
+        }
         return await toggleDisciplineWorkoutCompletion(ctx.user.id, input.exerciseId, input.date, input.completed);
       }),
     disciplineJournals: protectedProcedure.query(async ({ ctx }) => {
@@ -875,6 +943,16 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
+        const existingTrades = await getUserTrades(ctx.user.id);
+        if (input.trades.length > existingTrades.length) {
+          const check = await canCreateTradeEntry(ctx.user.id);
+          if (!check.allowed) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: check.reason || "Trade limit reached.",
+            });
+          }
+        }
         return await syncUserTrades(
           ctx.user.id,
           input.trades,
@@ -1171,6 +1249,15 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin" && ctx.user.role !== "support") {
+          const access = await canAccessMentorSupport(ctx.user.id);
+          if (!access.allowed) {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: access.reason || "Mentor Support & Owner Personal Chat is available exclusively with Premium.",
+            });
+          }
+        }
         const conversation = await getOrCreateSupportConversation(ctx.user.id, ctx.user);
         const msg = await sendSupportMessage({
           conversationId: conversation.id,
@@ -1272,16 +1359,21 @@ export const appRouter = router({
     users: supportProcedure.query(async () => {
       const usersList = await listAllUsers();
       const ordersList = await listAllOrders();
-      return usersList.map((u: any) => {
-        const userOrders = ordersList.filter((o: any) => o.customerId === u.id);
-        return {
-          ...u,
-          ordersCount: userOrders.length,
-          totalSpent: userOrders
-            .filter((o: any) => o.orderStatus === "approved")
-            .reduce((sum: number, o: any) => sum + parseFloat(o.amount || "0"), 0),
-        };
-      });
+      return await Promise.all(
+        usersList.map(async (u: any) => {
+          const userOrders = ordersList.filter((o: any) => o.customerId === u.id);
+          const sub = await getUserSubscription(u.id);
+          return {
+            ...u,
+            accountStatus: u.accountStatus || sub.accountStatus || "active",
+            subscription: sub,
+            ordersCount: userOrders.length,
+            totalSpent: userOrders
+              .filter((o: any) => o.orderStatus === "approved")
+              .reduce((sum: number, o: any) => sum + parseFloat(o.amount || "0"), 0),
+          };
+        })
+      );
     }),
 
     auditLogs: supportProcedure.query(() => listAuditLogs()),
@@ -1326,6 +1418,113 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         await deleteOrder(input.orderId, ctx.user.id);
         return { success: true };
+      }),
+
+    activateUserSubscription: adminProcedure
+      .input(
+        z.object({
+          userId: z.number(),
+          plan: z.enum(["pro", "premium"]),
+          durationDays: z.number().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const updated = await activateSubscription(input.userId, input.plan, input.durationDays);
+        return { success: true, subscription: updated };
+      }),
+
+    setUserAccountStatus: adminProcedure
+      .input(
+        z.object({
+          userId: z.number(),
+          status: z.enum(["active", "suspended", "banned"]),
+        })
+      )
+      .mutation(async ({ input }) => {
+        await setAccountStatus(input.userId, input.status);
+        return { success: true };
+      }),
+
+    // USER MANAGEMENT SYSTEM PROCEDURES
+    userManagementList: adminProcedure
+      .input(
+        z
+          .object({
+            search: z.string().optional(),
+            accountStatus: z.string().optional(),
+            courseAccess: z.string().optional(),
+            proAccess: z.string().optional(),
+            premiumAccess: z.string().optional(),
+          })
+          .optional()
+      )
+      .query(async ({ input }) => {
+        return await listUsersForManagement(input);
+      }),
+
+    userManagementDetails: adminProcedure
+      .input(z.object({ userId: z.number() }))
+      .query(async ({ input }) => {
+        return await getUserDetailsForManagement(input.userId);
+      }),
+
+    userManagementUpdateAccess: adminProcedure
+      .input(
+        z.object({
+          userId: z.number(),
+          accessType: z.enum(["course", "pro", "premium"]),
+          status: z.enum(["on", "off"]),
+          startDate: z.string().nullable().optional(),
+          expiryDate: z.string().nullable().optional(),
+          isLifetime: z.boolean().optional(),
+          isOverrideBlocked: z.boolean().optional(),
+          notes: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        return await setUserAccess(ctx.user.id, ctx.user.name || "Admin", input);
+      }),
+
+    userManagementClearOverride: adminProcedure
+      .input(
+        z.object({
+          userId: z.number(),
+          accessType: z.enum(["course", "pro", "premium"]),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        return await clearUserAccessOverride(
+          ctx.user.id,
+          ctx.user.name || "Admin",
+          input.userId,
+          input.accessType
+        );
+      }),
+
+    userManagementSetAccountStatus: adminProcedure
+      .input(
+        z.object({
+          userId: z.number(),
+          status: z.enum(["active", "suspended", "banned"]),
+        })
+      )
+      .mutation(async ({ input }) => {
+        await setAccountStatus(input.userId, input.status);
+        return { success: true };
+      }),
+
+    userManagementAuditLogs: adminProcedure
+      .input(z.object({ userId: z.number().optional() }).optional())
+      .query(async ({ input }) => {
+        return await getUserAuditLogs(input?.userId);
+      }),
+
+    getUserSubscription: adminProcedure
+      .input(z.object({ userId: z.number() }))
+      .query(async ({ input }) => {
+        const sub = await getUserSubscription(input.userId);
+        const usage = await getUserUsage(input.userId);
+        return { subscription: sub, usage };
       }),
 
     setSetting: adminProcedure
@@ -1461,6 +1660,18 @@ export const appRouter = router({
           methodologyLabel: z.string().optional(),
           methodologyIcon: z.string().optional(),
           showDetailsParagraph: z.boolean().optional(),
+          profile2Name: z.string().optional(),
+          profile2Role: z.string().optional(),
+          profile2RoleBn: z.string().optional(),
+          profile2PhotoUrl: z.string().optional(),
+          profile2BioEn: z.string().optional(),
+          profile2BioBn: z.string().optional(),
+          profile2TradingStyle: z.string().optional(),
+          profile2Telegram: z.string().optional(),
+          profile2Youtube: z.string().optional(),
+          profile2Facebook: z.string().optional(),
+          profile2Twitter: z.string().optional(),
+          profile2Email: z.string().optional(),
         })
       )
       .mutation(async ({ input }) => {
@@ -1548,6 +1759,81 @@ export const appRouter = router({
       }
       return await getUserGlobalRank(userId);
     }),
+  }),
+
+  subscription: router({
+    getMySubscription: protectedProcedure.query(async ({ ctx }) => {
+      return await getUserSubscription(ctx.user.id);
+    }),
+
+    getMyUsage: protectedProcedure.query(async ({ ctx }) => {
+      return await getUserUsage(ctx.user.id);
+    }),
+
+    checkAccess: protectedProcedure
+      .input(
+        z.object({
+          feature: z.enum([
+            "journal_book",
+            "trade_entry",
+            "video_journal",
+            "video_notebook",
+            "notebook_page",
+            "workout",
+            "discipline",
+            "community",
+            "mentor_support",
+            "owner_chat",
+          ]),
+          meta: z.any().optional(),
+        })
+      )
+      .query(async ({ ctx, input }) => {
+        switch (input.feature) {
+          case "journal_book": {
+            const count = Number(input.meta?.currentBookCount) || 1;
+            return await canCreateJournalBook(ctx.user.id, count);
+          }
+          case "trade_entry":
+            return await canCreateTradeEntry(ctx.user.id);
+          case "video_journal":
+            return await canSaveVideo(ctx.user.id, "journal");
+          case "video_notebook":
+            return await canSaveVideo(ctx.user.id, "notebook");
+          case "notebook_page":
+            return await canCreateNotebookPage(ctx.user.id);
+          case "workout":
+            return await canAccessWorkout(ctx.user.id);
+          case "discipline":
+            return await canLogDiscipline(ctx.user.id, input.meta?.date || new Date().toISOString().slice(0, 10));
+          case "community":
+            return await canAccessCommunity(ctx.user.id);
+          case "mentor_support":
+            return await canAccessMentorSupport(ctx.user.id);
+          case "owner_chat":
+            return await canAccessOwnerChat(ctx.user.id);
+          default:
+            return { allowed: true };
+        }
+      }),
+
+    createNotebookPage: protectedProcedure
+      .input(z.object({ pageId: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const check = await canCreateNotebookPage(ctx.user.id);
+        if (!check.allowed) {
+          throw new TRPCError({ code: "FORBIDDEN", message: check.reason });
+        }
+        await recordNotebookPage(ctx.user.id, input.pageId);
+        return { success: true };
+      }),
+
+    deleteNotebookPage: protectedProcedure
+      .input(z.object({ pageId: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        await removeNotebookPage(ctx.user.id, input.pageId);
+        return { success: true };
+      }),
   }),
 });
 

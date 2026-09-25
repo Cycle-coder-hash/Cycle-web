@@ -11,6 +11,7 @@ export const users = mysqlTable("users", {
   loginMethod: varchar("loginMethod", { length: 64 }),
   avatar: text("avatar"),
   role: mysqlEnum("role", ["user", "admin", "support"]).default("user").notNull(),
+  accountStatus: mysqlEnum("accountStatus", ["active", "suspended", "banned"]).default("active").notNull(),
   language: mysqlEnum("language", ["en", "bn", "ur"]).default("en").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -328,6 +329,38 @@ export const traderTrades = mysqlTable("traderTrades", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+export const subscriptions = mysqlTable("subscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  plan: mysqlEnum("plan", ["free_trial", "free_after_trial", "pro", "premium"]).default("free_trial").notNull(),
+  status: mysqlEnum("status", ["active", "expired", "suspended"]).default("active").notNull(),
+  trialStartsAt: timestamp("trialStartsAt").notNull(),
+  trialEndsAt: timestamp("trialEndsAt").notNull(),
+  subscriptionStartsAt: timestamp("subscriptionStartsAt"),
+  subscriptionEndsAt: timestamp("subscriptionEndsAt"),
+  pausedProDaysRemaining: int("pausedProDaysRemaining").default(0).notNull(),
+  pausedPremiumDaysRemaining: int("pausedPremiumDaysRemaining").default(0).notNull(),
+  freeCycleStartsAt: timestamp("freeCycleStartsAt"),
+  freeCycleEndsAt: timestamp("freeCycleEndsAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const savedVideos = mysqlTable("savedVideos", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  videoUrl: varchar("videoUrl", { length: 500 }).notNull(),
+  source: mysqlEnum("source", ["journal", "notebook"]).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const notebookPages = mysqlTable("notebookPages", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  pageId: varchar("pageId", { length: 120 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type Product = typeof products.$inferSelect;
@@ -360,3 +393,45 @@ export type InsertTraderTrade = typeof traderTrades.$inferInsert;
 
 export type CourseTelegramPopupEvent = typeof courseTelegramPopupEvents.$inferSelect;
 export type InsertCourseTelegramPopupEvent = typeof courseTelegramPopupEvents.$inferInsert;
+
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = typeof subscriptions.$inferInsert;
+export type SavedVideo = typeof savedVideos.$inferSelect;
+export type InsertSavedVideo = typeof savedVideos.$inferInsert;
+export type NotebookPageRecord = typeof notebookPages.$inferSelect;
+export type InsertNotebookPageRecord = typeof notebookPages.$inferInsert;
+
+export const userManualAccess = mysqlTable("userManualAccess", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  accessType: mysqlEnum("accessType", ["course", "pro", "premium"]).notNull(),
+  status: mysqlEnum("status", ["on", "off"]).default("off").notNull(),
+  isOverrideBlocked: boolean("isOverrideBlocked").default(false).notNull(),
+  startDate: timestamp("startDate"),
+  expiryDate: timestamp("expiryDate"),
+  isLifetime: boolean("isLifetime").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const userAccessAuditLogs = mysqlTable("userAccessAuditLogs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  accessType: mysqlEnum("accessType", ["course", "pro", "premium"]).notNull(),
+  previousState: varchar("previousState", { length: 64 }).notNull(),
+  newState: varchar("newState", { length: 64 }).notNull(),
+  startDate: timestamp("startDate"),
+  expiryDate: timestamp("expiryDate"),
+  isLifetime: boolean("isLifetime").default(false).notNull(),
+  adminId: int("adminId").notNull(),
+  adminName: varchar("adminName", { length: 128 }),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type UserManualAccess = typeof userManualAccess.$inferSelect;
+export type InsertUserManualAccess = typeof userManualAccess.$inferInsert;
+export type UserAccessAuditLog = typeof userAccessAuditLogs.$inferSelect;
+export type InsertUserAccessAuditLog = typeof userAccessAuditLogs.$inferInsert;
+
+

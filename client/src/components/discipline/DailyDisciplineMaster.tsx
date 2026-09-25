@@ -21,6 +21,7 @@ import { DisciplineForexTrackerTab } from "./DisciplineForexTrackerTab";
 import { DisciplineStatsTab } from "./DisciplineStatsTab";
 import { DisciplineSettingsTab } from "./DisciplineSettingsTab";
 import { DisciplineDataManagementTab } from "./DisciplineDataManagementTab";
+import { UpgradeModal, UpgradeFeatureType } from "@/components/subscription/UpgradeModal";
 
 interface DailyDisciplineMasterProps {
   user: any;
@@ -40,6 +41,12 @@ export function DailyDisciplineMaster({
 
   // Global selected date for schedule/workout/journal/forex
   const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split("T")[0]);
+
+  // Subscription state & upgrade modal
+  const utils = trpc.useUtils();
+  const { data: subUsage } = trpc.subscription.getMyUsage.useQuery(undefined, { enabled: !!user });
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [upgradeFeature, setUpgradeFeature] = useState<UpgradeFeatureType>("generic");
 
   // ============================================================================
   // TRPC QUERIES
@@ -114,6 +121,13 @@ export function DailyDisciplineMaster({
     onSuccess: () => {
       refetchSchedule();
       refetchStats();
+      utils.subscription.getMyUsage.invalidate();
+    },
+    onError: (err) => {
+      if (err.data?.code === "FORBIDDEN") {
+        setUpgradeFeature("discipline_limit");
+        setIsUpgradeModalOpen(true);
+      }
     },
   });
 
@@ -121,6 +135,13 @@ export function DailyDisciplineMaster({
     onSuccess: () => {
       refetchWorkouts();
       refetchStats();
+      utils.subscription.getMyUsage.invalidate();
+    },
+    onError: (err) => {
+      if (err.data?.code === "FORBIDDEN") {
+        setUpgradeFeature("workout");
+        setIsUpgradeModalOpen(true);
+      }
     },
   });
 
@@ -142,6 +163,13 @@ export function DailyDisciplineMaster({
     onSuccess: () => {
       refetchWorkouts();
       refetchStats();
+      utils.subscription.getMyUsage.invalidate();
+    },
+    onError: (err) => {
+      if (err.data?.code === "FORBIDDEN") {
+        setUpgradeFeature("workout");
+        setIsUpgradeModalOpen(true);
+      }
     },
   });
 
@@ -289,9 +317,16 @@ export function DailyDisciplineMaster({
             scheduleData={scheduleData}
             isLoading={isScheduleLoading}
             isBn={isBn}
-            onToggleTask={(taskId, completed) =>
-              toggleTaskMutation.mutate({ taskId, date: selectedDate, completed })
-            }
+            onToggleTask={(taskId, completed) => {
+              if (completed && subUsage && subUsage.disciplineDaysLimit !== "unlimited") {
+                if (subUsage.disciplineDaysCount >= subUsage.disciplineDaysLimit) {
+                  setUpgradeFeature("discipline_limit");
+                  setIsUpgradeModalOpen(true);
+                  return;
+                }
+              }
+              toggleTaskMutation.mutate({ taskId, date: selectedDate, completed });
+            }}
             onAddTask={(task) => addTaskMutation.mutate(task)}
             onUpdateTask={(id, updates) => updateTaskMutation.mutate({ id, updates })}
             onDeleteTask={(id) => deleteTaskMutation.mutate({ id })}
@@ -305,6 +340,11 @@ export function DailyDisciplineMaster({
             workoutData={workoutData}
             isLoading={isWorkoutLoading}
             isBn={isBn}
+            isLocked={!!subUsage?.isWorkoutLocked}
+            onUpgradeClick={() => {
+              setUpgradeFeature("workout");
+              setIsUpgradeModalOpen(true);
+            }}
             onToggleExercise={(exerciseId, completed) =>
               toggleExerciseMutation.mutate({ exerciseId, date: selectedDate, completed })
             }
@@ -382,6 +422,14 @@ export function DailyDisciplineMaster({
           />
         )}
       </div>
+
+      {/* Subscription Access / Upgrade Modal */}
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        feature={upgradeFeature}
+        currentPlan={subUsage?.plan}
+      />
     </div>
   );
 }

@@ -9,9 +9,10 @@ import {
   UserCheck,
   KeyRound,
   Shield,
+  UserCog,
 } from "lucide-react";
 
-export type AdminTab = "overview" | "orders" | "students" | "ebooks" | "support" | "owner" | "settings" | "audit";
+export type AdminTab = "overview" | "orders" | "user_management" | "students" | "ebooks" | "support" | "owner" | "settings" | "audit";
 
 interface AdminNavTabsProps {
   activeTab: AdminTab;
@@ -37,6 +38,12 @@ export const AdminNavTabs: React.FC<AdminNavTabsProps> = ({
       label: "Payment Verification",
       icon: FileCheck2,
       badge: pendingOrdersCount ? `${pendingOrdersCount}` : undefined,
+    },
+    {
+      id: "user_management",
+      label: "User Management",
+      icon: UserCog,
+      badge: undefined,
     },
     {
       id: "students",

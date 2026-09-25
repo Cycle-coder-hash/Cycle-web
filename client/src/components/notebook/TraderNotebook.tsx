@@ -23,16 +23,40 @@ import {
   FilePlus,
   Compass,
 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import { UpgradeModal, UpgradeFeatureType } from "@/components/subscription/UpgradeModal";
 
 interface TraderNotebookProps {
   user?: any;
   isBn?: boolean;
+  subUsage?: any;
 }
 
-export function TraderNotebook({ user, isBn = false }: TraderNotebookProps) {
+export function TraderNotebook({ user, isBn = false, subUsage: propSubUsage }: TraderNotebookProps) {
   const userId = useMemo(() => {
     return user?.openId || user?.email || (user?.id ? String(user.id) : "trader_private_vault");
   }, [user]);
+
+  const utils = trpc.useUtils();
+  const subUsageQuery = trpc.subscription.getMyUsage.useQuery(undefined, {
+    enabled: !propSubUsage && !!user,
+  });
+  const subUsage = propSubUsage || subUsageQuery.data;
+
+  const createNotebookPageMutation = trpc.subscription.createNotebookPage.useMutation({
+    onSuccess: () => {
+      utils.subscription.getMyUsage.invalidate();
+    },
+  });
+
+  const deleteNotebookPageMutation = trpc.subscription.deleteNotebookPage.useMutation({
+    onSuccess: () => {
+      utils.subscription.getMyUsage.invalidate();
+    },
+  });
+
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [upgradeFeature, setUpgradeFeature] = useState<UpgradeFeatureType>("notebook_pages");
 
   const [userData, setUserData] = useState<NotebookUserData | null>(null);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
@@ -232,6 +256,19 @@ export function TraderNotebook({ user, isBn = false }: TraderNotebookProps) {
   // Create Page (Top-level or Sub-page)
   const handleCreatePage = (parentPageId?: string | null) => {
     if (!userData || !activeTemplateId) return;
+
+    if (subUsage) {
+      if (
+        subUsage.notebookPagesLimit === 0 ||
+        (subUsage.notebookPagesLimit !== "unlimited" &&
+          subUsage.notebookPagesCount >= subUsage.notebookPagesLimit)
+      ) {
+        setUpgradeFeature("notebook_pages");
+        setIsUpgradeModalOpen(true);
+        return;
+      }
+    }
+
     const newPageId = `page_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     const newPage: NotebookPage = {
       id: newPageId,
@@ -267,6 +304,8 @@ export function TraderNotebook({ user, isBn = false }: TraderNotebookProps) {
       pages: nextPages,
       activePageId: newPageId,
     });
+
+    createNotebookPageMutation.mutate({ pageId: newPageId });
   };
 
   // Rename Page
@@ -316,6 +355,7 @@ export function TraderNotebook({ user, isBn = false }: TraderNotebookProps) {
     });
 
     setDeleteTarget((prev) => ({ ...prev, isOpen: false }));
+    deleteNotebookPageMutation.mutate({ pageId });
   };
 
   // Update Page Content
@@ -509,6 +549,14 @@ export function TraderNotebook({ user, isBn = false }: TraderNotebookProps) {
         isBn={isBn}
         onConfirm={deleteTarget.type === "template" ? confirmDeleteTemplate : confirmDeletePage}
         onCancel={() => setDeleteTarget((prev) => ({ ...prev, isOpen: false }))}
+      />
+
+      {/* Subscription Access / Upgrade Modal */}
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+        feature={upgradeFeature}
+        currentPlan={subUsage?.plan}
       />
     </div>
   );

@@ -9,6 +9,7 @@ import { AdminNavTabs, AdminTab } from "./components/AdminNavTabs";
 
 import { OverviewTab } from "./tabs/OverviewTab";
 import { OrdersTab } from "./tabs/OrdersTab";
+import { UserManagementTab } from "./tabs/UserManagementTab";
 import { StudentsTab } from "./tabs/StudentsTab";
 import { EbooksTab } from "./tabs/EbooksTab";
 import { SupportTab } from "./tabs/SupportTab";
@@ -127,6 +128,18 @@ export default function AdminPage() {
     methodologyLabel: "Core Methodology",
     methodologyIcon: "award",
     showDetailsParagraph: false,
+    profile2Name: "Cycle of Chart",
+    profile2Role: "Institutional Trading Mentor",
+    profile2RoleBn: "ইন্সটিটিউশনাল ট্রেডিং মেন্টর",
+    profile2PhotoUrl: "/logo.jpg",
+    profile2BioEn: "",
+    profile2BioBn: "",
+    profile2TradingStyle: "",
+    profile2Telegram: "",
+    profile2Youtube: "",
+    profile2Facebook: "",
+    profile2Twitter: "",
+    profile2Email: "",
   });
   const [ownerFormInitialized, setOwnerFormInitialized] = useState(false);
   const [ownerPreviewLang, setOwnerPreviewLang] = useState<"en" | "bn">("en");
@@ -183,6 +196,18 @@ export default function AdminPage() {
         methodologyLabel: ownerProfileData.methodologyLabel || "Core Methodology",
         methodologyIcon: ownerProfileData.methodologyIcon || "award",
         showDetailsParagraph: !!ownerProfileData.showDetailsParagraph,
+        profile2Name: (ownerProfileData as any)?.profile2Name ?? "Cycle of Chart",
+        profile2Role: (ownerProfileData as any)?.profile2Role ?? "Institutional Trading Mentor",
+        profile2RoleBn: (ownerProfileData as any)?.profile2RoleBn ?? "ইন্সটিটিউশনাল ট্রেডিং মেন্টর",
+        profile2PhotoUrl: (ownerProfileData as any)?.profile2PhotoUrl ?? "/logo.jpg",
+        profile2BioEn: (ownerProfileData as any)?.profile2BioEn ?? "",
+        profile2BioBn: (ownerProfileData as any)?.profile2BioBn ?? "",
+        profile2TradingStyle: (ownerProfileData as any)?.profile2TradingStyle ?? "",
+        profile2Telegram: (ownerProfileData as any)?.profile2Telegram ?? "",
+        profile2Youtube: (ownerProfileData as any)?.profile2Youtube ?? "",
+        profile2Facebook: (ownerProfileData as any)?.profile2Facebook ?? "",
+        profile2Twitter: (ownerProfileData as any)?.profile2Twitter ?? "",
+        profile2Email: (ownerProfileData as any)?.profile2Email ?? "",
       });
       setOwnerFormInitialized(true);
     }
@@ -481,6 +506,29 @@ export default function AdminPage() {
     }
   };
 
+  const handleProfile2PhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload a valid image file (PNG, JPG, WebP)");
+      return;
+    }
+    const toastId = toast.loading("Uploading Profile 2 brand photo to cloud CDN...");
+    try {
+      const cdnUrl = await uploadImage(file);
+      setOwnerForm((prev) => ({
+        ...prev,
+        profile2PhotoUrl: cdnUrl,
+      }));
+      toast.success("Profile 2 photo uploaded to cloud CDN!", { id: toastId });
+    } catch (err: any) {
+      console.error("[Profile 2 photo upload error]:", err);
+      toast.error("Failed to upload photo. Please try again.", { id: toastId });
+    } finally {
+      e.target.value = "";
+    }
+  };
+
   const handleSaveOwnerProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!ownerForm.name.trim()) {
@@ -509,6 +557,19 @@ export default function AdminPage() {
         toast.success("Photo uploaded to ImgBB CDN successfully!", { id: uploadToast });
       } catch (err: any) {
         console.error("Base64 photo upload error:", err);
+        toast.error("Failed to upload base64 photo to CDN. Saving as-is.", { id: uploadToast });
+      }
+    }
+
+    let finalProfile2PhotoUrl = ownerForm.profile2PhotoUrl?.trim();
+    if (finalProfile2PhotoUrl && finalProfile2PhotoUrl.startsWith("data:image/")) {
+      const uploadToast = toast.loading("Converting & uploading base64 Profile 2 photo to ImgBB CDN...");
+      try {
+        finalProfile2PhotoUrl = await uploadImage(finalProfile2PhotoUrl, "brand-profile-photo.png");
+        setOwnerForm((prev) => ({ ...prev, profile2PhotoUrl: finalProfile2PhotoUrl }));
+        toast.success("Profile 2 photo uploaded to ImgBB CDN successfully!", { id: uploadToast });
+      } catch (err: any) {
+        console.error("Base64 Profile 2 photo upload error:", err);
         toast.error("Failed to upload base64 photo to CDN. Saving as-is.", { id: uploadToast });
       }
     }
@@ -543,6 +604,18 @@ export default function AdminPage() {
       methodologyLabel: ownerForm.methodologyLabel?.trim() || "Core Methodology",
       methodologyIcon: ownerForm.methodologyIcon || "award",
       showDetailsParagraph: ownerForm.showDetailsParagraph,
+      profile2Name: ownerForm.profile2Name?.trim() || undefined,
+      profile2Role: ownerForm.profile2Role?.trim() || undefined,
+      profile2RoleBn: ownerForm.profile2RoleBn?.trim() || undefined,
+      profile2PhotoUrl: finalProfile2PhotoUrl || undefined,
+      profile2BioEn: ownerForm.profile2BioEn?.trim() || undefined,
+      profile2BioBn: ownerForm.profile2BioBn?.trim() || undefined,
+      profile2TradingStyle: ownerForm.profile2TradingStyle?.trim() || undefined,
+      profile2Telegram: ownerForm.profile2Telegram?.trim() || undefined,
+      profile2Youtube: ownerForm.profile2Youtube?.trim() || undefined,
+      profile2Facebook: ownerForm.profile2Facebook?.trim() || undefined,
+      profile2Twitter: ownerForm.profile2Twitter?.trim() || undefined,
+      profile2Email: ownerForm.profile2Email?.trim() || undefined,
     });
   };
 
@@ -579,6 +652,18 @@ export default function AdminPage() {
         methodologyLabel: ownerProfileData.methodologyLabel || "Core Methodology",
         methodologyIcon: ownerProfileData.methodologyIcon || "award",
         showDetailsParagraph: !!ownerProfileData.showDetailsParagraph,
+        profile2Name: (ownerProfileData as any)?.profile2Name ?? "Cycle of Chart",
+        profile2Role: (ownerProfileData as any)?.profile2Role ?? "Institutional Trading Mentor",
+        profile2RoleBn: (ownerProfileData as any)?.profile2RoleBn ?? "ইন্সটিটিউশনাল ট্রেডিং মেন্টর",
+        profile2PhotoUrl: (ownerProfileData as any)?.profile2PhotoUrl ?? "/logo.jpg",
+        profile2BioEn: (ownerProfileData as any)?.profile2BioEn ?? "",
+        profile2BioBn: (ownerProfileData as any)?.profile2BioBn ?? "",
+        profile2TradingStyle: (ownerProfileData as any)?.profile2TradingStyle ?? "",
+        profile2Telegram: (ownerProfileData as any)?.profile2Telegram ?? "",
+        profile2Youtube: (ownerProfileData as any)?.profile2Youtube ?? "",
+        profile2Facebook: (ownerProfileData as any)?.profile2Facebook ?? "",
+        profile2Twitter: (ownerProfileData as any)?.profile2Twitter ?? "",
+        profile2Email: (ownerProfileData as any)?.profile2Email ?? "",
       });
     }
   };
@@ -677,6 +762,10 @@ export default function AdminPage() {
           />
         )}
 
+        {activeTab === "user_management" && (
+          <UserManagementTab />
+        )}
+
         {activeTab === "students" && (
           <StudentsTab
             students={students || []}
@@ -717,6 +806,7 @@ export default function AdminPage() {
             setOwnerPreviewLang={setOwnerPreviewLang}
             onSave={handleSaveOwnerProfile}
             onPhotoUpload={handleOwnerPhotoUpload}
+            onProfile2PhotoUpload={handleProfile2PhotoUpload}
             onReload={handleReloadOwner}
             isLoading={isLoadingOwnerProfile}
             isSaving={updateOwnerMutation.isPending}

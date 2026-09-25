@@ -37,6 +37,10 @@ import {
   Mail,
   Globe,
   UserCheck,
+  Crown,
+  Video,
+  Dumbbell,
+  MessageSquare,
 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
@@ -302,6 +306,7 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeStage, setActiveStage] = useState(0);
   const [selectedStageModal, setSelectedStageModal] = useState<number | null>(null);
+  const [selectedPlanModal, setSelectedPlanModal] = useState<"free" | "pro" | "premium" | null>(null);
   const [isFreeEbookModalOpen, setIsFreeEbookModalOpen] = useState(false);
   const { data: bundles } = trpc.public.bundles.useQuery();
   const { data: products } = trpc.public.products.useQuery();
@@ -414,6 +419,7 @@ export default function Home() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setSelectedStageModal(null);
+        setSelectedPlanModal(null);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -1138,6 +1144,413 @@ export default function Home() {
         </section>
 
         {/* ========================================================================= */}
+        {/* PLANS FOR EVERY TRADER */}
+        {/* ========================================================================= */}
+        <section id="plans" className="content-auto bg-slate-900/40 py-16 sm:py-24 border-t border-slate-200/60 dark:border-slate-800/80 transition-colors">
+          <div className="mx-auto max-w-7xl px-5 lg:px-8">
+            <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-[#0284c7]/10 text-[#0284c7] dark:bg-sky-500/20 dark:text-sky-400 border border-sky-500/30">
+                <Sparkles size={14} />
+                <span className="uppercase tracking-widest">{isBn ? "ট্রেডার অ্যাক্সেস প্ল্যান" : "Plans For Every Trader"}</span>
+              </div>
+              <h2 className="mt-4 text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
+                {isBn ? "স্বচ্ছ মাসিক অ্যাক্সেস। কোনো লুকানো চার্জ নেই।" : "Transparent Trader Access. No Hidden Deductions."}
+              </h2>
+              <p className="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+                {isBn
+                  ? "বিনামূল্যে ৩০ দিনের ট্রায়াল দিয়ে শুরু করুন অথবা সম্পূর্ণ আনলিমিটেড ট্রেড, একাধিক জার্নাল বুক, ভিডিও সেভিং এবং ১-অন-১ প্রাতিষ্ঠানিক মেন্টরশিপের জন্য প্রো বা প্রিমিয়ামে আপগ্রেড করুন।"
+                  : "Start with an anchored 30-day Free Trial or upgrade to Pro or Premium for unlimited trade logging, dedicated journal books, video uploads, daily workout routines, and direct institutional mentorship."}
+              </p>
+            </div>
+
+            {/* Pricing Cards Grid */}
+            <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8 items-stretch max-w-7xl mx-auto">
+              {/* CARD 1: FREE TRIAL */}
+              <div className="relative flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-7 shadow-sm transition hover:shadow-lg dark:border-slate-800 dark:bg-[#0b162a]">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      {isBn ? "ফ্রি ট্রায়াল" : "Free Trial"}
+                    </span>
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                      30 DAYS FULL TRIAL
+                    </span>
+                  </div>
+                  <div className="mt-4 flex items-baseline gap-1">
+                    <span className="text-4xl font-black text-slate-900 dark:text-white">৳0</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">/ 30 days</span>
+                  </div>
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    {isBn
+                      ? "অ্যাকাউন্ট তৈরির সাথে সাথে স্বয়ংক্রিয়ভাবে সক্রিয় হয়। ৩০ দিন পর প্রতি মাসে ৫টি ট্রেড ও ৫টি ডিসিপ্লিন দিনে সীমাবদ্ধ থাকবে।"
+                      : "Strictly anchored to your account creation date. After 30 days, converts to Free 5 trades & 5 discipline days per month."}
+                  </p>
+
+                  <div className="mt-6 border-t border-slate-100 pt-5 dark:border-slate-800/80">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-3">
+                      {isBn ? "সুবিধাসমূহ" : "Included Features"}
+                    </div>
+                    <ul className="space-y-2.5 text-xs text-slate-600 dark:text-slate-300">
+                      <li className="flex items-center gap-2.5">
+                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                        <span><strong>1 Journal Book</strong> max</span>
+                      </li>
+                      <li className="flex items-center gap-2.5">
+                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                        <span><strong>Unlimited Trades</strong> during 30 days</span>
+                      </li>
+                      <li className="flex items-center gap-2.5">
+                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                        <span>Standard Journal Analytics</span>
+                      </li>
+                      <li className="flex items-center gap-2.5 text-slate-400 dark:text-slate-500">
+                        <LockKeyhole size={15} className="shrink-0" />
+                        <span>Video saving locked</span>
+                      </li>
+                      <li className="flex items-center gap-2.5 text-slate-400 dark:text-slate-500">
+                        <LockKeyhole size={15} className="shrink-0" />
+                        <span>Workout Routine & Community locked</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="mt-8 space-y-2.5">
+                  <Button
+                    variant="outline"
+                    className="w-full text-xs font-bold border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    onClick={() => setSelectedPlanModal("free")}
+                  >
+                    {isBn ? "বিস্তারিত দেখুন" : "View Details"}
+                  </Button>
+                  <Link href="/dashboard" className="block w-full">
+                    <Button
+                      variant="ghost"
+                      className="w-full text-xs font-semibold text-slate-600 dark:text-slate-300"
+                    >
+                      {isBn ? "ড্যাশবোর্ডে যান" : "Go to Dashboard"}
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+
+              {/* CARD 2: PRO PLAN (MOST POPULAR) */}
+              <div className="relative flex flex-col justify-between rounded-3xl border-2 border-sky-500 bg-white p-7 shadow-xl shadow-sky-500/10 dark:border-sky-500 dark:bg-[#0c182e] ring-2 ring-sky-500/20">
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-md">
+                  ★ MOST POPULAR ★
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">
+                      {isBn ? "প্রো প্ল্যান" : "Pro Plan"}
+                    </span>
+                    <span className="rounded-full bg-sky-500/10 px-3 py-1 text-[11px] font-bold text-sky-600 dark:text-sky-300 border border-sky-500/20">
+                      +5 BONUS DAYS IN TRIAL
+                    </span>
+                  </div>
+                  <div className="mt-4 flex items-baseline gap-1">
+                    <span className="text-4xl font-black text-slate-900 dark:text-white">৳599</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">/ month</span>
+                  </div>
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    {isBn
+                      ? "ম্যানুয়াল মাসিক নবায়ন। ট্রায়াল চলাকালে নিলে পাবেন অতিরিক্ত ৫ বোনাস দিন (মোট ৩৫ দিন)।"
+                      : "Manual monthly renewal. Upgrading during trial adds +5 Bonus Days (35 days total first period)."}
+                  </p>
+
+                  <div className="mt-6 border-t border-slate-100 pt-5 dark:border-slate-800/80">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-sky-500 mb-3">
+                      {isBn ? "প্রো সুবিধাসমূহ" : "Pro Features"}
+                    </div>
+                    <ul className="space-y-2.5 text-xs text-slate-600 dark:text-slate-300">
+                      <li className="flex items-center gap-2.5 font-semibold text-slate-900 dark:text-white">
+                        <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
+                        <span><strong>Up to 5 Dedicated Journal Books</strong></span>
+                      </li>
+                      <li className="flex items-center gap-2.5 font-semibold text-slate-900 dark:text-white">
+                        <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
+                        <span><strong>Unlimited Trade Entries</strong></span>
+                      </li>
+                      <li className="flex items-center gap-2.5">
+                        <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
+                        <span><strong>30 Trade Videos / mo</strong> (restored on delete)</span>
+                      </li>
+                      <li className="flex items-center gap-2.5">
+                        <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
+                        <span><strong>10 Notebook Pages & 5 Videos / mo</strong></span>
+                      </li>
+                      <li className="flex items-center gap-2.5">
+                        <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
+                        <span><strong>Full Workout Routine Access</strong></span>
+                      </li>
+                      <li className="flex items-center gap-2.5">
+                        <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
+                        <span><strong>Full Community Chat Access</strong></span>
+                      </li>
+                      <li className="flex items-center gap-2.5">
+                        <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
+                        <span><strong>Global Leaderboard Eligible</strong> (verified)</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="mt-8 space-y-2.5">
+                  <Link href="/checkout?plan=pro" className="block w-full">
+                    <Button className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-xs h-10 shadow-lg shadow-sky-500/25">
+                      {isBn ? "প্রো কিনুন — ৳৫৯৯/মাস" : "Get Pro — ৳599/month"}
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="outline"
+                    className="w-full text-xs font-bold border-sky-500/30 text-sky-600 dark:text-sky-300 hover:bg-sky-500/10"
+                    onClick={() => setSelectedPlanModal("pro")}
+                  >
+                    {isBn ? "বিস্তারিত দেখুন" : "View Details"}
+                  </Button>
+                </div>
+              </div>
+
+              {/* CARD 3: PREMIUM PLAN */}
+              <div className="relative flex flex-col justify-between rounded-3xl border border-amber-500/40 bg-gradient-to-b from-amber-500/[0.04] to-transparent p-7 shadow-sm transition hover:shadow-lg dark:border-amber-500/40 dark:bg-[#0c1524]">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-amber-500 flex items-center gap-1.5">
+                      <Crown size={15} />
+                      {isBn ? "প্রিমিয়াম প্ল্যান" : "Premium Plan"}
+                    </span>
+                    <span className="rounded-full bg-amber-500/15 px-3 py-1 text-[11px] font-bold text-amber-500 dark:text-amber-300 border border-amber-500/30">
+                      INSTITUTIONAL
+                    </span>
+                  </div>
+                  <div className="mt-4 flex items-baseline gap-1">
+                    <span className="text-4xl font-black text-slate-900 dark:text-white">৳999</span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">/ month</span>
+                  </div>
+                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    {isBn
+                      ? "সর্বোচ্চ প্রাতিষ্ঠানিক সুযোগ-সুবিধা। মেন্টরদের সরাসরি গাইডেন্স ও ফাউন্ডারের সাথে ওয়ান-টু-ওয়ান চ্যাট।"
+                      : "The ultimate institutional trader suite with 1-on-1 mentorship and direct private chat with the founder."}
+                  </p>
+
+                  <div className="mt-6 border-t border-slate-100 pt-5 dark:border-slate-800/80">
+                    <div className="text-[11px] font-bold uppercase tracking-wider text-amber-500 mb-3">
+                      {isBn ? "প্রিমিয়াম সুবিধাসমূহ" : "Premium Exclusive"}
+                    </div>
+                    <ul className="space-y-2.5 text-xs text-slate-600 dark:text-slate-300">
+                      <li className="flex items-center gap-2.5 font-semibold text-slate-900 dark:text-white">
+                        <CheckCircle2 size={16} className="text-amber-500 shrink-0" />
+                        <span><strong>Unlimited Journal Books</strong></span>
+                      </li>
+                      <li className="flex items-center gap-2.5 font-semibold text-slate-900 dark:text-white">
+                        <CheckCircle2 size={16} className="text-amber-500 shrink-0" />
+                        <span><strong>Unlimited Log New Trade entries</strong></span>
+                      </li>
+                      <li className="flex items-center gap-2.5 font-semibold text-slate-900 dark:text-white">
+                        <CheckCircle2 size={16} className="text-amber-500 shrink-0" />
+                        <span><strong>Unlimited Video Saving & Notebook Pages</strong></span>
+                      </li>
+                      <li className="flex items-center gap-2.5">
+                        <CheckCircle2 size={16} className="text-amber-500 shrink-0" />
+                        <span>Workout Routine & Community Chat</span>
+                      </li>
+                      <li className="flex items-center gap-2.5 font-bold text-amber-500">
+                        <Crown size={15} className="shrink-0" />
+                        <span><strong>Direct 1-on-1 Mentor Support</strong></span>
+                      </li>
+                      <li className="flex items-center gap-2.5 font-bold text-amber-500">
+                        <Crown size={15} className="shrink-0" />
+                        <span><strong>Direct Owner Personal Chat Access</strong></span>
+                      </li>
+                      <li className="flex items-center gap-2.5">
+                        <CheckCircle2 size={16} className="text-amber-500 shrink-0" />
+                        <span>Pro Remaining Days Paused & Preserved</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="mt-8 space-y-2.5">
+                  <Link href="/checkout?plan=premium" className="block w-full">
+                    <Button className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black font-bold text-xs h-10 shadow-lg shadow-amber-500/25">
+                      {isBn ? "প্রিমিয়াম কিনুন — ৳৯৯৯/মাস" : "Get Premium — ৳999/month"}
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="outline"
+                    className="w-full text-xs font-bold border-amber-500/30 text-amber-600 dark:text-amber-300 hover:bg-amber-500/10"
+                    onClick={() => setSelectedPlanModal("premium")}
+                  >
+                    {isBn ? "বিস্তারিত দেখুন" : "View Details"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* PLAN DETAILS MODAL */}
+        {selectedPlanModal !== null && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 backdrop-blur-md bg-black/60 transition-all duration-300 animate-in fade-in"
+            onClick={() => setSelectedPlanModal(null)}
+          >
+            <div
+              className={`relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-2xl dark:border-slate-800 dark:bg-slate-900 transition-all duration-300 scale-100 animate-in zoom-in-95 ${
+                isBn ? "font-bangla" : ""
+              }`}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Top Bar with Plan Badge & Close Button */}
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex size-7 items-center justify-center rounded-xl bg-sky-500/20 font-mono text-xs font-bold text-sky-500">
+                    <Sparkles size={14} />
+                  </span>
+                  <span className="text-xs font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                    {selectedPlanModal === "free"
+                      ? "Free Trial & Free-After-Trial System"
+                      : selectedPlanModal === "pro"
+                      ? "Pro Plan Breakdown"
+                      : "Premium Plan Breakdown"}
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => setSelectedPlanModal(null)}
+                  className="flex size-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-white"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="mt-5 space-y-5">
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                    {selectedPlanModal === "free" && "30-Day Free Trial & Permanent Free Tier"}
+                    {selectedPlanModal === "pro" && "Pro Trader Plan — ৳599 / month"}
+                    {selectedPlanModal === "premium" && "Premium Institutional Plan — ৳999 / month"}
+                  </h3>
+                  <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                    {selectedPlanModal === "free" &&
+                      "Every new account automatically receives a 30-day Free Trial anchored to the exact moment of registration. During this period, you have 1 Journal Book with unlimited trade entries. After 30 days expire, your account permanently enters Free-After-Trial mode (max 5 trade entries and 5 discipline days per rolling 30-day cycle)."}
+                    {selectedPlanModal === "pro" &&
+                      "The Pro Plan is crafted for active disciplined traders needing separate books, video storage, structured fitness routines, and community collaboration. Renew manually every month with zero automatic debits. If upgraded during your Free Trial, you receive 5 BONUS DAYS (35 days total)."}
+                    {selectedPlanModal === "premium" &&
+                      "The Premium Plan unlocks unlimited institutional scale: unlimited journal books, unlimited trade entries, unlimited video uploads, full access to daily workout routine and community chat, plus direct 1-on-1 private Mentor Support and direct Owner Personal Chat access with the founder."}
+                  </p>
+                </div>
+
+                {/* Detailed Table */}
+                <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+                      <tr>
+                        <th className="p-3">Feature</th>
+                        <th className="p-3 text-center">Free Trial</th>
+                        <th className="p-3 text-center">Pro (৳599)</th>
+                        <th className="p-3 text-center">Premium (৳999)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                      <tr>
+                        <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">Journal Books</td>
+                        <td className="p-3 text-center text-slate-600 dark:text-slate-400">1 Book</td>
+                        <td className="p-3 text-center font-bold text-sky-600 dark:text-sky-400">5 Books</td>
+                        <td className="p-3 text-center font-bold text-amber-500">Unlimited</td>
+                      </tr>
+                      <tr>
+                        <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">Log New Trade</td>
+                        <td className="p-3 text-center text-slate-600 dark:text-slate-400">Unlimited (Trial) / 5 (Post)</td>
+                        <td className="p-3 text-center font-bold text-sky-600 dark:text-sky-400">Unlimited</td>
+                        <td className="p-3 text-center font-bold text-amber-500">Unlimited</td>
+                      </tr>
+                      <tr>
+                        <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">Trade Videos</td>
+                        <td className="p-3 text-center text-rose-500">Locked</td>
+                        <td className="p-3 text-center font-bold text-sky-600 dark:text-sky-400">30 / mo (Restored on del)</td>
+                        <td className="p-3 text-center font-bold text-amber-500">Unlimited</td>
+                      </tr>
+                      <tr>
+                        <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">Notebook Pages & Videos</td>
+                        <td className="p-3 text-center text-slate-600 dark:text-slate-400">Templates only</td>
+                        <td className="p-3 text-center text-slate-700 dark:text-slate-300">10 Pages / 5 Videos</td>
+                        <td className="p-3 text-center font-bold text-amber-500">Unlimited</td>
+                      </tr>
+                      <tr>
+                        <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">Workout Routine</td>
+                        <td className="p-3 text-center text-rose-500">Locked</td>
+                        <td className="p-3 text-center text-emerald-500 font-bold">Full Access</td>
+                        <td className="p-3 text-center text-emerald-500 font-bold">Full Access</td>
+                      </tr>
+                      <tr>
+                        <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">Community Chat</td>
+                        <td className="p-3 text-center text-rose-500">Locked</td>
+                        <td className="p-3 text-center text-emerald-500 font-bold">Full Access</td>
+                        <td className="p-3 text-center text-emerald-500 font-bold">Full Access</td>
+                      </tr>
+                      <tr>
+                        <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">1-on-1 Mentor Support</td>
+                        <td className="p-3 text-center text-rose-500">Locked</td>
+                        <td className="p-3 text-center text-rose-500">Locked</td>
+                        <td className="p-3 text-center font-bold text-amber-500">Direct 1-on-1</td>
+                      </tr>
+                      <tr>
+                        <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">Owner Personal Chat</td>
+                        <td className="p-3 text-center text-rose-500">Locked</td>
+                        <td className="p-3 text-center text-rose-500">Locked</td>
+                        <td className="p-3 text-center font-bold text-amber-500">Direct Founder Channel</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Important Rules Alert */}
+                <div className="p-4 rounded-2xl bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/40 text-xs text-sky-900 dark:text-sky-200 space-y-1">
+                  <div className="font-bold flex items-center gap-1.5 text-sky-700 dark:text-sky-300">
+                    <Sparkles size={14} />
+                    <span>Special Bonus & Pausing Rules</span>
+                  </div>
+                  <p className="leading-relaxed">
+                    • <strong>Trial Bonus:</strong> Purchasing Pro or Premium during your 30-day Free Trial immediately adds <strong>5 Bonus Days</strong> (35 days total for that first month).
+                  </p>
+                  <p className="leading-relaxed">
+                    • <strong>Plan Switching:</strong> If you are on Pro and upgrade to Premium, your remaining Pro days are paused and preserved in the database. When Premium expires, your remaining Pro days automatically resume.
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="mt-6 flex flex-col sm:flex-row items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedPlanModal(null)}
+                  className="w-full sm:w-auto text-xs"
+                >
+                  Close
+                </Button>
+                {selectedPlanModal === "pro" && (
+                  <Link href="/checkout?plan=pro" className="w-full sm:w-auto">
+                    <Button className="w-full sm:w-auto bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold text-xs">
+                      Proceed to Checkout (৳599/mo)
+                    </Button>
+                  </Link>
+                )}
+                {selectedPlanModal === "premium" && (
+                  <Link href="/checkout?plan=premium" className="w-full sm:w-auto">
+                    <Button className="w-full sm:w-auto bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-bold text-xs">
+                      Proceed to Checkout (৳999/mo)
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
         {/* CALL TO ACTION BOTTOM BANNER */}
         {/* ========================================================================= */}
         <section className="bg-gradient-to-r from-[#071a36] via-[#0d2a52] to-[#0a1e3d] py-20 text-white dark:bg-[#070e1b] dark:from-[#070e1b] dark:via-[#070e1b] dark:to-[#070e1b]">
@@ -1351,6 +1764,17 @@ export default function Home() {
                           : ownerProfile.bioEn ||
                             "Specializing in institutional price delivery, market structure, liquidity dynamics, and price action. Dedicated to replacing emotional speculation with structured understanding, systematic analysis, and disciplined execution."}
                       </p>
+                      {(() => {
+                        const p2Bio = isBn && (ownerProfile as any).profile2BioBn
+                          ? (ownerProfile as any).profile2BioBn
+                          : (ownerProfile as any).profile2BioEn;
+                        if (!p2Bio) return null;
+                        return (
+                          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 whitespace-pre-line leading-relaxed pt-1 border-t border-slate-200/60 dark:border-slate-800/60">
+                            {p2Bio}
+                          </p>
+                        );
+                      })()}
                       {ownerProfile.showDetailsParagraph && (ownerProfile.detailsBn || ownerProfile.detailsEn) && (
                         <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 whitespace-pre-line leading-relaxed pt-1">
                           {isBn && ownerProfile.detailsBn ? ownerProfile.detailsBn : ownerProfile.detailsEn}
@@ -1442,11 +1866,11 @@ export default function Home() {
                       ? p2.profile2RoleBn
                       : (p2.profile2Role || (isBn ? "ইন্সটিটিউশনাল ট্রেডিং মেন্টর" : "Institutional Trading Mentor"));
                     const p2Photo = p2.profile2PhotoUrl || "/logo.jpg";
-                    const p2Telegram = p2.profile2Telegram !== undefined ? p2.profile2Telegram : ownerProfile.telegram;
-                    const p2Youtube = p2.profile2Youtube !== undefined ? p2.profile2Youtube : ownerProfile.youtube;
-                    const p2Facebook = p2.profile2Facebook !== undefined ? p2.profile2Facebook : ownerProfile.facebook;
-                    const p2Twitter = p2.profile2Twitter !== undefined ? p2.profile2Twitter : ownerProfile.twitter;
-                    const p2Email = p2.profile2Email !== undefined ? p2.profile2Email : ownerProfile.email;
+                    const p2Telegram = p2.profile2Telegram !== undefined ? p2.profile2Telegram : "";
+                    const p2Youtube = p2.profile2Youtube !== undefined ? p2.profile2Youtube : "";
+                    const p2Facebook = p2.profile2Facebook !== undefined ? p2.profile2Facebook : "";
+                    const p2Twitter = p2.profile2Twitter !== undefined ? p2.profile2Twitter : "";
+                    const p2Email = p2.profile2Email !== undefined ? p2.profile2Email : "";
 
                     return (
                       <div className="lg:col-span-3 flex flex-col items-center text-center">

@@ -11,6 +11,8 @@ import {
   Loader2,
   ExternalLink,
   RefreshCw,
+  Crown,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -33,6 +35,15 @@ export function SupportChat({ inline = false }: SupportChatProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // tRPC Queries & Mutations
+  const { data: subUsage } = trpc.subscription.getMyUsage.useQuery(undefined, {
+    enabled: !!user,
+  });
+
+  const isNonPremiumCustomer =
+    user?.role !== "admin" &&
+    user?.role !== "support" &&
+    Boolean(subUsage?.isMentorSupportLocked);
+
   const {
     data: supportData,
     isLoading: isLoadingConversation,
@@ -369,48 +380,73 @@ export function SupportChat({ inline = false }: SupportChatProps) {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Text-Only Input Bottom Area */}
+      {/* Bottom Area: Input or Premium Locked Banner */}
       <div className="border-t border-slate-100 bg-white p-3 sm:p-4 dark:border-slate-800 dark:bg-slate-950/80">
-        <form onSubmit={handleSendMessage} className="space-y-2">
-          <div className="flex items-center gap-2">
-            <textarea
-              ref={textareaRef}
-              rows={1}
-              value={messageText}
-              onChange={(e) => setMessageText(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                isBn
-                  ? "আপনার মেসেজ লিখুন... (Enter চাপুন পাঠাতে)"
-                  : "Type your message here... (Press Enter to send)"
-              }
-              className="flex-1 min-h-[46px] max-h-[140px] resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs sm:text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-sky-500 focus:bg-white focus:ring-1 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-900/90 dark:text-white dark:placeholder-slate-500 dark:focus:bg-slate-900 transition"
-            />
-
-            <Button
-              type="submit"
-              disabled={!messageText.trim() || sendMessageMutation.isPending}
-              className="size-11 rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold shrink-0 disabled:opacity-40 transition-all shadow-sm"
-            >
-              {sendMessageMutation.isPending ? (
-                <Loader2 size={18} className="animate-spin" />
-              ) : (
-                <Send size={18} />
-              )}
-            </Button>
+        {isNonPremiumCustomer ? (
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+            <div className="flex items-center gap-3">
+              <div className="size-11 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-500/30">
+                <Crown size={22} />
+              </div>
+              <div>
+                <div className="text-xs sm:text-sm font-extrabold text-amber-300">
+                  {isBn ? "১-অন-১ মেন্টর সাপোর্ট ও ওনার চ্যাট প্রিমিয়াম এক্সক্লুসিভ" : "1-on-1 Mentor Support & Owner Chat is Premium Exclusive"}
+                </div>
+                <div className="text-[11px] text-gray-300 mt-0.5">
+                  {isBn
+                    ? "সরাসরি ফাউন্ডারের সাথে চ্যাট ও প্রাতিষ্ঠানিক ট্রেড পর্যালোচনার জন্য প্রিমিয়ামে আপগ্রেড করুন।"
+                    : "Direct private trade reviews and 1-on-1 access to the founder are reserved for Premium members."}
+                </div>
+              </div>
+            </div>
+            <Link href="/checkout?plan=premium" className="w-full sm:w-auto shrink-0">
+              <Button size="sm" className="w-full sm:w-auto bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black font-black text-xs h-9 px-5 shadow-lg shadow-amber-500/20">
+                {isBn ? "প্রিমিয়ামে আপগ্রেড — ৳৯৯৯/মাস" : "Get Premium — ৳999/mo"}
+              </Button>
+            </Link>
           </div>
+        ) : (
+          <form onSubmit={handleSendMessage} className="space-y-2">
+            <div className="flex items-center gap-2">
+              <textarea
+                ref={textareaRef}
+                rows={1}
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder={
+                  isBn
+                    ? "আপনার মেসেজ লিখুন... (Enter চাপুন পাঠাতে)"
+                    : "Type your message here... (Press Enter to send)"
+                }
+                className="flex-1 min-h-[46px] max-h-[140px] resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs sm:text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-sky-500 focus:bg-white focus:ring-1 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-900/90 dark:text-white dark:placeholder-slate-500 dark:focus:bg-slate-900 transition"
+              />
 
-          <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 px-1">
-            <span>
-              {isBn
-                ? "১-অন-১ ডেডিকেটেড সাপোর্ট • সব মেসেজ সুরক্ষিতভাবে সেভ থাকে"
-                : "Permanent 1-on-1 support • All messages secured & archived"}
-            </span>
-            <span className="hidden sm:inline font-mono">
-              Shift + Enter for new line
-            </span>
-          </div>
-        </form>
+              <Button
+                type="submit"
+                disabled={!messageText.trim() || sendMessageMutation.isPending}
+                className="size-11 rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold shrink-0 disabled:opacity-40 transition-all shadow-sm"
+              >
+                {sendMessageMutation.isPending ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : (
+                  <Send size={18} />
+                )}
+              </Button>
+            </div>
+
+            <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 px-1">
+              <span>
+                {isBn
+                  ? "১-অন-১ ডেডিকেটেড সাপোর্ট • সব মেসেজ সুরক্ষিতভাবে সেভ থাকে"
+                  : "Permanent 1-on-1 support • All messages secured & archived"}
+              </span>
+              <span className="hidden sm:inline font-mono">
+                Shift + Enter for new line
+              </span>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   );

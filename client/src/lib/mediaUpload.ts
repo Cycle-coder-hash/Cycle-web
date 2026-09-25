@@ -97,7 +97,11 @@ export async function uploadImage(fileOrBase64: File | Blob | string, customFile
  * Upload a video to Free CDN (Catbox, up to 200MB, permanent streaming MP4).
  * Returns permanent direct video URL (e.g. https://files.catbox.moe/xxxx.mp4).
  */
-export async function uploadVideo(fileOrBase64: File | Blob | string, customFilename?: string): Promise<string> {
+export async function uploadVideo(
+  fileOrBase64: File | Blob | string,
+  customFilename?: string,
+  source: "journal" | "notebook" = "journal"
+): Promise<string> {
   try {
     let base64String = "";
     let filename = customFilename || "video.mp4";
@@ -117,6 +121,7 @@ export async function uploadVideo(fileOrBase64: File | Blob | string, customFile
       body: JSON.stringify({
         base64: base64String,
         filename,
+        source,
       }),
     });
 
@@ -134,6 +139,23 @@ export async function uploadVideo(fileOrBase64: File | Blob | string, customFile
   } catch (err: any) {
     console.error("[MediaUpload] Video upload error:", err);
     throw err;
+  }
+}
+
+/**
+ * Delete a saved video record and restore quota immediately
+ */
+export async function deleteSavedVideo(videoUrl: string): Promise<boolean> {
+  try {
+    const res = await fetch("/api/upload/video/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ videoUrl }),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error("[MediaUpload] Video delete error:", err);
+    return false;
   }
 }
 

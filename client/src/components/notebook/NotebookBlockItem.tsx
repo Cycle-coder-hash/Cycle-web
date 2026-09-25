@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { ContentBlock, ContentBlockType } from "@/types/notebook";
 import { validateVideoDuration } from "@/lib/notebookStorage";
-import { uploadImage, uploadVideo, uploadFile, parseVideoUrl } from "@/lib/mediaUpload";
+import { uploadImage, uploadVideo, uploadFile, parseVideoUrl, deleteSavedVideo } from "@/lib/mediaUpload";
 import { toast } from "sonner";
 
 interface NotebookBlockItemProps {
@@ -128,7 +128,7 @@ export function NotebookBlockItem({
       setIsUploadingVideo(true);
       const toastId = toast.loading(isBn ? "ফ্রি ক্লাউডে ভিডিও আপলোড হচ্ছে..." : "Uploading video to free cloud CDN...");
       try {
-        const cdnUrl = await uploadVideo(file);
+        const cdnUrl = await uploadVideo(file, file.name, "notebook");
         onUpdate({
           ...block,
           content: cdnUrl,
@@ -143,7 +143,7 @@ export function NotebookBlockItem({
         });
         toast.success(isBn ? "ভিডিও সফলভাবে ক্লাউডে সেভ হয়েছে!" : "Video uploaded to cloud CDN!", { id: toastId });
       } catch (uploadErr: any) {
-        toast.error(isBn ? "ভিডিও আপলোড ব্যর্থ হয়েছে।" : "Failed to upload video.", { id: toastId });
+        toast.error(uploadErr.message || (isBn ? "ভিডিও আপলোড ব্যর্থ হয়েছে।" : "Failed to upload video."), { id: toastId });
       } finally {
         setIsUploadingVideo(false);
       }
@@ -273,7 +273,12 @@ export function NotebookBlockItem({
         </button>
         <button
           type="button"
-          onClick={() => onDelete(block.id)}
+          onClick={() => {
+            if (block.type === "video" && block.content && block.content.startsWith("http")) {
+              deleteSavedVideo(block.content);
+            }
+            onDelete(block.id);
+          }}
           title={isBn ? "ব্লক ডিলিট করুন" : "Delete Block"}
           className="flex h-6 w-6 items-center justify-center rounded text-red-400 hover:bg-red-500/10 hover:text-red-500"
         >

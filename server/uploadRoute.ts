@@ -69,12 +69,27 @@ export function registerUploadRoutes(app: Express) {
     }
   });
 
-  // 2. Upload video to Free CDN (Catbox, up to 200MB, permanent streaming MP4)
+  // 2. Upload video to Free CDN (Catbox, up to 200MB, permanent streaming MP4) with Server-Side Subscription Quota Enforcement
   app.post("/api/upload/video", async (req: Request, res: Response) => {
     try {
-      const { base64, filename = "video.mp4" } = req.body;
+      const { base64, filename = "video.mp4", source = "journal" } = req.body;
       if (!base64) {
         return res.status(400).json({ error: "No video payload provided" });
+      }
+
+      // 1. Authenticate user to enforce subscription quota
+      const { sdk } = await import("./_core/sdk");
+      const user = await sdk.authenticateRequest(req);
+      if (!user) {
+        return res.status(401).json({ error: "Please sign in to upload and save videos." });
+      }
+
+      // 2. Server-side quota check
+      const { canSaveVideo, recordSavedVideo } = await import("./subscription");
+      const videoSource = source === "notebook" ? "notebook" : "journal";
+      const check = await canSaveVideo(user.id, videoSource);
+      if (!check.allowed) {
+        return res.status(403).json({ error: check.reason || "Video saving is restricted on your plan." });
       }
 
       const cleanBase64 = base64.replace(/^data:video\/[a-zA-Z0-9+.-]+;base64,/, "");
@@ -91,6 +106,8 @@ export function registerUploadRoutes(app: Express) {
 
       const catboxUrl = (await catboxRes.text()).trim();
       if (catboxUrl.startsWith("http")) {
+        // Record saved video only upon success so failed uploads do NOT consume quota
+        await recordSavedVideo(user.id, catboxUrl, videoSource);
         return res.json({
           success: true,
           url: catboxUrl,
@@ -102,6 +119,28 @@ export function registerUploadRoutes(app: Express) {
     } catch (err: any) {
       console.error("[Upload Video Error]:", err);
       return res.status(500).json({ error: err.message || "Failed to upload video" });
+    }
+  });
+
+  // 2b. Delete saved video record -> Restores quota availability immediately
+  app.post("/api/upload/video/delete", async (req: Request, res: Response) => {
+    try {
+      const { videoUrl } = req.body;
+      if (!videoUrl) {
+        return res.status(400).json({ error: "No videoUrl provided" });
+      }
+
+      const { sdk } = await import("./_core/sdk");
+      const user = await sdk.authenticateRequest(req);
+      if (!user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const { removeSavedVideo } = await import("./subscription");
+      await removeSavedVideo(user.id, videoUrl);
+      return res.json({ success: true, restored: true });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message || "Failed to remove video" });
     }
   });
 

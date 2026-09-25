@@ -27,6 +27,8 @@ interface DisciplineWorkoutTabProps {
   onAddExercise: (ex: { name: string; difficulty: string }) => void;
   onUpdateExercise: (id: number, updates: any) => void;
   onDeleteExercise: (id: number) => void;
+  isLocked?: boolean;
+  onUpgradeClick?: () => void;
 }
 
 export function DisciplineWorkoutTab({
@@ -38,7 +40,40 @@ export function DisciplineWorkoutTab({
   onAddExercise,
   onUpdateExercise,
   onDeleteExercise,
+  isLocked = false,
+  onUpgradeClick,
 }: DisciplineWorkoutTabProps) {
+  if (isLocked) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-3xl border border-slate-200/80 bg-white p-8 sm:p-12 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900 animate-in fade-in duration-300">
+        <div className="flex size-16 items-center justify-center rounded-3xl bg-amber-500/10 text-amber-500 mb-4 border border-amber-500/20 shadow-lg shadow-amber-500/10">
+          <Dumbbell className="size-8" />
+        </div>
+        <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-black text-amber-600 dark:text-amber-400 border border-amber-500/20 mb-3">
+          <Sparkles className="size-3.5" />
+          <span>PRO & PREMIUM FEATURE</span>
+        </div>
+        <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          {isBn ? "ওয়ার্কআউট রুটিন ও অডিও টাইমার লকড" : "Trader Workout Protocol Locked"}
+        </h3>
+        <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md leading-relaxed">
+          {isBn
+            ? "শারীরিক সুস্থতা ট্রেডারের মানসিক শৃঙ্খলার ভিত্তি। প্রো অথবা প্রিমিয়াম প্ল্যানে আপগ্রেড করে কাস্টম এক্সারসাইজ ও ডুয়াল-টোন অডিও টাইমার আনলক করুন।"
+            : "Physical fitness drives peak cognitive focus in trading. Upgrade to Pro or Premium to unlock structured daily exercises, customizable routines, and institutional dual-tone audio rest timers."}
+        </p>
+
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <Button
+            onClick={onUpgradeClick}
+            className="rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-black text-xs px-6 py-2.5 shadow-lg shadow-amber-500/20 hover:from-amber-400 hover:to-yellow-400 gap-2 cursor-pointer"
+          >
+            <Sparkles className="size-4" />
+            <span>{isBn ? "প্রো বা প্রিমিয়ামে আপগ্রেড করুন" : "Upgrade to Pro / Premium"}</span>
+          </Button>
+        </div>
+      </div>
+    );
+  }
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingExercise, setEditingExercise] = useState<any | null>(null);

@@ -15,6 +15,9 @@ export const supabaseServer = createClient(supabaseUrl, supabaseAnonKey, {
   },
   global: {
     fetch: (url, options = {}) => {
+      if (process.env.NODE_ENV === "test") {
+        return Promise.resolve(new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } }));
+      }
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), 4000);
       const signal = options.signal ? (AbortSignal as any).any ? (AbortSignal as any).any([options.signal, controller.signal]) : controller.signal : controller.signal;
