@@ -40,6 +40,14 @@ import {
 } from "./db";
 import { eq } from "drizzle-orm";
 import { sendAccessEmail } from "./email";
+import {
+  listUsersForManagement,
+  getUserDetailsForManagement,
+  setUserAccess,
+  clearUserAccessOverride,
+  getUserAuditLogs,
+} from "./userManagement";
+import { setAccountStatus } from "./subscription";
 
 export const adminRouter = Router();
 
@@ -511,3 +519,81 @@ adminRouter.post("/leaderboard/recalculate", async (_req, res) => {
     return res.status(500).json({ success: false, error: err.message });
   }
 });
+
+// ============================================================================
+// USER MANAGEMENT ENDPOINTS
+// ============================================================================
+
+// GET /api/admin/user-management/list
+adminRouter.get("/user-management/list", async (req, res) => {
+  try {
+    const users = await listUsersForManagement(req.query as any);
+    return res.json({ success: true, users });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/admin/user-management/details/:userId
+adminRouter.get("/user-management/details/:userId", async (req, res) => {
+  try {
+    const details = await getUserDetailsForManagement(Number(req.params.userId));
+    return res.json({ success: true, ...details });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/admin/user-management/update-access
+adminRouter.post("/user-management/update-access", async (req, res) => {
+  try {
+    const { userId, accessType, status, startDate, expiryDate, isLifetime, isOverrideBlocked, notes } = req.body;
+    const result = await setUserAccess(1, "Admin", {
+      userId: Number(userId),
+      accessType,
+      status,
+      startDate: startDate || null,
+      expiryDate: expiryDate || null,
+      isLifetime: !!isLifetime,
+      isOverrideBlocked: isOverrideBlocked !== undefined ? isOverrideBlocked : status === "off",
+      notes,
+    });
+    return res.json(result);
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/admin/user-management/clear-override
+adminRouter.post("/user-management/clear-override", async (req, res) => {
+  try {
+    const { userId, accessType } = req.body;
+    const result = await clearUserAccessOverride(1, "Admin", Number(userId), accessType);
+    return res.json(result);
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/admin/user-management/account-status
+adminRouter.post("/user-management/account-status", async (req, res) => {
+  try {
+    const { userId, status } = req.body;
+    await setAccountStatus(Number(userId), status);
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/admin/user-management/audit-logs
+adminRouter.get("/user-management/audit-logs", async (req, res) => {
+  try {
+    const userId = req.query.userId ? Number(req.query.userId) : undefined;
+    const logs = await getUserAuditLogs(userId);
+    return res.json({ success: true, logs });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
