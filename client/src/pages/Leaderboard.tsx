@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import {
   Trophy,
@@ -26,6 +26,304 @@ import { LanguageSelector } from "@/components/LanguageSelector";
 import { trpc } from "@/lib/trpc";
 import { LeaderboardTrader } from "../../../server/db";
 
+/* ========================================================================= */
+/* TASK 1(a): PERSISTENT TWINKLING AMBIENT STARFIELD (~30-35 STARS, 1-3PX)   */
+/* ========================================================================= */
+const AMBIENT_STARFIELD = [
+  { top: "8%", left: "11%", size: 2, dur: "2.4s", delay: "0.2s" },
+  { top: "14%", left: "26%", size: 1.5, dur: "3.1s", delay: "1.1s" },
+  { top: "21%", left: "43%", size: 2.5, dur: "2.8s", delay: "0.5s" },
+  { top: "11%", left: "61%", size: 1, dur: "2.2s", delay: "1.8s" },
+  { top: "17%", left: "77%", size: 2, dur: "3.4s", delay: "0.9s" },
+  { top: "24%", left: "91%", size: 3, dur: "2.6s", delay: "0.3s" },
+  { top: "33%", left: "7%", size: 1.5, dur: "3.0s", delay: "1.4s" },
+  { top: "41%", left: "21%", size: 2, dur: "2.5s", delay: "0.7s" },
+  { top: "37%", left: "36%", size: 1, dur: "3.3s", delay: "2.0s" },
+  { top: "47%", left: "53%", size: 2.5, dur: "2.9s", delay: "1.2s" },
+  { top: "39%", left: "68%", size: 1.5, dur: "2.3s", delay: "0.4s" },
+  { top: "31%", left: "83%", size: 2, dur: "3.2s", delay: "1.6s" },
+  { top: "51%", left: "95%", size: 1, dur: "2.7s", delay: "0.8s" },
+  { top: "59%", left: "4%", size: 2, dur: "3.5s", delay: "2.2s" },
+  { top: "67%", left: "17%", size: 2.5, dur: "2.4s", delay: "0.6s" },
+  { top: "57%", left: "31%", size: 1, dur: "3.0s", delay: "1.9s" },
+  { top: "64%", left: "47%", size: 1.5, dur: "2.8s", delay: "1.0s" },
+  { top: "71%", left: "63%", size: 2, dur: "2.5s", delay: "0.1s" },
+  { top: "61%", left: "78%", size: 3, dur: "3.3s", delay: "1.5s" },
+  { top: "69%", left: "87%", size: 1.5, dur: "2.6s", delay: "2.4s" },
+  { top: "79%", left: "13%", size: 1, dur: "3.1s", delay: "0.9s" },
+  { top: "85%", left: "28%", size: 2, dur: "2.7s", delay: "1.7s" },
+  { top: "77%", left: "42%", size: 2.5, dur: "3.4s", delay: "0.3s" },
+  { top: "83%", left: "58%", size: 1.5, dur: "2.2s", delay: "1.3s" },
+  { top: "89%", left: "72%", size: 2, dur: "2.9s", delay: "2.1s" },
+  { top: "81%", left: "85%", size: 1, dur: "3.0s", delay: "0.5s" },
+  { top: "91%", left: "94%", size: 2, dur: "2.4s", delay: "1.0s" },
+  { top: "9%", left: "39%", size: 1.5, dur: "3.2s", delay: "1.2s" },
+  { top: "27%", left: "15%", size: 2, dur: "2.6s", delay: "2.0s" },
+  { top: "49%", left: "81%", size: 1, dur: "3.5s", delay: "0.8s" },
+  { top: "74%", left: "24%", size: 2, dur: "2.3s", delay: "1.4s" },
+  { top: "87%", left: "49%", size: 1.5, dur: "2.8s", delay: "0.2s" },
+  { top: "54%", left: "10%", size: 2, dur: "3.1s", delay: "0.4s" },
+  { top: "19%", left: "51%", size: 1.5, dur: "2.5s", delay: "1.6s" },
+];
+
+function TwinklingStarfield() {
+  return (
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 z-0 overflow-hidden select-none"
+    >
+      {AMBIENT_STARFIELD.map((star, idx) => (
+        <span
+          key={idx}
+          className="hero-twinkling-star absolute rounded-full bg-white dark:bg-white shadow-[0_0_4px_rgba(255,255,255,0.85)]"
+          style={
+            {
+              top: star.top,
+              left: star.left,
+              width: `${star.size}px`,
+              height: `${star.size}px`,
+              "--twinkle-dur": star.dur,
+              "--twinkle-delay": star.delay,
+            } as React.CSSProperties
+          }
+        />
+      ))}
+    </div>
+  );
+}
+
+/* ========================================================================= */
+/* TASK 1(b): HERO SECTION STARRY / SPARKLE CURSOR-TRAIL EFFECT (2-6PX)       */
+/* ========================================================================= */
+interface SparkParticle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  size: number;
+  rotation: number;
+  rotSpeed: number;
+  life: number;
+  maxLife: number;
+  color: string;
+  shape: "star" | "diamond";
+}
+
+const SPARKLE_COLORS = [
+  "#ffffff", // pure white
+  "#f0f9ff", // luminous ice white
+  "#38bdf8", // bright sky blue
+  "#22d3ee", // cyan
+  "#67e8f9", // glowing cyan
+  "#a5f3fc", // radiant cyan
+  "#34d399", // emerald shimmer
+];
+
+function HeroSparkleCanvas({
+  containerRef,
+}: {
+  containerRef: React.RefObject<HTMLElement | null>;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const particlesRef = useRef<SparkParticle[]>([]);
+  const isRunningRef = useRef(false);
+  const lastSpawnRef = useRef(0);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const canvas = canvasRef.current;
+    if (!container || !canvas) return;
+
+    // Respect prefers-reduced-motion
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (mediaQuery.matches) return;
+
+    let rafId: number | null = null;
+    let lastTime = performance.now();
+
+    const resizeCanvas = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = container.offsetWidth;
+      const h = container.offsetHeight;
+      if (canvas.width !== w * dpr || canvas.height !== h * dpr) {
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width = `${w}px`;
+        canvas.style.height = `${h}px`;
+      }
+    };
+
+    resizeCanvas();
+    const ro = new ResizeObserver(() => resizeCanvas());
+    ro.observe(container);
+
+    const spawnSpark = (x: number, y: number) => {
+      if (particlesRef.current.length > 45) return;
+      const maxLife = 700 + Math.random() * 300; // 700-1000ms life
+      const color = SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)];
+      const shape = Math.random() > 0.35 ? "star" : "diamond";
+      particlesRef.current.push({
+        x,
+        y,
+        vx: (Math.random() - 0.5) * 0.7,
+        vy: (Math.random() - 0.6) * 0.7, // Slight upward drift
+        size: shape === "star" ? 3 + Math.random() * 3 : 2 + Math.random() * 3, // 2-6px sparks
+        rotation: Math.random() * Math.PI * 2,
+        rotSpeed: (Math.random() - 0.5) * 0.05,
+        life: maxLife,
+        maxLife,
+        color,
+        shape,
+      });
+
+      if (!isRunningRef.current) {
+        isRunningRef.current = true;
+        lastTime = performance.now();
+        rafId = requestAnimationFrame(render);
+      }
+    };
+
+    const render = (now: number) => {
+      const dt = Math.min(now - lastTime, 50);
+      lastTime = now;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.save();
+      ctx.scale(dpr, dpr);
+
+      const particles = particlesRef.current;
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.life -= dt;
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rotation += p.rotSpeed;
+
+        const progress = p.life / p.maxLife; // 1 -> 0
+        const lifePassed = 1 - progress; // 0 -> 1
+
+        let alpha = 1;
+        let scale = 1;
+        if (lifePassed < 0.15) {
+          const t = lifePassed / 0.15;
+          alpha = t;
+          scale = 0.5 + t * 0.5;
+        } else {
+          const t = (lifePassed - 0.15) / 0.85;
+          alpha = 1 - t;
+          scale = 1 - t * 0.45;
+        }
+
+        const size = p.size * scale;
+        if (size <= 0.2) continue;
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+
+        // Outer neon glow
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = size * 2.2;
+        ctx.fillStyle = p.color;
+
+        if (p.shape === "star") {
+          const spikes = 4;
+          const outer = size;
+          const inner = size * 0.22;
+          ctx.beginPath();
+          for (let s = 0; s < spikes * 2; s++) {
+            const radius = s % 2 === 0 ? outer : inner;
+            const angle = (s * Math.PI) / spikes;
+            const sx = Math.cos(angle) * radius;
+            const sy = Math.sin(angle) * radius;
+            if (s === 0) ctx.moveTo(sx, sy);
+            else ctx.lineTo(sx, sy);
+          }
+          ctx.closePath();
+          ctx.fill();
+
+          // Intense core dot
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = "#ffffff";
+          ctx.beginPath();
+          ctx.arc(0, 0, size * 0.22, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // Diamond spark
+          ctx.beginPath();
+          ctx.moveTo(0, -size);
+          ctx.lineTo(size * 0.45, 0);
+          ctx.lineTo(0, size);
+          ctx.lineTo(-size * 0.45, 0);
+          ctx.closePath();
+          ctx.fill();
+
+          // Intense core
+          ctx.shadowBlur = 0;
+          ctx.fillStyle = "#ffffff";
+          ctx.beginPath();
+          ctx.arc(0, 0, size * 0.25, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.restore();
+      }
+
+      ctx.restore();
+
+      if (particles.length > 0) {
+        rafId = requestAnimationFrame(render);
+      } else {
+        isRunningRef.current = false;
+        rafId = null;
+      }
+    };
+
+    const handlePointerMove = (e: PointerEvent) => {
+      const now = performance.now();
+      // Throttle spawn rate (~one spark per 25-30ms of movement)
+      if (now - lastSpawnRef.current < 28) return;
+      lastSpawnRef.current = now;
+
+      const rect = container.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      spawnSpark(x, y);
+      if (Math.random() > 0.65) {
+        spawnSpark(x + (Math.random() - 0.5) * 10, y + (Math.random() - 0.5) * 10);
+      }
+    };
+
+    container.addEventListener("pointermove", handlePointerMove);
+
+    return () => {
+      ro.disconnect();
+      container.removeEventListener("pointermove", handlePointerMove);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [containerRef]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 z-20 h-full w-full"
+    />
+  );
+}
+
 export default function Leaderboard() {
   const { theme, toggleTheme } = useTheme();
   const [, setLocation] = useLocation();
@@ -41,6 +339,188 @@ export default function Leaderboard() {
       setLocation("/login");
     }
   }, [user, isAuthLoading, setLocation]);
+
+  // ---------------------------------------------------------------------------
+  // TASK 1: Ref for hero section cursor sparkles
+  // ---------------------------------------------------------------------------
+  const heroSectionRef = useRef<HTMLElement>(null);
+
+  // ---------------------------------------------------------------------------
+  // TASK 3: Stat boxes scroll-triggered entrance/exit & 7s auto-repeat loop
+  // ---------------------------------------------------------------------------
+  const statRowRef = useRef<HTMLDivElement>(null);
+  const [statAnimPhase, setStatAnimPhase] = useState<"hidden-right" | "entering" | "entered" | "exiting">("hidden-right");
+  const [isReducedMotion, setIsReducedMotion] = useState(false);
+
+  const loopTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const phaseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const phaseTimeout2Ref = useRef<NodeJS.Timeout | null>(null);
+  const isVisibleRef = useRef(false);
+
+  useEffect(() => {
+    // Check reduced motion setting
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const reduced = mediaQuery.matches;
+    setIsReducedMotion(reduced);
+
+    if (reduced) {
+      setStatAnimPhase("entered");
+      return;
+    }
+
+    const handleMediaChange = (e: MediaQueryListEvent) => {
+      setIsReducedMotion(e.matches);
+      if (e.matches) {
+        setStatAnimPhase("entered");
+        stopLoop();
+      }
+    };
+    mediaQuery.addEventListener("change", handleMediaChange);
+
+    const clearTimeouts = () => {
+      if (loopTimerRef.current) {
+        clearInterval(loopTimerRef.current);
+        loopTimerRef.current = null;
+      }
+      if (phaseTimeoutRef.current) {
+        clearTimeout(phaseTimeoutRef.current);
+        phaseTimeoutRef.current = null;
+      }
+      if (phaseTimeout2Ref.current) {
+        clearTimeout(phaseTimeout2Ref.current);
+        phaseTimeout2Ref.current = null;
+      }
+    };
+
+    const stopLoop = () => {
+      clearTimeouts();
+    };
+
+    const playAutoReplayCycle = () => {
+      if (!isVisibleRef.current) return;
+      // Step 1: Slide out to left staggered in reverse order (~70ms apart)
+      setStatAnimPhase("exiting");
+
+      // Last box starts at 280ms, duration 380ms -> 660ms
+      phaseTimeoutRef.current = setTimeout(() => {
+        if (!isVisibleRef.current) return;
+        // Step 2: Instant reset to hidden-right
+        setStatAnimPhase("hidden-right");
+
+        phaseTimeout2Ref.current = setTimeout(() => {
+          if (!isVisibleRef.current) return;
+          // Step 3: Slide back in from right staggered ~90ms apart
+          setStatAnimPhase("entering");
+
+          phaseTimeoutRef.current = setTimeout(() => {
+            if (!isVisibleRef.current) return;
+            setStatAnimPhase("entered");
+          }, 900);
+        }, 50);
+      }, 700);
+    };
+
+    const startLoop = () => {
+      clearTimeouts();
+      loopTimerRef.current = setInterval(() => {
+        playAutoReplayCycle();
+      }, 7000);
+    };
+
+    const triggerEntrance = () => {
+      clearTimeouts();
+      setStatAnimPhase("hidden-right");
+      phaseTimeoutRef.current = setTimeout(() => {
+        setStatAnimPhase("entering");
+        phaseTimeout2Ref.current = setTimeout(() => {
+          setStatAnimPhase("entered");
+          startLoop();
+        }, 900);
+      }, 30);
+    };
+
+    const triggerExit = () => {
+      stopLoop();
+      setStatAnimPhase("exiting");
+      phaseTimeoutRef.current = setTimeout(() => {
+        setStatAnimPhase("hidden-right");
+      }, 700);
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry) return;
+
+        if (entry.isIntersecting) {
+          isVisibleRef.current = true;
+          triggerEntrance();
+        } else {
+          if (isVisibleRef.current) {
+            isVisibleRef.current = false;
+            triggerExit();
+          }
+        }
+      },
+      { threshold: 0.35 }
+    );
+
+    const el = statRowRef.current;
+    if (el) {
+      observer.observe(el);
+    }
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleMediaChange);
+      if (el) observer.unobserve(el);
+      clearTimeouts();
+    };
+  }, []);
+
+  const getStatBoxStyle = useCallback(
+    (index: number): React.CSSProperties => {
+      if (isReducedMotion) {
+        return {
+          transform: "none",
+          opacity: 1,
+          transition: "none",
+        };
+      }
+
+      switch (statAnimPhase) {
+        case "hidden-right":
+          return {
+            transform: "translateX(42px)",
+            opacity: 0,
+            transition: "none",
+            willChange: "transform, opacity",
+          };
+        case "entering":
+          return {
+            transform: "translateX(0px)",
+            opacity: 1,
+            transition: "transform 520ms cubic-bezier(0.16, 1, 0.3, 1), opacity 520ms ease-out",
+            transitionDelay: `${index * 90}ms`,
+            willChange: "transform, opacity",
+          };
+        case "entered":
+          return {
+            transform: "translateX(0px)",
+            opacity: 1,
+            transition: "none",
+          };
+        case "exiting":
+          return {
+            transform: "translateX(-42px)",
+            opacity: 0,
+            transition: "transform 380ms cubic-bezier(0.4, 0, 0.2, 1), opacity 380ms ease-in",
+            transitionDelay: `${(4 - index) * 70}ms`,
+            willChange: "transform, opacity",
+          };
+      }
+    },
+    [statAnimPhase, isReducedMotion]
+  );
 
   // Search filter
   const [searchQuery, setSearchQuery] = useState("");
@@ -178,28 +658,42 @@ export default function Leaderboard() {
         {/* ======================================================================= */}
         {/* HERO SECTION & SCORING PHILOSOPHY */}
         {/* ======================================================================= */}
-        <section className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white/90 to-slate-50/90 p-6 sm:p-10 dark:border-slate-800/80 dark:from-[#081326]/90 dark:to-[#050b17]/95 backdrop-blur-md shadow-xl">
+        <section
+          ref={heroSectionRef}
+          className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white/90 to-slate-50/90 p-6 sm:p-10 dark:border-slate-800/80 dark:from-[#081326]/90 dark:to-[#050b17]/95 backdrop-blur-md shadow-xl"
+        >
           <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-blue-600/10 blur-3xl pointer-events-none" />
 
+          {/* TASK 1(a): Persistent twinkling ambient starfield (always running) */}
+          <TwinklingStarfield />
+
+          {/* TASK 1(b): Interactive cursor-follow spark trail canvas (on hover/mouse-move) */}
+          <HeroSparkleCanvas containerRef={heroSectionRef} />
+
           <div className="relative z-10 max-w-3xl space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
-              <Trophy size={14} className="text-amber-500" />
-              <span>{isBn ? "রিয়েল ট্রেডার পারফরম্যান্স সিস্টেম" : "REAL TRADER PERFORMANCE SYSTEM"}</span>
+            {/* TASK 2: BADGE WITH LOOPING LIGHT-SWEEP AND SOFT PULSING GLOW RING */}
+            <div className="relative inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 leaderboard-badge-glow overflow-hidden select-none">
+              <div
+                className="pointer-events-none absolute -inset-y-2 -left-2 w-1/2 bg-gradient-to-r from-transparent via-amber-200/40 dark:via-amber-100/40 to-transparent leaderboard-badge-shine"
+                aria-hidden="true"
+              />
+              <Trophy size={14} className="text-amber-500 shrink-0 relative z-10" />
+              <span className="relative z-10">{isBn ? "রিয়েল ট্রেডার পারফরম্যান্স সিস্টেম" : "REAL TRADER PERFORMANCE SYSTEM"}</span>
             </div>
 
             <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
               {isBn ? (
                 <>
                   সুশৃঙ্খল নিয়ম ও রিয়েল এক্সিকিউশন। <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-emerald-400">
+                  <span className="heading-gradient-shimmer">
                     আন্দাজে জুয়া নয়, প্রসেস-ভিত্তিক লিডারবোর্ড।
                   </span>
                 </>
               ) : (
                 <>
                   Rule Compliance & Authentic Execution. <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-emerald-400">
+                  <span className="heading-gradient-shimmer">
                     Ranked by Process, Not Blind Gambling.
                   </span>
                 </>
@@ -212,9 +706,15 @@ export default function Leaderboard() {
                 : "The Cycle of Chart Global Leaderboard is not dictated by raw profit alone. Real rankings are computed from verified trader adherence, daily discipline habits, consistency streaks, and risk management quality."}
             </p>
 
-            {/* 5-Pillar Score Formula Breakdown Pills */}
-            <div className="pt-2 grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-center">
-              <div className="rounded-xl border border-sky-500/20 bg-sky-500/5 p-2.5 dark:border-sky-500/30 dark:bg-sky-500/10">
+            {/* TASK 3: 5-Pillar Score Formula Breakdown Pills with Scroll Trigger & Auto-Repeat Loop */}
+            <div
+              ref={statRowRef}
+              className="pt-2 grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-center overflow-x-clip"
+            >
+              <div
+                style={getStatBoxStyle(0)}
+                className="leaderboard-stat-box rounded-xl border border-sky-500/20 bg-sky-500/5 p-2.5 dark:border-sky-500/30 dark:bg-sky-500/10"
+              >
                 <div className="text-[10px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider">
                   {isBn ? "রিস্ক মেনে চলা" : "Rule Adherence"}
                 </div>
@@ -222,7 +722,10 @@ export default function Leaderboard() {
                 <div className="text-[10px] text-slate-500 dark:text-slate-400">Base Weight</div>
               </div>
 
-              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-2.5 dark:border-emerald-500/30 dark:bg-emerald-500/10">
+              <div
+                style={getStatBoxStyle(1)}
+                className="leaderboard-stat-box rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-2.5 dark:border-emerald-500/30 dark:bg-emerald-500/10"
+              >
                 <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
                   {isBn ? "ডেইলি ডিসিপ্লিন" : "Discipline Routine"}
                 </div>
@@ -230,7 +733,10 @@ export default function Leaderboard() {
                 <div className="text-[10px] text-slate-500 dark:text-slate-400">Execution Habit</div>
               </div>
 
-              <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-2.5 dark:border-cyan-500/30 dark:bg-cyan-500/10">
+              <div
+                style={getStatBoxStyle(2)}
+                className="leaderboard-stat-box rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-2.5 dark:border-cyan-500/30 dark:bg-cyan-500/10"
+              >
                 <div className="text-[10px] font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider">
                   {isBn ? "উইন রেট" : "Win Rate"}
                 </div>
@@ -238,7 +744,10 @@ export default function Leaderboard() {
                 <div className="text-[10px] text-slate-500 dark:text-slate-400">Trade Quality</div>
               </div>
 
-              <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-2.5 dark:border-purple-500/30 dark:bg-purple-500/10">
+              <div
+                style={getStatBoxStyle(3)}
+                className="leaderboard-stat-box rounded-xl border border-purple-500/20 bg-purple-500/5 p-2.5 dark:border-purple-500/30 dark:bg-purple-500/10"
+              >
                 <div className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
                   {isBn ? "ধারাবাহিকতা" : "Consistency"}
                 </div>
@@ -246,7 +755,10 @@ export default function Leaderboard() {
                 <div className="text-[10px] text-slate-500 dark:text-slate-400">Streaks & Days</div>
               </div>
 
-              <div className="col-span-2 sm:col-span-1 rounded-xl border border-amber-500/20 bg-amber-500/5 p-2.5 dark:border-amber-500/30 dark:bg-amber-500/10">
+              <div
+                style={getStatBoxStyle(4)}
+                className="leaderboard-stat-box col-span-2 sm:col-span-1 rounded-xl border border-amber-500/20 bg-amber-500/5 p-2.5 dark:border-amber-500/30 dark:bg-amber-500/10"
+              >
                 <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
                   {isBn ? "প্রফিট ফ্যাক্টর" : "Profit Factor"}
                 </div>
