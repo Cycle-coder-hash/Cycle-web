@@ -38,6 +38,8 @@ import {
   getSupportMessages,
   sendSupportMessage,
   markSupportConversationRead,
+  deleteSupportMessage,
+  deleteSupportConversation,
   listAdminSupportConversations,
   getCustomerSupportContext,
   listAllUsers,
@@ -110,6 +112,10 @@ import {
   updatePaymentGateways,
   syncUserTrades,
   getUserTrades,
+  getUserJournalBooks,
+  saveUserJournalBooks,
+  getUserNotebookData,
+  saveUserNotebookData,
   getLeaderboardRankings,
   getPublicTraderStats,
   getUserGlobalRank,
@@ -964,6 +970,22 @@ export const appRouter = router({
     userTrades: protectedProcedure.query(async ({ ctx }) => {
       return await getUserTrades(ctx.user.id);
     }),
+    userJournalBooks: protectedProcedure.query(async ({ ctx }) => {
+      return await getUserJournalBooks(ctx.user.id);
+    }),
+    syncJournalBooks: protectedProcedure
+      .input(z.object({ books: z.array(z.any()) }))
+      .mutation(async ({ ctx, input }) => {
+        return await saveUserJournalBooks(ctx.user.id, input.books);
+      }),
+    userNotebook: protectedProcedure.query(async ({ ctx }) => {
+      return await getUserNotebookData(ctx.user.id);
+    }),
+    syncUserNotebook: protectedProcedure
+      .input(z.object({ data: z.any() }))
+      .mutation(async ({ ctx, input }) => {
+        return await saveUserNotebookData(ctx.user.id, input.data);
+      }),
     createJournal: protectedProcedure
       .input(
         z.object({
@@ -1002,7 +1024,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const conversation = await getOrCreateSupportConversation(ctx.user.id);
+        const conversation = await getOrCreateSupportConversation(ctx.user.id, ctx.user);
         const msg = await sendSupportMessage({
           conversationId: conversation.id,
           senderId: ctx.user.id,
@@ -1021,7 +1043,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const conversation = await getOrCreateSupportConversation(ctx.user.id);
+        const conversation = await getOrCreateSupportConversation(ctx.user.id, ctx.user);
         const msg = await sendSupportMessage({
           conversationId: conversation.id,
           senderId: ctx.user.id,
@@ -1268,6 +1290,17 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         return await markSupportConversationRead(input.conversationId, "customer");
       }),
+
+    deleteMessage: protectedProcedure
+      .input(
+        z.object({
+          conversationId: z.number(),
+          messageId: z.number(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        return await deleteSupportMessage(input.conversationId, input.messageId);
+      }),
   }),
 
   admin: router({
@@ -1340,6 +1373,23 @@ export const appRouter = router({
       .input(z.object({ conversationId: z.number() }))
       .mutation(async ({ input }) => {
         return await markSupportConversationRead(input.conversationId, "admin");
+      }),
+
+    deleteSupportMessage: supportProcedure
+      .input(
+        z.object({
+          conversationId: z.number(),
+          messageId: z.number(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        return await deleteSupportMessage(input.conversationId, input.messageId);
+      }),
+
+    deleteSupportConversation: supportProcedure
+      .input(z.object({ conversationId: z.number() }))
+      .mutation(async ({ input }) => {
+        return await deleteSupportConversation(input.conversationId);
       }),
 
     customerContext: supportProcedure

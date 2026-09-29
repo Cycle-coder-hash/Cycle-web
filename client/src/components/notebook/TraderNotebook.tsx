@@ -9,6 +9,7 @@ import {
   debouncedSaveNotebookData,
   saveUserNotebookData,
 } from "@/lib/notebookStorage";
+import { trpc } from "@/lib/trpc";
 import { NotebookSidebar } from "./NotebookSidebar";
 import { NotebookPageEditor } from "./NotebookPageEditor";
 import { NotebookSearchModal } from "./NotebookSearchModal";
@@ -64,6 +65,12 @@ export function TraderNotebook({ user, isBn = false, subUsage: propSubUsage }: T
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Cloud Synchronization
+  const remoteNotebookQuery = trpc.customer.userNotebook.useQuery(undefined, {
+    enabled: !!user,
+  });
+  const syncNotebookMutation = trpc.customer.syncUserNotebook.useMutation();
+
   // Search Modal
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
@@ -108,7 +115,54 @@ export function TraderNotebook({ user, isBn = false, subUsage: propSubUsage }: T
     };
   }, [userId]);
 
-  // Save changes helper with debounce
+  // Synchronize with cloud database
+  useEffect(() => {
+    if (!user || !remoteNotebookQuery.data) return;
+    const remoteData = remoteNotebookQuery.data as NotebookUserData;
+    if (!remoteData || !Array.isArray(remoteData.templates)) return;
+
+    setUserData((prevLocal) => {
+      const local = prevLocal;
+      if (!local || local.templates.length === 0) {
+        if (remoteData.templates.length > 0) {
+          saveUserNotebookData(userId, remoteData);
+          const currentTmplId = remoteData.activeTemplateId || remoteData.templates[0]?.id || null;
+          setActiveTemplateId(currentTmplId);
+          const pagesInTmpl = (remoteData.pages || []).filter((p) => p.notebookId === currentTmplId);
+          setActivePageId(pagesInTmpl[0]?.id || null);
+          return remoteData;
+        }
+        return local;
+      }
+
+      // If local has templates but remote is empty: push local to remote
+      if (remoteData.templates.length === 0 && local.templates.length > 0) {
+        syncNotebookMutation.mutate({ data: local });
+        return local;
+      }
+
+      // Merge templates and pages
+      const localTmplIds = new Set(local.templates.map((t) => t.id));
+      const missingTmpls = remoteData.templates.filter((t) => !localTmplIds.has(t.id));
+      const localPageIds = new Set(local.pages.map((p) => p.id));
+      const missingPages = (remoteData.pages || []).filter((p) => !localPageIds.has(p.id));
+
+      if (missingTmpls.length > 0 || missingPages.length > 0) {
+        const merged: NotebookUserData = {
+          templates: [...local.templates, ...missingTmpls],
+          pages: [...local.pages, ...missingPages],
+          activeTemplateId: local.activeTemplateId || remoteData.activeTemplateId,
+          activePageId: local.activePageId || remoteData.activePageId,
+        };
+        saveUserNotebookData(userId, merged);
+        return merged;
+      }
+
+      return local;
+    });
+  }, [remoteNotebookQuery.data, user, userId]);
+
+  // Save changes helper with debounce & cloud sync
   const persistChanges = useCallback(
     (nextData: NotebookUserData) => {
       setUserData(nextData);
@@ -116,8 +170,11 @@ export function TraderNotebook({ user, isBn = false, subUsage: propSubUsage }: T
       debouncedSaveNotebookData(userId, nextData, 400).then(() => {
         setIsSaving(false);
       });
+      if (user) {
+        syncNotebookMutation.mutate({ data: nextData });
+      }
     },
-    [userId]
+    [userId, user]
   );
 
   // Switch Template

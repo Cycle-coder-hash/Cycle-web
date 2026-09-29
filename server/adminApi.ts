@@ -12,6 +12,8 @@ import {
   getSupportMessages,
   sendSupportMessage,
   markSupportConversationRead,
+  deleteSupportMessage,
+  deleteSupportConversation,
   listAdminSupportConversations,
   getCustomerSupportContext,
   listAuditLogs,
@@ -291,6 +293,63 @@ adminRouter.post("/support/mark-read", async (req, res) => {
     if (!conversationId) return res.status(400).json({ success: false, error: "conversationId is required" });
 
     const result = await markSupportConversationRead(Number(conversationId), "admin");
+    return res.json(result);
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/admin/support/delete-message
+adminRouter.post("/support/delete-message", async (req, res) => {
+  try {
+    const { conversationId, messageId } = req.body;
+    if (!conversationId || !messageId) {
+      return res.status(400).json({ success: false, error: "conversationId and messageId are required" });
+    }
+    const result = await deleteSupportMessage(Number(conversationId), Number(messageId));
+    return res.json(result);
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /api/admin/support/conversations/:convId/messages/:msgId
+adminRouter.delete("/support/conversations/:convId/messages/:msgId", async (req, res) => {
+  try {
+    const convId = parseInt(req.params.convId, 10);
+    const msgId = parseInt(req.params.msgId, 10);
+    if (isNaN(convId) || isNaN(msgId)) {
+      return res.status(400).json({ success: false, error: "Invalid conversationId or messageId" });
+    }
+    const result = await deleteSupportMessage(convId, msgId);
+    return res.json(result);
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/admin/support/delete-conversation
+adminRouter.post("/support/delete-conversation", async (req, res) => {
+  try {
+    const { conversationId } = req.body;
+    if (!conversationId) {
+      return res.status(400).json({ success: false, error: "conversationId is required" });
+    }
+    const result = await deleteSupportConversation(Number(conversationId));
+    return res.json(result);
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /api/admin/support/conversations/:id
+adminRouter.delete("/support/conversations/:id", async (req, res) => {
+  try {
+    const conversationId = parseInt(req.params.id, 10);
+    if (isNaN(conversationId)) {
+      return res.status(400).json({ success: false, error: "Invalid conversationId" });
+    }
+    const result = await deleteSupportConversation(conversationId);
     return res.json(result);
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });

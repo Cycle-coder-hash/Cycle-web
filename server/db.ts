@@ -434,6 +434,25 @@ export async function setSetting(key: string, value: string): Promise<boolean> {
   return true;
 }
 
+export async function deleteSetting(key: string): Promise<boolean> {
+  inMemorySettings.delete(key);
+  const db = await getDb();
+  if (db) {
+    try {
+      await db.delete(settings).where(eq(settings.key, key));
+    } catch (err) {
+      console.warn("[deleteSetting error]:", err);
+    }
+  }
+  try {
+    const { supabaseServer } = await import("./supabase");
+    await supabaseServer.from("settings").delete().eq("key", key);
+  } catch (supaErr) {
+    console.warn("[deleteSetting Supabase error]:", supaErr);
+  }
+  return true;
+}
+
 // ------------------------------------------------------------------------------
 // PAYMENT GATEWAYS & CHECKOUT CONFIGURATION
 // ------------------------------------------------------------------------------
@@ -3063,6 +3082,20 @@ export async function sendSupportMessage(input: {
   const now = new Date().toISOString();
   const existingMessages = await getSupportMessages(numConvId);
 
+  // When admin replies, automatically mark all prior customer messages as read!
+  if (input.senderRole === "admin") {
+    for (const m of existingMessages) {
+      if (m.senderRole !== "admin" && !m.readAt) {
+        m.readAt = now;
+      }
+    }
+    for (const m of inMemoryMessages) {
+      if (Number(m.conversationId) === numConvId && m.senderRole !== "admin" && !m.readAt) {
+        m.readAt = now;
+      }
+    }
+  }
+
   let maxId = 0;
   for (const m of existingMessages) {
     if (Number(m.id) > maxId) maxId = Number(m.id);
@@ -3082,7 +3115,7 @@ export async function sendSupportMessage(input: {
     createdAt: now,
   };
 
-  // 1. Save message to settings array
+  // 1. Save messages to settings array
   existingMessages.push(messageRecord);
   inMemoryMessages.push(messageRecord);
   await setSetting(`support_messages_${numConvId}`, JSON.stringify(existingMessages));
@@ -3103,6 +3136,18 @@ export async function sendSupportMessage(input: {
   const db = await getDb();
   if (db) {
     try {
+      if (input.senderRole === "admin") {
+        await db
+          .update(supportMessages)
+          .set({ readAt: new Date(now) })
+          .where(
+            and(
+              eq(supportMessages.conversationId, numConvId),
+              ne(supportMessages.senderRole, "admin"),
+              isNull(supportMessages.readAt)
+            )
+          );
+      }
       await db.insert(supportMessages).values({
         id: newMsgId,
         conversationId: numConvId,
@@ -3123,6 +3168,14 @@ export async function sendSupportMessage(input: {
 
   try {
     const { supabaseServer } = await import("./supabase");
+    if (input.senderRole === "admin") {
+      await supabaseServer
+        .from("supportMessages")
+        .update({ readAt: now })
+        .eq("conversationId", numConvId)
+        .neq("senderRole", "admin")
+        .is("readAt", null);
+    }
     await supabaseServer.from("supportMessages").insert({
       id: newMsgId,
       conversationId: numConvId,
@@ -3312,10 +3365,226 @@ export async function markSupportConversationRead(
           }
         });
       });
+
+      const adminInboxChannel = supabaseServer.channel("admin_support_inbox");
+      await new Promise<void>((resolve) => {
+        const timer = setTimeout(() => resolve(), 600);
+        adminInboxChannel.subscribe(async (status) => {
+          if (status === "SUBSCRIBED") {
+            try {
+              await adminInboxChannel.send({
+                type: "broadcast",
+                event: "conversation_updated",
+                payload: { conversationId: numId },
+              });
+            } catch {}
+            clearTimeout(timer);
+            resolve();
+          }
+        });
+      });
     } catch {}
   }
 
   return { success: true, count: updatedCount };
+}
+
+/**
+ * Deletes a single support message from persistent settings, memory, and database.
+ */
+export async function deleteSupportMessage(
+  conversationId: number,
+  messageId: number
+): Promise<{ success: boolean }> {
+  const numConvId = Number(conversationId);
+  const numMsgId = Number(messageId);
+
+  // 1. Fetch current messages and filter out the target message
+  const messages = await getSupportMessages(numConvId);
+  const filtered = messages.filter((m) => Number(m.id) !== numMsgId);
+
+  // Save back to settings
+  const key = `support_messages_${numConvId}`;
+  await setSetting(key, JSON.stringify(filtered));
+
+  // Update in-memory messages array in place
+  for (let i = inMemoryMessages.length - 1; i >= 0; i--) {
+    if (Number(inMemoryMessages[i].conversationId) === numConvId && Number(inMemoryMessages[i].id) === numMsgId) {
+      inMemoryMessages.splice(i, 1);
+    }
+  }
+
+  // 2. Delete from Postgres DB if available
+  const db = await getDb();
+  if (db) {
+    try {
+      await db
+        .delete(supportMessages)
+        .where(
+          and(
+            eq(supportMessages.conversationId, numConvId),
+            eq(supportMessages.id, numMsgId)
+          )
+        );
+    } catch (err) {
+      console.warn("[deleteSupportMessage db delete error]:", err);
+    }
+  }
+
+  // 3. Delete from Supabase table if available
+  try {
+    const { supabaseServer } = await import("./supabase");
+    await supabaseServer
+      .from("supportMessages")
+      .delete()
+      .eq("conversationId", numConvId)
+      .eq("id", numMsgId);
+  } catch {}
+
+  // 4. Update conversation registry lastMessage & timestamps
+  try {
+    const allConversations = await loadSupportConversationsRegistry();
+    const conv = allConversations.find((c) => Number(c.id) === numConvId);
+    if (conv) {
+      const lastMsg = filtered.length > 0 ? filtered[filtered.length - 1] : null;
+      conv.lastMessageAt = lastMsg ? lastMsg.createdAt : conv.createdAt;
+      conv.updatedAt = new Date().toISOString();
+      await saveSupportConversationsRegistry(allConversations);
+    }
+  } catch {}
+
+  // 5. Broadcast message_deleted event to real-time channels
+  try {
+    const { supabaseServer } = await import("./supabase");
+    const channel = supabaseServer.channel(`support_chat_${numConvId}`);
+    await new Promise<void>((resolve) => {
+      const timer = setTimeout(() => resolve(), 500);
+      channel.subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          try {
+            await channel.send({
+              type: "broadcast",
+              event: "message_deleted",
+              payload: { conversationId: numConvId, messageId: numMsgId },
+            });
+          } catch {}
+          clearTimeout(timer);
+          resolve();
+        }
+      });
+    });
+
+    const adminInboxChannel = supabaseServer.channel("admin_support_inbox");
+    await new Promise<void>((resolve) => {
+      const timer = setTimeout(() => resolve(), 500);
+      adminInboxChannel.subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          try {
+            await adminInboxChannel.send({
+              type: "broadcast",
+              event: "conversation_updated",
+              payload: { conversationId: numConvId },
+            });
+          } catch {}
+          clearTimeout(timer);
+          resolve();
+        }
+      });
+    });
+  } catch {}
+
+  return { success: true };
+}
+
+/**
+ * Deletes an entire support conversation along with all its messages from database, settings, and memory.
+ */
+export async function deleteSupportConversation(
+  conversationId: number
+): Promise<{ success: boolean }> {
+  const numConvId = Number(conversationId);
+
+  // 1. Remove from support_conversations_registry
+  const allConversations = await loadSupportConversationsRegistry();
+  const updatedConversations = allConversations.filter((c) => Number(c.id) !== numConvId);
+  await saveSupportConversationsRegistry(updatedConversations);
+
+  // Update in-memory conversations array in place
+  const convIdx = inMemoryConversations.findIndex((c) => Number(c.id) === numConvId);
+  if (convIdx !== -1) {
+    inMemoryConversations.splice(convIdx, 1);
+  }
+
+  // 2. Delete messages key from settings
+  const messagesKey = `support_messages_${numConvId}`;
+  await deleteSetting(messagesKey);
+
+  // Clear in-memory messages for this conversation
+  for (let i = inMemoryMessages.length - 1; i >= 0; i--) {
+    if (Number(inMemoryMessages[i].conversationId) === numConvId) {
+      inMemoryMessages.splice(i, 1);
+    }
+  }
+
+  // 3. Delete from Postgres DB if available
+  const db = await getDb();
+  if (db) {
+    try {
+      await db.delete(supportMessages).where(eq(supportMessages.conversationId, numConvId));
+      await db.delete(supportConversations).where(eq(supportConversations.id, numConvId));
+    } catch (err) {
+      console.warn("[deleteSupportConversation db delete error]:", err);
+    }
+  }
+
+  // 4. Delete from Supabase tables if available
+  try {
+    const { supabaseServer } = await import("./supabase");
+    await supabaseServer.from("supportMessages").delete().eq("conversationId", numConvId);
+    await supabaseServer.from("supportConversations").delete().eq("id", numConvId);
+  } catch {}
+
+  // 5. Broadcast conversation_deleted event
+  try {
+    const { supabaseServer } = await import("./supabase");
+    const adminInboxChannel = supabaseServer.channel("admin_support_inbox");
+    await new Promise<void>((resolve) => {
+      const timer = setTimeout(() => resolve(), 500);
+      adminInboxChannel.subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          try {
+            await adminInboxChannel.send({
+              type: "broadcast",
+              event: "conversation_deleted",
+              payload: { conversationId: numConvId },
+            });
+          } catch {}
+          clearTimeout(timer);
+          resolve();
+        }
+      });
+    });
+
+    const chatChannel = supabaseServer.channel(`support_chat_${numConvId}`);
+    await new Promise<void>((resolve) => {
+      const timer = setTimeout(() => resolve(), 500);
+      chatChannel.subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          try {
+            await chatChannel.send({
+              type: "broadcast",
+              event: "conversation_deleted",
+              payload: { conversationId: numConvId },
+            });
+          } catch {}
+          clearTimeout(timer);
+          resolve();
+        }
+      });
+    });
+  } catch {}
+
+  return { success: true };
 }
 
 /**
@@ -4125,24 +4394,104 @@ export async function ensureDisciplineDefaults(userId: number) {
           restTimerSound: true,
         });
       }
-      return;
     } catch (err) {
       console.warn("[ensureDisciplineDefaults db error]:", err);
     }
   }
 
-  // In-memory fallback: only ensure settings
-  if (!inMemoryDisciplineSettings.has(userId)) {
-    inMemoryDisciplineSettings.set(userId, {
-      id: disciplineSettingsAutoId++,
-      userId,
-      dailyTargetPercent: 80,
-      dailyForexMinutesTarget: 60,
-      restTimerDefaultSeconds: 60,
-      restTimerSound: true,
-      updatedAt: new Date(),
-    });
-  }
+  // Ensure settings in settings table / memory
+  try {
+    const rawSettings = await getSetting(`discipline_settings_${userId}`);
+    if (!rawSettings) {
+      const defaultSettings = {
+        userId,
+        dailyTargetPercent: 80,
+        dailyForexMinutesTarget: 60,
+        restTimerDefaultSeconds: 60,
+        restTimerSound: true,
+        updatedAt: new Date().toISOString(),
+      };
+      await setSetting(`discipline_settings_${userId}`, JSON.stringify(defaultSettings));
+      inMemoryDisciplineSettings.set(userId, defaultSettings);
+    } else {
+      inMemoryDisciplineSettings.set(userId, JSON.parse(rawSettings));
+    }
+  } catch {}
+
+  // Ensure default tasks in settings table / memory
+  try {
+    const rawTasks = await getSetting(`discipline_tasks_${userId}`);
+    if (!rawTasks) {
+      const existingMem = inMemoryDisciplineTasks.filter((t) => t.userId === userId && t.isActive !== false);
+      if (existingMem.length === 0) {
+        const seeded = DEFAULT_DISCIPLINE_TASKS.map((t, idx) => ({
+          id: disciplineTaskAutoId++,
+          userId,
+          title: t.title,
+          startTime: (t as any).startTime || t.time || null,
+          endTime: (t as any).endTime || null,
+          time: (t as any).startTime || t.time,
+          isMandatory: t.isMandatory,
+          isTrackable: t.isTrackable,
+          orderIndex: idx + 1,
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }));
+        await setSetting(`discipline_tasks_${userId}`, JSON.stringify(seeded));
+        seeded.forEach((st) => inMemoryDisciplineTasks.push(st));
+      } else {
+        await setSetting(`discipline_tasks_${userId}`, JSON.stringify(existingMem));
+      }
+    } else {
+      const parsedTasks = JSON.parse(rawTasks);
+      if (Array.isArray(parsedTasks)) {
+        for (const pt of parsedTasks) {
+          const idx = inMemoryDisciplineTasks.findIndex((m) => String(m.id) === String(pt.id) && m.userId === userId);
+          if (idx !== -1) {
+            inMemoryDisciplineTasks[idx] = pt;
+          } else {
+            inMemoryDisciplineTasks.push(pt);
+          }
+        }
+      }
+    }
+  } catch {}
+
+  // Ensure default exercises in settings table / memory
+  try {
+    const rawExercises = await getSetting(`discipline_exercises_${userId}`);
+    if (!rawExercises) {
+      const existingMem = inMemoryDisciplineExercises.filter((e) => e.userId === userId && e.isActive !== false);
+      if (existingMem.length === 0) {
+        const seeded = DEFAULT_DISCIPLINE_EXERCISES.map((e, idx) => ({
+          id: disciplineExerciseAutoId++,
+          userId,
+          name: e.name,
+          difficulty: e.difficulty,
+          orderIndex: idx + 1,
+          isActive: true,
+          createdAt: new Date().toISOString(),
+        }));
+        await setSetting(`discipline_exercises_${userId}`, JSON.stringify(seeded));
+        seeded.forEach((se) => inMemoryDisciplineExercises.push(se));
+      } else {
+        await setSetting(`discipline_exercises_${userId}`, JSON.stringify(existingMem));
+      }
+    } else {
+      const parsedExercises = JSON.parse(rawExercises);
+      if (Array.isArray(parsedExercises)) {
+        for (const pe of parsedExercises) {
+          const idx = inMemoryDisciplineExercises.findIndex((m) => String(m.id) === String(pe.id) && m.userId === userId);
+          if (idx !== -1) {
+            inMemoryDisciplineExercises[idx] = pe;
+          } else {
+            inMemoryDisciplineExercises.push(pe);
+          }
+        }
+      }
+    }
+  } catch {}
 }
 
 // ------------------------------------------------------------------------------
@@ -4161,32 +4510,51 @@ export async function getDisciplineSchedule(userId: number, date: string) {
         .where(and(eq(disciplineTasks.userId, userId), eq(disciplineTasks.isActive, true)))
         .orderBy(asc(disciplineTasks.orderIndex), asc(disciplineTasks.id));
 
-      const completions = await db
-        .select()
-        .from(disciplineTaskCompletions)
-        .where(and(eq(disciplineTaskCompletions.userId, userId), eq(disciplineTaskCompletions.date, date)));
+      if (tasks && tasks.length > 0) {
+        const completions = await db
+          .select()
+          .from(disciplineTaskCompletions)
+          .where(and(eq(disciplineTaskCompletions.userId, userId), eq(disciplineTaskCompletions.date, date)));
 
-      const mergedTasks = tasks.map((t: any) => {
-        const startTime = t.startTime !== undefined && t.startTime !== null ? t.startTime : (t.time ? t.time : null);
-        const endTime = t.endTime !== undefined && t.endTime !== null ? t.endTime : null;
-        return {
-          ...t,
-          startTime,
-          endTime,
-          completed: completions.some((c: any) => c.taskId === t.id && c.completed),
-        };
-      });
+        const mergedTasks = tasks.map((t: any) => {
+          const startTime = t.startTime !== undefined && t.startTime !== null ? t.startTime : (t.time ? t.time : null);
+          const endTime = t.endTime !== undefined && t.endTime !== null ? t.endTime : null;
+          return {
+            ...t,
+            startTime,
+            endTime,
+            completed: completions.some((c: any) => String(c.taskId) === String(t.id) && c.completed),
+          };
+        });
 
-      return { tasks: mergedTasks, date };
+        return { tasks: mergedTasks, date };
+      }
     } catch (err) {
       console.warn("[getDisciplineSchedule db error]:", err);
     }
   }
 
-  // In-memory fallback
-  const tasks = inMemoryDisciplineTasks
+  // Load persistent tasks from settings if in-memory is empty
+  let tasks: any[] = inMemoryDisciplineTasks
     .filter((t) => t.userId === userId && t.isActive !== false)
     .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+
+  if (tasks.length === 0) {
+    try {
+      const raw = await getSetting(`discipline_tasks_${userId}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          tasks = parsed.filter((t: any) => t.isActive !== false).sort((a: any, b: any) => (a.orderIndex || 0) - (b.orderIndex || 0));
+          for (const pt of parsed) {
+            if (!inMemoryDisciplineTasks.some((m) => String(m.id) === String(pt.id) && m.userId === userId)) {
+              inMemoryDisciplineTasks.push(pt);
+            }
+          }
+        }
+      }
+    } catch {}
+  }
 
   let completions = inMemoryDisciplineCompletions.filter(
     (c) => c.userId === userId && c.date === date
@@ -4199,6 +4567,11 @@ export async function getDisciplineSchedule(userId: number, date: string) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
           completions = parsed;
+          for (const pc of parsed) {
+            if (!inMemoryDisciplineCompletions.some((m) => String(m.taskId) === String(pc.taskId) && m.userId === userId && m.date === date)) {
+              inMemoryDisciplineCompletions.push(pc);
+            }
+          }
         }
       }
     } catch {}
@@ -4211,7 +4584,7 @@ export async function getDisciplineSchedule(userId: number, date: string) {
       ...t,
       startTime,
       endTime,
-      completed: completions.some((c: any) => c.taskId === t.id && c.completed),
+      completed: completions.some((c: any) => String(c.taskId) === String(t.id) && c.completed),
     };
   });
 
@@ -4233,15 +4606,28 @@ export async function addDisciplineTask(
   const endTime = task.endTime?.trim() || null;
   const legacyTime = startTime || task.time?.trim() || null;
 
+  await ensureDisciplineDefaults(userId);
+
+  const existing = inMemoryDisciplineTasks.filter((t) => t.userId === userId && t.isActive !== false);
+  const nextOrder = existing.length + 1;
+  const created: any = {
+    id: disciplineTaskAutoId++,
+    userId,
+    title: task.title.trim(),
+    startTime,
+    endTime,
+    time: legacyTime,
+    isMandatory: task.isMandatory ?? true,
+    isTrackable: task.isTrackable ?? true,
+    orderIndex: nextOrder,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
   const db = await getDb();
   if (db) {
     try {
-      const existing = await db
-        .select()
-        .from(disciplineTasks)
-        .where(and(eq(disciplineTasks.userId, userId), eq(disciplineTasks.isActive, true)));
-      const nextOrder = existing.length + 1;
-
       const res = await db.insert(disciplineTasks).values({
         userId,
         title: task.title.trim(),
@@ -4254,42 +4640,21 @@ export async function addDisciplineTask(
         isActive: true,
       });
       const insertId = res[0]?.insertId || res[0]?.id;
-      return {
-        id: insertId || disciplineTaskAutoId++,
-        userId,
-        title: task.title.trim(),
-        startTime,
-        endTime,
-        time: legacyTime,
-        isMandatory: task.isMandatory ?? true,
-        isTrackable: task.isTrackable ?? true,
-        orderIndex: nextOrder,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      if (insertId) created.id = insertId;
     } catch (err) {
       console.warn("[addDisciplineTask db error]:", err);
     }
   }
 
-  const existing = inMemoryDisciplineTasks.filter((t) => t.userId === userId && t.isActive !== false);
-  const nextOrder = existing.length + 1;
-  const created = {
-    id: disciplineTaskAutoId++,
-    userId,
-    title: task.title.trim(),
-    startTime,
-    endTime,
-    time: legacyTime,
-    isMandatory: task.isMandatory ?? true,
-    isTrackable: task.isTrackable ?? true,
-    orderIndex: nextOrder,
-    isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
   inMemoryDisciplineTasks.push(created);
+
+  try {
+    const allUserTasks = inMemoryDisciplineTasks.filter((t) => t.userId === userId && t.isActive !== false);
+    await setSetting(`discipline_tasks_${userId}`, JSON.stringify(allUserTasks));
+  } catch (err) {
+    console.warn("[addDisciplineTask setSetting error]:", err);
+  }
+
   return created;
 }
 
@@ -4306,6 +4671,7 @@ export async function updateDisciplineTask(
     orderIndex: number;
   }>
 ) {
+  await ensureDisciplineDefaults(userId);
   const cleanUpdates: any = { ...updates };
   if (cleanUpdates.startTime !== undefined) {
     cleanUpdates.startTime = cleanUpdates.startTime?.trim() || null;
@@ -4325,25 +4691,29 @@ export async function updateDisciplineTask(
           updatedAt: new Date(),
         })
         .where(and(eq(disciplineTasks.id, taskId), eq(disciplineTasks.userId, userId)));
-      return true;
     } catch (err) {
       console.warn("[updateDisciplineTask db error]:", err);
     }
   }
 
-  const task = inMemoryDisciplineTasks.find((t) => t.id === taskId && t.userId === userId);
+  const task = inMemoryDisciplineTasks.find((t) => String(t.id) === String(taskId) && t.userId === userId);
   if (task) {
-    Object.assign(task, cleanUpdates, { updatedAt: new Date() });
-    return true;
+    Object.assign(task, cleanUpdates, { updatedAt: new Date().toISOString() });
   }
-  return false;
+
+  try {
+    const allUserTasks = inMemoryDisciplineTasks.filter((t) => t.userId === userId);
+    await setSetting(`discipline_tasks_${userId}`, JSON.stringify(allUserTasks));
+  } catch {}
+
+  return true;
 }
 
 export async function deleteDisciplineTask(userId: number, taskId: number) {
+  await ensureDisciplineDefaults(userId);
   const db = await getDb();
   if (db) {
     try {
-      // Soft-delete task and delete completions
       await db
         .update(disciplineTasks)
         .set({ isActive: false, updatedAt: new Date() })
@@ -4351,16 +4721,21 @@ export async function deleteDisciplineTask(userId: number, taskId: number) {
       await db
         .delete(disciplineTaskCompletions)
         .where(and(eq(disciplineTaskCompletions.taskId, taskId), eq(disciplineTaskCompletions.userId, userId)));
-      return true;
     } catch (err) {
       console.warn("[deleteDisciplineTask db error]:", err);
     }
   }
 
-  const task = inMemoryDisciplineTasks.find((t) => t.id === taskId && t.userId === userId);
+  const task = inMemoryDisciplineTasks.find((t) => String(t.id) === String(taskId) && t.userId === userId);
   if (task) {
     task.isActive = false;
   }
+
+  try {
+    const allUserTasks = inMemoryDisciplineTasks.filter((t) => t.userId === userId && t.isActive !== false);
+    await setSetting(`discipline_tasks_${userId}`, JSON.stringify(allUserTasks));
+  } catch {}
+
   return true;
 }
 
@@ -4373,15 +4748,6 @@ export async function toggleDisciplineTaskCompletion(
   const db = await getDb();
   if (db) {
     try {
-      // Verify task belongs to user
-      const task = await db
-        .select()
-        .from(disciplineTasks)
-        .where(and(eq(disciplineTasks.id, taskId), eq(disciplineTasks.userId, userId)))
-        .limit(1);
-
-      if (!task.length) throw new Error("Task not found or unauthorized");
-
       const existing = await db
         .select()
         .from(disciplineTaskCompletions)
@@ -4411,18 +4777,32 @@ export async function toggleDisciplineTaskCompletion(
           completedAt: completed ? new Date() : null,
         });
       }
-      return true;
     } catch (err) {
       console.warn("[toggleDisciplineTaskCompletion db error]:", err);
     }
   }
 
+  // Load existing completions from setting if memory empty
+  if (inMemoryDisciplineCompletions.filter((c) => c.userId === userId && c.date === date).length === 0) {
+    try {
+      const raw = await getSetting(`discipline_task_comp_${userId}_${date}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          for (const item of parsed) {
+            inMemoryDisciplineCompletions.push(item);
+          }
+        }
+      }
+    } catch {}
+  }
+
   const existing = inMemoryDisciplineCompletions.find(
-    (c) => c.userId === userId && c.taskId === taskId && c.date === date
+    (c) => c.userId === userId && String(c.taskId) === String(taskId) && c.date === date
   );
   if (existing) {
     existing.completed = completed;
-    existing.completedAt = completed ? new Date() : null;
+    existing.completedAt = completed ? new Date().toISOString() : null;
   } else {
     inMemoryDisciplineCompletions.push({
       id: disciplineCompletionAutoId++,
@@ -4430,7 +4810,7 @@ export async function toggleDisciplineTaskCompletion(
       taskId,
       date,
       completed,
-      completedAt: completed ? new Date() : null,
+      completedAt: completed ? new Date().toISOString() : null,
     });
   }
 
@@ -4460,28 +4840,47 @@ export async function getDisciplineWorkouts(userId: number, date: string) {
         .where(and(eq(disciplineExercises.userId, userId), eq(disciplineExercises.isActive, true)))
         .orderBy(asc(disciplineExercises.orderIndex), asc(disciplineExercises.id));
 
-      const completions = await db
-        .select()
-        .from(disciplineWorkoutCompletions)
-        .where(and(eq(disciplineWorkoutCompletions.userId, userId), eq(disciplineWorkoutCompletions.date, date)));
+      if (exercises && exercises.length > 0) {
+        const completions = await db
+          .select()
+          .from(disciplineWorkoutCompletions)
+          .where(and(eq(disciplineWorkoutCompletions.userId, userId), eq(disciplineWorkoutCompletions.date, date)));
 
-      const merged = exercises.map((e: any) => ({
-        ...e,
-        completed: completions.some((c: any) => c.exerciseId === e.id && c.completed),
-      }));
+        const merged = exercises.map((e: any) => ({
+          ...e,
+          completed: completions.some((c: any) => String(c.exerciseId) === String(e.id) && c.completed),
+        }));
 
-      const completedCount = merged.filter((e: any) => e.completed).length;
-      const progressPercent = merged.length ? Math.round((completedCount / merged.length) * 100) : 0;
+        const completedCount = merged.filter((e: any) => e.completed).length;
+        const progressPercent = merged.length ? Math.round((completedCount / merged.length) * 100) : 0;
 
-      return { exercises: merged, progressPercent, date };
+        return { exercises: merged, progressPercent, date };
+      }
     } catch (err) {
       console.warn("[getDisciplineWorkouts db error]:", err);
     }
   }
 
-  const exercises = inMemoryDisciplineExercises
+  let exercises = inMemoryDisciplineExercises
     .filter((e) => e.userId === userId && e.isActive !== false)
     .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+
+  if (exercises.length === 0) {
+    try {
+      const raw = await getSetting(`discipline_exercises_${userId}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          exercises = parsed.filter((e: any) => e.isActive !== false).sort((a: any, b: any) => (a.orderIndex || 0) - (b.orderIndex || 0));
+          for (const pe of parsed) {
+            if (!inMemoryDisciplineExercises.some((m) => String(m.id) === String(pe.id) && m.userId === userId)) {
+              inMemoryDisciplineExercises.push(pe);
+            }
+          }
+        }
+      }
+    } catch {}
+  }
 
   let completions = inMemoryDisciplineWorkoutCompletions.filter(
     (c) => c.userId === userId && c.date === date
@@ -4494,6 +4893,11 @@ export async function getDisciplineWorkouts(userId: number, date: string) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
           completions = parsed;
+          for (const pc of parsed) {
+            if (!inMemoryDisciplineWorkoutCompletions.some((m) => String(m.exerciseId) === String(pc.exerciseId) && m.userId === userId && m.date === date)) {
+              inMemoryDisciplineWorkoutCompletions.push(pc);
+            }
+          }
         }
       }
     } catch {}
@@ -4501,7 +4905,7 @@ export async function getDisciplineWorkouts(userId: number, date: string) {
 
   const merged = exercises.map((e) => ({
     ...e,
-    completed: completions.some((c: any) => c.exerciseId === e.id && c.completed),
+    completed: completions.some((c: any) => String(c.exerciseId) === String(e.id) && c.completed),
   }));
 
   const completedCount = merged.filter((e) => e.completed).length;
@@ -4514,15 +4918,22 @@ export async function addDisciplineExercise(
   userId: number,
   exercise: { name: string; difficulty: string }
 ) {
+  await ensureDisciplineDefaults(userId);
+  const existing = inMemoryDisciplineExercises.filter((e) => e.userId === userId && e.isActive !== false);
+  const nextOrder = existing.length + 1;
+  const created: any = {
+    id: disciplineExerciseAutoId++,
+    userId,
+    name: exercise.name.trim(),
+    difficulty: exercise.difficulty || "Intermediate",
+    orderIndex: nextOrder,
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  };
+
   const db = await getDb();
   if (db) {
     try {
-      const existing = await db
-        .select()
-        .from(disciplineExercises)
-        .where(and(eq(disciplineExercises.userId, userId), eq(disciplineExercises.isActive, true)));
-      const nextOrder = existing.length + 1;
-
       const res = await db.insert(disciplineExercises).values({
         userId,
         name: exercise.name.trim(),
@@ -4531,31 +4942,19 @@ export async function addDisciplineExercise(
         isActive: true,
       });
       const insertId = res[0]?.insertId || res[0]?.id;
-      return {
-        id: insertId || disciplineExerciseAutoId++,
-        userId,
-        ...exercise,
-        orderIndex: nextOrder,
-        isActive: true,
-        createdAt: new Date(),
-      };
+      if (insertId) created.id = insertId;
     } catch (err) {
       console.warn("[addDisciplineExercise db error]:", err);
     }
   }
 
-  const existing = inMemoryDisciplineExercises.filter((e) => e.userId === userId && e.isActive !== false);
-  const nextOrder = existing.length + 1;
-  const created = {
-    id: disciplineExerciseAutoId++,
-    userId,
-    name: exercise.name.trim(),
-    difficulty: exercise.difficulty || "Intermediate",
-    orderIndex: nextOrder,
-    isActive: true,
-    createdAt: new Date(),
-  };
   inMemoryDisciplineExercises.push(created);
+
+  try {
+    const allExercises = inMemoryDisciplineExercises.filter((e) => e.userId === userId && e.isActive !== false);
+    await setSetting(`discipline_exercises_${userId}`, JSON.stringify(allExercises));
+  } catch {}
+
   return created;
 }
 
@@ -4564,6 +4963,7 @@ export async function updateDisciplineExercise(
   exerciseId: number,
   updates: Partial<{ name: string; difficulty: string }>
 ) {
+  await ensureDisciplineDefaults(userId);
   const db = await getDb();
   if (db) {
     try {
@@ -4571,21 +4971,26 @@ export async function updateDisciplineExercise(
         .update(disciplineExercises)
         .set(updates)
         .where(and(eq(disciplineExercises.id, exerciseId), eq(disciplineExercises.userId, userId)));
-      return true;
     } catch (err) {
       console.warn("[updateDisciplineExercise db error]:", err);
     }
   }
 
-  const ex = inMemoryDisciplineExercises.find((e) => e.id === exerciseId && e.userId === userId);
+  const ex = inMemoryDisciplineExercises.find((e) => String(e.id) === String(exerciseId) && e.userId === userId);
   if (ex) {
     Object.assign(ex, updates);
-    return true;
   }
-  return false;
+
+  try {
+    const allExercises = inMemoryDisciplineExercises.filter((e) => e.userId === userId && e.isActive !== false);
+    await setSetting(`discipline_exercises_${userId}`, JSON.stringify(allExercises));
+  } catch {}
+
+  return true;
 }
 
 export async function deleteDisciplineExercise(userId: number, exerciseId: number) {
+  await ensureDisciplineDefaults(userId);
   const db = await getDb();
   if (db) {
     try {
@@ -4596,16 +5001,21 @@ export async function deleteDisciplineExercise(userId: number, exerciseId: numbe
       await db
         .delete(disciplineWorkoutCompletions)
         .where(and(eq(disciplineWorkoutCompletions.exerciseId, exerciseId), eq(disciplineWorkoutCompletions.userId, userId)));
-      return true;
     } catch (err) {
       console.warn("[deleteDisciplineExercise db error]:", err);
     }
   }
 
-  const ex = inMemoryDisciplineExercises.find((e) => e.id === exerciseId && e.userId === userId);
+  const ex = inMemoryDisciplineExercises.find((e) => String(e.id) === String(exerciseId) && e.userId === userId);
   if (ex) {
     ex.isActive = false;
   }
+
+  try {
+    const allExercises = inMemoryDisciplineExercises.filter((e) => e.userId === userId && e.isActive !== false);
+    await setSetting(`discipline_exercises_${userId}`, JSON.stringify(allExercises));
+  } catch {}
+
   return true;
 }
 
@@ -4643,14 +5053,28 @@ export async function toggleDisciplineWorkoutCompletion(
           completed,
         });
       }
-      return true;
     } catch (err) {
       console.warn("[toggleDisciplineWorkoutCompletion db error]:", err);
     }
   }
 
+  // Load existing workout completions if memory empty
+  if (inMemoryDisciplineWorkoutCompletions.filter((c) => c.userId === userId && c.date === date).length === 0) {
+    try {
+      const raw = await getSetting(`discipline_workout_comp_${userId}_${date}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          for (const item of parsed) {
+            inMemoryDisciplineWorkoutCompletions.push(item);
+          }
+        }
+      }
+    } catch {}
+  }
+
   const existing = inMemoryDisciplineWorkoutCompletions.find(
-    (c) => c.userId === userId && c.exerciseId === exerciseId && c.date === date
+    (c) => c.userId === userId && String(c.exerciseId) === String(exerciseId) && c.date === date
   );
   if (existing) {
     existing.completed = completed;
@@ -5102,15 +5526,27 @@ export async function getDisciplineSettings(userId: number) {
     }
   }
 
-  return (
-    inMemoryDisciplineSettings.get(userId) || {
-      userId,
-      dailyTargetPercent: 80,
-      dailyForexMinutesTarget: 60,
-      restTimerDefaultSeconds: 60,
-      restTimerSound: true,
+  const memory = inMemoryDisciplineSettings.get(userId);
+  if (memory) return memory;
+
+  try {
+    const raw = await getSetting(`discipline_settings_${userId}`);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      inMemoryDisciplineSettings.set(userId, parsed);
+      return parsed;
     }
-  );
+  } catch {}
+
+  const fallback = {
+    userId,
+    dailyTargetPercent: 80,
+    dailyForexMinutesTarget: 60,
+    restTimerDefaultSeconds: 60,
+    restTimerSound: true,
+  };
+  inMemoryDisciplineSettings.set(userId, fallback);
+  return fallback;
 }
 
 export async function updateDisciplineSettings(
@@ -5145,18 +5581,23 @@ export async function updateDisciplineSettings(
           restTimerSound: updates.restTimerSound ?? true,
         });
       }
-      return true;
     } catch (err) {
       console.warn("[updateDisciplineSettings db error]:", err);
     }
   }
 
   const existing = inMemoryDisciplineSettings.get(userId) || { userId };
-  inMemoryDisciplineSettings.set(userId, {
+  const merged = {
     ...existing,
     ...updates,
-    updatedAt: new Date(),
-  });
+    updatedAt: new Date().toISOString(),
+  };
+  inMemoryDisciplineSettings.set(userId, merged);
+
+  try {
+    await setSetting(`discipline_settings_${userId}`, JSON.stringify(merged));
+  } catch {}
+
   return true;
 }
 
@@ -5552,7 +5993,9 @@ export async function importDisciplineData(userId: number, backup: any) {
         id: disciplineTaskAutoId++,
         userId,
         title: String(t.title).trim(),
-        time: t.time || "08:00 AM",
+        startTime: t.startTime || t.time || null,
+        endTime: t.endTime || null,
+        time: t.startTime || t.time || "08:00 AM",
         isMandatory: t.isMandatory !== false,
         isTrackable: t.isTrackable !== false,
         orderIndex: Number(t.orderIndex) || 0,
@@ -5613,6 +6056,21 @@ export async function importDisciplineData(userId: number, backup: any) {
     });
   }
 
+  // Persist imported data to settings for mobile and cross-instance durability
+  try {
+    const allUserTasks = inMemoryDisciplineTasks.filter((t) => t.userId === userId);
+    await setSetting(`discipline_tasks_${userId}`, JSON.stringify(allUserTasks));
+    const allExercises = inMemoryDisciplineExercises.filter((e) => e.userId === userId);
+    await setSetting(`discipline_exercises_${userId}`, JSON.stringify(allExercises));
+    const allJournals = inMemoryDisciplineJournals.filter((j) => j.userId === userId);
+    await setSetting(`discipline_journals_${userId}`, JSON.stringify(allJournals));
+    const allForex = inMemoryDisciplineForexLogs.filter((f) => f.userId === userId);
+    await setSetting(`discipline_forex_${userId}`, JSON.stringify(allForex));
+    if (backup.settings) {
+      await setSetting(`discipline_settings_${userId}`, JSON.stringify(inMemoryDisciplineSettings.get(userId)));
+    }
+  } catch {}
+
   return { success: true, count: tasksToImport.length + exercisesToImport.length + journalsToImport.length };
 }
 
@@ -5656,6 +6114,15 @@ export async function resetDisciplineData(userId: number) {
     if (inMemoryDisciplineForexLogs[i].userId === userId) inMemoryDisciplineForexLogs.splice(i, 1);
   }
   inMemoryDisciplineSettings.delete(userId);
+
+  // Settings cleanup
+  try {
+    await deleteSetting(`discipline_tasks_${userId}`);
+    await deleteSetting(`discipline_exercises_${userId}`);
+    await deleteSetting(`discipline_journals_${userId}`);
+    await deleteSetting(`discipline_forex_${userId}`);
+    await deleteSetting(`discipline_settings_${userId}`);
+  } catch {}
 
   await ensureDisciplineDefaults(userId);
   return true;
@@ -5951,6 +6418,68 @@ export async function setUserJournalConfig(userId: number, config: UserJournalCo
   try {
     await setSetting(`user_journal_config_${userId}`, JSON.stringify(config));
   } catch {}
+}
+
+const inMemoryJournalBooks: Map<number, any[]> = new Map();
+
+export async function getUserJournalBooks(userId: number): Promise<any[]> {
+  if (inMemoryJournalBooks.has(userId) && inMemoryJournalBooks.get(userId)!.length > 0) {
+    return inMemoryJournalBooks.get(userId)!;
+  }
+  try {
+    const raw = await getSetting(`user_journal_books_${userId}`);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        inMemoryJournalBooks.set(userId, parsed);
+        return parsed;
+      }
+    }
+  } catch (err) {
+    console.warn("[getUserJournalBooks error]:", err);
+  }
+  return inMemoryJournalBooks.get(userId) || [];
+}
+
+export async function saveUserJournalBooks(userId: number, books: any[]): Promise<boolean> {
+  inMemoryJournalBooks.set(userId, books);
+  try {
+    await setSetting(`user_journal_books_${userId}`, JSON.stringify(books));
+    return true;
+  } catch (err) {
+    console.warn("[saveUserJournalBooks error]:", err);
+    return false;
+  }
+}
+
+const inMemoryUserNotebooks: Map<number, any> = new Map();
+
+export async function getUserNotebookData(userId: number): Promise<any> {
+  if (inMemoryUserNotebooks.has(userId)) {
+    return inMemoryUserNotebooks.get(userId);
+  }
+  try {
+    const raw = await getSetting(`user_notebook_${userId}`);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      inMemoryUserNotebooks.set(userId, parsed);
+      return parsed;
+    }
+  } catch (err) {
+    console.warn("[getUserNotebookData error]:", err);
+  }
+  return inMemoryUserNotebooks.get(userId) || null;
+}
+
+export async function saveUserNotebookData(userId: number, data: any): Promise<boolean> {
+  inMemoryUserNotebooks.set(userId, data);
+  try {
+    await setSetting(`user_notebook_${userId}`, JSON.stringify(data));
+    return true;
+  } catch (err) {
+    console.warn("[saveUserNotebookData error]:", err);
+    return false;
+  }
 }
 
 export async function syncUserTrades(

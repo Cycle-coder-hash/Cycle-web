@@ -11,6 +11,7 @@ import {
   Loader2,
   ExternalLink,
   RefreshCw,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -59,6 +60,30 @@ export function SupportChat({ inline = false }: SupportChatProps) {
     },
   });
 
+  const deleteMessageMutation = trpc.support.deleteMessage.useMutation({
+    onSuccess: () => {
+      toast.success(isBn ? "মেসেজ ডিলিট হয়েছে" : "Message deleted");
+      refetchConversation();
+    },
+    onError: (err) => {
+      toast.error(err.message || (isBn ? "ডিলিট করতে সমস্যা হয়েছে" : "Failed to delete message"));
+    },
+  });
+
+  const handleDeleteMessage = (messageId: number) => {
+    if (!conversation?.id) return;
+    if (
+      !window.confirm(
+        isBn
+          ? "আপনি কি নিশ্চিতভাবে এই মেসেজটি ডিলিট করতে চান?"
+          : "Are you sure you want to permanently delete this message from the database?"
+      )
+    )
+      return;
+
+    deleteMessageMutation.mutate({ conversationId: conversation.id, messageId });
+  };
+
   const conversation = supportData?.conversation;
   const messages = useMemo(() => {
     const list = supportData?.messages || [];
@@ -101,6 +126,12 @@ export function SupportChat({ inline = false }: SupportChatProps) {
         refetchConversation();
       })
       .on("broadcast", { event: "messages_read" }, () => {
+        refetchConversation();
+      })
+      .on("broadcast", { event: "message_deleted" }, () => {
+        refetchConversation();
+      })
+      .on("broadcast", { event: "conversation_deleted" }, () => {
         refetchConversation();
       })
       .subscribe();
@@ -310,7 +341,7 @@ export function SupportChat({ inline = false }: SupportChatProps) {
                 return (
                   <div
                     key={msg.id}
-                    className={`flex items-end gap-2.5 ${
+                    className={`group relative flex items-end gap-2.5 ${
                       isCustomer ? "justify-end" : "justify-start"
                     }`}
                   >
@@ -321,6 +352,16 @@ export function SupportChat({ inline = false }: SupportChatProps) {
                       >
                         <ShieldCheck size={16} />
                       </div>
+                    )}
+
+                    {isCustomer && (
+                      <button
+                        onClick={() => handleDeleteMessage(msg.id)}
+                        className="opacity-0 group-hover:opacity-100 transition p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 rounded mb-1"
+                        title={isBn ? "মেসেজ ডিলিট করুন" : "Delete message from database"}
+                      >
+                        <Trash2 size={13} />
+                      </button>
                     )}
 
                     <div

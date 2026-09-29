@@ -20,6 +20,7 @@ import {
   ExternalLink,
   ChevronRight,
   Filter,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
@@ -101,6 +102,47 @@ export const SupportTab: React.FC<SupportTabProps> = () => {
     },
   });
 
+  const deleteMessageMutation = trpc.admin.deleteSupportMessage.useMutation({
+    onSuccess: () => {
+      toast.success("Message permanently deleted from database");
+      refetchMessages();
+      refetchConversations();
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to delete message");
+    },
+  });
+
+  const deleteConversationMutation = trpc.admin.deleteSupportConversation.useMutation({
+    onSuccess: () => {
+      toast.success("Conversation permanently deleted from database");
+      setSelectedConversationId(null);
+      refetchConversations();
+    },
+    onError: (err) => {
+      toast.error(err.message || "Failed to delete conversation");
+    },
+  });
+
+  const handleDeleteConversation = () => {
+    if (!selectedConversationId) return;
+    if (
+      !window.confirm(
+        "Are you sure you want to permanently delete this conversation and all its messages from the database? This cannot be undone."
+      )
+    )
+      return;
+
+    deleteConversationMutation.mutate({ conversationId: selectedConversationId });
+  };
+
+  const handleDeleteMessage = (messageId: number) => {
+    if (!selectedConversationId) return;
+    if (!window.confirm("Permanently delete this message from the database?")) return;
+
+    deleteMessageMutation.mutate({ conversationId: selectedConversationId, messageId });
+  };
+
   // Auto mark read when opening a conversation with unread customer messages
   useEffect(() => {
     if (selectedConversationId && activeConversation && activeConversation.unreadCount > 0) {
@@ -121,6 +163,14 @@ export const SupportTab: React.FC<SupportTabProps> = () => {
       .on("broadcast", { event: "messages_read" }, () => {
         refetchMessages();
       })
+      .on("broadcast", { event: "message_deleted" }, () => {
+        refetchMessages();
+        refetchConversations();
+      })
+      .on("broadcast", { event: "conversation_deleted" }, () => {
+        refetchConversations();
+        setSelectedConversationId(null);
+      })
       .subscribe();
 
     return () => {
@@ -138,6 +188,9 @@ export const SupportTab: React.FC<SupportTabProps> = () => {
         if (updatedConvId && Number(updatedConvId) === Number(selectedConversationId)) {
           refetchMessages();
         }
+      })
+      .on("broadcast", { event: "conversation_deleted" }, () => {
+        refetchConversations();
       })
       .subscribe();
 
@@ -397,6 +450,16 @@ export const SupportTab: React.FC<SupportTabProps> = () => {
                     <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     Direct Thread
                   </span>
+
+                  <button
+                    onClick={handleDeleteConversation}
+                    disabled={deleteConversationMutation.isPending}
+                    className="flex items-center gap-1 rounded-lg border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-xs font-bold text-rose-500 hover:bg-rose-500/20 hover:text-rose-400 transition disabled:opacity-50"
+                    title="Permanently delete this entire conversation from database"
+                  >
+                    <Trash2 size={13} />
+                    <span className="hidden sm:inline">Delete</span>
+                  </button>
                 </div>
               </div>
 
@@ -421,7 +484,7 @@ export const SupportTab: React.FC<SupportTabProps> = () => {
                     return (
                       <div
                         key={msg.id}
-                        className={`flex items-end gap-2 ${
+                        className={`group relative flex items-end gap-2 ${
                           isAdmin ? "justify-end" : "justify-start"
                         }`}
                       >
@@ -429,6 +492,16 @@ export const SupportTab: React.FC<SupportTabProps> = () => {
                           <div className="size-6 rounded-full bg-slate-300 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-700 dark:text-slate-200 shrink-0 mb-1">
                             {activeConversation.customer?.name?.[0] || "C"}
                           </div>
+                        )}
+
+                        {isAdmin && (
+                          <button
+                            onClick={() => handleDeleteMessage(msg.id)}
+                            className="opacity-0 group-hover:opacity-100 transition p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-md"
+                            title="Delete message from database"
+                          >
+                            <Trash2 size={12} />
+                          </button>
                         )}
 
                         <div
@@ -459,6 +532,16 @@ export const SupportTab: React.FC<SupportTabProps> = () => {
                             )}
                           </div>
                         </div>
+
+                        {!isAdmin && (
+                          <button
+                            onClick={() => handleDeleteMessage(msg.id)}
+                            className="opacity-0 group-hover:opacity-100 transition p-1 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-md"
+                            title="Delete message from database"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        )}
                       </div>
                     );
                   })
