@@ -24,7 +24,6 @@ import {
   FilePlus,
   Compass,
 } from "lucide-react";
-import { trpc } from "@/lib/trpc";
 import { UpgradeModal, UpgradeFeatureType } from "@/components/subscription/UpgradeModal";
 
 interface TraderNotebookProps {
