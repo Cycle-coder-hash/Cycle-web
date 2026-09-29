@@ -470,7 +470,7 @@ export const appRouter = router({
     updatePreferences: protectedProcedure
       .input(
         z.object({
-          theme: z.enum(["dark", "light"]).optional(),
+          theme: z.enum(["dark", "light", "auto"]).optional(),
           language: language.optional(),
           timezone: z.string().optional(),
           currency: z.string().optional(),

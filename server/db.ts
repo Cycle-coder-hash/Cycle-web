@@ -7182,14 +7182,14 @@ export function normalizeUserLanguage(lang?: string | null): "en" | "bn" | "ur" 
 }
 
 export interface UserPreferences {
-  theme: "dark" | "light";
+  theme: "dark" | "light" | "auto";
   language: "en" | "bn" | "ur";
   timezone: string;
   currency: string;
 }
 
 export const DEFAULT_USER_PREFERENCES: UserPreferences = {
-  theme: "dark",
+  theme: "auto",
   language: "en",
   timezone: "Asia/Dhaka",
   currency: "BDT",
@@ -7201,7 +7201,7 @@ export async function getUserPreferences(userKey: string | number): Promise<User
     if (raw) {
       const parsed = JSON.parse(raw);
       return {
-        theme: parsed.theme === "light" ? "light" : "dark",
+        theme: parsed.theme === "light" || parsed.theme === "dark" || parsed.theme === "auto" ? parsed.theme : "auto",
         language: normalizeUserLanguage(parsed.language),
         timezone: parsed.timezone || "Asia/Dhaka",
         currency: parsed.currency || "BDT",
@@ -7219,7 +7219,7 @@ export async function saveUserPreferences(userKey: string | number, prefs: Parti
     ...current,
     ...prefs,
     language: prefs.language ? normalizeUserLanguage(prefs.language) : current.language,
-    theme: prefs.theme ? (prefs.theme === "light" ? "light" : "dark") : current.theme,
+    theme: prefs.theme ? prefs.theme : current.theme,
   };
   await setSetting(`user_preferences_${userKey}`, JSON.stringify(updated));
   return updated;

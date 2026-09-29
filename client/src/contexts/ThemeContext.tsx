@@ -21,15 +21,19 @@ interface ThemeProviderProps {
   defaultTheme?: ThemeMode;
 }
 
-const THEME_MODE_KEY = "cycle-theme-mode";
-const THEME_LEGACY_KEY = "cycle-theme";
+const THEME_MODE_KEY = "cycle-device-theme-mode-v3";
 
 // Helper to detect current device / OS system preference
-const getSystemTheme = (): Theme => {
-  if (typeof window !== "undefined" && window.matchMedia) {
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+export const getSystemTheme = (): Theme => {
+  if (typeof window === "undefined" || !window.matchMedia) {
+    return "light";
   }
-  return "dark"; // Institutional default fallback
+  try {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    return mq && mq.matches ? "dark" : "light";
+  } catch {
+    return "light";
+  }
 };
 
 export function ThemeProvider({
@@ -45,15 +49,16 @@ export function ThemeProvider({
   // 2. Active theme mode preference ("auto" | "light" | "dark")
   const [themeMode, setThemeModeState] = useState<ThemeMode>(() => {
     if (typeof window === "undefined") return fallbackMode;
-    const storedMode = localStorage.getItem(THEME_MODE_KEY);
-    if (storedMode === "auto" || storedMode === "light" || storedMode === "dark") {
-      return storedMode as ThemeMode;
-    }
-    // Check legacy key if someone had previously saved "light" or "dark"
-    const legacy = localStorage.getItem(THEME_LEGACY_KEY);
-    if (legacy === "light" || legacy === "dark") {
-      return legacy as ThemeMode;
-    }
+    try {
+      // Clean up old stale keys that locked visitors in dark mode
+      localStorage.removeItem("cycle-theme");
+      localStorage.removeItem("cycle-theme-mode");
+
+      const storedMode = localStorage.getItem(THEME_MODE_KEY);
+      if (storedMode === "auto" || storedMode === "light" || storedMode === "dark") {
+        return storedMode as ThemeMode;
+      }
+    } catch {}
     return fallbackMode; // Defaults to "auto" (Device mode)
   });
 
@@ -99,9 +104,10 @@ export function ThemeProvider({
     root.setAttribute("data-theme-mode", themeMode);
     root.style.colorScheme = theme;
 
-    // Persist user selection
-    localStorage.setItem(THEME_MODE_KEY, themeMode);
-    localStorage.setItem(THEME_LEGACY_KEY, theme);
+    // Persist user preference
+    try {
+      localStorage.setItem(THEME_MODE_KEY, themeMode);
+    } catch {}
   }, [theme, themeMode]);
 
   // 6. Set theme mode explicitly

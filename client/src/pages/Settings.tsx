@@ -994,7 +994,7 @@ export default function Settings() {
                     <div
                       onClick={() => {
                         setThemeMode("auto");
-                        updatePreferencesMutation.mutate({ theme: "dark" });
+                        updatePreferencesMutation.mutate({ theme: "auto" });
                         toast.success(isBn ? "স্বয়ংক্রিয় ডিভাইস মোড সক্রিয় হয়েছে" : "Auto / Device theme enabled");
                       }}
                       className={`cursor-pointer rounded-2xl border-2 p-5 transition-all duration-200 relative ${

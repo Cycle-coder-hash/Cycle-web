@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
@@ -8,6 +8,43 @@
     <link rel="icon" type="image/jpeg" href="/logo.jpg" />
     <link rel="apple-touch-icon" href="/logo.jpg" />
     <link rel="preload" as="image" href="/logo.jpg" fetchpriority="high" />
+
+    <!-- Synchronous device theme initialization (Zero flicker on light or dark phones) -->
+    <script>
+      (function () {
+        try {
+          // Clear any legacy keys that locked visitors in dark mode
+          localStorage.removeItem('cycle-theme');
+          localStorage.removeItem('cycle-theme-mode');
+
+          var mode = localStorage.getItem('cycle-device-theme-mode-v3');
+          var isDark = false;
+          if (mode === 'dark') {
+            isDark = true;
+          } else if (mode === 'light') {
+            isDark = false;
+          } else {
+            // Default "auto" (Device mode): directly check OS prefers-color-scheme
+            var mq = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+            isDark = !!(mq && mq.matches);
+          }
+
+          var root = document.documentElement;
+          if (isDark) {
+            root.classList.add('dark');
+            root.setAttribute('data-theme', 'dark');
+            root.setAttribute('data-theme-mode', mode || 'auto');
+            root.style.colorScheme = 'dark';
+          } else {
+            root.classList.remove('dark');
+            root.setAttribute('data-theme', 'light');
+            root.setAttribute('data-theme-mode', mode || 'auto');
+            root.style.colorScheme = 'light';
+          }
+        } catch (e) {}
+      })();
+    </script>
+
     <!-- Google Fonts: Inter (English) & Hind Siliguri (Bengali) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -18,7 +55,7 @@
         position: fixed;
         inset: 0;
         z-index: 99999999;
-        background-color: #030712;
+        background-color: #f8fafc;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -32,6 +69,9 @@
         transition: opacity 0.48s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.48s;
         user-select: none;
         -webkit-user-select: none;
+      }
+      html.dark #cycle-preloader {
+        background-color: #030712;
       }
       #cycle-preloader.cycle-preloader-fade-out {
         opacity: 0;
@@ -48,9 +88,17 @@
           circle 380px at 50% 50%,
           rgba(14, 165, 233, 0.12) 0%,
           rgba(6, 182, 212, 0.04) 45%,
-          rgba(3, 7, 18, 0) 75%
+          rgba(248, 250, 252, 0) 75%
         );
         animation: cycle-aura-pulse 2s ease-in-out infinite alternate;
+      }
+      html.dark .cycle-preloader-aura {
+        background: radial-gradient(
+          circle 380px at 50% 50%,
+          rgba(14, 165, 233, 0.12) 0%,
+          rgba(6, 182, 212, 0.04) 45%,
+          rgba(3, 7, 18, 0) 75%
+        );
       }
 
       /* Centered Brand Lockup (Logo + "CYCLE OF CHART" Text) */
@@ -104,6 +152,10 @@
         font-weight: 800;
         letter-spacing: 0.24em;
         text-transform: uppercase;
+        color: #0f172a;
+        text-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      }
+      html.dark .cycle-preloader-title {
         color: #ffffff;
         text-shadow:
           0 2px 12px rgba(0, 0, 0, 0.6),
