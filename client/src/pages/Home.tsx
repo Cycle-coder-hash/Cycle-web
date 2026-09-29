@@ -13,6 +13,7 @@ import {
   X,
   Zap,
   Layers,
+  Laptop,
   Sun,
   Moon,
   Compass,
@@ -315,7 +316,7 @@ function renderOwnerStatIcon(iconName?: string, className: string = "size-5") {
 
 export default function Home() {
   const { user } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, themeMode } = useTheme();
   const { t, language, isRTL } = useLanguage();
   const isBn = language === "bn";
   const [menuOpen, setMenuOpen] = useState(false);
@@ -536,14 +537,29 @@ export default function Home() {
           <TopNavLinks isBn={isBn} copy={copy} />
 
           <div className="flex items-center gap-2.5">
-            {/* Dark / Light Theme Toggle */}
+            {/* Dark / Light / Device Theme Toggle */}
             <button
               onClick={toggleTheme}
-              aria-label="Toggle Dark/Light Mode"
-              className="flex size-9 items-center justify-center rounded-full border border-slate-300/80 bg-slate-100 text-slate-700 transition hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-yellow-400 dark:hover:bg-slate-700"
-              title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              aria-label="Toggle Theme Mode"
+              className="relative flex size-9 items-center justify-center rounded-full border border-slate-300/80 bg-slate-100 text-slate-700 transition hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-yellow-400 dark:hover:bg-slate-700 cursor-pointer"
+              title={
+                themeMode === "auto"
+                  ? (isBn ? `ডিভাইস মোড (স্বয়ংক্রিয়: ${theme === "dark" ? "ডার্ক" : "লাইট"})` : `Device Mode (Auto: ${theme})`)
+                  : (theme === "dark" ? (isBn ? "ডার্ক মোড সক্রিয়" : "Dark Mode Active") : (isBn ? "লাইট মোড সক্রিয়" : "Light Mode Active"))
+              }
             >
-              {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+              {themeMode === "auto" ? (
+                <div className="relative flex items-center justify-center">
+                  <Laptop size={15} className="text-sky-500" />
+                  <span className="absolute -bottom-1 -right-1 flex size-2.5 items-center justify-center rounded-full bg-sky-500 text-[7px] font-black text-slate-950 shadow-xs">
+                    A
+                  </span>
+                </div>
+              ) : theme === "dark" ? (
+                <Sun size={17} />
+              ) : (
+                <Moon size={17} />
+              )}
             </button>
 
             {/* Language Switcher */}

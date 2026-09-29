@@ -12,6 +12,7 @@ import {
   Sparkles,
   ChevronRight,
   Sun,
+  Laptop,
   Moon,
   X,
   Lock,
@@ -325,7 +326,7 @@ function HeroSparkleCanvas({
 }
 
 export default function Leaderboard() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, themeMode } = useTheme();
   const [, setLocation] = useLocation();
   const { user, loading: isAuthLoading } = useAuth({ redirectOnUnauthenticated: true, redirectPath: "/login" });
 
@@ -629,13 +630,29 @@ export default function Leaderboard() {
 
           {/* Controls */}
           <div className="flex items-center gap-3">
-            {/* Theme Toggle */}
+            {/* Dark / Light / Device Theme Toggle */}
             <button
               onClick={toggleTheme}
-              aria-label="Toggle Dark/Light Mode"
-              className="flex size-9 items-center justify-center rounded-full border border-slate-300/80 bg-slate-100 text-slate-700 transition hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-yellow-400 dark:hover:bg-slate-700"
+              aria-label="Toggle Theme Mode"
+              className="relative flex size-9 items-center justify-center rounded-full border border-slate-300/80 bg-slate-100 text-slate-700 transition hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-yellow-400 dark:hover:bg-slate-700 cursor-pointer"
+              title={
+                themeMode === "auto"
+                  ? (isBn ? `ডিভাইস মোড (স্বয়ংক্রিয়: ${theme === "dark" ? "ডার্ক" : "লাইট"})` : `Device Mode (Auto: ${theme})`)
+                  : (theme === "dark" ? (isBn ? "ডার্ক মোড সক্রিয়" : "Dark Mode Active") : (isBn ? "লাইট মোড সক্রিয়" : "Light Mode Active"))
+              }
             >
-              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+              {themeMode === "auto" ? (
+                <div className="relative flex items-center justify-center">
+                  <Laptop size={15} className="text-sky-500" />
+                  <span className="absolute -bottom-1 -right-1 flex size-2.5 items-center justify-center rounded-full bg-sky-500 text-[7px] font-black text-slate-950 shadow-xs">
+                    A
+                  </span>
+                </div>
+              ) : theme === "dark" ? (
+                <Sun size={16} />
+              ) : (
+                <Moon size={16} />
+              )}
             </button>
 
             {/* Language Switcher */}

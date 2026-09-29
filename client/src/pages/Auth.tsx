@@ -12,6 +12,7 @@ import {
   Sparkles,
   User as UserIcon,
   Sun,
+  Laptop,
   Moon,
   CheckCircle2,
   AlertCircle,
@@ -57,7 +58,7 @@ type AuthMode = "login" | "register" | "forgot_password" | "reset_password" | "v
 export default function Auth() {
   const [location, setLocation] = useLocation();
   const { user } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, themeMode } = useTheme();
 
   // Mode
   const [mode, setMode] = useState<AuthMode>(() =>
@@ -795,13 +796,28 @@ export default function Auth() {
         </Link>
 
         <div className="flex items-center gap-3">
-          {/* Theme Switcher */}
+          {/* Theme Switcher with Auto/Device support */}
           <button
             onClick={toggleTheme}
-            className="flex size-9 items-center justify-center rounded-full border border-slate-300/80 bg-white/80 text-slate-700 backdrop-blur-md transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-yellow-400 dark:hover:bg-slate-700"
-            title={theme === "dark" ? "Light Mode" : "Dark Mode"}
+            className="relative flex size-9 items-center justify-center rounded-full border border-slate-300/80 bg-white/80 text-slate-700 backdrop-blur-md transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-yellow-400 dark:hover:bg-slate-700 cursor-pointer"
+            title={
+              themeMode === "auto"
+                ? (isBn ? `ডিভাইস মোড (স্বয়ংক্রিয়: ${theme === "dark" ? "ডার্ক" : "লাইট"})` : `Device Mode (Auto: ${theme})`)
+                : (theme === "dark" ? (isBn ? "ডার্ক মোড সক্রিয়" : "Dark Mode Active") : (isBn ? "লাইট মোড সক্রিয়" : "Light Mode Active"))
+            }
           >
-            {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
+            {themeMode === "auto" ? (
+              <div className="relative flex items-center justify-center">
+                <Laptop size={15} className="text-sky-500" />
+                <span className="absolute -bottom-1 -right-1 flex size-2.5 items-center justify-center rounded-full bg-sky-500 text-[7px] font-black text-slate-950 shadow-xs">
+                  A
+                </span>
+              </div>
+            ) : theme === "dark" ? (
+              <Sun size={17} />
+            ) : (
+              <Moon size={17} />
+            )}
           </button>
 
           {/* Language Switcher */}

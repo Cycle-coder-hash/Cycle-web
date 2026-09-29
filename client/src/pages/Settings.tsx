@@ -47,7 +47,7 @@ type SettingsTab = "account" | "appearance" | "region" | "security" | "support";
 export default function Settings() {
   const [location, setLocation] = useLocation();
   const { user, loading: authLoading, logout } = useAuth();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, themeMode, setThemeMode } = useTheme();
   const { t, language, currentOption, setCountryLanguage, allOptions, isRTL } = useLanguage();
   const isBn = language === "bn";
 
@@ -989,21 +989,56 @@ export default function Settings() {
                   </div>
 
                   {/* Theme Selection Cards */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Dark Mode Card */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Auto / Device Mode Card */}
                     <div
                       onClick={() => {
-                        setTheme("dark");
+                        setThemeMode("auto");
                         updatePreferencesMutation.mutate({ theme: "dark" });
-                        toast.success(isBn ? "ডার্ক মোড সক্রিয় করা হয়েছে" : "Dark theme enabled");
+                        toast.success(isBn ? "স্বয়ংক্রিয় ডিভাইস মোড সক্রিয় হয়েছে" : "Auto / Device theme enabled");
                       }}
                       className={`cursor-pointer rounded-2xl border-2 p-5 transition-all duration-200 relative ${
-                        theme === "dark"
+                        themeMode === "auto"
                           ? "border-sky-500 bg-sky-500/10 shadow-md ring-2 ring-sky-500/20"
                           : "border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700 bg-white dark:bg-slate-900/40"
                       }`}
                     >
-                      {theme === "dark" && (
+                      {themeMode === "auto" && (
+                        <div className="absolute top-4 right-4 rounded-full bg-sky-500 p-1 text-slate-950">
+                          <Check size={12} className="stroke-[3]" />
+                        </div>
+                      )}
+                      <div className="size-10 rounded-xl bg-sky-500/15 border border-sky-500/30 text-sky-600 dark:text-sky-400 flex items-center justify-center mb-4">
+                        <Laptop size={20} />
+                      </div>
+                      <div className="font-extrabold text-sm text-slate-900 dark:text-white">
+                        {isBn ? "স্বয়ংক্রিয় (ডিভাইস মোড)" : "Auto (Device Mode)"}
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                        {isBn
+                          ? `আপনার মোবাইল বা কম্পিউটারের সিস্টেম থিম অনুযায়ী অটোম্যাটিক পরিবর্তিত হবে (বর্তমানে ${theme === "dark" ? "ডার্ক" : "লাইট"} সক্রিয়)।`
+                          : `Automatically synchronizes with your OS dark/light mode preference (currently active: ${theme === "dark" ? "Dark" : "Light"}).`}
+                      </p>
+                      <div className="mt-4 flex items-center gap-1.5 text-[10px] font-mono font-bold text-sky-600 dark:text-sky-400">
+                        <Sparkles size={11} />
+                        <span>Adaptive System Sync</span>
+                      </div>
+                    </div>
+
+                    {/* Dark Mode Card */}
+                    <div
+                      onClick={() => {
+                        setThemeMode("dark");
+                        updatePreferencesMutation.mutate({ theme: "dark" });
+                        toast.success(isBn ? "ডার্ক মোড সক্রিয় করা হয়েছে" : "Dark theme enabled");
+                      }}
+                      className={`cursor-pointer rounded-2xl border-2 p-5 transition-all duration-200 relative ${
+                        themeMode === "dark"
+                          ? "border-sky-500 bg-sky-500/10 shadow-md ring-2 ring-sky-500/20"
+                          : "border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700 bg-white dark:bg-slate-900/40"
+                      }`}
+                    >
+                      {themeMode === "dark" && (
                         <div className="absolute top-4 right-4 rounded-full bg-sky-500 p-1 text-slate-950">
                           <Check size={12} className="stroke-[3]" />
                         </div>
@@ -1012,7 +1047,7 @@ export default function Settings() {
                         <Moon size={20} />
                       </div>
                       <div className="font-extrabold text-sm text-slate-900 dark:text-white">
-                        {isBn ? "ডার্ক মোড (ডিফল্ট)" : "Dark Navy Theme (Default)"}
+                        {isBn ? "ডার্ক মোড (ইনস্টিটিউশনাল)" : "Dark Navy Theme"}
                       </div>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                         {isBn
@@ -1020,7 +1055,7 @@ export default function Settings() {
                           : "Institutional deep blue-black interface built for low glare during night sessions and CRT markups."}
                       </p>
                       <div className="mt-4 flex items-center gap-1.5 text-[10px] font-mono font-bold text-sky-600 dark:text-sky-400">
-                        <Sparkles size={11} />
+                        <Moon size={11} />
                         <span>Institutional Standard</span>
                       </div>
                     </div>
@@ -1028,17 +1063,17 @@ export default function Settings() {
                     {/* Light Mode Card */}
                     <div
                       onClick={() => {
-                        setTheme("light");
+                        setThemeMode("light");
                         updatePreferencesMutation.mutate({ theme: "light" });
                         toast.success(isBn ? "লাইট মোড সক্রিয় করা হয়েছে" : "Light theme enabled");
                       }}
                       className={`cursor-pointer rounded-2xl border-2 p-5 transition-all duration-200 relative ${
-                        theme === "light"
+                        themeMode === "light"
                           ? "border-sky-500 bg-sky-500/10 shadow-md ring-2 ring-sky-500/20"
                           : "border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700 bg-white dark:bg-slate-900/40"
                       }`}
                     >
-                      {theme === "light" && (
+                      {themeMode === "light" && (
                         <div className="absolute top-4 right-4 rounded-full bg-sky-500 p-1 text-white">
                           <Check size={12} className="stroke-[3]" />
                         </div>
@@ -1055,7 +1090,7 @@ export default function Settings() {
                           : "High-contrast daylight theme for reading trading notes and curriculum articles."}
                       </p>
                       <div className="mt-4 flex items-center gap-1.5 text-[10px] font-mono font-bold text-slate-500">
-                        <Laptop size={11} />
+                        <Sun size={11} />
                         <span>High Ambient Light</span>
                       </div>
                     </div>

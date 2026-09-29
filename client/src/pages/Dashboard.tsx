@@ -24,6 +24,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   Layers,
+  Laptop,
   Loader2,
   Lock,
   LogOut,
@@ -111,7 +112,7 @@ const DAILY_DISCIPLINE_RULES = [
 
 export default function Dashboard() {
   const { user, loading, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, themeMode } = useTheme();
 
   // Active Tab
   const [tab, setTab] = useState<
@@ -957,34 +958,36 @@ export default function Dashboard() {
       {/* DASHBOARD SIDEBAR */}
       {/* ========================================================================= */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col justify-between border-r border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-[#070e1b] transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-50 flex h-full w-72 flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-[#070e1b] transition-transform duration-300 ease-in-out select-none ${
           isSidebarOpen ? "translate-x-0 shadow-2xl lg:shadow-none" : "-translate-x-full pointer-events-none"
         }`}
       >
-        <div>
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-3">
-              <BrandLogo size={42} className="shrink-0" />
-              <div>
-                <span className="text-xs font-extrabold tracking-[0.2em] text-[#0a192f] dark:text-white">
-                  CYCLE OF CHART
-                </span>
-                <div className="text-[10px] font-bold text-[#0284c7] dark:text-sky-400">TRADING REALITY PORTAL</div>
-              </div>
-            </Link>
-            <button
-              type="button"
-              onClick={toggleSidebar}
-              className="flex size-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition-colors cursor-pointer"
-              title={isBn ? "সাইডবার বন্ধ করুন" : "Close Sidebar"}
-              aria-label={isBn ? "সাইডবার বন্ধ করুন" : "Close Sidebar"}
-            >
-              <PanelLeftClose size={16} />
-            </button>
-          </div>
+        {/* Brand Header (Fixed at top) */}
+        <div className="shrink-0 flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100/80 dark:border-slate-800/60 bg-white dark:bg-[#070e1b]">
+          <Link href="/" className="flex items-center gap-3">
+            <BrandLogo size={38} className="shrink-0" />
+            <div>
+              <span className="text-xs font-extrabold tracking-[0.2em] text-[#0a192f] dark:text-white">
+                CYCLE OF CHART
+              </span>
+              <div className="text-[10px] font-bold text-[#0284c7] dark:text-sky-400">TRADING REALITY PORTAL</div>
+            </div>
+          </Link>
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            className="flex size-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition-colors cursor-pointer"
+            title={isBn ? "সাইডবার বন্ধ করুন" : "Close Sidebar"}
+            aria-label={isBn ? "সাইডবার বন্ধ করুন" : "Close Sidebar"}
+          >
+            <PanelLeftClose size={16} />
+          </button>
+        </div>
 
+        {/* Scrollable Middle Body */}
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-4 space-y-4 custom-scrollbar">
           {/* User Profile Snippet */}
-          <div className="mt-8 rounded-2xl border border-slate-100 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/60">
+          <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/60">
             <div className="flex items-center gap-3">
               {/* Circular Avatar / Profile Photo Area */}
               <div className="relative shrink-0 group">
@@ -1111,7 +1114,7 @@ export default function Dashboard() {
           </div>
 
           {/* Navigation Links */}
-          <nav className="mt-6 space-y-1.5">
+          <nav className="space-y-1.5">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = tab === item.id;
@@ -1187,17 +1190,32 @@ export default function Dashboard() {
           </nav>
         </div>
 
-        {/* Sidebar Footer Controls */}
-        <div className="border-t border-slate-200/80 pt-4 dark:border-slate-800 space-y-3">
-
+        {/* Sidebar Footer Controls (Fixed at bottom) */}
+        <div className="shrink-0 border-t border-slate-200/80 px-5 py-3.5 dark:border-slate-800 bg-white/95 dark:bg-[#070e1b]/95 backdrop-blur-xs">
           <div className="flex items-center justify-between">
-            {/* Theme Toggle */}
+            {/* Theme Toggle Button with Auto / Device Mode support */}
             <button
               onClick={toggleTheme}
-              className="flex size-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-slate-800 dark:text-yellow-400 dark:hover:bg-slate-800"
-              title="Toggle theme"
+              className="relative flex size-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-slate-800 dark:text-yellow-400 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              title={
+                themeMode === "auto"
+                  ? (isBn ? `ডিভাইস মোড (স্বয়ংক্রিয়: ${theme === "dark" ? "ডার্ক" : "লাইট"})` : `Device Mode (Auto: ${theme})`)
+                  : (theme === "dark" ? (isBn ? "ডার্ক মোড সক্রিয়" : "Dark Mode Active") : (isBn ? "লাইট মোড সক্রিয়" : "Light Mode Active"))
+              }
+              aria-label="Toggle theme mode"
             >
-              {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+              {themeMode === "auto" ? (
+                <div className="relative flex items-center justify-center">
+                  <Laptop size={16} className="text-sky-500" />
+                  <span className="absolute -bottom-1 -right-1.5 flex h-3 min-w-3 items-center justify-center rounded-full bg-sky-500 px-0.5 text-[8px] font-black text-slate-950 shadow-xs">
+                    A
+                  </span>
+                </div>
+              ) : theme === "dark" ? (
+                <Sun size={16} />
+              ) : (
+                <Moon size={16} />
+              )}
             </button>
 
             {/* Language Switcher */}
@@ -1206,8 +1224,9 @@ export default function Dashboard() {
             {/* Logout */}
             <button
               onClick={handleLogout}
-              className="flex size-9 items-center justify-center rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900/50 dark:hover:bg-rose-950/30"
-              title="Sign out"
+              className="flex size-9 items-center justify-center rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-900/50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+              title={isBn ? "লগআউট" : "Sign out"}
+              aria-label={isBn ? "লগআউট" : "Sign out"}
             >
               <LogOut size={16} />
             </button>
