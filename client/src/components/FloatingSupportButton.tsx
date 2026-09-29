@@ -4,8 +4,15 @@ import { MessageSquare } from "lucide-react";
 export function FloatingSupportButton() {
   const [location] = useLocation();
 
-  // Hide on /support page itself to avoid redundant button
-  if (location === "/support") {
+  // Hide inside user dashboard and on dedicated /support page
+  // Preserves button on all other pages (Homepage, Store, Checkout, Leaderboard, etc.)
+  const isDashboardRoute =
+    location === "/dashboard" ||
+    location.startsWith("/dashboard/") ||
+    location === "/discipline" ||
+    location === "/calculator";
+
+  if (location === "/support" || isDashboardRoute) {
     return null;
   }
 
