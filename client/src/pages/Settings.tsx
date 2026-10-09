@@ -6,6 +6,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useUserPreferences, SUPPORTED_TIMEZONES, SUPPORTED_CURRENCIES } from "@/contexts/UserPreferencesContext";
 import { BrandLogo } from "@/components/BrandLogo";
+import { HeaderBrandWordmark } from "@/components/HeaderBrandWordmark";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -587,9 +588,7 @@ export default function Settings() {
           <Link href="/" className="flex items-center gap-2.5">
             <BrandLogo size={32} />
             <div>
-              <span className="text-xs font-black tracking-widest text-slate-900 dark:text-white uppercase">
-                Cycle of Chart
-              </span>
+              <HeaderBrandWordmark className="text-xs" />
               <p className="text-[10px] font-bold text-sky-600 dark:text-sky-400 tracking-wider">
                 {isBn ? "অ্যাকাউন্ট সেটিংস" : "INSTITUTIONAL SETTINGS"}
               </p>

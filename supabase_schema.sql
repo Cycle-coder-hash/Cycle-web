@@ -320,6 +320,67 @@ CREATE INDEX IF NOT EXISTS idx_ctp_user ON "course_telegram_popup_events"("userI
 CREATE INDEX IF NOT EXISTS idx_ctp_order ON "course_telegram_popup_events"("orderId");
 CREATE UNIQUE INDEX IF NOT EXISTS idx_ctp_user_order ON "course_telegram_popup_events"("userId", "orderId");
 
+-- 13. TRADER JOURNAL BOOKS
+CREATE TABLE IF NOT EXISTS "journalBooks" (
+    id VARCHAR(120) PRIMARY KEY,
+    "userId" INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    currency VARCHAR(16) DEFAULT '$' NOT NULL,
+    "startingBalance" NUMERIC(15, 2) DEFAULT 0 NOT NULL,
+    "isDefault" BOOLEAN DEFAULT FALSE NOT NULL,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_journal_books_user ON "journalBooks"("userId");
+
+-- 14. TRADER TRADES
+CREATE TABLE IF NOT EXISTS "traderTrades" (
+    id VARCHAR(120) PRIMARY KEY,
+    "userId" INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    "journalBookId" VARCHAR(120) DEFAULT 'default' NOT NULL,
+    "tradeNumber" INT DEFAULT 1 NOT NULL,
+    date VARCHAR(32) NOT NULL,
+    "entryTime" VARCHAR(32),
+    pair VARCHAR(32) NOT NULL,
+    timeframe VARCHAR(32) DEFAULT '15M' NOT NULL,
+    direction VARCHAR(16) DEFAULT 'Buy' NOT NULL,
+    "entryPrice" NUMERIC(15, 5) DEFAULT 0 NOT NULL,
+    "stopLoss" NUMERIC(15, 5) DEFAULT 0 NOT NULL,
+    "takeProfit" NUMERIC(15, 5) DEFAULT 0 NOT NULL,
+    "exitPrice" NUMERIC(15, 5) DEFAULT 0 NOT NULL,
+    "followedRules" VARCHAR(16) DEFAULT 'Yes' NOT NULL,
+    pnl NUMERIC(15, 2) DEFAULT 0 NOT NULL,
+    "riskReward" VARCHAR(32) DEFAULT '1:2',
+    pips NUMERIC(10, 2) DEFAULT 0,
+    "lotSize" NUMERIC(10, 2) DEFAULT 1,
+    "tradeRun" VARCHAR(32),
+    note TEXT,
+    "tradeRank" VARCHAR(16) DEFAULT 'A',
+    learning TEXT,
+    "mediaUrl" TEXT,
+    "mediaType" VARCHAR(32),
+    screenshots JSONB DEFAULT '[]'::jsonb,
+    "videoUrl" TEXT,
+    "videoDurationSeconds" INT,
+    "customProperties" JSONB,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_trader_trades_user ON "traderTrades"("userId");
+CREATE INDEX IF NOT EXISTS idx_trader_trades_book ON "traderTrades"("journalBookId");
+
+-- 15. USER NOTEBOOKS (VAULT)
+CREATE TABLE IF NOT EXISTS "userNotebooks" (
+    "userId" INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    data JSONB NOT NULL,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_notebooks_user ON "userNotebooks"("userId");
+
 -- ==============================================================================
 -- SEED INITIAL BUNDLES & PAYMENT NUMBERS
 -- ==============================================================================

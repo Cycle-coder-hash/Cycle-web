@@ -1,0 +1,154 @@
+PROMPT #200 [2026-09-25T03:33:58Z]
+<USER_REQUEST>
+Inspect the existing “Owner Profile & Founder CMS” in the Admin Panel and FIX the newly added dual-profile section shown on the website.
+
+CURRENT ISSUE:
+The website now displays TWO profiles side-by-side:
+1. Founder / Owner profile on the left
+2. Cycle of Chart profile on the right
+
+However, the existing Admin → Owner Profile & Founder CMS does not provide controls to manage both profiles.
+
+IMPLEMENT THIS PROPERLY:
+
+1. Update the existing Admin → Owner Profile & Founder CMS so it supports TWO independent profiles.
+
+PROFILE 1 — FOUNDER / OWNER
+- Profile photo
+- Profile name
+- Role / designation
+- Description / bio
+- Core methodology text if this field exists
+- Social/contact links if those existing icons are connected to editable data
+
+PROFILE 2 — CYCLE OF CHART / BRAND PROFILE
+- Profile/logo image
+- Profile name
+- Role / designation
+- Description / bio
+- Core methodology text if applicable
+- Social/contact links if those existing icons are connected to editable data
+
+2. IMPORTANT:
+Both profiles must be completely independent.
+
+Admin must be able to change:
+- Profile 1 name without changing Profile 2
+- Profile 2 name without changing Profile 1
+- Profile 1 image without changing Profile 2
+- Profile 2 image without changing Profile 1
+- Profile 1 description without changing Profile 2
+- Profile 2 description without changing Profile 1
+
+3. The two profile names MUST be editable from Admin CMS.
+
+For example:
+
+Founder / Owner Profile
+Name: [editable field]
+
+Cycle of Chart Profile
+Name: [editable field]
+
+If the admin changes either name and saves:
+→ the website must immediately use the newly saved value.
+
+Do NOT hardcode these names in the frontend.
+
+4. Use the EXISTING Owner Profile & Founder CMS and existing database architecture.
+
+Do NOT create a separate admin system.
+
+Do NOT create duplicate CMS systems.
+
+Inspect the existing implementation first and extend it cleanly.
+
+5. DATABASE REQUIREMENT:
+Store both profiles as real persistent CMS data associated with the existing admin/site settings system.
+
+Do not rely on:
+- frontend constants
+- hardcoded text
+- localStorage
+- temporary state
+
+6. WEBSITE:
+The existing two-profile design shown in the screenshot must remain visually unchanged.
+
+Do NOT change:
+- card layout
+- positions
+- spacing
+- sizing
+- colors
+- fonts
+- borders
+- glow effects
+- profile image styling
+- icons
+- responsive behavior
+- animations
+- background
+- unrelated text
+- unrelated sections
+
+Only connect the existing two profiles to the new CMS controls.
+
+7. ADMIN UX:
+Inside the existing Owner Profile & Founder CMS, clearly separate the two profiles, for example:
+
+FOUNDER / OWNER PROFILE
+[Image]
+[Name]
+[Role]
+[Description]
+[Methodology]
+[Social Links]
+[Save]
+
+CYCLE OF CHART PROFILE
+[Logo/Image]
+[Name]
+[Role]
+[Description]
+[Methodology]
+[Social Links]
+[Save]
+
+Use the existing CMS design style.
+
+8. IMPORTANT:
+If the current CMS already has some of these fields, REUSE them instead of creating duplicate fields.
+
+If the current website already stores the Founder profile data, migrate/connect that existing data into Profile 1 rather than losing it.
+
+For the newly added Profile 2, create the necessary persistent CMS fields.
+
+9. After saving from Admin:
+Admin CMS
+→ Save
+→ Database updated
+→ Website reads updated CMS data
+→ Both profile sections display the correct saved values.
+
+10. TEST:
+- Change Founder name → only Founder name changes.
+- Change Cycle of Chart name → only Cycle of Chart name changes.
+- Change Founder image → only Founder image changes.
+- Change Cycle of Chart image → only Cycle of Chart image changes.
+- Refresh website → values remain.
+- Logout/login → values remain.
+- Test desktop and mobile.
+- Verify existing admin CMS functionality still works.
+
+STRICT NO-REBUILD RULE:
+Do not rebuild the website.
+Do not redesign the profile section.
+Do not replace the existing CMS.
+Do not modify unrelated features.
+
+ONLY FIX AND EXTEND THE EXISTING OWNER PROFILE & FOUNDER CMS SO BOTH VISIBLE PROFILES CAN BE FULLY CONTROLLED AND EDITED FROM ADMIN.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-25T09:03:58+05:30.
+</ADDITIONAL_METADATA>

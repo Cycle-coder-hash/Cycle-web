@@ -1,0 +1,68 @@
+PROMPT #221 [2026-09-28T02:41:16Z]
+<USER_REQUEST>
+PROJECT: Cycle of Chart — Trading Reality (existing production website)
+SCOPE: The site header wordmark only, the text "CYCLE OF CHART" that sits
+to the right of the round logo (appears on every page's navbar).
+
+CONTEXT:
+This is an EXISTING codebase. Do not rebuild the header. First inspect the
+current Navbar/Header component and how the "CYCLE OF CHART" text (and the
+small sub-label under it, e.g. "GLOBAL LEADERBOARD" on the leaderboard
+page) is currently rendered. Reuse the existing styling approach
+(Tailwind/CSS modules/etc.). Do not introduce a new animation library.
+
+TASK — Outline text with cyan fill sweep:
+Restyle the "CYCLE OF CHART" text as follows:
+
+a) Base state: the letters are outline-only. Transparent fill with a thin
+   (~1px) semi-transparent white stroke (-webkit-text-stroke:
+   1px rgba(255,255,255,.55)). Keep the current font family, weight
+   (heavy/black), and wide letter-spacing (~0.2em).
+
+b) Fill sweep: overlay an identical copy of the text (same font, size,
+   spacing, no stroke) in cyan (#22d3ee) with a soft cyan text-shadow
+   glow (~0 0 14px rgba(34,211,238,.6)). Reveal it from left to right by
+   animating its width from 0 to 100% with overflow:hidden and
+   white-space:nowrap, so the cyan color appears to fill the letters.
+
+c) Timing: one full loop is ~5s, ease-in-out:
+   0% width 0, then filled by ~45%, stays fully filled until ~70%, then
+   empties back to 0 by 100%, and repeats forever.
+
+d) Implementation notes:
+   - Use a pseudo-element (::after with content set to the same text) or
+     a duplicated absolutely-positioned span with aria-hidden="true", so
+     screen readers read the text only once.
+   - The overlay must line up exactly with the base text (same
+     font-size, letter-spacing, line-height, position: left 0 / top 0).
+   - Keep the existing sub-label under/near the wordmark (e.g.
+     "GLOBAL LEADERBOARD", "TRADING REALITY") unchanged in text, color
+     and position.
+
+CONSTRAINTS:
+- Do NOT change the logo image, navigation links, language switcher,
+  theme toggle, Dashboard button, or any layout/spacing of the header.
+- The header height and the wordmark's width must not change (no layout
+  shift when the animation runs).
+- Desktop must look identical apart from the new wordmark style.
+- On mobile, reduce the font size proportionally so the header still fits
+  on one line (use the same breakpoint the header already uses).
+- Respect prefers-reduced-motion: no animation, show the text fully
+  filled in cyan.
+- If the site has a light theme (there is a sun/theme toggle), make sure
+  the outline stroke and the cyan fill still have enough contrast on the
+  light background; adjust the stroke color for light mode only.
+- Animate only width/clip on the overlay text, nothing that triggers
+  layout of the rest of the header.
+
+VERIFY in the real browser (not just compile): check desktop and mobile
+widths, both dark and light themes, confirm no layout shift, and confirm
+the same wordmark appears consistently on the home page, leaderboard page
+and other pages that use the shared header.
+
+DELIVERABLE:
+Report which files were changed and confirm the checks above.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-28T08:11:16+05:30.
+</ADDITIONAL_METADATA>

@@ -1,0 +1,285 @@
+PROMPT #204 [2026-09-25T05:06:59Z]
+<USER_REQUEST>
+# MASTER IMPLEMENTATION PROMPT — Admin Panel: User Management
+**Target system:** Cycle of Chart / Trading Reality (existing Next.js + TypeScript + PostgreSQL/Prisma production app)
+**For:** Antigravity (or any coding agent extending the existing codebase)
+
+---
+
+## 0. Role & Objective
+
+You are extending an **existing, live production application** — not building a new one.
+
+**Goal:** Add a real, database-backed **User Management** section to the existing Admin Panel so the Admin can:
+- See every registered user in one place, with live-synced profile data.
+- Independently turn **Course**, **Pro**, and **Premium** access ON/OFF per user.
+- Do this safely alongside the existing automatic payment/subscription system — without breaking it.
+
+**Primary use case:** A customer can't pay via bKash/Nagad/Rocket and pays the Admin through an agreed alternative method. The Admin opens User Management, finds the user, and manually grants the correct access — which then behaves *exactly* like normally-purchased access, invisibly to the user.
+
+---
+
+## 1. Non-Negotiable Constraints
+
+**Do NOT:**
+- Rebuild the website, or replace: authentication, Google/Gmail login, the Store, payment processing, the Pro/Premium subscription architecture, the Course system, the Admin Panel, the Leaderboard, or any existing database/models.
+- Create a second user database, fake/demo users, or mock access data.
+- Duplicate existing profile/email/username fields — the existing profile/auth records are the single source of truth.
+- Generate the display User ID randomly on the frontend, or let two users' data mix.
+- Merge or redefine Pro vs Premium features — their existing feature differences must stay exactly as-is.
+- Couple Course Access to Pro/Premium logic (unless the existing Course system *already* does this).
+- Auto-disable Pro when Premium is turned ON (or vice versa) — they are independent switches and can both be ON at once.
+- Delete, reset, or consume days from an automatic subscription when an Admin override is applied or removed.
+- Expose any of these words/concepts to normal users, anywhere in the Dashboard/product UI: *"Manual Access," "Admin Granted," "Payment Bypass," "Admin Override," "Special Access,"* or similar.
+- Expose the internal audit/history log to normal users, or fabricate audit records.
+- Solve entitlement/effective-access logic with frontend-only booleans or localStorage.
+- Let unauthorized users reach Admin APIs via URL manipulation, frontend state, cookies, or hidden UI.
+- Touch unrelated Admin Panel navigation items.
+
+**Approach:** `INSPECT → REUSE → EXTEND → INTEGRATE → TEST`
+
+---
+
+## 2. Before You Start: Inspect the Existing Codebase
+
+Before writing any code, inspect and understand:
+- Auth system (incl. Google/Gmail signup/login flow and stored provider info)
+- User profile/settings model (name, username, photo)
+- Existing Dashboard, Store, Course system
+- Existing Pro/Premium subscription/payment models
+- Existing Admin Panel structure and UI components/design system
+
+Reuse these models wherever possible. Only add the minimum new fields/tables needed (see §15).
+
+---
+
+## 3. Feature Placement
+
+Add **"User Management"** as a new item in the existing Admin Panel nav, styled to match the current Admin UI exactly (no redesign of the panel):
+
+```
+ADMIN PANEL
+├── Dashboard
+├── Orders / Payments
+├── User Management   ← NEW
+├── Owner Profile & Founder CMS
+├── Support
+├── Leaderboard
+└── (other existing sections, unchanged)
+```
+
+---
+
+## 4. User List View
+
+A searchable/filterable table of all real users, each row showing:
+
+| Field | Source |
+|---|---|
+| User ID (`USER-0001`, stable, sequential, backend-assigned) | New stable display ID mapped to the existing immutable DB user ID |
+| Profile Photo | Existing profile/auth record (existing default-avatar fallback if none) |
+| Full Name | Existing profile record |
+| Gmail / Email | Existing auth record (real authenticated email — never typed/hardcoded) |
+| Username | Existing profile record |
+| Account Status | New/existing status field |
+| Course / Pro / Premium Access | Computed effective access (see §8) |
+
+Every user who successfully signs up/logs in must appear automatically — no manual creation by Admin. If the user later changes their name, username, or photo from their own Settings, the Admin view must reflect it automatically (no stale duplicate copy).
+
+---
+
+## 5. User Detail View
+
+Clicking a user opens:
+
+```
+USER-0001
+[Profile Photo]
+Full Name:      M Nijam Uddin
+Gmail:          example@gmail.com
+Username:       nijam
+Signup Date:    24 Sep 2026   (real account-creation timestamp)
+Last Login:     24 Sep 2026   (real login record — add persistent tracking if not already stored)
+Account Status: ACTIVE
+```
+
+---
+
+## 6. Account Status
+
+- Values: `Active` / `Suspended` / `Banned`. Default on account creation: `Active`.
+- Use the existing status field if one already exists; otherwise add a proper DB-backed field.
+- **Fully separate** from Course/Pro/Premium access, payment status, and subscription status. Changing status must never delete a user's subscription, history, or data.
+- The existing Global Leaderboard keeps its current "must be Active" requirement.
+
+---
+
+## 7. Access Management — Course / Pro / Premium
+
+Three **independent** ON/OFF controls per user, each with its own Status / Access Type / Start Date / Expiry-or-Lifetime / Save:
+
+```
+COURSE ACCESS    [ ON/OFF ]
+PRO ACCESS       [ ON/OFF ]
+PREMIUM ACCESS   [ ON/OFF ]
+```
+
+Rules:
+- Course Access is fully independent of Pro/Premium (unless the existing Course system already ties them together — preserve that if so).
+- Pro and Premium can both be ON simultaneously and must both display as ON — never silently turn one off for the other. Where their features overlap, the *effective* feature set uses Premium-level capabilities, but Pro stays visibly ON.
+- Existing feature definitions stay untouched, e.g. (as currently defined — do not rewrite):
+  - **Pro** — ৳599/month · up to 5 Journal Books · unlimited journal entries · 30 journal/trade videos per cycle · Community · Workout
+  - **Premium** — ৳999/month · unlimited Journal Books · unlimited journal/trade videos · unlimited Notebook · Community · Workout · Mentor Support · Owner personal chat
+
+---
+
+## 8. Entitlement Architecture (the core logic)
+
+Compute **effective access** server-side from three independent layers — never from a single frontend boolean:
+
+| Layer | What it is |
+|---|---|
+| **A. Automatic Entitlement** | Comes from the existing payment/subscription system, untouched by this feature |
+| **B. Manual Admin Entitlement** | An access grant the Admin created directly (with its own start/expiry/lifetime) |
+| **C. Admin Override/Restriction** | An explicit Admin "OFF" that blocks access regardless of A or B |
+
+**Resolution rules:**
+
+| Automatic (A) | Manual (B) | Override (C) | Effective Access |
+|---|---|---|---|
+| Active | — | — | **ON** |
+| Active | — | OFF | **BLOCKED** (subscription itself is preserved, untouched, days not consumed) |
+| Active (10 days left) | — | OFF → later cleared | **ON**, resumes with the same 10 days remaining |
+| None | Active until expiry | — | **ON** until manual expiry |
+| None | Active, Lifetime | — | **ON** until Admin manually disables it |
+
+- Manual access always runs *alongside* automatic entitlement, never replacing it.
+- When a manual grant's expiry date/time passes, it deactivates automatically; the Admin can re-enable it later.
+- Admin can change ON/OFF, Start Date, Expiry Date, or switch to Lifetime at any time.
+
+**Admin-only detail view example** (never shown to the end user):
+
+```
+PREMIUM ACCESS
+Effective Access:  ON
+Automatic:         None
+Manual:            Active — Start 24 Sep 2026 · Expiry: LIFETIME
+Admin Override:    None
+```
+
+---
+
+## 9. Visibility Rules
+
+- End users only ever see the normal product experience — e.g. a manually-granted Premium user sees plain **"Premium"**, identical to an automatically-paying subscriber. No "manually activated," "admin granted," or similar text anywhere in the Dashboard/product UI.
+- The Automatic / Manual / Override breakdown, and the audit history, are visible **only inside the Admin Panel**.
+
+---
+
+## 10. Search & Filters
+
+- **Search** by User ID, Full Name, Gmail/Email, or Username — against real DB records.
+- **Filters:** Account Status (All/Active/Suspended/Banned), Course Access (All/ON/OFF), Pro Access (All/ON/OFF), Premium Access (All/ON/OFF). Optionally allow filtering by Automatic/Manual/Effective source without cluttering the UI.
+
+---
+
+## 11. Audit History
+
+On every Admin-initiated access change, log (Admin/backend-only, never user-facing, no fake entries):
+
+> User · Access type · Previous state · New state · Start date · Expiry date · Lifetime/temporary flag · Admin who made the change · Timestamp
+
+---
+
+## 12. Consistency & Real-Time Requirements
+
+On Save: DB updates → effective access recalculates → the user's very next authenticated request/page load reflects it. Use realtime channels if the existing architecture supports them; otherwise ensure correctness on next request — never rely solely on browser refresh or localStorage.
+
+---
+
+## 13. Security & Authorization
+
+- Only authorized Admin accounts can view/edit User Management, change Account Status, change Course/Pro/Premium access, or view audit history.
+- Every Admin action must be authorized **server-side**. Never trust frontend state, localStorage, cookies, URL params, hidden UI, or client-side access flags.
+- Strict per-user data isolation — verify User A's name/email/username/photo/access can never appear under User B.
+
+---
+
+## 14. Suggested Minimal Data Model *(illustrative — adapt to what you find during inspection; do not duplicate existing fields)*
+
+```prisma
+// Extends the existing User model — don't duplicate profile/email/username
+model User {
+  // ...existing fields (id, email, name, username, image, createdAt, etc.)
+  displayId      String?        @unique   // "USER-0001", assigned once, backend-generated
+  accountStatus  AccountStatus  @default(ACTIVE)
+  lastLoginAt    DateTime?
+  accessGrants   AccessGrant[]
+  accessLogs     AccessAuditLog[]
+}
+
+enum AccountStatus { ACTIVE SUSPENDED BANNED }
+enum AccessType    { COURSE PRO PREMIUM }
+enum GrantSource   { MANUAL OVERRIDE }   // automatic entitlement stays in the existing subscription model
+
+model AccessGrant {
+  id         String      @id @default(cuid())
+  userId     String
+  user       User        @relation(fields: [userId], references: [id])
+  type       AccessType
+  source     GrantSource            // MANUAL grant vs explicit OFF override
+  isActive   Boolean     @default(true)
+  startDate  DateTime?
+  expiryDate DateTime?              // null + isLifetime = lifetime
+  isLifetime Boolean     @default(false)
+}
+
+model AccessAuditLog {
+  id           String     @id @default(cuid())
+  userId       String
+  user         User       @relation(fields: [userId], references: [id])
+  type         AccessType
+  previousState String
+  newState     String
+  startDate    DateTime?
+  expiryDate   DateTime?
+  isLifetime   Boolean
+  adminId      String
+  createdAt    DateTime   @default(now())
+}
+```
+
+Effective access for each `AccessType` = compute in a single server-side function combining the existing automatic-subscription check + any active `MANUAL` grant + any active `OVERRIDE` (override wins if present, per §8's table).
+
+---
+
+## 15. Acceptance Test Checklist
+
+- [ ] New Gmail/Google signup appears automatically in User Management
+- [ ] Name / username / photo changes in Settings reflect in Admin view without a manual sync step
+- [ ] Search works by User ID, email, username, and name
+- [ ] Each filter (status, Course, Pro, Premium) returns correct results
+- [ ] Admin toggling Course/Pro/Premium ON or OFF takes effect immediately on next request
+- [ ] Automatic Pro subscription + Admin sets Pro OFF → Pro is blocked, subscription record untouched
+- [ ] Admin later clears that OFF override → Pro resumes with the original remaining days (not reset)
+- [ ] Manual Premium grant → user sees plain "Premium," no manual-access indicator anywhere
+- [ ] Manual grant reaches expiry → auto-deactivates; Admin can re-enable
+- [ ] Lifetime grant stays active until Admin disables it
+- [ ] Pro and Premium both manually ON simultaneously → both display ON; overlapping features use Premium tier
+- [ ] Course ON/OFF has zero effect on Pro/Premium and vice versa
+- [ ] Access persists correctly across logout/login, device change, and refresh
+- [ ] Frontend/localStorage manipulation cannot unlock restricted access
+- [ ] Non-admin users get denied when attempting to hit Admin APIs directly
+- [ ] Existing bKash/Nagad/Rocket payment flow, Store, Course system, and Leaderboard all continue working unchanged
+
+---
+
+## 16. Definition of Done
+
+`REAL USER DATA + REAL DATABASE + REAL ADMIN AUTHORIZATION + REAL ACCESS CONTROL + REAL MANUAL OVERRIDE + REAL EXPIRY/LIFETIME HANDLING + REAL AUTOMATIC/MANUAL RESOLUTION + REAL SEARCH/FILTER + REAL PROFILE SYNC + REAL AUDIT HISTORY`
+
+— fully integrated into the existing Cycle of Chart / Trading Reality app, with no rebuild and no unrelated changes.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-25T10:36:59+05:30.
+</ADDITIONAL_METADATA>

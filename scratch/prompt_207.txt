@@ -1,0 +1,79 @@
+PROMPT #207 [2026-09-25T10:28:10Z]
+<USER_REQUEST>
+# MASTER IMPLEMENTATION PROMPT — Admin Panel: Collapsible Sidebar Toggle
+**Target system:** Cycle of Chart Admin Operations Console (cycleofchartadmin.vercel.app — existing Next.js + TypeScript app)
+**For:** Antigravity (or any coding agent extending the existing codebase)
+
+---
+
+## 0. Objective
+
+Add an **open/close (collapse/expand) toggle** for the existing Admin Panel's left sidebar, so the Admin can minimize it for more workspace and bring it back whenever needed — with zero change to the sidebar's existing items, styling, or the rest of the panel.
+
+---
+
+## 1. Current State (confirmed via screenshot)
+
+The left sidebar is always fully expanded, showing:
+- Logo/brand block: "CYCLE OF CHART — ADMIN OPERATIONS"
+- Nav items: Executive KPI, Payment Queue, User Management, Students & Access, Free eBooks & PDFs, Support Messages (with an unread-count badge), Owner Profile CMS, Gateways & Notice, Leaderboard Matrix, Audit Trail
+- Footer block: "Trading Reality v2.0 — Dual-Mode Security Enabled"
+
+There is currently **no way to collapse or hide it** — it's fixed-width at all times.
+
+---
+
+## 2. Non-Negotiable Constraints
+
+**Do NOT:**
+- Change any nav item, route, icon, order, label, or badge logic.
+- Change the main content area's design, cards, or functionality — only its width/position should react to the sidebar state.
+- Rebuild the sidebar or admin layout from scratch — extend the existing sidebar component.
+- Change colors, typography, spacing, or styling of the expanded sidebar from how it looks today.
+
+---
+
+## 3. Feature Spec
+
+**Toggle control:**
+- Add a small icon button (e.g. a chevron or hamburger icon) to collapse/expand the sidebar — placed in a natural spot such as next to the logo block or at the sidebar's edge, matching the existing UI style.
+
+**Collapsed state:**
+- Sidebar shrinks to a slim icon-only rail — icons remain visible and clickable, labels hide.
+- Hovering an icon shows its label as a tooltip.
+- The logo block shrinks to just the monogram ("C").
+- The footer text ("Trading Reality v2.0...") hides or shrinks gracefully — no overflow or clipping.
+- The unread-count badge (e.g. on Support Messages) stays visible on the icon (e.g. as a small dot or number overlapping the icon corner).
+- The current active page's icon stays visibly highlighted, same as today's active-item styling.
+
+**Expanded state:**
+- Identical to the current design — full labels, full logo, full footer text.
+
+**Behavior:**
+- Smooth animated width transition between states (no jarring snap or content flash).
+- The main content area reflows to use the freed horizontal space when the sidebar is collapsed — no leftover empty margin.
+- The chosen state (collapsed or expanded) persists across page navigation and refresh within the admin panel (e.g. via localStorage or a stored admin preference) — the Admin shouldn't have to re-collapse it every time they load a page.
+
+---
+
+## 4. Acceptance Test Checklist
+
+- [ ] Toggle button is visible and clicking it collapses the sidebar to an icon-only rail
+- [ ] Clicking the toggle again expands it back to the full sidebar, identical to today's design
+- [ ] Every nav item is still clickable and routes correctly in both collapsed and expanded states
+- [ ] Active-page highlighting works correctly in both states
+- [ ] The Support Messages unread badge remains visible when collapsed
+- [ ] Main content area resizes/reflows correctly when the sidebar collapses or expands — no dead space, no overlap
+- [ ] Transition is smooth, with no layout flash or content jump
+- [ ] Collapsed/expanded state is remembered across refresh and page navigation
+- [ ] No visual or functional regression to the sidebar's current (expanded) appearance
+
+---
+
+## 5. Definition of Done
+
+The Admin can toggle the sidebar between a full labeled view and a compact icon-only rail at any time, with the choice persisting across sessions, and with zero change to the sidebar's existing items or the rest of the Admin Panel.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-25T15:58:10+05:30.
+</ADDITIONAL_METADATA>

@@ -50,6 +50,7 @@ import { startLogin } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/BrandLogo";
+import { HeaderBrandWordmark } from "@/components/HeaderBrandWordmark";
 import { HeroCandle3D } from "@/components/HeroCandle3D";
 import { AnimatedCardBorder } from "@/components/AnimatedCardBorder";
 import { AnimatedRgbBorder } from "@/components/AnimatedRgbBorder";
@@ -528,9 +529,7 @@ export default function Home() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3 lg:px-8">
           <Link href="/" className="flex items-center gap-3">
             <BrandLogo size={42} className="shrink-0" />
-            <span className="text-sm font-extrabold tracking-[0.2em] text-[#0a192f] dark:text-white">
-              CYCLE OF CHART
-            </span>
+            <HeaderBrandWordmark className="text-xs sm:text-sm" />
           </Link>
 
           <TopNavLinks isBn={isBn} copy={copy} />
@@ -1370,6 +1369,10 @@ export default function Home() {
                         <CheckCircle2 size={16} className="text-amber-500 shrink-0" />
                         <span>Workout Routine & Community Chat</span>
                       </li>
+                      <li className="flex items-center gap-2.5">
+                        <CheckCircle2 size={16} className="text-amber-500 shrink-0" />
+                        <span><strong>Global Leaderboard Eligible</strong> (verified)</span>
+                      </li>
                       <li className="flex items-center gap-2.5 font-bold text-amber-500">
                         <Crown size={15} className="shrink-0" />
                         <span><strong>Direct 1-on-1 Mentor Support</strong></span>
@@ -1454,7 +1457,7 @@ export default function Home() {
                     {selectedPlanModal === "pro" &&
                       "The Pro Plan is crafted for active disciplined traders needing separate books, video storage, structured fitness routines, and community collaboration. Renew manually every month with zero automatic debits. If upgraded during your Free Trial, you receive 5 BONUS DAYS (35 days total)."}
                     {selectedPlanModal === "premium" &&
-                      "The Premium Plan unlocks unlimited institutional scale: unlimited journal books, unlimited trade entries, unlimited video uploads, full access to daily workout routine and community chat, plus direct 1-on-1 private Mentor Support and direct Owner Personal Chat access with the founder."}
+                      "The Premium Plan unlocks unlimited institutional scale: unlimited journal books, unlimited trade entries, unlimited video uploads, full access to daily workout routine and community chat, verified Global Leaderboard eligibility, plus direct 1-on-1 private Mentor Support and direct Owner Personal Chat access with the founder."}
                   </p>
                 </div>
 
@@ -1505,6 +1508,12 @@ export default function Home() {
                         <td className="p-3 text-center text-rose-500">Locked</td>
                         <td className="p-3 text-center text-emerald-500 font-bold">Full Access</td>
                         <td className="p-3 text-center text-emerald-500 font-bold">Full Access</td>
+                      </tr>
+                      <tr>
+                        <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">Global Leaderboard</td>
+                        <td className="p-3 text-center text-slate-600 dark:text-slate-400">View Only</td>
+                        <td className="p-3 text-center font-bold text-sky-600 dark:text-sky-400">Eligible (Verified)</td>
+                        <td className="p-3 text-center font-bold text-amber-500">Eligible (Verified)</td>
                       </tr>
                       <tr>
                         <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">1-on-1 Mentor Support</td>

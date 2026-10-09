@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
+import { HeaderBrandWordmark } from "@/components/HeaderBrandWordmark";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -26,9 +27,7 @@ export default function SupportPage() {
             <Link href="/" className="flex items-center gap-2.5 group">
               <BrandLogo size={34} />
               <div className="flex flex-col">
-                <span className="font-extrabold text-sm sm:text-base tracking-tight text-white group-hover:text-sky-400 transition-colors">
-                  Cycle of Chart
-                </span>
+                <HeaderBrandWordmark className="text-xs sm:text-sm" />
                 <span className="text-[10px] font-mono tracking-widest uppercase text-sky-400">
                   Direct Support
                 </span>

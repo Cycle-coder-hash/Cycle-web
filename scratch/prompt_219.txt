@@ -1,0 +1,108 @@
+PROMPT #219 [2026-09-28T02:28:59Z]
+<USER_REQUEST>
+# MASTER DEBUG + FIX PROMPT — User Data Not Syncing Across Devices (Journal)
+**Target system:** Cycle of Chart / Trading Reality (existing Next.js + TypeScript + PostgreSQL/Prisma production app)
+**For:** Antigravity (or any coding agent working on the existing codebase)
+
+---
+
+## 0. The Problem (reported by the owner)
+
+- One Google account was used on a PC to create many Trade Journal entries.
+- The same Google account was then used to log in on a phone.
+- **The journal entries created on the PC do not appear on the phone.**
+
+A journal entry saved under a logged-in account must appear on every device where that same account logs in. Right now it doesn't, so user data is not reliably stored per-account in the database.
+
+**Scope — this is not only about journals or one account.** The requirement applies to **every existing user and every future new user**, and to **everything a user saves anywhere on the website**. Example that must work: a new user signs up with a Gmail on a PC, sets their name, uses the site for days, then logs in with the same Gmail on a phone weeks later — their name and all their saved data must be there, exactly as they left it. Nothing a logged-in user saves may exist only inside one browser or one device.
+
+---
+
+## 1. Rules for This Task
+
+- **Diagnose first, with evidence. Do not guess and do not start rewriting.** Report what you actually find before changing anything.
+- **Do NOT delete, clear, reset, or migrate-destructively any data** — in the database or in browser storage. The only copy of the owner's PC journals may currently exist in the PC browser's local storage. Losing it is the worst outcome.
+- No fake/demo data. No frontend-only fixes. No second auth/user system. No rebuild.
+- Reuse existing auth, Prisma models, and API architecture wherever they already exist.
+
+---
+
+## 2. Investigation (report findings for each step)
+
+**Step 1 — Trace the journal write and read paths**
+- From the "Log New Trade" / Journal Book UI: where does a saved entry actually go? Identify whether it is written to (a) `localStorage` / `sessionStorage` / IndexedDB / client state only, or (b) an API route → server logic → Prisma → PostgreSQL.
+- Do the same for reading: where does the Journal page load its entries from?
+- State clearly: is the database the source of truth for journals today, yes or no?
+
+**Step 2 — Check account identity consistency**
+- Does the same Google account on PC and on phone resolve to the **same User row and same User ID**? Look for duplicate users for one email, separate accounts created per provider/device, email case differences, or account-linking problems.
+- Confirm that journal queries filter by the authenticated user's real ID from the server session.
+
+**Step 3 — Check environment and database consistency**
+- Compare `DATABASE_URL` (and any related env vars) across: the main site deployment, the admin deployment (`cycleofchartadmin`), Vercel Production vs Preview, and local development. Are there multiple databases?
+- Is the owner's PC-created data present in the production database at all? Do a **read-only** check for journal rows linked to that user.
+
+**Step 4 — Audit all user-owned data for the same problem**
+Produce a table of every user-owned feature with columns: *Feature | Stored where today (DB / browser only) | Server-side auth enforced?*
+Cover **everything a user can save or change**, at least: profile name, username, profile photo/avatar, language, theme, time zone, currency and other Settings; Journal Books, Trade entries, Trade videos/screenshots; Daily Discipline; Private Trader Notebook; Workout Routine; Roadmap/Library progress and completed stages; Position Size Calculator saved values; Strategy rules; Support messages; orders, payments, subscription and access state; leaderboard inputs; onboarding answers. If a feature is not on this list but stores anything per user, include it too.
+
+**Step 5 — Admin Panel connectivity (verify only)**
+- Confirm the admin app reads from the same production database as the main site, and that data created by real users on the main site is visible to it. Do not add new admin features in this task.
+
+---
+
+## 3. Fix (only after reporting the findings above)
+
+- Make the **database the single source of truth** for all user-owned data found to be browser-only or inconsistent: real API routes with server-side authentication and per-user authorization → Prisma → PostgreSQL; the frontend reads from the API.
+- Browser storage may remain only as a non-authoritative cache or UI preference — never as the only copy of user data.
+- If duplicate user records or identity mismatches are found, fix the cause and reconcile safely without losing either record's data.
+- If env/database mismatches are found, correct the configuration so all deployments that should share data use the same production database.
+
+---
+
+## 4. Data Rescue (must be done together with the fix)
+
+If existing journals live only in browser storage:
+- Implement a **one-time, idempotent import**: when the affected user next opens the site in the browser that holds the legacy data, detect it and upload it to the database under the authenticated user's ID — with no duplicates if it runs twice.
+- **Do not remove the local copy** until the server confirms the data is saved and readable back.
+- Preserve original dates, P/L, notes, books, and attachments as faithfully as possible.
+- The same import must run for **any** user who has legacy browser-only data, not just the owner. Note the limitation honestly in your report: data that exists only inside another user's own browser cannot be read from the server — it can only be rescued when that user next opens the site in that same browser, so the import must be automatic and silent on their next visit. Report which features had browser-only data so the owner knows what was at risk.
+
+---
+
+## 5. Permanent Prevention (so this never happens again)
+
+- **Standing rule for all current and future features:** any data a logged-in user creates or changes must be saved to the database through an authenticated server API, tied to that user's real User ID. `localStorage`, `sessionStorage`, IndexedDB, cookies, and client state may only hold non-authoritative caches or device-level UI preferences — never the only copy of user data.
+- Make this the enforced pattern in the codebase: route every user-owned save/load through one shared data-access layer (reuse the existing one if present) so a new feature cannot accidentally store user data browser-only.
+- A new user's first-ever save (name, first journal entry, etc.) must also go to the database — verify the brand-new-account path, not just existing accounts.
+- Add a short developer note in the repo (e.g. a README section) stating this rule, so any future change follows it.
+
+---
+
+## 6. Verification (actual browser behavior, not just compilation)
+
+- [ ] Create a journal entry on PC → it appears on the phone after login (same account)
+- [ ] Create an entry on the phone → it appears on the PC
+- [ ] Same account in an incognito window / different browser → entries appear
+- [ ] Logout → login → entries still present
+- [ ] Two different accounts never see each other's data
+- [ ] **Brand-new user test:** sign up with a new Gmail on PC, set a name, create journal/discipline/notebook/settings data → log in with the same Gmail on a phone → name and all data are present
+- [ ] **Cleared-browser test:** after saving data on PC, clear that browser's site data completely, log in again → all data is still there (proves the database, not the browser, holds it)
+- [ ] Profile name, username, photo, and Settings changes made on one device show on another device
+- [ ] The owner's existing PC journals are present in the database and visible on the phone
+- [ ] Every other user-owned feature from the Step 4 table behaves the same way across devices
+- [ ] Admin Panel reads the same database and shows real user data consistently
+
+---
+
+## 7. Report Back
+
+1. Root cause, with evidence (which of: browser-only storage / duplicate user records / different databases / failed writes / other)
+2. The Step 4 audit table
+3. Files and models changed
+4. What was done to rescue the existing PC data, and confirmation it is now in the database
+5. What was tested, on which devices/browsers
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-28T07:58:59+05:30.
+</ADDITIONAL_METADATA>

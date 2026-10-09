@@ -174,30 +174,32 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
     };
   }, [userId]);
 
-  // Fetch remote trades from database on load/user login
+  // Remote queries for persistent Journal Books & Trades from server database
+  const utils = trpc.useUtils();
+
+  const remoteBooksQuery = trpc.customer.getJournalBooks.useQuery(undefined, {
+    enabled: !!user,
+  });
+
   const remoteTradesQuery = trpc.customer.userTrades.useQuery(undefined, {
     enabled: !!user,
   });
 
-  useEffect(() => {
-    if (remoteTradesQuery.data && Array.isArray(remoteTradesQuery.data) && remoteTradesQuery.data.length > 0) {
-      setTrades((prevLocal) => {
-        const local = prevLocal || [];
-        if (local.length === 0) {
-          saveTrades(remoteTradesQuery.data, userId);
-          return remoteTradesQuery.data;
-        }
-        const localIds = new Set(local.map((t: any) => String(t.id)));
-        const missingFromLocal = remoteTradesQuery.data.filter((rt: any) => !localIds.has(String(rt.id)));
-        if (missingFromLocal.length > 0) {
-          const merged = [...local, ...missingFromLocal];
-          saveTrades(merged, userId);
-          return merged;
-        }
-        return local;
-      });
-    }
-  }, [remoteTradesQuery.data, userId]);
+  const saveBooksMutation = trpc.customer.saveJournalBooks.useMutation();
+  const deleteJournalBookMutation = trpc.customer.deleteJournalBook.useMutation();
+
+  const syncTradesMutation = trpc.customer.syncTrades.useMutation({
+    onSuccess: () => {
+      utils.leaderboard.rankings.invalidate();
+    },
+  });
+
+  const deleteTradeMutation = trpc.customer.deleteTrade.useMutation({
+    onSuccess: () => {
+      utils.customer.userTrades.invalidate();
+      utils.leaderboard.rankings.invalidate();
+    },
+  });
 
   // Currently active book
   const currentBook = useMemo(() => {
@@ -223,24 +225,67 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
     return currentBook?.startingBalance || 10000;
   }, [books, currentBook, selectedBookId]);
 
-  // Sync trades and starting balance to server database for global leaderboard ranking
-  const utils = trpc.useUtils();
-  const syncTradesMutation = trpc.customer.syncTrades.useMutation({
-    onSuccess: () => {
-      utils.leaderboard.rankings.invalidate();
-    },
-  });
-
+  // Synchronize remote Journal Books from database (with idempotent PC data rescue)
   useEffect(() => {
-    if (user && trades) {
-      syncTradesMutation.mutate({
-        trades,
-        startingBalance: effectiveStartingBalance,
-        currency: currencySymbol,
-        bookName: currentBook?.name || "Main Journal",
+    if (!user) return;
+    if (remoteBooksQuery.data && Array.isArray(remoteBooksQuery.data)) {
+      setBooks((prevLocal) => {
+        const local = prevLocal || [];
+        const remote = remoteBooksQuery.data || [];
+        if (remote.length > 0) {
+          const remoteIds = new Set(remote.map((b: any) => String(b.id)));
+          const unsyncedLocal = local.filter((b: any) => !remoteIds.has(String(b.id)));
+          const merged = [...remote, ...unsyncedLocal];
+          saveJournalBooks(merged, userId);
+          if (unsyncedLocal.length > 0) {
+            saveBooksMutation.mutate({ books: merged });
+          }
+          return merged;
+        } else if (local.length > 0) {
+          // PC Data Rescue: server has 0 books, upload existing local books
+          saveBooksMutation.mutate({ books: local });
+          return local;
+        }
+        return local;
       });
     }
-  }, [user, trades, effectiveStartingBalance, currencySymbol, currentBook?.name]);
+  }, [remoteBooksQuery.data, user, userId]);
+
+  // Synchronize remote Trade Entries from database (with idempotent PC data rescue)
+  useEffect(() => {
+    if (!user) return;
+    if (remoteTradesQuery.data && Array.isArray(remoteTradesQuery.data)) {
+      setTrades((prevLocal) => {
+        const local = prevLocal || [];
+        const remote = remoteTradesQuery.data || [];
+        if (remote.length > 0) {
+          const remoteIds = new Set(remote.map((t: any) => String(t.id)));
+          const unsyncedLocal = local.filter((t: any) => !remoteIds.has(String(t.id)));
+          const merged = [...remote, ...unsyncedLocal];
+          saveTrades(merged, userId);
+          if (unsyncedLocal.length > 0) {
+            syncTradesMutation.mutate({
+              trades: merged,
+              startingBalance: effectiveStartingBalance,
+              currency: currencySymbol,
+              bookName: currentBook?.name || "Main Journal",
+            });
+          }
+          return merged;
+        } else if (local.length > 0) {
+          // PC Data Rescue: server has 0 trades, upload existing local trades
+          syncTradesMutation.mutate({
+            trades: local,
+            startingBalance: effectiveStartingBalance,
+            currency: currencySymbol,
+            bookName: currentBook?.name || "Main Journal",
+          });
+          return local;
+        }
+        return local;
+      });
+    }
+  }, [remoteTradesQuery.data, user, userId, effectiveStartingBalance, currencySymbol, currentBook?.name]);
 
   // Overall or Book Statistics
   const stats: JournalStats = useMemo(() => {
@@ -315,11 +360,14 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
     const updated = getStoredJournalBooks(userId);
     setBooks(updated);
     setSelectedBookId(created.id);
+    saveBooksMutation.mutate({ books: updated });
   };
 
   const handleUpdateBook = (book: JournalBook) => {
     updateJournalBook(book, userId);
-    setBooks(getStoredJournalBooks(userId));
+    const updated = getStoredJournalBooks(userId);
+    setBooks(updated);
+    saveBooksMutation.mutate({ books: updated });
   };
 
   const handleDeleteBook = (bookId: string) => {
@@ -329,27 +377,44 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
     setTrades(getStoredTrades(userId));
     setSelectedBookId(remaining[0]?.id || "all");
     setDeleteBookConfirmId(null);
+    deleteJournalBookMutation.mutate({ bookId });
   };
 
   // Handlers for Trades
   const handleSaveTrade = (tradeData: Omit<TradeEntry, "id" | "tradeNumber" | "createdAt">) => {
     addTrade(tradeData, userId);
-    setTrades(getStoredTrades(userId));
+    const updated = getStoredTrades(userId);
+    setTrades(updated);
     setIsTradeModalOpen(false);
+    syncTradesMutation.mutate({
+      trades: updated,
+      startingBalance: effectiveStartingBalance,
+      currency: currencySymbol,
+      bookName: currentBook?.name || "Main Journal",
+    });
   };
 
   const handleUpdateTrade = (trade: TradeEntry) => {
     updateTrade(trade, userId);
-    setTrades(getStoredTrades(userId));
+    const updated = getStoredTrades(userId);
+    setTrades(updated);
     setIsTradeModalOpen(false);
     setEditingTrade(null);
+    syncTradesMutation.mutate({
+      trades: updated,
+      startingBalance: effectiveStartingBalance,
+      currency: currencySymbol,
+      bookName: currentBook?.name || "Main Journal",
+    });
   };
 
   const handleDeleteTrade = (tradeId: string) => {
     deleteTrade(tradeId, userId);
-    setTrades(getStoredTrades(userId));
+    const updated = getStoredTrades(userId);
+    setTrades(updated);
     setDeleteTradeConfirmId(null);
     if (viewingTrade?.id === tradeId) setViewingTrade(null);
+    deleteTradeMutation.mutate({ tradeId });
   };
 
   return (

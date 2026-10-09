@@ -17,6 +17,7 @@ import {
   Lock,
 } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
+import { HeaderBrandWordmark } from "@/components/HeaderBrandWordmark";
 import { TopNavLinks } from "@/components/TopNavLinks";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -324,6 +325,73 @@ function HeroSparkleCanvas({
   );
 }
 
+/* ========================================================================= */
+/* TASK 5: 5-PILLAR SCORE FORMULA DATA CONFIGURATION                         */
+/* ========================================================================= */
+interface StatPillar {
+  id: string;
+  titleEn: string;
+  titleBn: string;
+  weight: string;
+  subEn: string;
+  subBn: string;
+  baseColor: string;
+  hoverClasses: string;
+}
+
+const STAT_PILLARS: StatPillar[] = [
+  {
+    id: "rule-adherence",
+    titleEn: "Rule Adherence",
+    titleBn: "রিস্ক মেনে চলা",
+    weight: "25%",
+    subEn: "Base Weight",
+    subBn: "বেস ওয়েট",
+    baseColor: "border-sky-500/20 bg-sky-500/5 text-sky-600 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-400",
+    hoverClasses: "hover:border-sky-400/80 hover:bg-sky-500/15 hover:shadow-[0_0_24px_rgba(14,165,233,0.38)]",
+  },
+  {
+    id: "discipline-routine",
+    titleEn: "Discipline Routine",
+    titleBn: "ডেইলি ডিসিপ্লিন",
+    weight: "25%",
+    subEn: "Execution Habit",
+    subBn: "এক্সিকিউশন হ্যাবিট",
+    baseColor: "border-emerald-500/20 bg-emerald-500/5 text-emerald-600 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400",
+    hoverClasses: "hover:border-emerald-400/80 hover:bg-emerald-500/15 hover:shadow-[0_0_24px_rgba(16,185,129,0.38)]",
+  },
+  {
+    id: "win-rate",
+    titleEn: "Win Rate",
+    titleBn: "উইন রেট",
+    weight: "20%",
+    subEn: "Trade Quality",
+    subBn: "ট্রেড কোয়ালিটি",
+    baseColor: "border-cyan-500/20 bg-cyan-500/5 text-cyan-600 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-400",
+    hoverClasses: "hover:border-cyan-400/80 hover:bg-cyan-500/15 hover:shadow-[0_0_24px_rgba(6,182,212,0.38)]",
+  },
+  {
+    id: "consistency",
+    titleEn: "Consistency",
+    titleBn: "ধারাবাহিকতা",
+    weight: "15%",
+    subEn: "Streaks & Days",
+    subBn: "স্ট্রিক্স ও দিন",
+    baseColor: "border-purple-500/20 bg-purple-500/5 text-purple-600 dark:border-purple-500/30 dark:bg-purple-500/10 dark:text-purple-400",
+    hoverClasses: "hover:border-purple-400/80 hover:bg-purple-500/15 hover:shadow-[0_0_24px_rgba(168,85,247,0.38)]",
+  },
+  {
+    id: "profit-factor",
+    titleEn: "Profit Factor",
+    titleBn: "প্রফিট ফ্যাক্টর",
+    weight: "15%",
+    subEn: "Risk : Reward",
+    subBn: "রিস্ক : রিওয়ার্ড",
+    baseColor: "border-amber-500/20 bg-amber-500/5 text-amber-600 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400",
+    hoverClasses: "hover:border-amber-400/80 hover:bg-amber-500/15 hover:shadow-[0_0_24px_rgba(245,158,11,0.38)]",
+  },
+];
+
 export default function Leaderboard() {
   const { theme, toggleTheme } = useTheme();
   const [, setLocation] = useLocation();
@@ -346,181 +414,23 @@ export default function Leaderboard() {
   const heroSectionRef = useRef<HTMLElement>(null);
 
   // ---------------------------------------------------------------------------
-  // TASK 3: Stat boxes scroll-triggered entrance/exit & 7s auto-repeat loop
+  // TASK 5: Stat boxes moving row & reduced-motion preference
   // ---------------------------------------------------------------------------
-  const statRowRef = useRef<HTMLDivElement>(null);
-  const [statAnimPhase, setStatAnimPhase] = useState<"hidden-right" | "entering" | "entered" | "exiting">("hidden-right");
   const [isReducedMotion, setIsReducedMotion] = useState(false);
 
-  const loopTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const phaseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const phaseTimeout2Ref = useRef<NodeJS.Timeout | null>(null);
-  const isVisibleRef = useRef(false);
-
   useEffect(() => {
-    // Check reduced motion setting
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const reduced = mediaQuery.matches;
-    setIsReducedMotion(reduced);
-
-    if (reduced) {
-      setStatAnimPhase("entered");
-      return;
-    }
+    setIsReducedMotion(mediaQuery.matches);
 
     const handleMediaChange = (e: MediaQueryListEvent) => {
       setIsReducedMotion(e.matches);
-      if (e.matches) {
-        setStatAnimPhase("entered");
-        stopLoop();
-      }
     };
+
     mediaQuery.addEventListener("change", handleMediaChange);
-
-    const clearTimeouts = () => {
-      if (loopTimerRef.current) {
-        clearInterval(loopTimerRef.current);
-        loopTimerRef.current = null;
-      }
-      if (phaseTimeoutRef.current) {
-        clearTimeout(phaseTimeoutRef.current);
-        phaseTimeoutRef.current = null;
-      }
-      if (phaseTimeout2Ref.current) {
-        clearTimeout(phaseTimeout2Ref.current);
-        phaseTimeout2Ref.current = null;
-      }
-    };
-
-    const stopLoop = () => {
-      clearTimeouts();
-    };
-
-    const playAutoReplayCycle = () => {
-      if (!isVisibleRef.current) return;
-      // Step 1: Slide out to left staggered in reverse order (~70ms apart)
-      setStatAnimPhase("exiting");
-
-      // Last box starts at 280ms, duration 380ms -> 660ms
-      phaseTimeoutRef.current = setTimeout(() => {
-        if (!isVisibleRef.current) return;
-        // Step 2: Instant reset to hidden-right
-        setStatAnimPhase("hidden-right");
-
-        phaseTimeout2Ref.current = setTimeout(() => {
-          if (!isVisibleRef.current) return;
-          // Step 3: Slide back in from right staggered ~90ms apart
-          setStatAnimPhase("entering");
-
-          phaseTimeoutRef.current = setTimeout(() => {
-            if (!isVisibleRef.current) return;
-            setStatAnimPhase("entered");
-          }, 900);
-        }, 50);
-      }, 700);
-    };
-
-    const startLoop = () => {
-      clearTimeouts();
-      loopTimerRef.current = setInterval(() => {
-        playAutoReplayCycle();
-      }, 7000);
-    };
-
-    const triggerEntrance = () => {
-      clearTimeouts();
-      setStatAnimPhase("hidden-right");
-      phaseTimeoutRef.current = setTimeout(() => {
-        setStatAnimPhase("entering");
-        phaseTimeout2Ref.current = setTimeout(() => {
-          setStatAnimPhase("entered");
-          startLoop();
-        }, 900);
-      }, 30);
-    };
-
-    const triggerExit = () => {
-      stopLoop();
-      setStatAnimPhase("exiting");
-      phaseTimeoutRef.current = setTimeout(() => {
-        setStatAnimPhase("hidden-right");
-      }, 700);
-    };
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (!entry) return;
-
-        if (entry.isIntersecting) {
-          isVisibleRef.current = true;
-          triggerEntrance();
-        } else {
-          if (isVisibleRef.current) {
-            isVisibleRef.current = false;
-            triggerExit();
-          }
-        }
-      },
-      { threshold: 0.35 }
-    );
-
-    const el = statRowRef.current;
-    if (el) {
-      observer.observe(el);
-    }
-
     return () => {
       mediaQuery.removeEventListener("change", handleMediaChange);
-      if (el) observer.unobserve(el);
-      clearTimeouts();
     };
   }, []);
-
-  const getStatBoxStyle = useCallback(
-    (index: number): React.CSSProperties => {
-      if (isReducedMotion) {
-        return {
-          transform: "none",
-          opacity: 1,
-          transition: "none",
-        };
-      }
-
-      switch (statAnimPhase) {
-        case "hidden-right":
-          return {
-            transform: "translateX(42px)",
-            opacity: 0,
-            transition: "none",
-            willChange: "transform, opacity",
-          };
-        case "entering":
-          return {
-            transform: "translateX(0px)",
-            opacity: 1,
-            transition: "transform 520ms cubic-bezier(0.16, 1, 0.3, 1), opacity 520ms ease-out",
-            transitionDelay: `${index * 90}ms`,
-            willChange: "transform, opacity",
-          };
-        case "entered":
-          return {
-            transform: "translateX(0px)",
-            opacity: 1,
-            transition: "none",
-          };
-        case "exiting":
-          return {
-            transform: "translateX(-42px)",
-            opacity: 0,
-            transition: "transform 380ms cubic-bezier(0.4, 0, 0.2, 1), opacity 380ms ease-in",
-            transitionDelay: `${(4 - index) * 70}ms`,
-            willChange: "transform, opacity",
-          };
-      }
-    },
-    [statAnimPhase, isReducedMotion]
-  );
 
   // Search filter
   const [searchQuery, setSearchQuery] = useState("");
@@ -615,9 +525,7 @@ export default function Leaderboard() {
           <Link href="/" className="flex items-center gap-3">
             <BrandLogo size={40} className="shrink-0" />
             <div className="flex flex-col">
-              <span className="text-sm font-extrabold tracking-[0.2em] text-[#0a192f] dark:text-white">
-                CYCLE OF CHART
-              </span>
+              <HeaderBrandWordmark className="text-xs sm:text-sm" />
               <span className="text-[10px] font-bold text-[#0284c7] dark:text-sky-400">
                 {isBn ? "গ্লোবাল লিডারবোর্ড" : "GLOBAL LEADERBOARD"}
               </span>
@@ -671,101 +579,110 @@ export default function Leaderboard() {
           {/* TASK 1(b): Interactive cursor-follow spark trail canvas (on hover/mouse-move) */}
           <HeroSparkleCanvas containerRef={heroSectionRef} />
 
-          <div className="relative z-10 max-w-3xl space-y-4">
-            {/* TASK 2: BADGE WITH LOOPING LIGHT-SWEEP AND SOFT PULSING GLOW RING */}
-            <div className="relative inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 leaderboard-badge-glow overflow-hidden select-none">
-              <div
-                className="pointer-events-none absolute -inset-y-2 -left-2 w-1/2 bg-gradient-to-r from-transparent via-amber-200/40 dark:via-amber-100/40 to-transparent leaderboard-badge-shine"
-                aria-hidden="true"
-              />
-              <Trophy size={14} className="text-amber-500 shrink-0 relative z-10" />
-              <span className="relative z-10">{isBn ? "রিয়েল ট্রেডার পারফরম্যান্স সিস্টেম" : "REAL TRADER PERFORMANCE SYSTEM"}</span>
+          <div className="relative z-10 space-y-5">
+            <div className="max-w-3xl space-y-4">
+              {/* TASK 2: BADGE WITH LOOPING LIGHT-SWEEP AND SOFT PULSING GLOW RING */}
+              <div className="relative inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 leaderboard-badge-glow overflow-hidden select-none">
+                <div
+                  className="pointer-events-none absolute -inset-y-2 -left-2 w-1/2 bg-gradient-to-r from-transparent via-amber-200/40 dark:via-amber-100/40 to-transparent leaderboard-badge-shine"
+                  aria-hidden="true"
+                />
+                <Trophy size={14} className="text-amber-500 shrink-0 relative z-10" />
+                <span className="relative z-10">{isBn ? "রিয়েল ট্রেডার পারফরম্যান্স সিস্টেম" : "REAL TRADER PERFORMANCE SYSTEM"}</span>
+              </div>
+
+              <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+                {isBn ? (
+                  <>
+                    সুশৃঙ্খল নিয়ম ও রিয়েল এক্সিকিউশন। <br />
+                    <span className="heading-gradient-shimmer">
+                      আন্দাজে জুয়া নয়, প্রসেস-ভিত্তিক লিডারবোর্ড।
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    Rule Compliance & Authentic Execution. <br />
+                    <span className="heading-gradient-shimmer">
+                      Ranked by Process, Not Blind Gambling.
+                    </span>
+                  </>
+                )}
+              </h1>
+
+              <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+                {isBn
+                  ? "সাইকেল অব চার্ট লিডারবোর্ড শুধুমাত্র লাভের অঙ্কে নির্ধারণ করা হয় না। ট্রেডিং রুলস অনুসরণ, দৈনিক ডিসিপ্লিন রুটিন, ধারাবাহিক জার্নালিং এবং সুশৃঙ্খল রিস্ক ম্যানেজমেন্টের ওপর ভিত্তি করে অল-টাইম স্কোর নির্ণয় করা হয়।"
+                  : "The Cycle of Chart Global Leaderboard is not dictated by raw profit alone. Real rankings are computed from verified trader adherence, daily discipline habits, consistency streaks, and risk management quality."}
+              </p>
             </div>
 
-            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
-              {isBn ? (
-                <>
-                  সুশৃঙ্খল নিয়ম ও রিয়েল এক্সিকিউশন। <br />
-                  <span className="heading-gradient-shimmer">
-                    আন্দাজে জুয়া নয়, প্রসেস-ভিত্তিক লিডারবোর্ড।
-                  </span>
-                </>
-              ) : (
-                <>
-                  Rule Compliance & Authentic Execution. <br />
-                  <span className="heading-gradient-shimmer">
-                    Ranked by Process, Not Blind Gambling.
-                  </span>
-                </>
-              )}
-            </h1>
-
-            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
-              {isBn
-                ? "সাইকেল অব চার্ট লিডারবোর্ড শুধুমাত্র লাভের অঙ্কে নির্ধারণ করা হয় না। ট্রেডিং রুলস অনুসরণ, দৈনিক ডিসিপ্লিন রুটিন, ধারাবাহিক জার্নালিং এবং সুশৃঙ্খল রিস্ক ম্যানেজমেন্টের ওপর ভিত্তি করে অল-টাইম স্কোর নির্ণয় করা হয়।"
-                : "The Cycle of Chart Global Leaderboard is not dictated by raw profit alone. Real rankings are computed from verified trader adherence, daily discipline habits, consistency streaks, and risk management quality."}
-            </p>
-
-            {/* TASK 3: 5-Pillar Score Formula Breakdown Pills with Scroll Trigger & Auto-Repeat Loop */}
-            <div
-              ref={statRowRef}
-              className="pt-2 grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-center overflow-x-clip"
-            >
-              <div
-                style={getStatBoxStyle(0)}
-                className="leaderboard-stat-box rounded-xl border border-sky-500/20 bg-sky-500/5 p-2.5 dark:border-sky-500/30 dark:bg-sky-500/10"
-              >
-                <div className="text-[10px] font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider">
-                  {isBn ? "রিস্ক মেনে চলা" : "Rule Adherence"}
-                </div>
-                <div className="text-base font-extrabold text-slate-900 dark:text-white">25%</div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400">Base Weight</div>
+            {/* TASK 5: CONTINUOUS SCROLLING STAT BOXES TICKER (EDUCATE.IO STYLE) */}
+            {isReducedMotion ? (
+              <div className="pt-2 grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-center max-w-3xl">
+                {STAT_PILLARS.map((pillar, idx) => (
+                  <div
+                    key={pillar.id}
+                    className={`rounded-xl border p-2.5 transition-colors ${pillar.baseColor} ${pillar.hoverClasses} ${
+                      idx === 4 ? "col-span-2 sm:col-span-1" : ""
+                    }`}
+                  >
+                    <div className="text-[10px] font-bold uppercase tracking-wider">
+                      {isBn ? pillar.titleBn : pillar.titleEn}
+                    </div>
+                    <div className="text-base font-extrabold text-slate-900 dark:text-white">
+                      {pillar.weight}
+                    </div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                      {isBn ? pillar.subBn : pillar.subEn}
+                    </div>
+                  </div>
+                ))}
               </div>
+            ) : (
+              <div className="relative pt-1 w-full max-w-4xl overflow-hidden stat-ticker-mask">
+                <div className="stat-ticker-track py-3">
+                  {/* Set 1 (5 cards) */}
+                  <div className="flex shrink-0 items-center gap-3 pr-3">
+                    {STAT_PILLARS.map((pillar) => (
+                      <div
+                        key={`set1-${pillar.id}`}
+                        className={`w-[170px] sm:w-[195px] shrink-0 text-center rounded-xl border p-2.5 transition-all duration-300 ease-out cursor-default hover:-translate-y-1 ${pillar.baseColor} ${pillar.hoverClasses}`}
+                      >
+                        <div className="text-[10px] font-bold uppercase tracking-wider">
+                          {isBn ? pillar.titleBn : pillar.titleEn}
+                        </div>
+                        <div className="text-base font-extrabold text-slate-900 dark:text-white">
+                          {pillar.weight}
+                        </div>
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                          {isBn ? pillar.subBn : pillar.subEn}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
 
-              <div
-                style={getStatBoxStyle(1)}
-                className="leaderboard-stat-box rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-2.5 dark:border-emerald-500/30 dark:bg-emerald-500/10"
-              >
-                <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
-                  {isBn ? "ডেইলি ডিসিপ্লিন" : "Discipline Routine"}
+                  {/* Set 2 (Identical duplicate of 5 cards for seamless 10-card 50% loop) */}
+                  <div aria-hidden="true" className="flex shrink-0 items-center gap-3 pr-3">
+                    {STAT_PILLARS.map((pillar) => (
+                      <div
+                        key={`set2-${pillar.id}`}
+                        className={`w-[170px] sm:w-[195px] shrink-0 text-center rounded-xl border p-2.5 transition-all duration-300 ease-out cursor-default hover:-translate-y-1 ${pillar.baseColor} ${pillar.hoverClasses}`}
+                      >
+                        <div className="text-[10px] font-bold uppercase tracking-wider">
+                          {isBn ? pillar.titleBn : pillar.titleEn}
+                        </div>
+                        <div className="text-base font-extrabold text-slate-900 dark:text-white">
+                          {pillar.weight}
+                        </div>
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                          {isBn ? pillar.subBn : pillar.subEn}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="text-base font-extrabold text-slate-900 dark:text-white">25%</div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400">Execution Habit</div>
               </div>
-
-              <div
-                style={getStatBoxStyle(2)}
-                className="leaderboard-stat-box rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-2.5 dark:border-cyan-500/30 dark:bg-cyan-500/10"
-              >
-                <div className="text-[10px] font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider">
-                  {isBn ? "উইন রেট" : "Win Rate"}
-                </div>
-                <div className="text-base font-extrabold text-slate-900 dark:text-white">20%</div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400">Trade Quality</div>
-              </div>
-
-              <div
-                style={getStatBoxStyle(3)}
-                className="leaderboard-stat-box rounded-xl border border-purple-500/20 bg-purple-500/5 p-2.5 dark:border-purple-500/30 dark:bg-purple-500/10"
-              >
-                <div className="text-[10px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
-                  {isBn ? "ধারাবাহিকতা" : "Consistency"}
-                </div>
-                <div className="text-base font-extrabold text-slate-900 dark:text-white">15%</div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400">Streaks & Days</div>
-              </div>
-
-              <div
-                style={getStatBoxStyle(4)}
-                className="leaderboard-stat-box col-span-2 sm:col-span-1 rounded-xl border border-amber-500/20 bg-amber-500/5 p-2.5 dark:border-amber-500/30 dark:bg-amber-500/10"
-              >
-                <div className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
-                  {isBn ? "প্রফিট ফ্যাক্টর" : "Profit Factor"}
-                </div>
-                <div className="text-base font-extrabold text-slate-900 dark:text-white">15%</div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400">Risk : Reward</div>
-              </div>
-            </div>
+            )}
           </div>
         </section>
 

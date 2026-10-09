@@ -1,0 +1,161 @@
+PROMPT #224 [2026-09-28T03:13:49Z]
+<USER_REQUEST>
+URGENT — AUDIT AND COMPLETE ALL PREVIOUSLY REQUESTED UPDATES
+
+Do NOT start by adding a new feature.
+
+I have already given you many implementation/update requests for this project in previous prompts. You worked on them, but after checking the project, I found that many of those requested updates are still missing, incomplete, not connected to the actual application, or were never properly applied.
+
+Your task now is to AUDIT THE ENTIRE PROJECT and COMPLETE THE PREVIOUSLY REQUESTED WORK.
+
+IMPORTANT:
+Do not assume that previous tasks were completed just because files were previously modified or you previously reported them as completed.
+
+You must inspect the CURRENT CODEBASE and determine what is actually implemented right now.
+
+STEP 1 — AUDIT THE CURRENT PROJECT
+
+Inspect the entire project and identify:
+- all existing pages
+- components
+- routes
+- APIs/server actions
+- database models/tables
+- authentication
+- authorization/admin permissions
+- state management
+- shared components
+- relevant configuration
+- recently modified files
+- duplicate implementations
+- old/deprecated implementations
+- incomplete implementations
+- TODOs/placeholders
+- UI that exists but is not connected to real functionality
+
+STEP 2 — RECOVER MY PREVIOUS REQUIREMENTS
+
+Review the previous task/request context available to you and identify EVERY previously requested change that was supposed to be implemented.
+
+Create an internal checklist of those requirements.
+
+Do NOT assume that a previous requirement was completed just because a related file exists.
+
+For every previous requirement, determine its CURRENT status:
+
+IMPLEMENTED
+PARTIALLY IMPLEMENTED
+NOT IMPLEMENTED
+BROKEN
+UI ONLY / NOT CONNECTED
+BACKEND ONLY / NOT CONNECTED
+OVERRIDDEN BY OLD CODE
+
+STEP 3 — FIND WHAT WAS MISSED
+
+For every requirement that is:
+- partially implemented
+- missing
+- broken
+- disconnected
+- overridden
+- incorrectly implemented
+
+find the actual reason.
+
+Trace the complete flow where applicable:
+
+UI
+→ component
+→ state
+→ API/server logic
+→ database
+→ response
+→ state update
+→ UI
+
+Do not patch only the visible symptom.
+
+STEP 4 — COMPLETE THE MISSING WORK
+
+Implement ALL previously requested changes that are missing or incomplete.
+
+If an existing implementation is wrong, fix the existing implementation.
+
+Do NOT create duplicate systems just to make a requirement appear implemented.
+
+Reuse the existing architecture wherever possible.
+
+If multiple files/systems must be changed for a requirement to actually work, make all required changes.
+
+STEP 5 — VERIFY THE ACTUAL APPLICATION
+
+After implementation, verify every previously requested requirement individually.
+
+Do not verify only whether code exists.
+
+Verify whether the requested behavior actually works in the application.
+
+Check:
+- frontend
+- backend/API
+- database
+- authentication
+- admin permissions
+- state updates
+- responsive behavior
+- existing functionality
+- error handling
+- routing
+- persistence after refresh
+- data synchronization between pages where applicable
+
+STEP 6 — SEARCH FOR OVERRIDES AND DUPLICATES
+
+Search the entire project for old implementations or duplicate logic that could cause the newly completed functionality to be ignored or overridden.
+
+If you find conflicting implementations, resolve the conflict properly.
+
+There must be one clear source of truth for each feature.
+
+STEP 7 — BUILD AND ERROR CHECK
+
+Run the appropriate project validation/build/type-check/lint process available in this project.
+
+Fix errors related to the work.
+
+Also check for runtime errors that could prevent the implemented features from working.
+
+STEP 8 — FINAL REQUIREMENT CHECK
+
+Before declaring completion, compare the CURRENT PROJECT against EVERY previously requested update.
+
+Do not stop early.
+
+Do not mark a task complete simply because some files were changed.
+
+If you find even ONE previously requested update that is still missing or incomplete, continue working and fix it.
+
+FINAL REPORT:
+
+Give me a concise report containing:
+
+1. Previously requested items found.
+2. Items that were already working.
+3. Items that were missing/broken.
+4. Items you fixed now.
+5. Any remaining item that genuinely cannot be completed and the exact reason.
+
+MOST IMPORTANT RULE:
+
+I am specifically asking you to recover and complete the work that was previously requested but did not actually make it into the working application.
+
+Do NOT treat this as a new feature request.
+
+Do NOT erase or redesign working features.
+
+Do NOT claim completion until you have verified the actual current application against the previously requested requirements.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-28T08:43:49+05:30.
+</ADDITIONAL_METADATA>

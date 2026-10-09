@@ -57,6 +57,7 @@ import {
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
 import { BrandLogo } from "@/components/BrandLogo";
+import { HeaderBrandWordmark } from "@/components/HeaderBrandWordmark";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -966,9 +967,7 @@ export default function Dashboard() {
             <Link href="/" className="flex items-center gap-3">
               <BrandLogo size={42} className="shrink-0" />
               <div>
-                <span className="text-xs font-extrabold tracking-[0.2em] text-[#0a192f] dark:text-white">
-                  CYCLE OF CHART
-                </span>
+                <HeaderBrandWordmark className="text-xs" />
                 <div className="text-[10px] font-bold text-[#0284c7] dark:text-sky-400">TRADING REALITY PORTAL</div>
               </div>
             </Link>

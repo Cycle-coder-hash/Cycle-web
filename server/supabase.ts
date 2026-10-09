@@ -15,7 +15,7 @@ export const supabaseServer = createClient(supabaseUrl, supabaseAnonKey, {
   },
   global: {
     fetch: (url, options = {}) => {
-      if (process.env.NODE_ENV === "test") {
+      if (process.env.NODE_ENV === "test" && !process.env.TEST_LIVE_DB) {
         return Promise.resolve(new Response(JSON.stringify([]), { status: 200, headers: { "Content-Type": "application/json" } }));
       }
       const controller = new AbortController();

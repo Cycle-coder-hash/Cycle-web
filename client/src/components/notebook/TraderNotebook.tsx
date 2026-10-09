@@ -80,6 +80,19 @@ export function TraderNotebook({ user, isBn = false, subUsage: propSubUsage }: T
     name: "",
   });
 
+  // Remote cloud sync
+  const remoteNotebookQuery = trpc.customer.getNotebookData.useQuery(undefined, {
+    enabled: !!user,
+    staleTime: 60000,
+  });
+  const saveNotebookMutation = trpc.customer.saveNotebookData.useMutation();
+  const hasSyncedRemoteRef = React.useRef(false);
+  const serverSaveTimerRef = React.useRef<any>(null);
+
+  useEffect(() => {
+    hasSyncedRemoteRef.current = false;
+  }, [userId]);
+
   // Load User Notebook Data on mount or user change
   useEffect(() => {
     let isMounted = true;
@@ -108,7 +121,93 @@ export function TraderNotebook({ user, isBn = false, subUsage: propSubUsage }: T
     };
   }, [userId]);
 
-  // Save changes helper with debounce
+  // Non-destructive bidirectional sync between local cache & remote cloud vault
+  useEffect(() => {
+    if (!user || remoteNotebookQuery.isLoading || !remoteNotebookQuery.isSuccess) return;
+    if (hasSyncedRemoteRef.current) return;
+
+    const remoteData = remoteNotebookQuery.data;
+    if (!remoteData || typeof remoteData !== "object") {
+      // Remote is empty: rescue local notebook to server vault if local has templates
+      if (userData && Array.isArray(userData.templates) && userData.templates.length > 0) {
+        console.log("[TraderNotebook] Rescuing local notebook to server vault...");
+        saveNotebookMutation.mutate({ data: userData });
+      }
+      hasSyncedRemoteRef.current = true;
+      return;
+    }
+
+    const remoteTemplates = Array.isArray(remoteData.templates) ? remoteData.templates : [];
+    const remotePages = Array.isArray(remoteData.pages) ? remoteData.pages : [];
+
+    if (remoteTemplates.length === 0) {
+      if (userData && userData.templates && userData.templates.length > 0) {
+        saveNotebookMutation.mutate({ data: userData });
+      }
+      hasSyncedRemoteRef.current = true;
+      return;
+    }
+
+    // If local has 0 templates (e.g. freshly logged-in mobile device), hydrate directly from remote
+    const localTemplates = userData?.templates || [];
+    if (localTemplates.length === 0) {
+      console.log(`[TraderNotebook] Hydrating ${remoteTemplates.length} templates & ${remotePages.length} pages from server vault.`);
+      setUserData(remoteData);
+      saveUserNotebookData(userId, remoteData);
+      const currTmpl = remoteData.activeTemplateId || remoteTemplates[0]?.id || null;
+      setActiveTemplateId(currTmpl);
+      const tmplPages = remotePages.filter((p: any) => p.notebookId === currTmpl);
+      const activePg = tmplPages.find((p: any) => p.id === remoteData.activePageId) || tmplPages[0] || null;
+      setActivePageId(activePg ? activePg.id : null);
+      hasSyncedRemoteRef.current = true;
+      return;
+    }
+
+    // Both local and remote have data: perform non-destructive timestamp merge
+    const templateMap = new Map<string, any>();
+    for (const t of localTemplates) templateMap.set(t.id, t);
+    for (const t of remoteTemplates) {
+      if (!templateMap.has(t.id)) {
+        templateMap.set(t.id, t);
+      } else {
+        const localT = templateMap.get(t.id);
+        const remoteTime = new Date(t.updatedAt || 0).getTime();
+        const localTime = new Date(localT.updatedAt || 0).getTime();
+        if (remoteTime > localTime) {
+          templateMap.set(t.id, t);
+        }
+      }
+    }
+
+    const pageMap = new Map<string, any>();
+    for (const p of userData?.pages || []) pageMap.set(p.id, p);
+    for (const p of remotePages) {
+      if (!pageMap.has(p.id)) {
+        pageMap.set(p.id, p);
+      } else {
+        const localP = pageMap.get(p.id);
+        const remoteTime = new Date(p.updatedAt || 0).getTime();
+        const localTime = new Date(localP.updatedAt || 0).getTime();
+        if (remoteTime > localTime) {
+          pageMap.set(p.id, p);
+        }
+      }
+    }
+
+    const mergedData: NotebookUserData = {
+      templates: Array.from(templateMap.values()),
+      pages: Array.from(pageMap.values()),
+      activeTemplateId: activeTemplateId || remoteData.activeTemplateId || Array.from(templateMap.values())[0]?.id || null,
+      activePageId: activePageId || remoteData.activePageId || null,
+    };
+
+    setUserData(mergedData);
+    saveUserNotebookData(userId, mergedData);
+    saveNotebookMutation.mutate({ data: mergedData });
+    hasSyncedRemoteRef.current = true;
+  }, [user, remoteNotebookQuery.isLoading, remoteNotebookQuery.isSuccess, remoteNotebookQuery.data, userData, userId, activeTemplateId, activePageId]);
+
+  // Save changes helper with local debounce + debounced server sync
   const persistChanges = useCallback(
     (nextData: NotebookUserData) => {
       setUserData(nextData);
@@ -116,8 +215,17 @@ export function TraderNotebook({ user, isBn = false, subUsage: propSubUsage }: T
       debouncedSaveNotebookData(userId, nextData, 400).then(() => {
         setIsSaving(false);
       });
+
+      if (user) {
+        if (serverSaveTimerRef.current) {
+          clearTimeout(serverSaveTimerRef.current);
+        }
+        serverSaveTimerRef.current = setTimeout(() => {
+          saveNotebookMutation.mutate({ data: nextData });
+        }, 800);
+      }
     },
-    [userId]
+    [userId, user, saveNotebookMutation]
   );
 
   // Switch Template

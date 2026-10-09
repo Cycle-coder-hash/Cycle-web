@@ -1,0 +1,69 @@
+PROMPT #208 [2026-09-25T10:36:26Z]
+<USER_REQUEST>
+# MASTER IMPLEMENTATION PROMPT — Fix: Direct Support Page Incorrectly Gated Behind Premium
+**Target system:** Cycle of Chart / Trading Reality (existing Next.js + TypeScript + PostgreSQL/Prisma production app)
+**For:** Antigravity (or any coding agent extending the existing codebase)
+
+---
+
+## 0. Objective
+
+The general **Direct Support** page (`/support` — the "Cycle Support Team" chat) is supposed to be open to **every** user, on every plan, to message the support team. Right now the message input has been replaced by a "Premium Exclusive" banner, which incorrectly blocks everyone from sending a new message. Fix this so any user — Free Trial, Free-after-trial, Pro, or Premium — can message support normally.
+
+---
+
+## 1. Current State (confirmed via screenshot)
+
+On `/support`:
+- The existing chat thread with "Cycle Support Team" displays correctly (past messages, timestamps, specialist replies).
+- Where the message input/send box should be, the page instead shows:
+  > "1-on-1 Mentor Support & Owner Chat is Premium Exclusive — Direct private trade reviews and 1-on-1 access to the founder are reserved for Premium members." with a "Get Premium — ৳999/mo" button.
+- Result: **no user, regardless of plan, can type or send a new support message** on this page.
+
+---
+
+## 2. Root Cause Direction (inspect first)
+
+This project's plan rules correctly restrict **Mentor Support** and **Owner Personal Chat** to Premium — but general **Direct Support** (this Cycle Support Team chat) is a separate, always-available feature and should not be behind that same gate. Look for:
+- The message-input component on `/support` being wrapped in the same Premium-access check used for Mentor Support / Owner Personal Chat.
+- Or the `/support` route itself being (incorrectly) tied to the Mentor/Owner-chat feature flag instead of its own, ungated support-ticket logic.
+
+---
+
+## 3. Fix Required
+
+- **Restore the message input and send button on `/support` for all users** — Free Trial, Free-after-trial, Pro, and Premium alike — so everyone can send a message to the Cycle Support Team, same as before this regression.
+- **Remove the "Premium Exclusive" banner from this page** — it doesn't belong on general Direct Support.
+- **Do not remove Premium gating from the actual Mentor Support / Owner Personal Chat features** wherever those live in the product (per existing plan rules, those stay Premium-only). This fix is scoped only to the general Direct Support chat — don't touch that separate gate.
+
+---
+
+## 4. Non-Negotiable Constraints
+
+**Do NOT:**
+- Rebuild the support/ticketing system.
+- Change the existing chat thread UI, message history, timestamps, or specialist-reply display.
+- Touch the database/backend for support tickets beyond what's needed to un-gate the input.
+- Remove or weaken Premium gating anywhere else in the product (Mentor Support, Owner Personal Chat, Community Chat rules, etc.) — this is a single, scoped fix.
+
+---
+
+## 5. Acceptance Test Checklist
+
+- [ ] A Free Trial user can open `/support`, see the message input, type, and send a message
+- [ ] A Free-after-trial user can do the same
+- [ ] A Pro user can do the same
+- [ ] A Premium user can do the same
+- [ ] The "Premium Exclusive" banner no longer appears on `/support`
+- [ ] Existing chat history and thread display are unchanged
+- [ ] Mentor Support and Owner Personal Chat (their actual location in the product) remain Premium-gated and unaffected by this fix
+
+---
+
+## 6. Definition of Done
+
+Every user, on every plan, can send a message on the Direct Support page exactly as intended — with the Premium gate correctly scoped to only Mentor Support and Owner Personal Chat, not general customer support.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-25T16:06:26+05:30.
+</ADDITIONAL_METADATA>

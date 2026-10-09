@@ -62,6 +62,73 @@
 @keyframes pulse-glow { 0%,100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 0.85; transform: scale(1.08); } }
 @keyframes shine-sweep { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
+/* ========================================================================= */
+/* HEADER WORDMARK: OUTLINE WITH CYAN FILL SWEEP ANIMATION                   */
+/* ========================================================================= */
+@keyframes wordmark-fill-sweep {
+  0% {
+    width: 0%;
+  }
+  45% {
+    width: 100%;
+  }
+  70% {
+    width: 100%;
+  }
+  100% {
+    width: 0%;
+  }
+}
+
+.header-brand-wordmark {
+  display: inline-block;
+  position: relative;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.header-brand-base {
+  display: block;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  /* Light mode: high contrast stroke against light header */
+  -webkit-text-stroke: 1px rgba(15, 23, 42, 0.75);
+  letter-spacing: inherit;
+  font-family: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  white-space: nowrap;
+}
+
+.dark .header-brand-base {
+  /* Dark mode: thin semi-transparent white stroke */
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.55);
+}
+
+.header-brand-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  height: 100%;
+  width: 0%;
+  overflow: hidden;
+  white-space: nowrap;
+  pointer-events: none;
+  color: #22d3ee;
+  -webkit-text-fill-color: #22d3ee;
+  -webkit-text-stroke: 0;
+  text-shadow: 0 0 14px rgba(34, 211, 238, 0.6), 0 0 2px rgba(34, 211, 238, 0.9);
+  letter-spacing: inherit;
+  font-family: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  animation: wordmark-fill-sweep 5s ease-in-out infinite;
+  will-change: width;
+}
+
 /* Leaderboard Page: Real Trader Performance System Badge */
 @keyframes badge-light-sweep {
   0% {
@@ -123,32 +190,70 @@
 /* Leaderboard Hero: Heading Line 2 Flowing Gradient Shimmer */
 @keyframes heading-gradient-shimmer {
   0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
+    background-position: 0% center;
   }
   100% {
-    background-position: 0% 50%;
+    background-position: -200% center;
   }
 }
 
 .heading-gradient-shimmer {
   background: linear-gradient(
     90deg,
-    #38bdf8 0%,
-    #22d3ee 25%,
-    #34d399 50%,
-    #22d3ee 75%,
-    #38bdf8 100%
+    #22d3ee 0%,
+    #34d399 25%,
+    #22d3ee 50%,
+    #34d399 75%,
+    #22d3ee 100%
   );
-  background-size: 250% auto;
+  background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
   animation: heading-gradient-shimmer 6s linear infinite;
   will-change: background-position;
+  display: inline-block;
+}
+
+/* Leaderboard Hero: Continuous Scrolling Stat Boxes Ticker (Moving Row, Educate.io style) */
+@keyframes stat-ticker-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.stat-ticker-track {
+  display: flex;
+  width: max-content;
+  animation: stat-ticker-scroll 24s linear infinite;
+  will-change: transform;
+}
+
+.stat-ticker-track:hover,
+.stat-ticker-track:focus-within,
+.stat-ticker-mask:hover .stat-ticker-track {
+  animation-play-state: paused;
+}
+
+.stat-ticker-mask {
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 48px,
+    black calc(100% - 48px),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 48px,
+    black calc(100% - 48px),
+    transparent 100%
+  );
 }
 
 /* Roadmap Cards Subtle Floating Animation */
@@ -470,6 +575,18 @@
     transform: none !important;
     opacity: 1 !important;
     transition: none !important;
+  }
+  .stat-ticker-track {
+    animation: none !important;
+    transform: none !important;
+  }
+  .stat-ticker-mask {
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+  }
+  .header-brand-fill {
+    animation: none !important;
+    width: 100% !important;
   }
 }
 

@@ -1,0 +1,238 @@
+PROMPT #202 [2026-09-25T04:33:01Z]
+<USER_REQUEST>
+IMPORTANT: The frontend social-media layout is already correct. DO NOT redesign or reposition it.
+
+Fix ONLY the existing Admin Panel → “Owner Profile & Founder CMS” so I can personally manage the social-media links that are already displayed in the Founder / About section of the website.
+
+CURRENT PROBLEM:
+- The website already shows the centralized social-media icons correctly.
+- However, the existing Owner Profile & Founder CMS does NOT properly provide editable fields for all of these social-media links.
+- X / Twitter is also missing from the Admin CMS.
+- I need full control over these social links directly from the existing Admin Panel.
+
+==================================================
+SOCIAL MEDIA LINKS TO MANAGE
+==================================================
+
+The Admin CMS must contain editable fields for EXACTLY these 5 platforms:
+
+1. TikTok
+2. YouTube
+3. Instagram
+4. X / Twitter
+5. Facebook
+
+Do NOT add other social platforms.
+
+==================================================
+ADMIN PANEL
+==================================================
+
+Use the EXISTING:
+
+Admin Panel
+→ Owner Profile & Founder CMS
+
+Do NOT create:
+- a new CMS page
+- a separate social-media settings page
+- a duplicate admin system
+
+Instead, UPDATE the existing Owner Profile & Founder CMS by adding a clearly labeled section:
+
+SOCIAL MEDIA LINKS
+
+TikTok URL
+[ editable input ]
+
+YouTube URL
+[ editable input ]
+
+Instagram URL
+[ editable input ]
+
+X / Twitter URL
+[ editable input ]
+
+Facebook URL
+[ editable input ]
+
+[ Save ]
+
+The Admin must be able to enter their own real social-media URLs.
+
+==================================================
+EDIT / UPDATE BEHAVIOR
+==================================================
+
+The Admin must be able to:
+
+- Add a social-media link
+- Save it
+- Change it later
+- Save the new link
+- Remove/clear the link if needed
+
+Example:
+
+Admin enters TikTok URL
+→ Save
+→ Website TikTok icon uses that URL
+
+Later:
+Admin changes TikTok URL
+→ Save
+→ Website immediately uses the new URL
+
+The same behavior must work independently for:
+- YouTube
+- Instagram
+- X / Twitter
+- Facebook
+
+==================================================
+X / TWITTER IS REQUIRED
+==================================================
+
+Make sure the CMS includes a dedicated editable field for:
+
+X / Twitter URL
+
+The existing website’s X / Twitter social icon must be connected to this saved CMS value.
+
+Do NOT leave X / Twitter hardcoded or unconfigured.
+
+==================================================
+DATABASE CONNECTION
+==================================================
+
+The complete flow must be:
+
+Admin Panel CMS
+↓
+Admin enters/updates social link
+↓
+Save
+↓
+Persistent Database / Existing Settings Storage
+↓
+Website reads saved value
+↓
+Correct social icon uses the saved URL
+
+The database must be the source of truth.
+
+Do NOT use:
+- hardcoded social URLs
+- frontend constants
+- localStorage as the main storage
+- temporary frontend state
+- fake/demo links
+
+==================================================
+PERSISTENCE
+==================================================
+
+Saved social links must remain after:
+
+- page refresh
+- logout/login
+- new browser session
+- navigating between pages
+- production deployment
+
+Changing one social link must NOT reset the others.
+
+==================================================
+FRONTEND CONNECTION
+==================================================
+
+The existing centralized social-media icon row on the website is ALREADY correct.
+
+Keep its current position and appearance.
+
+The current structure must remain:
+
+[ Founder Profile ]   [ Description + Social Icons ]   [ Cycle of Chart Profile ]
+
+The icons should remain:
+
+TikTok
+YouTube
+Instagram
+X / Twitter
+Facebook
+
+Only connect these existing icons to the values saved from the Admin CMS.
+
+==================================================
+IMPORTANT — DO NOT CHANGE FRONTEND DESIGN
+==================================================
+
+Do NOT change:
+- social icon position
+- profile layout
+- profile images
+- profile names
+- profile roles
+- descriptions
+- Core Methodology
+- card layout
+- spacing
+- sizing
+- colors
+- typography
+- borders
+- glow effects
+- animations
+- backgrounds
+- responsive behavior
+
+The frontend design is already correct.
+
+ONLY fix the Admin CMS controls and the database/frontend connection for these 5 social-media links.
+
+==================================================
+REUSE EXISTING CMS
+==================================================
+
+Before implementing:
+
+1. Inspect the current Owner Profile & Founder CMS.
+2. Find how existing profile fields are edited and saved.
+3. Reuse the same input components, save button behavior, validation, permissions, database/settings storage, and update logic.
+4. If old social-link fields already exist, reuse/extend them instead of creating duplicate data fields.
+
+Do NOT break the existing Founder / Owner profile editing system.
+
+==================================================
+FINAL REQUIREMENT
+==================================================
+
+I must be able to do this entirely from:
+
+Admin Panel
+→ Owner Profile & Founder CMS
+→ Social Media Links
+→ Add / Edit URL
+→ Save
+
+And the website must automatically use the latest saved links for:
+
+TikTok
+YouTube
+Instagram
+X / Twitter
+Facebook
+
+ADMIN CMS ↔ DATABASE ↔ WEBSITE
+
+must be fully connected and synchronized.
+
+Do NOT rebuild anything unrelated.
+Do NOT redesign the website.
+ONLY fix and extend the existing Owner Profile & Founder CMS social-media management.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-25T10:03:01+05:30.
+</ADDITIONAL_METADATA>

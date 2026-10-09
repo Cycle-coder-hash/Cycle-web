@@ -1,0 +1,57 @@
+PROMPT #223 [2026-09-28T03:07:41Z]
+<USER_REQUEST>
+MASTER IMPLEMENTATION & VERIFICATION RULE
+
+For every future task in this project, do NOT consider a task complete merely because files were edited or code was generated.
+
+Before making changes:
+1. Analyze the existing project structure.
+2. Locate the exact pages, components, hooks, APIs, database logic, authentication/authorization, state management, and existing implementations related to the requested task.
+3. Search the entire project for duplicate, old, deprecated, or conflicting implementations of the same feature.
+4. Understand how the existing implementation currently works before modifying it.
+5. Identify dependencies and possible side effects.
+
+During implementation:
+6. Implement the requested change into the existing architecture instead of creating a parallel or duplicate system.
+7. Reuse existing components, APIs, database structures, utilities, and state management whenever appropriate.
+8. If an existing implementation conflicts with the requested behavior, update the existing implementation instead of creating a second competing implementation.
+9. Do not modify unrelated features or design elements.
+10. Preserve all existing functionality that was not explicitly requested to change.
+
+After implementation, perform a COMPLETE VERIFICATION PASS.
+
+11. Verify every requirement from the user's request one by one.
+12. Trace the complete flow:
+   UI → component/state → API/server logic → database → response/state update → UI.
+13. Verify that the actual running application behavior matches the requested behavior.
+14. Search again for old or duplicate code that could override, bypass, or conflict with the new implementation.
+15. Verify authentication and authorization/permissions where applicable.
+16. Verify responsive behavior where applicable.
+17. Check for JavaScript/TypeScript/runtime errors.
+18. Run the appropriate build, type-check, lint, or available validation process.
+19. If any error, conflict, incomplete behavior, or failed requirement is discovered, fix it before considering the task complete.
+20. Re-test the affected functionality after fixing issues.
+
+IMPORTANT:
+Do not report "completed" simply because the implementation was written.
+
+The task is COMPLETE only when:
+- the requested functionality is actually implemented,
+- the relevant UI works,
+- the required backend/API/database flow works,
+- existing functionality remains intact,
+- no duplicate/conflicting implementation is overriding it,
+- and the project passes the relevant validation/build checks.
+
+FINAL REPORT:
+At the end, provide:
+1. What was changed.
+2. Which files/systems were affected.
+3. What was verified.
+4. Any remaining issue that could not be verified or fixed.
+
+If a requested change cannot be fully implemented safely, do NOT pretend it is complete. Clearly identify what is blocking completion.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-28T08:37:41+05:30.
+</ADDITIONAL_METADATA>

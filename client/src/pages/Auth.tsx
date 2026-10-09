@@ -21,6 +21,7 @@ import {
   Send,
 } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
+import { HeaderBrandWordmark } from "@/components/HeaderBrandWordmark";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -789,9 +790,7 @@ export default function Auth() {
       <header className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-5 py-5 lg:px-8">
         <Link href="/" className="flex items-center gap-3">
           <BrandLogo size={42} className="shrink-0" />
-          <span className="text-sm font-extrabold tracking-[0.2em] text-[#0a192f] dark:text-white">
-            CYCLE OF CHART
-          </span>
+          <HeaderBrandWordmark className="text-xs sm:text-sm" />
         </Link>
 
         <div className="flex items-center gap-3">

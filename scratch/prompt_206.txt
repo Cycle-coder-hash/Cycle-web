@@ -1,0 +1,90 @@
+PROMPT #206 [2026-09-25T10:02:34Z]
+<USER_REQUEST>
+# MASTER IMPLEMENTATION PROMPT — Mobile Experience Polish (Homepage + Dashboard + Site-Wide)
+**Target system:** Cycle of Chart / Trading Reality (existing Next.js + TypeScript + PostgreSQL/Prisma production app)
+**For:** Antigravity (or any coding agent extending the existing codebase)
+
+---
+
+## 0. Objective
+
+On mobile, the Homepage and Dashboard (and the site generally) should feel clean, easy to read, and effortless to navigate with a thumb — no cramped cards, no tiny tap targets, no awkward wrapping or horizontal scroll. This is a **mobile-only polish pass**, not a redesign.
+
+**Reference for inspiration only:** a screenshot from a different trading-journal app (tradefxbook.com) shows the *kind* of mobile clarity to aim for — a clean 2-column stat-card grid, a condensed performance chart with simple time-range tabs (1D/1W/1M/3M/ALL), and a fixed bottom navigation bar for the most-used sections. **Do not copy its colors, branding, icons, or exact layout** — Cycle of Chart's existing dark/graphite + cyan-blue premium fintech identity stays exactly as-is. Borrow only the *structural* ideas: tighter grouping, simpler nav, less visual noise per screen.
+
+---
+
+## 1. Non-Negotiable Constraints
+
+**Do NOT:**
+- Change desktop/laptop layout, spacing, colors, typography, or behavior — this is mobile-only.
+- Redesign the visual identity (dark/graphite/gold-or-cyan palette, existing fonts, existing card styles, existing glow/border effects) — only adjust sizing, spacing, and arrangement for small screens.
+- Remove or hide any existing functionality — every sidebar item, dashboard stat, and homepage section must remain reachable on mobile, just better organized.
+- Rebuild pages from scratch. Adjust the existing responsive breakpoints/components.
+- Break existing mobile-specific rules already in place (e.g. the cursor-glow effect already disabled on mobile stays disabled).
+
+---
+
+## 2. Homepage — Mobile Pass
+
+Audit the existing homepage sections on small screens (~360–414px width) and fix, without altering desktop:
+- Hero section: heading/subheading font scaling, button stacking, no overflow.
+- Any preview/demo cards (e.g. the "Institutional Trader Journal & Performance" preview block): ensure stat numbers and labels don't crowd or truncate.
+- The dual Founder/Cycle of Chart profile section: confirm both profile cards stack cleanly (not side-by-side if that causes squeezing) and the centralized social-icon row stays legible and tappable (adequate spacing between icons for touch).
+- Any multi-column grids (e.g. the tools/platforms cards, roadmap stage cards): collapse to 1 column on narrow screens with consistent spacing.
+
+---
+
+## 3. Dashboard — Mobile Pass
+
+The dashboard currently shows, among other things: a top stat row (Journal Entries, Trade Win Rate, My Resources, Today's Discipline, Your Global Rank), a plan/usage summary row (trial or plan status, per-feature limits), a market-time card, and a left sidebar (Overview, Roadmap, Library, Trade Journal, Daily Routine, Position Size Calculator, Orders & Invoices, Direct Support, Leaderboard, Account Settings).
+
+**Fixes needed on mobile:**
+- **Stat cards:** rearrange into a clean, evenly-spaced 2-column grid (matching the *clarity* of the reference screenshot's card grid, in Cycle of Chart's own visual style) instead of a cramped single row.
+- **Navigation:** the desktop sidebar should not simply shrink or scroll sideways on mobile. Convert it to a mobile-appropriate pattern — e.g. a fixed bottom navigation bar with the 4–5 most-used sections (Overview, Trade Journal, Daily Routine, Leaderboard, and a "More" item that opens the remaining sections in a drawer/sheet) — inspired by the reference screenshot's bottom-nav structure, but styled to match Cycle of Chart's existing dark/cyan identity, not copied visually.
+- **Plan/usage row:** ensure limits and upgrade prompts (e.g. "Get Pro" / "Get Premium") remain fully readable and tappable without horizontal scrolling.
+- **Charts** (e.g. Performance Analytics & Growth Curve): ensure they resize to fit the viewport width, remain legible, and that tab controls (Balance Curve / Growth % / Period P&L) are large enough to tap comfortably.
+
+---
+
+## 4. Site-Wide Mobile Audit
+
+Apply the same standard across the rest of the app — Store, Checkout, Journal Books, Private Trader Notebook, Community, Support, Leaderboard, Account Settings, and Admin Panel (for admin users on mobile):
+- No horizontal scrolling anywhere except where intentionally designed (e.g. a data table that needs it).
+- No text truncation or overlap on common device widths (360px, 390px, 414px).
+- Buttons and interactive elements meet a comfortable minimum tap-target size.
+- Forms and inputs are full-width and easy to fill on a touchscreen keyboard.
+- Modals/sheets/dropdowns fit within the viewport and are dismissible with a thumb.
+
+---
+
+## 5. Performance on Mobile
+
+While fixing layout, do not introduce new performance cost:
+- Keep existing mobile-disabled effects (e.g. cursor-following glow) disabled — do not re-enable them.
+- Avoid adding new heavy animations/assets to mobile views.
+- If any existing mobile slowness is found during this pass (large assets, unnecessary re-renders, heavy JS on load), note it, but only fix it as part of this task if it's directly caused by the layout changes made here — otherwise flag it separately rather than scope-creeping this task.
+
+---
+
+## 6. Acceptance Test Checklist
+
+- [ ] Homepage hero, preview cards, Founder/Cycle of Chart profile section, and tool/roadmap grids all render cleanly with no overflow at 360px, 390px, and 414px widths
+- [ ] Dashboard stat cards form a clean, readable grid on mobile — no cramped single-row squeeze
+- [ ] Mobile navigation (bottom nav + "More") gives access to every sidebar section that exists on desktop — nothing removed, just reorganized
+- [ ] Plan/usage summary and upgrade CTAs are fully visible and tappable without horizontal scroll
+- [ ] Charts resize correctly and their tab controls are comfortably tappable
+- [ ] Store, Checkout, Journal, Notebook, Community, Support, Leaderboard, Settings, and Admin Panel show no overflow, truncation, or overlapping elements on mobile
+- [ ] Desktop/laptop layout and behavior are pixel-identical to before this change
+- [ ] No new performance regressions on mobile (page load, scroll smoothness, animation cost)
+- [ ] Existing mobile-only effect toggles (e.g. disabled cursor glow) remain unchanged
+
+---
+
+## 7. Definition of Done
+
+The Homepage, Dashboard, and the rest of the site are comfortable, uncluttered, and fully navigable on mobile — with every existing feature still reachable — while desktop stays exactly as it was, and the site's existing dark/premium visual identity is preserved throughout.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-25T15:32:34+05:30.
+</ADDITIONAL_METADATA>

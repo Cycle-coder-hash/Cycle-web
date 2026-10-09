@@ -1,0 +1,110 @@
+PROMPT #205 [2026-09-25T05:32:03Z]
+<USER_REQUEST>
+# MASTER IMPLEMENTATION PROMPT — Add Missing CMS Controls for the "Cycle of Chart" Profile
+**Target system:** Cycle of Chart / Trading Reality (existing Next.js + TypeScript + PostgreSQL/Prisma production app)
+**For:** Antigravity (or any coding agent extending the existing codebase)
+
+---
+
+## 0. Objective
+
+The Founder/About section shows two profiles side by side:
+1. **Founder / Owner** (left) — "M Nijam uddin"
+2. **Cycle of Chart** (right)
+
+**Profile 1 (Founder/Owner) already works correctly** — the Admin can already change its name/photo/etc. from the existing Owner Profile & Founder CMS. **Do not touch this — it is not broken.**
+
+**Profile 2 (Cycle of Chart) has no CMS control at all.** Its name, logo/image, role ("Institutional Trading Mentor"), and description are not connected to any admin-editable field — they're effectively fixed/hardcoded. Add the missing CMS controls for this profile only, so the Admin can change and re-upload them the same way they already can for Profile 1.
+
+---
+
+## 1. Current State (confirmed)
+
+- Owner Profile & Founder CMS → Profile 1 fields (image, name, role, description, etc.) exist and work. Leave this exactly as-is.
+- Owner Profile & Founder CMS → **no equivalent section exists for Profile 2.** The "Cycle of Chart" name, logo, role, and description on the live site are not backed by any editable CMS field.
+
+---
+
+## 2. Non-Negotiable Constraints
+
+**Do NOT:**
+- Modify, refactor, or "clean up" the existing Profile 1 (Founder/Owner) fields, save logic, or database model — it already works.
+- Change anything about the frontend layout, positions, spacing, sizing, colors, fonts, borders, glow effects, icons, or the already-correct centralized social-icon row.
+- Create a separate/new CMS page — add this inside the existing Owner Profile & Founder CMS.
+- Hardcode the Cycle of Chart name/image/role/description in the frontend, or use localStorage/frontend constants as the source of truth.
+
+---
+
+## 3. What to Add
+
+Inside the existing Owner Profile & Founder CMS, add a new, clearly separated section — mirroring the same field set, input components, and Save behavior already used for Profile 1:
+
+```
+CYCLE OF CHART PROFILE
+
+[ Logo / Image ]  — editable, re-uploadable
+Name:              [ editable ]   e.g. "Cycle of Chart"
+Role:              [ editable ]   e.g. "Institutional Trading Mentor"
+Description:       [ editable ]
+
+[ Save ]
+```
+
+- Reuse the exact same input/upload component, validation, and Save pattern Profile 1 already uses — don't build a new pattern from scratch.
+- This section must be fully independent of Profile 1: saving it must never change Profile 1's name, image, role, or description, and vice versa.
+
+---
+
+## 4. Data Model Guidance *(illustrative — adapt to what's already there)*
+
+Keep the existing Profile 1 model/table untouched. Add a new record for Profile 2:
+
+```prisma
+model BrandProfile {
+  id          String   @id @default(cuid())
+  image       String?
+  name        String
+  role        String?
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+```
+
+If a single settings/CMS table already holds Profile 1's fields, either add a second row scoped to "brand profile," or a new dedicated table like above — whichever fits the existing pattern with the least disruption.
+
+---
+
+## 5. Data Flow
+
+```
+Admin edits Cycle of Chart name / image / role / description
+   → Save
+   → New database record updates
+   → Website reads the saved value
+   → The right-side "Cycle of Chart" card displays the new values
+```
+
+Persistence required across: page refresh, logout/login, new session, and deployment.
+
+---
+
+## 6. Acceptance Test Checklist
+
+- [ ] New "Cycle of Chart Profile" section appears in the existing Owner Profile & Founder CMS
+- [ ] Admin can change the Cycle of Chart name and it updates live on the site
+- [ ] Admin can re-upload the Cycle of Chart logo/image and it updates live on the site
+- [ ] Admin can edit role and description for Cycle of Chart, reflected live
+- [ ] Saving Cycle of Chart fields does **not** change anything on the Founder/Owner (M Nijam uddin) profile
+- [ ] Founder/Owner profile editing still works exactly as before — untouched
+- [ ] Values persist after refresh, logout/login, and across desktop/mobile
+- [ ] No layout, spacing, color, or social-icon-row change anywhere in the section
+
+---
+
+## 7. Definition of Done
+
+The Admin can open Owner Profile & Founder CMS and independently edit **both** visible profiles — Founder/Owner (already working, untouched) and Cycle of Chart (newly added) — with real database persistence and zero visual side effects.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-25T11:02:03+05:30.
+</ADDITIONAL_METADATA>

@@ -110,6 +110,12 @@ import {
   updatePaymentGateways,
   syncUserTrades,
   getUserTrades,
+  deleteUserTrade,
+  getUserJournalBooks,
+  saveUserJournalBooks,
+  deleteUserJournalBook,
+  getUserNotebook,
+  saveUserNotebook,
   getLeaderboardRankings,
   getPublicTraderStats,
   getUserGlobalRank,
@@ -933,6 +939,27 @@ export const appRouter = router({
     resetDisciplineData: protectedProcedure.mutation(async ({ ctx }) => {
       return await resetDisciplineData(ctx.user.id);
     }),
+    getJournalBooks: protectedProcedure.query(async ({ ctx }) => {
+      return await getUserJournalBooks(ctx.user.id, ctx.user.openId);
+    }),
+    saveJournalBooks: protectedProcedure
+      .input(
+        z.object({
+          books: z.array(z.any()),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        return await saveUserJournalBooks(ctx.user.id, input.books, ctx.user.openId);
+      }),
+    deleteJournalBook: protectedProcedure
+      .input(
+        z.object({
+          bookId: z.string(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        return await deleteUserJournalBook(ctx.user.id, input.bookId, ctx.user.openId);
+      }),
     syncTrades: protectedProcedure
       .input(
         z.object({
@@ -943,7 +970,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const existingTrades = await getUserTrades(ctx.user.id);
+        const existingTrades = await getUserTrades(ctx.user.id, ctx.user.openId);
         if (input.trades.length > existingTrades.length) {
           const check = await canCreateTradeEntry(ctx.user.id);
           if (!check.allowed) {
@@ -958,12 +985,34 @@ export const appRouter = router({
           input.trades,
           input.startingBalance,
           input.currency,
-          input.bookName
+          input.bookName,
+          ctx.user.openId
         );
       }),
+    deleteTrade: protectedProcedure
+      .input(
+        z.object({
+          tradeId: z.string(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        return await deleteUserTrade(ctx.user.id, input.tradeId, ctx.user.openId);
+      }),
     userTrades: protectedProcedure.query(async ({ ctx }) => {
-      return await getUserTrades(ctx.user.id);
+      return await getUserTrades(ctx.user.id, ctx.user.openId);
     }),
+    getNotebookData: protectedProcedure.query(async ({ ctx }) => {
+      return await getUserNotebook(ctx.user.id, ctx.user.openId);
+    }),
+    saveNotebookData: protectedProcedure
+      .input(
+        z.object({
+          data: z.any(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        return await saveUserNotebook(ctx.user.id, input.data, ctx.user.openId);
+      }),
     createJournal: protectedProcedure
       .input(
         z.object({

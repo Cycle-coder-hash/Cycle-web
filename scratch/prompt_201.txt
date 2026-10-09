@@ -1,0 +1,130 @@
+PROMPT #201 [2026-09-25T04:19:06Z]
+<USER_REQUEST>
+Update ONLY the social media area of the existing dual-profile “Founder / About” section.
+
+CURRENT:
+- The Founder / Owner profile on the left has social/contact icons underneath it.
+- The Cycle of Chart profile on the right has social/contact icons underneath it.
+
+CHANGE TO:
+- Remove the social/contact icon rows from underneath BOTH profiles.
+- Do NOT show any social media icons directly below either profile.
+- Create ONE centralized social media icon row in the MIDDLE area between the two profiles, below the main description/content and above the bottom area of the profile section.
+- Keep the central social-media row visually balanced between the two profiles.
+
+SOCIAL MEDIA ICONS TO USE:
+1. TikTok
+2. YouTube
+3. Instagram
+4. X / Twitter
+5. Facebook
+
+The icons should be:
+- Clearly recognizable
+- Consistent with the existing website icon style
+- Clean and premium
+- Properly aligned in one central row
+- Responsive on desktop, tablet, and mobile
+
+FUNCTIONAL REQUIREMENT:
+Each social-media icon must use a real editable URL/link.
+
+ADMIN CMS:
+Update the EXISTING:
+Admin Panel → Owner Profile & Founder CMS
+
+Add editable controls for these 5 social media links:
+
+- TikTok URL
+- YouTube URL
+- Instagram URL
+- X / Twitter URL
+- Facebook URL
+
+The Admin must be able to:
+- Add a link
+- Save the link
+- Change the link later
+- Save the updated link
+- Remove a link if needed
+
+EXAMPLE:
+
+SOCIAL MEDIA LINKS
+TikTok: [editable URL field]
+YouTube: [editable URL field]
+Instagram: [editable URL field]
+X / Twitter: [editable URL field]
+Facebook: [editable URL field]
+[Save]
+
+IMPORTANT CMS BEHAVIOR:
+Use the EXISTING Owner Profile & Founder CMS and the SAME editing/save workflow already used for the existing profile information.
+
+Do NOT create a separate CMS page or separate admin system.
+
+PERSISTENT DATABASE CONNECTION:
+The following 3 layers must be fully connected:
+
+1. Admin Panel CMS
+2. Website Database / Persistent Storage
+3. Frontend Website Social Media Icons
+
+The data flow must be:
+
+Admin enters/updates social link
+→ Click Save
+→ Existing database/settings storage is updated
+→ Website reads the saved values
+→ Central social icons automatically use the updated links
+
+Do NOT use:
+- Hardcoded frontend URLs
+- LocalStorage as the source of truth
+- Temporary frontend state
+- Fake/demo links
+
+The social URLs must persist after:
+- Page refresh
+- Logout/login
+- New session
+- Deployment
+
+When Admin changes a link:
+- The previous link must be replaced with the new saved link.
+- The website must use the latest saved value.
+
+LINK BEHAVIOR:
+- Clicking each icon should open the corresponding saved social media URL.
+- Use a safe external-link behavior appropriate for the existing website.
+- If a particular social link is empty/unconfigured, do not create a fake URL.
+- Handle missing links gracefully according to the existing UI style.
+
+IMPORTANT:
+Do NOT remove the profiles.
+Do NOT change the profile images.
+Do NOT change profile names.
+Do NOT change roles/designations.
+Do NOT change descriptions.
+Do NOT change Core Methodology.
+Do NOT change the two-profile layout.
+Do NOT change the RGB/glow border effect.
+Do NOT change colors, typography, spacing, sizing, backgrounds, animations, or other visual elements except the requested social-media repositioning.
+
+PRESERVE THE EXISTING DESIGN:
+The current dual-profile structure must remain:
+
+[ FOUNDER PROFILE ]   [ CENTER DESCRIPTION + SOCIAL MEDIA ICONS ]   [ CYCLE OF CHART PROFILE ]
+
+The ONLY visual change is:
+- Remove social icons from beneath both profiles.
+- Add the new TikTok, YouTube, Instagram, X/Twitter, and Facebook icons to the center area.
+
+IMPORTANT:
+If the existing CMS/database already has social-link fields, reuse and extend them instead of creating duplicate fields.
+
+Ensure the Admin CMS, database, and website frontend remain fully synchronized and that future Admin edits are reflected correctly on the live website.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-25T09:49:06+05:30.
+</ADDITIONAL_METADATA>

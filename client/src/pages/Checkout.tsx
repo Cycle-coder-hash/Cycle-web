@@ -21,6 +21,7 @@ import { startLogin } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/BrandLogo";
+import { HeaderBrandWordmark } from "@/components/HeaderBrandWordmark";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
@@ -72,7 +73,7 @@ export default function Checkout() {
 
   const baseBundles = [
     { id: 101, titleEn: "CYCLE OF CHART — PRO PLAN (MONTHLY)", descriptionEn: "Unlimited trades · 5 books · 30 videos · Workout · Community", price: "599" },
-    { id: 102, titleEn: "CYCLE OF CHART — PREMIUM PLAN (MONTHLY)", descriptionEn: "Unlimited institutional access · Mentor support · Owner chat", price: "999" },
+    { id: 102, titleEn: "CYCLE OF CHART — PREMIUM PLAN (MONTHLY)", descriptionEn: "Unlimited institutional access · Mentor support · Owner chat · Leaderboard", price: "999" },
     { id: 1, titleEn: "Free eBook Package", descriptionEn: "15 PDFs · fixed package price", price: "00" },
     { id: 2, titleEn: "CYCLE OF CHART BASIC TO ADVANCE COURSE", descriptionEn: "Structured course · eBook included", price: "2499" },
     { id: 4, titleEn: "CYCLE OF CHART — PROFESSIONAL TRADING BLUEPRINT", descriptionEn: "Complete A–Z Trading Blueprint", originalPrice: "5550", price: "3999" },
@@ -234,9 +235,9 @@ export default function Checkout() {
       {/* Header */}
       <header className="border-b border-slate-200 bg-white/90 px-4 py-3.5 backdrop-blur-md sticky top-0 z-30 dark:border-slate-800 dark:bg-[#070e1b]/90">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
-          <Link href="/" className="flex items-center gap-2.5 text-xs sm:text-sm font-extrabold tracking-[.18em]">
+          <Link href="/" className="flex items-center gap-2.5">
             <BrandLogo size={36} />
-            <span className="hidden sm:inline">CYCLE OF CHART</span>
+            <HeaderBrandWordmark className="hidden sm:inline-block text-xs sm:text-sm" />
           </Link>
           <div className="flex items-center gap-3">
             <LanguageSelector variant="compact" />

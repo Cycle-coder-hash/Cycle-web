@@ -1,0 +1,115 @@
+PROMPT #217 [2026-09-28T01:46:38Z]
+<USER_REQUEST>
+PROJECT: Cycle of Chart — Trading Reality (existing production website)
+PAGE: Leaderboard page (cycleofchart.vercel.app/leaderboard)
+
+CONTEXT:
+This is an EXISTING codebase. Do not rebuild the page. First inspect the
+current Leaderboard component and its styling/animation setup (check if
+Framer Motion, GSAP, CSS animations, or Tailwind animate classes are
+already used elsewhere in the project) and reuse the same
+approach/library for consistency. Do not introduce a new animation
+library if one is already in use.
+
+A working HTML/CSS/JS reference demo of the exact intended animation
+behavior is available here — match this feel and timing as closely as
+possible while adapting it to the project's actual component structure
+and existing design tokens (colors, border-radius, spacing) rather than
+copy-pasting inline styles:
+https://claude.ai/artifact/Dyx9xnyLKcaa1bcMsvYi6f
+
+============================================================
+TASK 1 — Hero background + heading animation
+("Rule Compliance & Authentic Execution.
+ Ranked by Process, Not Blind Gambling.")
+============================================================
+
+Combine TWO star effects together in this hero section:
+
+a) Persistent twinkling starfield (always running):
+   Scatter ~30-35 small white dots (1-3px) at random fixed positions
+   across the hero section background. Each dot fades between ~12% and
+   ~100% opacity on a loop (~2-3.5s duration), with a randomized
+   animation delay per dot so they don't all pulse in sync. Runs
+   continuously regardless of mouse activity, sits behind the heading
+   text (low z-index, pointer-events:none).
+
+b) Cursor-follow spark trail (on hover/mouse-move):
+   On top of the twinkling starfield, spawn small glowing cyan/white
+   spark particles (2-6px) at the mouse position as the user moves
+   within the hero section. Each spark drifts a short random distance
+   and fades out over ~700-1000ms, then is removed from the DOM.
+   Throttle spawn rate to roughly one spark per 25-30ms of movement.
+   Only active while hovering within this hero section; does not
+   affect cursor behavior elsewhere on the page.
+
+c) Gradient shimmer on the second heading line ("Ranked by Process,
+   Not Blind Gambling."):
+   Fill this line's text with a moving linear-gradient (cyan → mint →
+   cyan) using background-clip:text, with the gradient background-size
+   set larger than the text (~250%) and background-position animating
+   on a ~6s linear loop, so the color appears to flow through the text.
+
+Both star layers render simultaneously — twinkling stars give constant
+ambient background motion, the spark trail adds an interactive layer
+on top, and the gradient shimmer runs independently on the heading.
+
+============================================================
+TASK 2 — "REAL TRADER PERFORMANCE SYSTEM" badge
+============================================================
+Add a subtle looping light-sweep/shine animation passing across the
+badge (~every 3.5-4s) plus a soft pulsing glow ring around it. Keep it
+tasteful and premium, not flashy.
+
+============================================================
+TASK 3 — Stat boxes (Rule Adherence 25%, Discipline Routine 25%,
+Win Rate 20%, Consistency 15%, Profit Factor 15%)
+============================================================
+a) Scroll-triggered entrance: when this row enters the viewport
+   (IntersectionObserver, ~35% threshold), each box slides in from
+   the right independently, staggered ~90ms apart (not simultaneous).
+
+b) Scroll-triggered exit: if the user scrolls back up past the section,
+   the boxes slide out to the left, staggered in reverse order
+   (~70ms apart), before sliding back in from the right if the user
+   scrolls back down.
+
+c) Auto-repeat loop: while the row is visible on screen, automatically
+   replay the exit → re-enter animation every ~7 seconds (same
+   staggered right-in / left-out motion), so the effect draws attention
+   periodically without requiring user interaction. Stop the interval
+   timer the moment the row leaves the viewport (important for mobile
+   battery/performance), and restart it when the row re-enters.
+
+d) Use transform (translateX) + opacity only for these animations —
+   avoid animating layout-affecting properties, to prevent scroll
+   jank/reflow, especially on mobile.
+
+============================================================
+CONSTRAINTS (apply to all tasks)
+============================================================
+- Do NOT change any existing text, colors, layout, spacing, fonts,
+  icons, or unrelated sections of the page.
+- Do NOT break desktop behavior while implementing.
+- Test on both desktop and mobile viewport sizes.
+- Respect prefers-reduced-motion: reduce non-essential animation
+  (sweep/glow/loop/shimmer) for users with that OS setting enabled.
+- Keep animations performant — avoid heavy re-renders or scroll jank.
+- Preserve all existing functionality on this page (search bar,
+  navigation, "My Dashboard" button, language switcher, etc.)
+- After implementing, verify the actual rendered behavior in-browser
+  (not just that it compiles): scroll down/up past the stat row to
+  confirm enter/exit, wait 7s to confirm the auto-loop fires, hover the
+  heading to confirm the spark trail + twinkling stars run together,
+  and confirm the loop timer stops when scrolled off-screen.
+
+============================================================
+DELIVERABLE
+============================================================
+Report back: which files were changed, which animation library/approach
+was reused vs newly added (and why, if new), and confirm mobile
+performance was checked.
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-28T07:16:38+05:30.
+</ADDITIONAL_METADATA>
