@@ -25,7 +25,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { trpc } from "@/lib/trpc";
-import { LeaderboardTrader } from "../../../server/db";
+import type { LeaderboardTrader } from "@shared/types/leaderboard";
 
 /* ========================================================================= */
 /* TASK 1(a): PERSISTENT TWINKLING AMBIENT STARFIELD (~30-35 STARS, 1-3PX)   */
