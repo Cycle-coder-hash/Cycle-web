@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNull, ne, or } from "drizzle-orm";
+﻿import { and, asc, desc, eq, inArray, isNull, ne, or } from "drizzle-orm";
 import {
   InsertUser,
   User,
@@ -55,6 +55,7 @@ export { getDb, getSetting, setSetting };
 
 export * from "./features/discipline";
 import { inMemoryDisciplineCompletions } from "./features/discipline";
+export * from "./features/owner-profile";
 
 export const DEFAULT_FREE_EBOOKS: any[] = [];
 
@@ -803,7 +804,7 @@ export async function listBundles() {
   return [
     { id: 1, slug: "pdf-package", titleEn: "Free eBook Package", titleBn: "Free eBook Package", price: "00", currency: "BDT", includesPdfPackage: true, includesEbook: false, includesCourse: false },
     { id: 2, slug: "course-ebook", titleEn: "CYCLE OF CHART BASIC TO ADVANCE COURSE", titleBn: "CYCLE OF CHART BASIC TO ADVANCE COURSE", price: "2499", currency: "BDT", includesPdfPackage: false, includesEbook: true, includesCourse: true },
-    { id: 4, slug: "pro-blueprint", titleEn: "CYCLE OF CHART â€” PROFESSIONAL TRADING BLUEPRINT", titleBn: "CYCLE OF CHART â€” PROFESSIONAL TRADING BLUEPRINT", originalPrice: "5550", price: "3999", currency: "BDT", includesPdfPackage: true, includesEbook: true, includesCourse: true },
+    { id: 4, slug: "pro-blueprint", titleEn: "CYCLE OF CHART Ã¢â‚¬â€ PROFESSIONAL TRADING BLUEPRINT", titleBn: "CYCLE OF CHART Ã¢â‚¬â€ PROFESSIONAL TRADING BLUEPRINT", originalPrice: "5550", price: "3999", currency: "BDT", includesPdfPackage: true, includesEbook: true, includesCourse: true },
   ];
 }
 
@@ -1212,13 +1213,13 @@ export const defaultCourseTelegramPopupConfig: CourseTelegramPopupConfig = {
   enabled: true,
   telegramUrl: "",
   titleEn: "COURSE ACCESS IS READY",
-  titleBn: "à¦•à§‹à¦°à§à¦¸ à¦…à§à¦¯à¦¾à¦•à§à¦¸à§‡à¦¸ à¦ªà§à¦°à¦¸à§à¦¤à§à¦¤",
+  titleBn: "Ã Â¦â€¢Ã Â§â€¹Ã Â¦Â°Ã Â§ÂÃ Â¦Â¸ Ã Â¦â€¦Ã Â§ÂÃ Â¦Â¯Ã Â¦Â¾Ã Â¦â€¢Ã Â§ÂÃ Â¦Â¸Ã Â§â€¡Ã Â¦Â¸ Ã Â¦ÂªÃ Â§ÂÃ Â¦Â°Ã Â¦Â¸Ã Â§ÂÃ Â¦Â¤Ã Â§ÂÃ Â¦Â¤",
   messageEn: "Before you begin your course journey, join our official Telegram community for real-time course updates, institutional study materials, session announcements, and dedicated student support.",
-  messageBn: "à¦•à§‹à¦°à§à¦¸ à¦¶à§à¦°à§ à¦•à¦°à¦¾à¦° à¦†à¦—à§‡ à¦†à¦®à¦¾à¦¦à§‡à¦° à¦…à¦«à¦¿à¦¶à¦¿à¦¯à¦¼à¦¾à¦² Telegram à¦•à¦®à¦¿à¦‰à¦¨à¦¿à¦Ÿà¦¿à¦¤à§‡ à¦¯à§à¦•à§à¦¤ à¦¹à§‹à¦¨à¥¤ à¦à¦–à¦¾à¦¨à§‡ à¦•à§‹à¦°à§à¦¸ à¦¸à¦‚à¦•à§à¦°à¦¾à¦¨à§à¦¤ à¦†à¦ªà¦¡à§‡à¦Ÿ, à¦ªà§à¦°à¦¾à¦¤à¦¿à¦·à§à¦ à¦¾à¦¨à¦¿à¦• à¦¸à§à¦Ÿà¦¾à¦¡à¦¿ à¦®à§à¦¯à¦¾à¦Ÿà§‡à¦°à¦¿à§Ÿà¦¾à¦², à¦¸à§‡à¦¶à¦¨ à¦…à§à¦¯à¦¾à¦¨à¦¾à¦‰à¦¨à§à¦¸à¦®à§‡à¦¨à§à¦Ÿ à¦à¦¬à¦‚ à¦¡à§‡à¦¡à¦¿à¦•à§‡à¦Ÿà§‡à¦¡ à¦¸à§à¦Ÿà§à¦¡à§‡à¦¨à§à¦Ÿ à¦¸à¦¾à¦ªà§‹à¦°à§à¦Ÿ à¦ªà¦¾à¦¬à§‡à¦¨à¥¤",
+  messageBn: "Ã Â¦â€¢Ã Â§â€¹Ã Â¦Â°Ã Â§ÂÃ Â¦Â¸ Ã Â¦Â¶Ã Â§ÂÃ Â¦Â°Ã Â§Â Ã Â¦â€¢Ã Â¦Â°Ã Â¦Â¾Ã Â¦Â° Ã Â¦â€ Ã Â¦â€”Ã Â§â€¡ Ã Â¦â€ Ã Â¦Â®Ã Â¦Â¾Ã Â¦Â¦Ã Â§â€¡Ã Â¦Â° Ã Â¦â€¦Ã Â¦Â«Ã Â¦Â¿Ã Â¦Â¶Ã Â¦Â¿Ã Â¦Â¯Ã Â¦Â¼Ã Â¦Â¾Ã Â¦Â² Telegram Ã Â¦â€¢Ã Â¦Â®Ã Â¦Â¿Ã Â¦â€°Ã Â¦Â¨Ã Â¦Â¿Ã Â¦Å¸Ã Â¦Â¿Ã Â¦Â¤Ã Â§â€¡ Ã Â¦Â¯Ã Â§ÂÃ Â¦â€¢Ã Â§ÂÃ Â¦Â¤ Ã Â¦Â¹Ã Â§â€¹Ã Â¦Â¨Ã Â¥Â¤ Ã Â¦ÂÃ Â¦â€“Ã Â¦Â¾Ã Â¦Â¨Ã Â§â€¡ Ã Â¦â€¢Ã Â§â€¹Ã Â¦Â°Ã Â§ÂÃ Â¦Â¸ Ã Â¦Â¸Ã Â¦â€šÃ Â¦â€¢Ã Â§ÂÃ Â¦Â°Ã Â¦Â¾Ã Â¦Â¨Ã Â§ÂÃ Â¦Â¤ Ã Â¦â€ Ã Â¦ÂªÃ Â¦Â¡Ã Â§â€¡Ã Â¦Å¸, Ã Â¦ÂªÃ Â§ÂÃ Â¦Â°Ã Â¦Â¾Ã Â¦Â¤Ã Â¦Â¿Ã Â¦Â·Ã Â§ÂÃ Â¦Â Ã Â¦Â¾Ã Â¦Â¨Ã Â¦Â¿Ã Â¦â€¢ Ã Â¦Â¸Ã Â§ÂÃ Â¦Å¸Ã Â¦Â¾Ã Â¦Â¡Ã Â¦Â¿ Ã Â¦Â®Ã Â§ÂÃ Â¦Â¯Ã Â¦Â¾Ã Â¦Å¸Ã Â§â€¡Ã Â¦Â°Ã Â¦Â¿Ã Â§Å¸Ã Â¦Â¾Ã Â¦Â², Ã Â¦Â¸Ã Â§â€¡Ã Â¦Â¶Ã Â¦Â¨ Ã Â¦â€¦Ã Â§ÂÃ Â¦Â¯Ã Â¦Â¾Ã Â¦Â¨Ã Â¦Â¾Ã Â¦â€°Ã Â¦Â¨Ã Â§ÂÃ Â¦Â¸Ã Â¦Â®Ã Â§â€¡Ã Â¦Â¨Ã Â§ÂÃ Â¦Å¸ Ã Â¦ÂÃ Â¦Â¬Ã Â¦â€š Ã Â¦Â¡Ã Â§â€¡Ã Â¦Â¡Ã Â¦Â¿Ã Â¦â€¢Ã Â§â€¡Ã Â¦Å¸Ã Â§â€¡Ã Â¦Â¡ Ã Â¦Â¸Ã Â§ÂÃ Â¦Å¸Ã Â§ÂÃ Â¦Â¡Ã Â§â€¡Ã Â¦Â¨Ã Â§ÂÃ Â¦Å¸ Ã Â¦Â¸Ã Â¦Â¾Ã Â¦ÂªÃ Â§â€¹Ã Â¦Â°Ã Â§ÂÃ Â¦Å¸ Ã Â¦ÂªÃ Â¦Â¾Ã Â¦Â¬Ã Â§â€¡Ã Â¦Â¨Ã Â¥Â¤",
   joinButtonTextEn: "JOIN TELEGRAM",
-  joinButtonTextBn: "TELEGRAM à¦ à¦¯à§à¦•à§à¦¤ à¦¹à§‹à¦¨",
+  joinButtonTextBn: "TELEGRAM Ã Â¦Â Ã Â¦Â¯Ã Â§ÂÃ Â¦â€¢Ã Â§ÂÃ Â¦Â¤ Ã Â¦Â¹Ã Â§â€¹Ã Â¦Â¨",
   dismissButtonTextEn: "MAYBE LATER",
-  dismissButtonTextBn: "à¦ªà¦°à§‡ à¦¯à§à¦•à§à¦¤ à¦¹à¦¬",
+  dismissButtonTextBn: "Ã Â¦ÂªÃ Â¦Â°Ã Â§â€¡ Ã Â¦Â¯Ã Â§ÂÃ Â¦â€¢Ã Â§ÂÃ Â¦Â¤ Ã Â¦Â¹Ã Â¦Â¬",
   displayMode: "once",
   popupDelay: 0,
 };
@@ -1630,7 +1631,7 @@ export async function approveOrder(orderId: number, approvedBy: number = 1) {
 
       await db.insert(notifications).values({
         userId: targetOrder.customerId,
-        title: isCourse ? "Course Access Unlocked ðŸŽ“" : "Access unlocked",
+        title: isCourse ? "Course Access Unlocked Ã°Å¸Å½â€œ" : "Access unlocked",
         message: isCourse && telegramConfig.telegramUrl
           ? "Your course access has been approved! Join our official Telegram community for real-time course updates, institutional study materials, and student support."
           : "Your payment was approved and your digital learning access is now available.",
@@ -1669,7 +1670,7 @@ export async function approveOrder(orderId: number, approvedBy: number = 1) {
     // Add notification in Supabase
     await supabaseServer.from("notifications").insert({
       userId: targetOrder.customerId,
-      title: isCourse ? "Course Access Unlocked ðŸŽ“" : "Access unlocked",
+      title: isCourse ? "Course Access Unlocked Ã°Å¸Å½â€œ" : "Access unlocked",
       message: isCourse && telegramConfig.telegramUrl
         ? "Your course access has been approved! Join our official Telegram community for real-time course updates, institutional study materials, and student support."
         : "Your payment was approved and your digital learning access is now available.",
@@ -3761,141 +3762,7 @@ export async function getCustomerLibraryPdfs(
 
 // Discipline system functions are now in ./features/discipline
 
-// ------------------------------------------------------------------------------
-// OWNER PROFILE & GENERAL SETTINGS CMS
-// ------------------------------------------------------------------------------
-
-export interface OwnerProfile {
-  isVisible?: boolean;
-  name: string;
-  role: string;
-  roleBn?: string;
-  bioEn: string;
-  bioBn?: string;
-  photoUrl: string;
-  detailsEn?: string;
-  detailsBn?: string;
-  experienceYears?: string;
-  studentsCount?: string;
-  tradingStyle?: string;
-  signatureQuoteEn?: string;
-  signatureQuoteBn?: string;
-  telegram?: string;
-  tiktok?: string;
-  youtube?: string;
-  instagram?: string;
-  facebook?: string;
-  twitter?: string;
-  email?: string;
-  showExperienceCard?: boolean;
-  experienceLabel?: string;
-  experienceIcon?: string;
-  showMentoredCard?: boolean;
-  mentoredLabel?: string;
-  mentoredIcon?: string;
-  showMethodologyCard?: boolean;
-  methodologyLabel?: string;
-  methodologyIcon?: string;
-  showDetailsParagraph?: boolean;
-  profile2Name?: string;
-  profile2Role?: string;
-  profile2RoleBn?: string;
-  profile2PhotoUrl?: string;
-  profile2BioEn?: string;
-  profile2BioBn?: string;
-  profile2TradingStyle?: string;
-  profile2Telegram?: string;
-  profile2Youtube?: string;
-  profile2Facebook?: string;
-  profile2Twitter?: string;
-  profile2Email?: string;
-}
-
-export const DEFAULT_OWNER_PROFILE: OwnerProfile = {
-  isVisible: true,
-  name: "Al-Amin Islam",
-  role: "Founder & Lead Institutional Analyst",
-  roleBn: "à¦ªà§à¦°à¦¤à¦¿à¦·à§à¦ à¦¾à¦¤à¦¾ à¦“ à¦²à¦¿à¦¡ à¦‡à¦¨à§à¦¸à¦Ÿà¦¿à¦Ÿà¦¿à¦‰à¦¶à¦¨à¦¾à¦² à¦…à§à¦¯à¦¾à¦¨à¦¾à¦²à¦¿à¦¸à§à¦Ÿ",
-  bioEn: "Specializing in institutional price delivery, market structure, liquidity dynamics, and price action. Dedicated to replacing emotional speculation with structured understanding, systematic analysis, and disciplined execution.",
-  bioBn: "à¦‡à¦¨à§à¦¸à¦Ÿà¦¿à¦Ÿà¦¿à¦‰à¦¶à¦¨à¦¾à¦² à¦ªà§à¦°à¦¾à¦‡à¦¸ à¦¡à§‡à¦²à¦¿à¦­à¦¾à¦°à¦¿, à¦®à¦¾à¦°à§à¦•à§‡à¦Ÿ à¦¸à§à¦Ÿà§à¦°à¦¾à¦•à¦šà¦¾à¦°, à¦²à¦¿à¦•à§à¦‡à¦¡à¦¿à¦Ÿà¦¿ à¦¡à¦¾à¦¯à¦¼à¦¨à¦¾à¦®à¦¿à¦•à§à¦¸ à¦à¦¬à¦‚ à¦ªà§à¦°à¦¾à¦‡à¦¸ à¦…à§à¦¯à¦¾à¦•à¦¶à¦¨ à¦¸à§à¦ªà§‡à¦¶à¦¾à¦²à¦¿à¦¸à§à¦Ÿà¥¤ à¦†à¦¬à§‡à¦—à¦¤à¦¾à¦¡à¦¼à¦¿à¦¤ à¦…à¦¨à§à¦®à¦¾à¦¨ à¦¦à§‚à¦° à¦•à¦°à§‡ à¦¸à§à¦Ÿà§à¦°à¦¾à¦•à¦šà¦¾à¦°à§à¦¡ à¦†à¦¨à§à¦¡à¦¾à¦°à¦¸à§à¦Ÿà§à¦¯à¦¾à¦¨à§à¦¡à¦¿à¦‚, à¦¸à¦¿à¦¸à§à¦Ÿà§‡à¦®à§‡à¦Ÿà¦¿à¦• à¦…à§à¦¯à¦¾à¦¨à¦¾à¦²à¦¾à¦‡à¦¸à¦¿à¦¸ à¦à¦¬à¦‚ à¦¸à§à¦¶à§ƒà¦™à§à¦–à¦² à¦à¦•à§à¦¸à¦¿à¦•à¦¿à¦‰à¦¶à¦¨ à¦¤à§ˆà¦°à¦¿à¦¤à§‡ à¦ªà§à¦°à¦¤à¦¿à¦¶à§à¦°à§à¦¤à¦¿à¦¬à¦¦à§à¦§à¥¤",
-  photoUrl: "/logo.jpg",
-  detailsEn: "Over 6+ years of specialized market experience researching interbank price delivery algorithms, session manipulation cycles, and institutional risk management.",
-  detailsBn: "",
-  experienceYears: "6+ Years",
-  studentsCount: "1,500+",
-  tradingStyle: "Institutional Order Flow, Liquidity & (SMC)",
-  signatureQuoteEn: "Before you trade, understand trading. Before you deposit, understand trading.",
-  signatureQuoteBn: "à¦Ÿà§à¦°à§‡à¦¡ à¦•à¦°à¦¾à¦° à¦†à¦—à§‡ à¦Ÿà§à¦°à§‡à¦¡à¦¿à¦‚ à¦¬à§à¦à§à¦¨à¥¤ à¦¡à¦¿à¦ªà§‹à¦œà¦¿à¦Ÿ à¦•à¦°à¦¾à¦° à¦†à¦—à§‡ à¦Ÿà§à¦°à§‡à¦¡à¦¿à¦‚ à¦¬à§à¦à§à¦¨à¥¤",
-  telegram: "https://t.me/cycleofchart",
-  tiktok: "https://tiktok.com/@cycleofchart",
-  youtube: "https://youtube.com/@cycleofchart",
-  instagram: "https://instagram.com/cycleofchart",
-  facebook: "https://facebook.com/cycleofchart",
-  twitter: "https://x.com/cycleofchart",
-  email: "contact@cycleofchart.com",
-  showExperienceCard: false,
-  experienceLabel: "Market Experience",
-  experienceIcon: "clock",
-  showMentoredCard: false,
-  mentoredLabel: "Traders Mentored",
-  mentoredIcon: "users",
-  showMethodologyCard: true,
-  methodologyLabel: "Core Methodology",
-  methodologyIcon: "award",
-  showDetailsParagraph: false,
-  profile2Name: "Cycle of Chart",
-  profile2Role: "Institutional Trading Mentor",
-  profile2RoleBn: "à¦‡à¦¨à§à¦¸à¦Ÿà¦¿à¦Ÿà¦¿à¦‰à¦¶à¦¨à¦¾à¦² à¦Ÿà§à¦°à§‡à¦¡à¦¿à¦‚ à¦®à§‡à¦¨à§à¦Ÿà¦°",
-  profile2PhotoUrl: "/logo.jpg",
-  profile2BioEn: "Cycle of Chart is an institutional trading education and market research initiative committed to mentoring traders in SMC, liquidity engineering, and rule-based execution.",
-  profile2BioBn: "à¦¸à¦¾à¦‡à¦•à§‡à¦² à¦…à¦¬ à¦šà¦¾à¦°à§à¦Ÿ à¦à¦•à¦Ÿà¦¿ à¦ªà§à¦°à¦¾à¦¤à¦¿à¦·à§à¦ à¦¾à¦¨à¦¿à¦• à¦Ÿà§à¦°à§‡à¦¡à¦¿à¦‚ à¦¶à¦¿à¦•à§à¦·à¦¾ à¦“ à¦®à¦¾à¦°à§à¦•à§‡à¦Ÿ à¦°à¦¿à¦¸à¦¾à¦°à§à¦š à¦ªà§à¦²à§à¦¯à¦¾à¦Ÿà¦«à¦°à§à¦® à¦¯à¦¾ à¦à¦¸à¦à¦®à¦¸à¦¿, à¦²à¦¿à¦•à§à¦‡à¦¡à¦¿à¦Ÿà¦¿ à¦‡à¦žà§à¦œà¦¿à¦¨à¦¿à¦¯à¦¼à¦¾à¦°à¦¿à¦‚ à¦à¦¬à¦‚ à¦¨à¦¿à¦¯à¦¼à¦®à¦¤à¦¾à¦¨à§à¦¤à§à¦°à¦¿à¦• à¦à¦•à§à¦¸à¦¿à¦•à¦¿à¦‰à¦¶à¦¨à§‡ à¦Ÿà§à¦°à§‡à¦¡à¦¾à¦°à¦¦à§‡à¦° à¦ªà§à¦°à¦¶à¦¿à¦•à§à¦·à¦£ à¦¦à§‡à¦¯à¦¼à¥¤",
-  profile2TradingStyle: "SMC, Liquidity & Order Flow Delivery",
-  profile2Telegram: "https://t.me/cycleofchart",
-  profile2Youtube: "https://youtube.com/@cycleofchart",
-  profile2Facebook: "https://facebook.com/cycleofchart",
-  profile2Twitter: "",
-  profile2Email: "contact@cycleofchart.com",
-};
-
-export async function getOwnerProfile(): Promise<OwnerProfile> {
-  try {
-    const raw = await getSetting("owner_profile");
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      // Ensure boolean flags default cleanly to current live state if not explicitly saved yet
-      if (parsed.isVisible === undefined) parsed.isVisible = true;
-      if (parsed.showExperienceCard === undefined) parsed.showExperienceCard = false;
-      if (parsed.showMentoredCard === undefined) parsed.showMentoredCard = false;
-      if (parsed.showMethodologyCard === undefined) parsed.showMethodologyCard = true;
-      if (parsed.showDetailsParagraph === undefined) parsed.showDetailsParagraph = false;
-      if (!parsed.experienceYears) parsed.experienceYears = "6+ Years";
-      if (!parsed.studentsCount) parsed.studentsCount = "1,500+";
-      if (!parsed.experienceLabel) parsed.experienceLabel = "Market Experience";
-      if (!parsed.mentoredLabel) parsed.mentoredLabel = "Traders Mentored";
-      if (!parsed.methodologyLabel) parsed.methodologyLabel = "Core Methodology";
-      if (!parsed.experienceIcon) parsed.experienceIcon = "clock";
-      if (!parsed.mentoredIcon) parsed.mentoredIcon = "users";
-      if (!parsed.methodologyIcon) parsed.methodologyIcon = "award";
-      if (!parsed.detailsEn) {
-        parsed.detailsEn = "Over 6+ years of specialized market experience researching interbank price delivery algorithms, session manipulation cycles, and institutional risk management.";
-      }
-      return { ...DEFAULT_OWNER_PROFILE, ...parsed };
-    }
-  } catch (err) {
-    console.warn("[getOwnerProfile error]:", err);
-  }
-  return DEFAULT_OWNER_PROFILE;
-}
-
-export async function updateOwnerProfile(data: Partial<OwnerProfile>): Promise<OwnerProfile> {
-  const current = await getOwnerProfile();
-  const updated: OwnerProfile = {
-    ...current,
-    ...data,
-  };
-  await setSetting("owner_profile", JSON.stringify(updated));
-  return updated;
-}
+// Owner profile functions are now in ./features/owner-profile
 
 // ==============================================================================
 // TRADER TRADES & LEADERBOARD SYSTEM
