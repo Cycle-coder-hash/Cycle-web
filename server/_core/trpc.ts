@@ -60,3 +60,5 @@ export const adminProcedure = t.procedure.use(
     });
   }),
 );
+
+export const supportProcedure = adminProcedure;
