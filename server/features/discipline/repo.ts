@@ -1,4 +1,4 @@
-﻿import { and, asc, desc, eq, inArray, isNull, ne, or } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, ne, or } from "drizzle-orm";
 import {
   disciplineTasks,
   disciplineTaskCompletions,
@@ -7,6 +7,9 @@ import {
   disciplineDailyJournals,
   disciplineForexLogs,
   disciplineSettings,
+  habits,
+  progress,
+  disciplineEntries,
   DisciplineTask,
   DisciplineExercise,
   DisciplineDailyJournal,
@@ -1825,4 +1828,225 @@ export async function resetDisciplineData(userId: number) {
   await ensureDisciplineDefaults(userId);
   return true;
 }
+
+export async function listHabits(userId: number, date: string) {
+  const db = await getDb();
+  if (db) {
+    try {
+      return await db
+        .select()
+        .from(habits)
+        .where(and(eq(habits.userId, userId), eq(habits.date, date)));
+    } catch (err) {
+      console.warn("[listHabits error]:", err);
+    }
+  }
+
+  try {
+    const { data, error } = await supabaseServer
+      .from("habits")
+      .select("*")
+      .eq("userId", userId)
+      .eq("date", date);
+    if (!error && data) return data;
+  } catch {}
+
+  try {
+    const key = `user_habits_${userId}_${date}`;
+    const raw = await getSetting(key);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+
+  return [];
+}
+
+export async function toggleHabitEntry(userId: number, label: string, date: string, completed: boolean) {
+  const db = await getDb();
+  if (db) {
+    try {
+      const existing = await db
+        .select()
+        .from(habits)
+        .where(and(eq(habits.userId, userId), eq(habits.date, date), eq(habits.label, label)))
+        .limit(1);
+      if (existing[0]) {
+        await db.update(habits).set({ completed }).where(eq(habits.id, existing[0].id));
+      } else {
+        await db.insert(habits).values({ userId, label, date, completed });
+      }
+      return true;
+    } catch (err) {
+      console.warn("[toggleHabitEntry db error]:", err);
+    }
+  }
+
+  try {
+    await supabaseServer.from("habits").upsert({
+      userId,
+      label,
+      date,
+      completed,
+    }, { onConflict: "userId,label,date" });
+  } catch {}
+
+  try {
+    const key = `user_habits_${userId}_${date}`;
+    const raw = await getSetting(key);
+    const existing: any[] = raw ? JSON.parse(raw) : [];
+    const item = existing.find((h) => h.label === label);
+    if (item) {
+      item.completed = completed;
+    } else {
+      existing.push({ userId, label, date, completed });
+    }
+    await setSetting(key, JSON.stringify(existing));
+  } catch {}
+
+  return true;
+}
+
+export async function listProgress(userId: number) {
+  const db = await getDb();
+  if (db) {
+    try {
+      return await db.select().from(progress).where(eq(progress.userId, userId));
+    } catch (err) {
+      console.warn("[listProgress error]:", err);
+    }
+  }
+
+  try {
+    const { data, error } = await supabaseServer.from("progress").select("*").eq("userId", userId);
+    if (!error && data) return data;
+  } catch {}
+
+  try {
+    const key = `user_progress_${userId}`;
+    const raw = await getSetting(key);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+
+  return [];
+}
+
+export async function toggleProgressEntry(userId: number, lessonId: number, completed: boolean) {
+  const db = await getDb();
+  if (db) {
+    try {
+      const existing = await db
+        .select()
+        .from(progress)
+        .where(and(eq(progress.userId, userId), eq(progress.lessonId, lessonId)))
+        .limit(1);
+      if (existing[0]) {
+        await db.update(progress).set({ completed }).where(eq(progress.id, existing[0].id));
+      } else {
+        await db.insert(progress).values({ userId, lessonId, completed });
+      }
+      return true;
+    } catch (err) {
+      console.warn("[toggleProgressEntry db error]:", err);
+    }
+  }
+
+  try {
+    await supabaseServer.from("progress").upsert({
+      userId,
+      lessonId,
+      completed,
+    }, { onConflict: "userId,lessonId" });
+  } catch {}
+
+  try {
+    const key = `user_progress_${userId}`;
+    const raw = await getSetting(key);
+    const existing: any[] = raw ? JSON.parse(raw) : [];
+    const item = existing.find((p) => p.lessonId === lessonId);
+    if (item) {
+      item.completed = completed;
+    } else {
+      existing.push({ userId, lessonId, completed });
+    }
+    await setSetting(key, JSON.stringify(existing));
+  } catch {}
+
+  return true;
+}
+
+export async function listDiscipline(userId: number, date: string) {
+  const db = await getDb();
+  if (db) {
+    try {
+      return await db
+        .select()
+        .from(disciplineEntries)
+        .where(and(eq(disciplineEntries.userId, userId), eq(disciplineEntries.date, date)));
+    } catch (err) {
+      console.warn("[listDiscipline error]:", err);
+    }
+  }
+
+  try {
+    const { data, error } = await supabaseServer
+      .from("disciplineEntries")
+      .select("*")
+      .eq("userId", userId)
+      .eq("date", date);
+    if (!error && data) return data;
+  } catch {}
+
+  try {
+    const key = `user_discipline_${userId}_${date}`;
+    const raw = await getSetting(key);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+
+  return [];
+}
+
+export async function toggleDisciplineEntry(userId: number, label: string, date: string, completed: boolean) {
+  const db = await getDb();
+  if (db) {
+    try {
+      const existing = await db
+        .select()
+        .from(disciplineEntries)
+        .where(and(eq(disciplineEntries.userId, userId), eq(disciplineEntries.date, date), eq(disciplineEntries.label, label)))
+        .limit(1);
+      if (existing[0]) {
+        await db.update(disciplineEntries).set({ completed }).where(eq(disciplineEntries.id, existing[0].id));
+      } else {
+        await db.insert(disciplineEntries).values({ userId, label, date, completed });
+      }
+      return true;
+    } catch (err) {
+      console.warn("[toggleDisciplineEntry db error]:", err);
+    }
+  }
+
+  try {
+    await supabaseServer.from("disciplineEntries").upsert({
+      userId,
+      label,
+      date,
+      completed,
+    }, { onConflict: "userId,label,date" });
+  } catch {}
+
+  try {
+    const key = `user_discipline_${userId}_${date}`;
+    const raw = await getSetting(key);
+    const existing: any[] = raw ? JSON.parse(raw) : [];
+    const item = existing.find((d) => d.label === label);
+    if (item) {
+      item.completed = completed;
+    } else {
+      existing.push({ userId, label, date, completed });
+    }
+    await setSetting(key, JSON.stringify(existing));
+  } catch {}
+
+  return true;
+}
+
 
