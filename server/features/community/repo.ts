@@ -1,5 +1,5 @@
-﻿import { getSetting, setSetting, supabaseServer } from "../../infra/db";
-import { listBundles, listProducts, resolveUserCandidateIds, listOrdersForUser } from "../../db";
+import { getSetting, setSetting, supabaseServer } from "../../infra/db";
+import { listBundles, listProducts, resolveUserCandidateIds, listOrdersForUser } from "../commerce";
 export interface CourseTelegramPopupConfig {
   enabled: boolean;
   telegramUrl: string;
