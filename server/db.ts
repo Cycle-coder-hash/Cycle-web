@@ -1,7 +1,4 @@
 import { and, asc, desc, eq, inArray, isNull, ne, or } from "drizzle-orm";
-import pg from "pg";
-import { drizzle as drizzlePg } from "drizzle-orm/node-postgres";
-import { drizzle as drizzleMysql } from "drizzle-orm/mysql2";
 import {
   InsertUser,
   User,
@@ -52,9 +49,9 @@ import { ENV } from "./_core/env";
 import { deriveNumericIdFromOpenId } from "@shared/const";
 import { supabaseServer } from "./supabase";
 import { sendAccessEmail } from "./email";
-
-let _db: any = null;
-let _pgPool: pg.Pool | null = null;
+import { getDb } from "./infra/db/client";
+import { getSetting, setSetting } from "./infra/db/settings";
+export { getDb, getSetting, setSetting };
 
 export const DEFAULT_FREE_EBOOKS: any[] = [];
 
@@ -342,97 +339,7 @@ let entitlementAutoId = 1;
 let auditAutoId = 1;
 let ebookAutoId = 6;
 
-let _dbChecked = false;
-let _dbAvailable = false;
 
-export async function getDb() {
-  if (_dbChecked) {
-    return _dbAvailable ? _db : null;
-  }
-  const url = process.env.DATABASE_URL;
-  const isTemplate = !url || url.includes("[") || url.includes("]") || url.includes("<") || url.includes(">");
-  if (!_db && url && !isTemplate) {
-    try {
-      if (url.startsWith("postgres://") || url.startsWith("postgresql://")) {
-        _pgPool = new pg.Pool({
-          connectionString: url,
-          ssl: url.includes("supabase.com") ? { rejectUnauthorized: false } : undefined,
-          connectionTimeoutMillis: 1500,
-        });
-        // Test connectivity once
-        const client = await _pgPool.connect();
-        client.release();
-        _db = drizzlePg(_pgPool);
-        _dbAvailable = true;
-      } else if (url.startsWith("mysql://")) {
-        _db = drizzleMysql(url);
-        _dbAvailable = true;
-      }
-    } catch (error) {
-      console.warn("[Database] Pooler unavailable, seamlessly using Supabase REST engine:", (error as any)?.message || error);
-      _db = null;
-      _dbAvailable = false;
-    } finally {
-      _dbChecked = true;
-    }
-  } else {
-    _dbChecked = true;
-  }
-  return _dbAvailable ? _db : null;
-}
-
-const inMemorySettings: Map<string, string> = new Map();
-
-export async function getSetting(key: string): Promise<string | null> {
-  if (inMemorySettings.has(key)) {
-    return inMemorySettings.get(key) || null;
-  }
-  const db = await getDb();
-  if (db) {
-    try {
-      const rows = await db.select().from(settings).where(eq(settings.key, key)).limit(1);
-      if (rows.length) {
-        inMemorySettings.set(key, rows[0].value);
-        return rows[0].value;
-      }
-    } catch (err) {
-      console.warn("[getSetting error]:", err);
-    }
-  }
-  try {
-    const { supabaseServer } = await import("./supabase");
-    const { data, error } = await supabaseServer.from("settings").select("value").eq("key", key).maybeSingle();
-    if (data && !error && data.value !== undefined && data.value !== null) {
-      inMemorySettings.set(key, data.value);
-      return data.value;
-    }
-  } catch {}
-  return inMemorySettings.get(key) || null;
-}
-
-export async function setSetting(key: string, value: string): Promise<boolean> {
-  inMemorySettings.set(key, value);
-  const db = await getDb();
-  if (db) {
-    try {
-      const existing = await db.select().from(settings).where(eq(settings.key, key)).limit(1);
-      if (existing.length) {
-        await db.update(settings).set({ value, updatedAt: new Date() }).where(eq(settings.key, key));
-      } else {
-        await db.insert(settings).values({ key, value });
-      }
-    } catch (err) {
-      console.warn("[setSetting error]:", err);
-    }
-  }
-  try {
-    const { supabaseServer } = await import("./supabase");
-    await supabaseServer.from("settings").upsert({ key, value }, { onConflict: "key" });
-  } catch (supaErr) {
-    console.warn("[setSetting Supabase error]:", supaErr);
-  }
-  return true;
-}
 
 // ------------------------------------------------------------------------------
 // PAYMENT GATEWAYS & CHECKOUT CONFIGURATION
