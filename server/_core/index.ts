@@ -7,7 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
 import { registerUploadRoutes } from "../uploadRoute";
 import { appRouter } from "../routers";
-import { adminRouter } from "../adminApi";
+import { adminRouter } from "../http/adminRest";
 import fs from "fs";
 import path from "path";
 import { createContext } from "./context";
