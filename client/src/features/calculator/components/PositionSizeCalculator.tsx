@@ -1,16 +1,12 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Calculator,
   RotateCcw,
   ShieldCheck,
-  TrendingUp,
   AlertCircle,
-  HelpCircle,
   Sparkles,
   Info,
-  DollarSign,
   Layers,
-  ArrowRight,
   Target,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,10 +22,17 @@ import {
   QUICK_RISK_PRESETS,
   calculatePositionSize,
   validateCalculatorInput,
-} from "@/lib/positionCalculator";
+  getLotStepDecimals,
+} from "../lib/positionCalculator";
 
 interface PositionSizeCalculatorProps {
   initialBalance?: number;
+}
+
+function parseNumericField(raw: string): number {
+  const trimmed = raw.trim();
+  if (trimmed === "") return NaN;
+  return Number(trimmed);
 }
 
 export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
@@ -41,15 +44,24 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
 
   // Form State
   const [balance, setBalance] = useState<string>(
-    initialBalance && initialBalance > 0 ? String(initialBalance) : String(DEFAULT_CALCULATOR_INPUT.accountBalance)
+    initialBalance && initialBalance > 0
+      ? String(initialBalance)
+      : String(DEFAULT_CALCULATOR_INPUT.accountBalance)
   );
-  const [riskPercent, setRiskPercent] = useState<string>(String(DEFAULT_CALCULATOR_INPUT.riskPercent));
-  const [stopLossPips, setStopLossPips] = useState<string>(String(DEFAULT_CALCULATOR_INPUT.stopLossPips));
+  const [riskPercent, setRiskPercent] = useState<string>(
+    String(DEFAULT_CALCULATOR_INPUT.riskPercent)
+  );
+  const [stopLossPips, setStopLossPips] = useState<string>(
+    String(DEFAULT_CALCULATOR_INPUT.stopLossPips)
+  );
   const [symbol, setSymbol] = useState<string>(DEFAULT_CALCULATOR_INPUT.symbol);
 
-  // Active Calculation Result State
-  const [hasCalculated, setHasCalculated] = useState<boolean>(true);
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  // Sync if initialBalance prop updates from parent
+  useEffect(() => {
+    if (initialBalance !== undefined && initialBalance > 0) {
+      setBalance(String(initialBalance));
+    }
+  }, [initialBalance]);
 
   // Active selected instrument specification
   const activeInstrument = useMemo<InstrumentSpec>(() => {
@@ -59,52 +71,63 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
     );
   }, [symbol]);
 
-  // Current calculation input object
+  // Current calculation input object derived from latest user inputs
   const currentInput = useMemo<PositionCalculatorInput>(() => {
     return {
-      accountBalance: parseFloat(balance) || 0,
-      riskPercent: parseFloat(riskPercent) || 0,
-      stopLossPips: parseFloat(stopLossPips) || 0,
+      accountBalance: parseNumericField(balance),
+      riskPercent: parseNumericField(riskPercent),
+      stopLossPips: parseNumericField(stopLossPips),
       symbol,
     };
   }, [balance, riskPercent, stopLossPips, symbol]);
+
+  // Live validation state
+  const liveValidation = useMemo(() => {
+    return validateCalculatorInput(currentInput);
+  }, [currentInput]);
 
   // Live calculation results
   const calculationResult = useMemo<PositionCalculatorResult>(() => {
     return calculatePositionSize(currentInput);
   }, [currentInput]);
 
-  // Handle calculation action
+  const validationErrors = liveValidation.errors;
+  const lotDecimals = getLotStepDecimals(activeInstrument.lotStep);
+
+  // Safe risk amount preview for input label
+  const previewRiskAmount = useMemo(() => {
+    const bal = currentInput.accountBalance;
+    const risk = currentInput.riskPercent;
+    if (!Number.isFinite(bal) || bal <= 0 || !Number.isFinite(risk) || risk <= 0 || risk > 100) {
+      return 0;
+    }
+    return Number(((bal * risk) / 100).toFixed(2));
+  }, [currentInput.accountBalance, currentInput.riskPercent]);
+
+  // Handle calculation form submission
   const handleCalculate = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const validation = validateCalculatorInput(currentInput);
-    setValidationErrors(validation.errors);
-    setHasCalculated(true);
   };
 
   // Handle reset to default parameters
   const handleReset = () => {
     setBalance(
-      initialBalance && initialBalance > 0 ? String(initialBalance) : String(DEFAULT_CALCULATOR_INPUT.accountBalance)
+      initialBalance && initialBalance > 0
+        ? String(initialBalance)
+        : String(DEFAULT_CALCULATOR_INPUT.accountBalance)
     );
     setRiskPercent(String(DEFAULT_CALCULATOR_INPUT.riskPercent));
     setStopLossPips(String(DEFAULT_CALCULATOR_INPUT.stopLossPips));
     setSymbol(DEFAULT_CALCULATOR_INPUT.symbol);
-    setValidationErrors({});
-    setHasCalculated(true);
   };
 
   // Quick preset click
   const handlePresetRisk = (preset: number) => {
     setRiskPercent(String(preset));
-    if (validationErrors.riskPercent) {
-      setValidationErrors((prev) => {
-        const next = { ...prev };
-        delete next.riskPercent;
-        return next;
-      });
-    }
   };
+
+  const isPointsInstrument =
+    activeInstrument.category === "indices" || activeInstrument.category === "crypto";
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -148,6 +171,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
         <div className="lg:col-span-6 space-y-6">
           <form
             onSubmit={handleCalculate}
+            noValidate
             className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-sm dark:border-slate-800 dark:bg-[#070e1b] space-y-5"
           >
             <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
@@ -182,16 +206,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
               </label>
               <select
                 value={symbol}
-                onChange={(e) => {
-                  setSymbol(e.target.value);
-                  if (validationErrors.symbol) {
-                    setValidationErrors((prev) => {
-                      const next = { ...prev };
-                      delete next.symbol;
-                      return next;
-                    });
-                  }
-                }}
+                onChange={(e) => setSymbol(e.target.value)}
                 className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs sm:text-sm font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
               >
                 <optgroup label="👑 CRT Core & Commodities">
@@ -243,7 +258,9 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                     onClick={() => setBalance(String(initialBalance))}
                     className="text-[11px] font-bold text-sky-500 hover:underline"
                   >
-                    {isBn ? `জার্নাল ব্যালেন্স ব্যবহার করুন ($${initialBalance})` : `Use Journal Balance ($${initialBalance.toLocaleString()})`}
+                    {isBn
+                      ? `জার্নাল ব্যালেন্স ব্যবহার করুন ($${initialBalance})`
+                      : `Use Journal Balance ($${initialBalance.toLocaleString()})`}
                   </button>
                 )}
               </div>
@@ -258,16 +275,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                   required
                   placeholder="10000"
                   value={balance}
-                  onChange={(e) => {
-                    setBalance(e.target.value);
-                    if (validationErrors.accountBalance) {
-                      setValidationErrors((prev) => {
-                        const next = { ...prev };
-                        delete next.accountBalance;
-                        return next;
-                      });
-                    }
-                  }}
+                  onChange={(e) => setBalance(e.target.value)}
                   className={`w-full rounded-2xl border bg-slate-50 py-3 pl-8 pr-4 text-sm font-extrabold text-slate-900 outline-none transition dark:bg-slate-900 dark:text-white ${
                     validationErrors.accountBalance
                       ? "border-rose-500 focus:border-rose-500"
@@ -276,7 +284,9 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                 />
               </div>
               {validationErrors.accountBalance && (
-                <p className="mt-1 text-[11px] font-bold text-rose-500">{validationErrors.accountBalance}</p>
+                <p className="mt-1 text-[11px] font-bold text-rose-500">
+                  {validationErrors.accountBalance}
+                </p>
               )}
             </div>
 
@@ -287,14 +297,14 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                   {isBn ? "রিস্ক শতাংশ (% Risk)" : "Risk Percentage (%)"}
                 </label>
                 <span className="text-[11px] font-extrabold text-sky-500 dark:text-sky-400">
-                  ${((parseFloat(balance) || 0) * ((parseFloat(riskPercent) || 0) / 100)).toFixed(2)} USD at risk
+                  ${previewRiskAmount.toFixed(2)} USD at risk
                 </span>
               </div>
 
               {/* Quick Select Pill Buttons */}
               <div className="grid grid-cols-5 gap-2 mb-2">
                 {QUICK_RISK_PRESETS.map((preset) => {
-                  const isActive = parseFloat(riskPercent) === preset;
+                  const isActive = parseNumericField(riskPercent) === preset;
                   return (
                     <button
                       key={preset}
@@ -322,16 +332,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                   required
                   placeholder="1.0"
                   value={riskPercent}
-                  onChange={(e) => {
-                    setRiskPercent(e.target.value);
-                    if (validationErrors.riskPercent) {
-                      setValidationErrors((prev) => {
-                        const next = { ...prev };
-                        delete next.riskPercent;
-                        return next;
-                      });
-                    }
-                  }}
+                  onChange={(e) => setRiskPercent(e.target.value)}
                   className={`w-full rounded-2xl border bg-slate-50 py-3 pl-4 pr-9 text-sm font-extrabold text-slate-900 outline-none transition dark:bg-slate-900 dark:text-white ${
                     validationErrors.riskPercent
                       ? "border-rose-500 focus:border-rose-500"
@@ -343,7 +344,9 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                 </span>
               </div>
               {validationErrors.riskPercent && (
-                <p className="mt-1 text-[11px] font-bold text-rose-500">{validationErrors.riskPercent}</p>
+                <p className="mt-1 text-[11px] font-bold text-rose-500">
+                  {validationErrors.riskPercent}
+                </p>
               )}
             </div>
 
@@ -354,9 +357,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                   {isBn ? "স্টপ লস দূরত্ব (Pips / Points)" : "Stop Loss Distance (Pips / Points)"}
                 </label>
                 <span className="text-[11px] text-slate-400">
-                  {activeInstrument.category === "indices" || activeInstrument.category === "crypto"
-                    ? "Points"
-                    : "Pips"}
+                  {isPointsInstrument ? "Points" : "Pips"}
                 </span>
               </div>
               <input
@@ -366,16 +367,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                 required
                 placeholder="20"
                 value={stopLossPips}
-                onChange={(e) => {
-                  setStopLossPips(e.target.value);
-                  if (validationErrors.stopLossPips) {
-                    setValidationErrors((prev) => {
-                      const next = { ...prev };
-                      delete next.stopLossPips;
-                      return next;
-                    });
-                  }
-                }}
+                onChange={(e) => setStopLossPips(e.target.value)}
                 className={`w-full rounded-2xl border bg-slate-50 p-3 text-sm font-extrabold text-slate-900 outline-none transition dark:bg-slate-900 dark:text-white ${
                   validationErrors.stopLossPips
                     ? "border-rose-500 focus:border-rose-500"
@@ -383,7 +375,9 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                 }`}
               />
               {validationErrors.stopLossPips && (
-                <p className="mt-1 text-[11px] font-bold text-rose-500">{validationErrors.stopLossPips}</p>
+                <p className="mt-1 text-[11px] font-bold text-rose-500">
+                  {validationErrors.stopLossPips}
+                </p>
               )}
             </div>
 
@@ -422,7 +416,9 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                   {isBn ? "স্ট্যান্ডার্ড লট সাইজ" : "Standard Lot Size"}
                 </div>
                 <div className="text-4xl sm:text-5xl font-black text-white tracking-tight text-glow-cyan">
-                  {calculationResult.isValid ? calculationResult.standardLots.toFixed(2) : "0.00"}{" "}
+                  {calculationResult.isValid
+                    ? calculationResult.standardLots.toFixed(lotDecimals)
+                    : "0.00"}{" "}
                   <span className="text-base sm:text-lg font-bold text-sky-400">Lots</span>
                 </div>
                 <div className="text-xs font-semibold text-slate-300 pt-1">
@@ -435,7 +431,38 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                     </span>
                   )}
                 </div>
+                {calculationResult.isValid &&
+                  Math.abs(calculationResult.actualRiskAmount - calculationResult.riskAmount) >= 0.01 && (
+                    <div className="text-[11px] text-sky-400/90">
+                      {isBn
+                        ? `সঠিক লট অনুযায়ী প্রকৃত এসএল ঝুঁকি: $${calculationResult.actualRiskAmount.toFixed(2)} USD`
+                        : `Actual SL Risk at ${calculationResult.standardLots.toFixed(lotDecimals)} Lots: $${calculationResult.actualRiskAmount.toFixed(2)} USD`}
+                    </div>
+                  )}
               </div>
+
+              {/* Warning / Error Alert when below minimum lot or above maximum lot */}
+              {(calculationResult.warningMessage ||
+                (!calculationResult.isValid && calculationResult.errorMessage)) && (
+                <div
+                  role="alert"
+                  className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-3.5 text-xs text-amber-600 dark:text-amber-300 flex items-start gap-2.5"
+                >
+                  <AlertCircle size={16} className="shrink-0 mt-0.5 text-amber-500" />
+                  <div className="space-y-1">
+                    <div className="font-bold">
+                      {calculationResult.warningMessage || calculationResult.errorMessage}
+                    </div>
+                    {calculationResult.isBelowMinLot && (
+                      <div className="text-[11px] text-amber-600/80 dark:text-amber-300/80">
+                        {isBn
+                          ? `হিসাবকৃত সাইজ: ${calculationResult.rawLots.toFixed(4)} লট (ন্যূনতম প্রয়োজন: ${activeInstrument.minLot} লট)।`
+                          : `Calculated raw size: ${calculationResult.rawLots.toFixed(4)} lots (Broker minimum: ${activeInstrument.minLot} lots).`}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Secondary Metrics Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
@@ -480,9 +507,11 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                     {isBn ? "পিপ ভ্যালু / লট" : "Pip Value / Lot"}
                   </div>
                   <div className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5">
-                    ${activeInstrument.pipValuePerStandardLot.toFixed(2)}
+                    ${calculationResult.pipValuePerLot.toFixed(2)}
                   </div>
-                  <div className="text-[10px] text-slate-400">USD per Pip</div>
+                  <div className="text-[10px] text-slate-400">
+                    USD per {isPointsInstrument ? "Point" : "Pip"}
+                  </div>
                 </div>
 
                 {/* Balance After Loss */}
@@ -491,7 +520,14 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                     {isBn ? "এসএল হিট হলে অবশিষ্ট ব্যালেন্স" : "Balance After Stop Loss"}
                   </div>
                   <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5">
-                    ${calculationResult.isValid ? calculationResult.balanceAfterLoss.toLocaleString(undefined, { minimumFractionDigits: 2 }) : "0.00"} USD
+                    $
+                    {calculationResult.isValid
+                      ? calculationResult.balanceAfterLoss.toLocaleString(undefined, {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })
+                      : "0.00"}{" "}
+                    USD
                   </div>
                   <div className="text-[10px] text-slate-400">
                     {isBn ? "নিরাপদ অ্যাকাউন্ট টিকে থাকা নিশ্চিত" : "Account remains protected"}
@@ -507,7 +543,9 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
               <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
                   <Target size={15} className="text-amber-500" />
-                  {isBn ? "প্রত্যাশিত রিটার্ন ম্যাট্রিক্স (R:R Targets)" : "Risk-to-Reward Projections"}
+                  {isBn
+                    ? "প্রত্যাশিত রিটার্ন ম্যাট্রিক্স (R:R Targets)"
+                    : "Risk-to-Reward Projections"}
                 </span>
                 <span className="text-[11px] font-bold text-slate-400">
                   SL: {calculationResult.instrument.symbol}
@@ -524,10 +562,13 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                       {target.ratio} R:R
                     </div>
                     <div className="text-sm font-black text-slate-900 dark:text-white">
-                      +${target.profitAmount.toFixed(0)}
+                      +$
+                      {Number.isInteger(target.profitAmount)
+                        ? target.profitAmount.toFixed(0)
+                        : target.profitAmount.toFixed(2)}
                     </div>
                     <div className="text-[10px] text-slate-400">
-                      {target.targetPips} {activeInstrument.category === "indices" ? "pts" : "pips"}
+                      {target.targetPips} {isPointsInstrument ? "pts" : "pips"}
                     </div>
                   </div>
                 ))}
@@ -539,7 +580,11 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
           <div className="rounded-3xl border border-sky-500/20 bg-sky-500/5 p-5 text-xs text-slate-600 dark:text-slate-300 space-y-2">
             <div className="flex items-center gap-2 font-black text-sky-600 dark:text-sky-400 text-xs uppercase tracking-wider">
               <ShieldCheck size={16} />
-              <span>{isBn ? "ক্যান্ডেল রেঞ্জ থিওরি (CRT) রিস্ক আর্কিটেকচার" : "Institutional Risk Architecture"}</span>
+              <span>
+                {isBn
+                  ? "ক্যান্ডেল রেঞ্জ থিওরি (CRT) রিস্ক আর্কিটেকচার"
+                  : "Institutional Risk Architecture"}
+              </span>
             </div>
             <p className="leading-relaxed text-[11px]">
               {isBn

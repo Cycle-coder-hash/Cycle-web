@@ -8,13 +8,19 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(templateRoot, "client", "src"),
+      "@features": path.resolve(templateRoot, "client", "src", "features"),
       "@shared": path.resolve(templateRoot, "shared"),
       "@assets": path.resolve(templateRoot, "attached_assets"),
     },
   },
   test: {
     environment: "node",
-    include: ["server/**/*.test.ts", "server/**/*.spec.ts"],
+    include: [
+      "server/**/*.test.ts",
+      "server/**/*.spec.ts",
+      "client/**/*.test.ts",
+      "client/**/*.spec.ts",
+    ],
     testTimeout: 60000,
   },
 });

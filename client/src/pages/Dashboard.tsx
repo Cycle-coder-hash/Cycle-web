@@ -4,6 +4,7 @@ import {
   AlertCircle,
   ArrowLeft,
   ArrowRight,
+  BookMarked,
   BookOpen,
   Calendar,
   Camera,
@@ -67,6 +68,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { TraderJournal } from "@/components/journal/TraderJournal";
+import { TraderNotebook } from "@/components/notebook/TraderNotebook";
 import { getStoredTrades } from "@/lib/traderJournalStorage";
 import { getDashboardRoadmapStages, DashboardRoadmapStage } from "@/data/roadmapStages";
 import { DailyDisciplineMaster } from "@/components/discipline/DailyDisciplineMaster";
@@ -116,14 +118,16 @@ export default function Dashboard() {
 
   // Active Tab
   const [tab, setTab] = useState<
-    "overview" | "roadmap" | "library" | "journal" | "discipline" | "calculator" | "orders" | "support"
+    "overview" | "roadmap" | "library" | "journal" | "notebook" | "discipline" | "calculator" | "orders" | "support"
   >(() => {
     if (typeof window !== "undefined") {
+      if (window.location.pathname === "/notebook") return "notebook";
       if (window.location.pathname === "/discipline") return "discipline";
       if (window.location.pathname === "/calculator") return "calculator";
       const params = new URLSearchParams(window.location.search);
       const tabParam = params.get("tab");
       if (
+        tabParam === "notebook" ||
         tabParam === "discipline" ||
         tabParam === "calculator" ||
         tabParam === "roadmap" ||
@@ -181,14 +185,66 @@ export default function Dashboard() {
   }, [timezone]);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    if (typeof window === "undefined") return;
+    const syncTabFromLocation = () => {
+      if (window.location.pathname === "/notebook") {
+        setTab("notebook");
+        return;
+      }
       if (window.location.pathname === "/discipline") {
         setTab("discipline");
-      } else if (window.location.pathname === "/calculator") {
-        setTab("calculator");
+        return;
       }
-    }
+      if (window.location.pathname === "/calculator") {
+        setTab("calculator");
+        return;
+      }
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get("tab");
+      if (
+        tabParam === "notebook" ||
+        tabParam === "discipline" ||
+        tabParam === "calculator" ||
+        tabParam === "roadmap" ||
+        tabParam === "library" ||
+        tabParam === "journal" ||
+        tabParam === "orders" ||
+        tabParam === "support" ||
+        tabParam === "overview"
+      ) {
+        setTab(tabParam as any);
+      }
+    };
+    syncTabFromLocation();
+    window.addEventListener("popstate", syncTabFromLocation);
+    return () => window.removeEventListener("popstate", syncTabFromLocation);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const path = window.location.pathname;
+    if (
+      (path === "/notebook" && tab === "notebook") ||
+      (path === "/discipline" && tab === "discipline") ||
+      (path === "/calculator" && tab === "calculator")
+    ) {
+      return;
+    }
+    const url = new URL(window.location.href);
+    if (path === "/notebook" || path === "/discipline" || path === "/calculator") {
+      url.pathname = "/dashboard";
+    }
+    if (tab === "overview") {
+      url.searchParams.delete("tab");
+    } else {
+      url.searchParams.set("tab", tab);
+    }
+    const nextUrl = `${url.pathname}${url.search}${url.hash}`;
+    const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (currentUrl !== nextUrl) {
+      window.history.replaceState(null, "", nextUrl);
+    }
+  }, [tab]);
 
   // Sidebar open/collapse state (remembers preference, opens on desktop by default)
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => {
@@ -891,7 +947,7 @@ export default function Dashboard() {
   }
 
   type NavItem = {
-    id: "overview" | "roadmap" | "library" | "journal" | "discipline" | "calculator" | "orders" | "support";
+    id: "overview" | "roadmap" | "library" | "journal" | "notebook" | "discipline" | "calculator" | "orders" | "support";
     labelEn: string;
     labelBn: string;
     icon: any;
@@ -903,6 +959,7 @@ export default function Dashboard() {
     { id: "roadmap", labelEn: t("dashboard.tabRoadmap"), labelBn: "১২-স্টেজ রোডম্যাপ", icon: Layers, badge: `${completedStagesCount}/12` },
     { id: "library", labelEn: t("dashboard.tabLibrary"), labelBn: "আমার লাইব্রেরি", icon: BookOpen, badge: entitlements?.length ? `${entitlements.length}` : undefined },
     { id: "journal", labelEn: t("dashboard.tabJournal"), labelBn: "ট্রেডিং জার্নাল", icon: NotebookPen, badge: (localTrades?.length || journal?.length) ? `${localTrades?.length || journal?.length}` : undefined },
+    { id: "notebook", labelEn: "Private Trader Notebook", labelBn: "প্রাইভেট ট্রেডার নোটবুক", icon: BookMarked },
     { id: "discipline", labelEn: t("dashboard.tabDiscipline"), labelBn: "ডেইলি রুটিন", icon: ClipboardCheck },
     { id: "calculator", labelEn: "Position Size Calculator", labelBn: "পজিশন সাইজ ক্যালকুলেটর", icon: Calculator },
     {
@@ -2150,6 +2207,13 @@ export default function Dashboard() {
           )}
 
           {/* ========================================================================= */}
+          {/* TAB: PRIVATE TRADER NOTEBOOK */}
+          {/* ========================================================================= */}
+          {tab === "notebook" && (
+            <TraderNotebook user={user} isBn={isBn} subUsage={subUsage} />
+          )}
+
+          {/* ========================================================================= */}
           {/* TAB 5: DAILY DISCIPLINE */}
           {/* ========================================================================= */}
           {tab === "discipline" && (
@@ -2431,6 +2495,28 @@ export default function Dashboard() {
                 <div className="min-w-0">
                   <div className="truncate font-extrabold">{isBn ? "আমার লাইব্রেরি" : "My Library"}</div>
                   <div className="text-[10px] text-slate-400 font-normal">{entitlements?.length || 0} active</div>
+                </div>
+              </button>
+
+              {/* Private Trader Notebook */}
+              <button
+                type="button"
+                onClick={() => {
+                  setTab("notebook");
+                  setIsMobileMoreOpen(false);
+                }}
+                className={`flex items-center gap-3 p-3 rounded-2xl border text-left text-xs font-bold transition-all cursor-pointer ${
+                  tab === "notebook"
+                    ? "border-sky-500/50 bg-sky-500/15 text-sky-400"
+                    : "border-slate-800/80 bg-slate-900/70 text-slate-300 hover:bg-slate-800"
+                }`}
+              >
+                <div className="size-9 rounded-xl bg-cyan-500/10 flex items-center justify-center shrink-0 text-cyan-400">
+                  <BookMarked size={18} />
+                </div>
+                <div className="min-w-0">
+                  <div className="truncate font-extrabold">{isBn ? "প্রাইভেট ট্রেডার নোটবুক" : "Private Trader Notebook"}</div>
+                  <div className="text-[10px] text-slate-400 font-normal">{isBn ? "নোট ও প্লেবুক ভল্ট" : "Strategy Vault"}</div>
                 </div>
               </button>
 
