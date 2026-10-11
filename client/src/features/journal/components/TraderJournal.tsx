@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { JournalBook, TradeEntry, JournalStats, GrowthDataPoint, PeriodPnl } from "@/types/journal";
 import {
   getStoredJournalBooks,
@@ -42,6 +43,7 @@ interface TraderJournalProps {
 }
 
 export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
+  const { selectText, isUr, isRTL } = useLanguage();
   const userId = useMemo(() => {
     return user?.openId || user?.email || (user?.id ? String(user.id) : "");
   }, [user]);
@@ -384,7 +386,7 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div dir={isRTL ? "rtl" : "ltr"} className={`space-y-6 animate-in fade-in duration-300 ${isUr ? "font-urdu" : ""}`}>
       <JournalOverviewHeaderAndKpis
         isBn={isBn}
         totalTradesCount={trades.length}
@@ -434,8 +436,8 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
                   }`}
                 >
                   <SlidersHorizontal className="h-3.5 w-3.5" />
-                  <span>{isBn ? "ট্রেড টেবিল (২১ ফিল্ড)" : "Audit Table (21 Fields)"}</span>
-                  <span className="rounded-full bg-slate-200/60 dark:bg-slate-700/60 px-2 py-0.5 text-[10px] font-mono">
+                  <span>{selectText({ bn: "ট্রেড টেবিল (২১ ফিল্ড)", en: "Audit Table (21 Fields)", ur: "آڈٹ ٹیبل (21 فیلڈز)" })}</span>
+                  <span dir="ltr" className="rounded-full bg-slate-200/60 dark:bg-slate-700/60 px-2 py-0.5 text-[10px] font-mono">
                     {bookTrades.length}
                   </span>
                 </button>
@@ -449,7 +451,7 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
                   }`}
                 >
                   <Calendar className="h-3.5 w-3.5" />
-                  <span>{isBn ? "বুক ক্যালেন্ডার ভিউ" : "Journal Calendar"}</span>
+                  <span>{selectText({ bn: "বুক ক্যালেন্ডার ভিউ", en: "Journal Calendar", ur: "جرنل کیلنڈر ویو" })}</span>
                   {currentBook && (
                     <span
                       className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
@@ -472,7 +474,7 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
                 className="rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-400 hover:to-blue-500 text-xs font-black gap-1.5 shadow-md shadow-cyan-500/20 px-4 py-2"
               >
                 <Plus className="h-3.5 w-3.5" />
-                {isBn ? "+ নতুন ট্রেড এন্ট্রি" : "+ Log Trade"}
+                <span>{selectText({ bn: "+ নতুন ট্রেড এন্ট্রি", en: "+ Log Trade", ur: "+ نیا ٹریڈ درج کریں" })}</span>
               </Button>
             </div>
           </div>

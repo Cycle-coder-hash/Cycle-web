@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { Plus, Printer, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export interface DashboardOrderItem {
   id: number | string;
@@ -16,29 +17,48 @@ export interface DashboardOrderItem {
 }
 
 export interface DashboardOrdersTabProps {
-  isBn: boolean;
+  isBn?: boolean;
   orders: DashboardOrderItem[] | undefined;
   onSelectInvoiceOrder: (order: DashboardOrderItem) => void;
 }
 
 export function DashboardOrdersTab({
-  isBn,
   orders,
   onSelectInvoiceOrder,
 }: DashboardOrdersTabProps) {
+  const { selectText, isUr, isRTL } = useLanguage();
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div
+      dir={isRTL ? "rtl" : "ltr"}
+      className={`space-y-6 animate-in fade-in duration-300 ${isUr ? "font-urdu" : ""}`}
+    >
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-2xl font-extrabold tracking-tight">{isBn ? "পেমেন্ট ও অর্ডার হিস্ট্রি" : "Orders & Manual Verification History"}</h2>
+          <h2 className="text-2xl font-extrabold tracking-tight">
+            {selectText({
+              en: "Orders & Manual Verification History",
+              bn: "পেমেন্ট ও অর্ডার হিস্ট্রি",
+              ur: "ادائیگی اور آرڈرز کی تصدیقی ہسٹری",
+            })}
+          </h2>
           <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            {isBn ? "আপনার বিকাশ, নগদ ও রকেট অর্ডারের ভেরিফিকেশন স্ট্যাটাস ও ইনভয়েস।" : "Track your manual payment verification statuses and generate official receipts."}
+            {selectText({
+              en: "Track your manual payment verification statuses and generate official receipts.",
+              bn: "আপনার বিকাশ, নগদ ও রকেট অর্ডারের ভেরিফিকেশন স্ট্যাটাস ও ইনভয়েস।",
+              ur: "اپنی ادائیگی کی تصدیق کا اسٹیٹس چیک کریں اور رسید حاصل کریں۔",
+            })}
           </p>
         </div>
 
         <Link href="/checkout">
           <Button size="sm" className="bg-[#081833] text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 font-bold">
-            <Plus size={15} className="mr-1" /> {isBn ? "নতুন অর্ডার করুন" : "New Order"}
+            <Plus size={15} className="mr-1" />{" "}
+            {selectText({
+              en: "New Order",
+              bn: "নতুন অর্ডার করুন",
+              ur: "نیا آرڈر کریں",
+            })}
           </Button>
         </Link>
       </div>
@@ -49,21 +69,37 @@ export function DashboardOrdersTab({
             <div key={o.id} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 gap-4">
               <div>
                 <div className="flex items-center gap-2.5 flex-wrap">
-                  <span className="font-extrabold text-base">Order #{o.id}</span>
+                  <span dir="ltr" className="font-extrabold text-base font-mono">Order #{o.id}</span>
                   <span className="rounded-lg bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800/60 px-2 py-0.5 text-[11px] font-extrabold text-sky-700 dark:text-sky-300">
-                    {o.bundleId === 4 ? "Bundle 4 · Trading Blueprint" : o.bundleId === 2 ? "Bundle 2 · Course + eBook" : o.bundleId === 1 ? "Free eBook Package" : `Bundle #${o.bundleId}`}
+                    {o.bundleId === 4
+                      ? selectText({ en: "Bundle 4 · Trading Blueprint", bn: "বান্ডেল ৪ · ট্রেডিং ব্লুপ্রিন্ট", ur: "بنڈل ۴ · ٹریڈنگ بلیو پرنٹ" })
+                      : o.bundleId === 2
+                      ? selectText({ en: "Bundle 2 · Course + eBook", bn: "বান্ডেল ২ · কোর্স + ইবুক", ur: "بنڈل ۲ · کورس + ای بک" })
+                      : o.bundleId === 1
+                      ? selectText({ en: "Free eBook Package", bn: "ফ্রি ইবুক প্যাকেজ", ur: "مفت ای بک پیکیج" })
+                      : selectText({ en: `Bundle #${o.bundleId}`, bn: `বান্ডেল #${o.bundleId}`, ur: `بنڈل #${o.bundleId}` })}
                   </span>
-                  <span className="font-mono text-xs text-slate-400">TxID: {o.transactionId}</span>
+                  <span dir="ltr" className="font-mono text-xs text-slate-400">TxID: {o.transactionId}</span>
                 </div>
                 <div className="mt-2 text-xs text-slate-500 flex items-center gap-3 flex-wrap">
-                  <span>{isBn ? "পদ্ধতি:" : "Method:"} <b className="uppercase text-slate-700 dark:text-slate-300">{o.paymentMethod}</b></span>
+                  <span>
+                    {selectText({ en: "Method:", bn: "পদ্ধতি:", ur: "طریقہ:" })}{" "}
+                    <b className="uppercase text-slate-700 dark:text-slate-300">{o.paymentMethod}</b>
+                  </span>
                   <span>•</span>
-                  <span>{isBn ? "তারিখ:" : "Date:"} {new Date(o.createdAt).toLocaleDateString()}</span>
+                  <span>
+                    {selectText({ en: "Date:", bn: "তারিখ:", ur: "تاریخ:" })}{" "}
+                    <span dir="ltr">{new Date(o.createdAt).toLocaleDateString()}</span>
+                  </span>
                   {o.orderStatus === "pending" && (
                     <>
                       <span>•</span>
                       <span className="text-amber-600 dark:text-amber-400 font-medium">
-                        {isBn ? "১৫-৩০ মিনিটের মধ্যে অ্যাপ্রুভ হবে" : "Approval usually within 15–30 mins"}
+                        {selectText({
+                          en: "Approval usually within 15–30 mins",
+                          bn: "১৫-৩০ মিনিটের মধ্যে অ্যাপ্রুভ হবে",
+                          ur: "عام طور پر ۱۵ سے ۳۰ منٹ میں تصدیق ہو جاتی ہے",
+                        })}
                       </span>
                     </>
                   )}
@@ -72,7 +108,7 @@ export function DashboardOrdersTab({
 
               <div className="flex items-center justify-between sm:justify-end gap-4">
                 <div className="text-right">
-                  <div className="text-lg font-black">৳{o.amount}</div>
+                  <div dir="ltr" className="text-lg font-black font-mono">৳{o.amount}</div>
                   <div className="text-[10px] text-slate-400">BDT</div>
                 </div>
 
@@ -85,7 +121,11 @@ export function DashboardOrdersTab({
                       : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
                   }`}
                 >
-                  {o.orderStatus === "approved" ? (isBn ? "অনুমোদিত" : "Approved") : o.orderStatus === "rejected" ? (isBn ? "বাতিল" : "Rejected") : (isBn ? "যাচাই প্রক্রিয়াধীন" : "Pending Review")}
+                  {o.orderStatus === "approved"
+                    ? selectText({ en: "Approved", bn: "অনুমোদিত", ur: "منظور شدہ" })
+                    : o.orderStatus === "rejected"
+                    ? selectText({ en: "Rejected", bn: "বাতিল", ur: "مسترد" })
+                    : selectText({ en: "Pending Review", bn: "যাচাই প্রক্রিয়াধীন", ur: "زیر التواء جائزہ" })}
                 </span>
 
                 <Button
@@ -95,7 +135,7 @@ export function DashboardOrdersTab({
                   className="gap-1 text-xs font-bold border-slate-300 dark:border-slate-700"
                 >
                   <Printer size={13} />
-                  <span>Receipt</span>
+                  <span>{selectText({ en: "Receipt", bn: "রসিদ", ur: "رسید" })}</span>
                 </Button>
               </div>
             </div>
@@ -103,7 +143,13 @@ export function DashboardOrdersTab({
         ) : (
           <div className="rounded-3xl border border-dashed border-slate-200 p-12 text-center text-slate-500 dark:border-slate-800">
             <Receipt size={36} className="mx-auto text-slate-400 mb-3" />
-            <h3 className="font-bold text-base">{isBn ? "এখনো কোনো অর্ডার নেই" : "No orders found"}</h3>
+            <h3 className="font-bold text-base">
+              {selectText({
+                en: "No orders found",
+                bn: "এখনো কোনো অর্ডার নেই",
+                ur: "ابھی تک کوئی آرڈر نہیں ملا",
+              })}
+            </h3>
           </div>
         )}
       </div>

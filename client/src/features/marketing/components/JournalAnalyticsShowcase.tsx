@@ -28,6 +28,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 import {
   PREVIEW_BOOKS,
@@ -42,10 +43,11 @@ import {
 } from "../lib/journalShowcaseData";
 
 interface Props {
-  isBn: boolean;
+  isBn?: boolean;
 }
 
-export function JournalAnalyticsShowcase({ isBn }: Props) {
+export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
+  const { language, selectText } = useLanguage();
   const [selectedBookId, setSelectedBookId] = useState<PreviewBookId>("ragf");
   const [chartMode, setChartMode] = useState<ShowcaseChartMode>("balance");
   const [isVisible, setIsVisible] = useState(false);
@@ -230,29 +232,47 @@ export function JournalAnalyticsShowcase({ isBn }: Props) {
           <div className="inline-flex items-center gap-2 rounded-full border border-sky-500/30 bg-sky-500/10 px-3.5 py-1 text-xs font-bold text-sky-600 dark:text-sky-400 mb-4 shadow-xs">
             <Sparkles className="h-3.5 w-3.5" />
             <span>
-              {isBn
-                ? "বিল্ট-ইন ট্রেডিং জার্নাল ও পারফরম্যান্স অডিট"
-                : "BUILT-IN TRADING JOURNAL & PERFORMANCE"}
+              {selectText({
+                en: "BUILT-IN TRADING JOURNAL & PERFORMANCE",
+                bn: "বিল্ট-ইন ট্রেডিং জার্নাল ও পারফরম্যান্স অডিট",
+                ur: "بلٹ ان ٹریڈنگ جرنل اور کارکردگی کا آڈٹ",
+              })}
             </span>
           </div>
 
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
-            {isBn ? "শক্তিশালী জার্নাল অ্যানালিটিক্স" : "Powerful Journal Analytics"}
+            {selectText({
+              en: "Powerful Journal Analytics",
+              bn: "শক্তিশালী জার্নাল অ্যানালিটিক্স",
+              ur: "طاقتور جرنل کے تجزیات",
+            })}
           </h2>
 
           <p className="mt-4 text-sm sm:text-base leading-relaxed text-slate-600 dark:text-slate-300 max-w-2xl">
-            {isBn
-              ? "ট্রেড ট্র্যাক করুন, প্রতিটি ডিসিশন অডিট করুন এবং আপনার স্ট্র্যাটেজি নিখুঁত করুন। মাল্টি-বুক পোর্টফোলিও, রুল ডিসিপ্লিন ভেরিফিকেশন এবং অটোমেটেড গ্রোথ কার্ভ—সব এক প্ল্যাটফর্মে।"
-              : "Track, analyze, and systematically improve your trading performance. Built-in multi-book strategy logs, automated equity curves, and strict rule discipline verification."}
+            {selectText({
+              en: "Track, analyze, and systematically improve your trading performance. Built-in multi-book strategy logs, automated equity curves, and strict rule discipline verification.",
+              bn: "ট্রেড ট্র্যাক করুন, প্রতিটি ডিসিশন অডিট করুন এবং আপনার স্ট্র্যাটেজি নিখুঁত করুন। মাল্টি-বুক পোর্টফোলিও, রুল ডিসিপ্লিন ভেরিফিকেশন এবং অটোমেটেড গ্রোথ কার্ভ—সব এক প্ল্যাটফর্মে।",
+              ur: "ٹریڈز کو ٹریک کریں، ہر فیصلے کا آڈٹ کریں اور اپنی حکمت عملی کو بہتر بنائیں۔ ملٹی بک پورٹ فولیو، رول ڈسپلن کی تصدیق اور خودکار گروتھ کرو — سب ایک پلیٹ فارم پر۔",
+            })}
           </p>
 
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
             <span className="flex items-center gap-1.5 rounded-lg bg-slate-200/60 dark:bg-slate-800/80 px-2.5 py-1">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-              {isBn ? "লাইভ ইন্টারেক্টিভ প্রিভিউ" : "Live Interactive Preview"}
+              {selectText({
+                en: "Live Interactive Preview",
+                bn: "লাইভ ইন্টারেক্টিভ প্রিভিউ",
+                ur: "لائیو انٹرایکٹو پیش نظارہ",
+              })}
             </span>
             <span>•</span>
-            <span>{isBn ? "ট্যাব পরিবর্তন করে দেখুন" : "Click tabs & books to interact"}</span>
+            <span>
+              {selectText({
+                en: "Click tabs & books to interact",
+                bn: "ট্যাব পরিবর্তন করে দেখুন",
+                ur: "انٹرایکٹ کرنے کے لیے ٹیبز پر کلک کریں",
+              })}
+            </span>
           </div>
         </div>
 
@@ -307,7 +327,11 @@ export function JournalAnalyticsShowcase({ isBn }: Props) {
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1 rounded-md bg-cyan-500/10 px-2 py-0.5 text-[10px] font-bold text-cyan-500 dark:text-cyan-400">
                 <ShieldCheck className="h-3 w-3" />
-                {isBn ? "ইন্সটিটিউশনাল অডিট গ্রেড" : "Institutional Audit Grade"}
+                {selectText({
+                  en: "Institutional Audit Grade",
+                  bn: "ইন্সটিটিউশনাল অডিট গ্রেড",
+                  ur: "ادارہ جاتی آڈٹ گریڈ",
+                })}
               </span>
             </div>
           </div>
@@ -323,12 +347,18 @@ export function JournalAnalyticsShowcase({ isBn }: Props) {
               </div>
               <div>
                 <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white tracking-tight">
-                  {isBn ? "ইন্সটিটিউশনাল ট্রেডার জার্নাল ও পারফরম্যান্স" : "Institutional Trader Journal & Performance"}
+                  {selectText({
+                    en: "Institutional Trader Journal & Performance",
+                    bn: "ইন্সটিটিউশনাল ট্রেডার জার্নাল ও পারফরম্যান্স",
+                    ur: "ادارہ جاتی ٹریڈر جرنل اور کارکردگی",
+                  })}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {isBn
-                    ? "মাল্টি-স্ট্র্যাটেজি বুক, স্বয়ংক্রিয় ইকুইটি কার্ভ এবং ২১-পয়েন্ট এক্সিকিউশন অডিট"
-                    : "Multi-book strategy logs, automated equity curves, and complete 21-point execution audit"}
+                  {selectText({
+                    en: "Multi-book strategy logs, automated equity curves, and complete 21-point execution audit",
+                    bn: "মাল্টি-স্ট্র্যাটেজি বুক, স্বয়ংক্রিয় ইকুইটি কার্ভ এবং ২১-পয়েন্ট এক্সিকিউশন অডিট",
+                    ur: "ملٹی بک اسٹریٹیجی لاگز، خودکار ایکویٹی کرو اور مکمل 21 نکاتی عمل درآمد کا آڈٹ",
+                  })}
                 </p>
               </div>
             </div>
@@ -340,14 +370,22 @@ export function JournalAnalyticsShowcase({ isBn }: Props) {
                 className="h-8 rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold gap-1 text-slate-700 dark:text-slate-300 cursor-default"
               >
                 <Plus className="h-3.5 w-3.5" />
-                {isBn ? "নতুন জার্নাল বুক" : "New Journal Book"}
+                {selectText({
+                  en: "New Journal Book",
+                  bn: "নতুন জার্নাল বুক",
+                  ur: "نیا جرنل بک",
+                })}
               </Button>
               <Button
                 size="sm"
                 className="h-8 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-black gap-1.5 shadow-md shadow-cyan-500/20 px-3 cursor-default"
               >
                 <Plus className="h-3.5 w-3.5" />
-                {isBn ? "+ লগ নিউ ট্রেড" : "+ Log New Trade"}
+                {selectText({
+                  en: "+ Log New Trade",
+                  bn: "+ লগ নিউ ট্রেড",
+                  ur: "+ نئی ٹریڈ درج کریں",
+                })}
               </Button>
             </div>
           </div>
@@ -367,7 +405,13 @@ export function JournalAnalyticsShowcase({ isBn }: Props) {
               }`}
             >
               <Layers className="h-4 w-4" />
-              <span>{isBn ? "সম্মিলিত পোর্টফোলিও (সকল বুক)" : "Combined Portfolio (All Books)"}</span>
+              <span>
+                {selectText({
+                  en: "Combined Portfolio (All Books)",
+                  bn: "সম্মিলিত পোর্টফোলিও (সকল বুক)",
+                  ur: "مشترکہ پورٹ فولیو (تمام کتابیں)",
+                })}
+              </span>
               <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-black">26</span>
             </button>
 
@@ -421,11 +465,19 @@ export function JournalAnalyticsShowcase({ isBn }: Props) {
             <div className="flex items-center gap-2 self-end sm:self-center">
               <span className="inline-flex items-center gap-1 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
                 <Calendar className="h-3.5 w-3.5 text-cyan-500" />
-                {isBn ? "ক্যালেন্ডার ভিউ" : "Calendar View"}
+                {selectText({
+                  en: "Calendar View",
+                  bn: "ক্যালেন্ডার ভিউ",
+                  ur: "کیلنڈر ویو",
+                })}
               </span>
               <span className="inline-flex items-center gap-1 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
                 <Edit className="h-3.5 w-3.5 text-slate-400" />
-                {isBn ? "বুক এডিট" : "Edit Book"}
+                {selectText({
+                  en: "Edit Book",
+                  bn: "বুক এডিট",
+                  ur: "کتاب میں ترمیم کریں",
+                })}
               </span>
             </div>
           </div>
@@ -439,7 +491,11 @@ export function JournalAnalyticsShowcase({ isBn }: Props) {
             <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900/80">
               <div className="flex items-center justify-between text-slate-400">
                 <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  {isBn ? "ব্যালেন্স প্রবৃদ্ধি" : "Account Capital"}
+                  {selectText({
+                    en: "Account Capital",
+                    bn: "ব্যালেন্স প্রবৃদ্ধি",
+                    ur: "اکاؤنٹ کا سرمایہ",
+                  })}
                 </span>
                 <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-cyan-500" />
               </div>
@@ -448,7 +504,13 @@ export function JournalAnalyticsShowcase({ isBn }: Props) {
                   ${book.currentBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
                 <div className="mt-1 flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400">
-                  <span>{isBn ? "প্রারম্ভিক:" : "Initial:"}</span>
+                  <span>
+                    {selectText({
+                      en: "Initial:",
+                      bn: "প্রারম্ভিক:",
+                      ur: "ابتدائی:",
+                    })}
+                  </span>
                   <span className="font-mono">${book.startingBalance.toLocaleString()}</span>
                 </div>
               </div>
@@ -465,7 +527,11 @@ export function JournalAnalyticsShowcase({ isBn }: Props) {
             <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900/80">
               <div className="flex items-center justify-between text-slate-400">
                 <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  {isBn ? "মোট নিট লাভ" : "Total Net P&L"}
+                  {selectText({
+                    en: "Total Net P&L",
+                    bn: "মোট নিট লাভ",
+                    ur: "کل نیٹ P&L",
+                  })}
                 </span>
                 <Percent className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-500" />
               </div>
@@ -488,7 +554,11 @@ export function JournalAnalyticsShowcase({ isBn }: Props) {
             <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900/80">
               <div className="flex items-center justify-between text-slate-400">
                 <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  {isBn ? "উইনরেট ও ফ্যাক্টর" : "Win Rate & Factor"}
+                  {selectText({
+                    en: "Win Rate & Factor",
+                    bn: "উইনরেট ও ফ্যাক্টর",
+                    ur: "جیت کی شرح اور فیکٹر",
+                  })}
                 </span>
                 <Flame className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-500" />
               </div>
@@ -526,7 +596,11 @@ export function JournalAnalyticsShowcase({ isBn }: Props) {
             <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900/80">
               <div className="flex items-center justify-between text-slate-400">
                 <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  {isBn ? "রুলস ডিসিপ্লিন" : "Rule Discipline"}
+                  {selectText({
+                    en: "Rule Discipline",
+                    bn: "রুলস ডিসিপ্লিন",
+                    ur: "اصولوں کا ڈسپلن",
+                  })}
                 </span>
                 <ShieldCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-cyan-400" />
               </div>
@@ -535,11 +609,19 @@ export function JournalAnalyticsShowcase({ isBn }: Props) {
                   {book.ruleComplianceRate}%
                 </div>
                 <span className="text-[10px] sm:text-xs font-bold text-slate-400">
-                  {isBn ? "অনুমোদন" : "Adherence"}
+                  {selectText({
+                    en: "Adherence",
+                    bn: "অনুমোদন",
+                    ur: "پابندی",
+                  })}
                 </span>
               </div>
               <div className="mt-2.5 sm:mt-3 text-[10px] sm:text-xs font-semibold text-slate-500 dark:text-slate-400 truncate">
-                {book.compliantTrades} of {book.totalTrades} obeyed rules
+                {selectText({
+                  en: `${book.compliantTrades} of ${book.totalTrades} obeyed rules`,
+                  bn: `${book.totalTrades}-এর মধ্যে ${book.compliantTrades}টি নিয়ম মেনেছে`,
+                  ur: `${book.totalTrades} میں سے ${book.compliantTrades} نے قواعد پر عمل کیا`,
+                })}
               </div>
               <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                 <div
@@ -569,7 +651,11 @@ export function JournalAnalyticsShowcase({ isBn }: Props) {
               </div>
               <span className="inline-flex items-center gap-1 rounded-xl border border-cyan-500/30 text-cyan-500 bg-cyan-500/5 px-2.5 py-1 text-xs font-bold self-start sm:self-center">
                 <SlidersHorizontal className="h-3.5 w-3.5" />
-                Manage Rules
+                {selectText({
+                  en: "Manage Rules",
+                  bn: "রুলস ম্যানেজ করুন",
+                  ur: "قواعد کا نظم کریں",
+                })}
               </span>
             </div>
 
@@ -610,7 +696,11 @@ export function JournalAnalyticsShowcase({ isBn }: Props) {
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <h4 className="text-sm sm:text-base font-black tracking-tight text-white">
-                      {isBn ? "পারফরম্যান্স ও গ্রোথ কার্ভ" : "Performance Analytics & Growth Curve"}
+                      {selectText({
+                        en: "Performance Analytics & Growth Curve",
+                        bn: "পারফরম্যান্স ও গ্রোথ কার্ভ",
+                        ur: "کارکردگی اور گروتھ کرو",
+                      })}
                     </h4>
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/25 px-2.5 py-0.5 text-[10px] font-bold text-cyan-400 tracking-wider uppercase">
                       <span className="size-1.5 rounded-full bg-cyan-400 animate-pulse" />
@@ -618,9 +708,11 @@ export function JournalAnalyticsShowcase({ isBn }: Props) {
                     </span>
                   </div>
                   <p className="text-xs text-slate-400 mt-1 font-medium tracking-normal">
-                    {isBn
-                      ? "ক্যাপিটাল প্রবৃদ্ধি ও পর্যায়ভিত্তিক P&L"
-                      : "Real-time balance trajectory & periodic returns"}
+                    {selectText({
+                      en: "Real-time balance trajectory & periodic returns",
+                      bn: "ক্যাপিটাল প্রবৃদ্ধি ও পর্যায়ভিত্তিক P&L",
+                      ur: "بیلنس کی سمت اور وقتی P&L",
+                    })}
                   </p>
                 </div>
               </div>
@@ -640,7 +732,11 @@ export function JournalAnalyticsShowcase({ isBn }: Props) {
                           : "text-slate-400 hover:text-white hover:bg-slate-800/50"
                       }`}
                     >
-                      {tab.label}
+                      {tab.id === "balance"
+                        ? selectText({ en: "Balance Curve", bn: "ব্যালেন্স কার্ভ", ur: "بیلنس کرو" })
+                        : tab.id === "growth"
+                        ? selectText({ en: "Growth %", bn: "গ্রোথ %", ur: "گروتھ %" })
+                        : selectText({ en: "Period P&L", bn: "পিরিয়ড P&L", ur: "پیریڈ P&L" })}
                     </button>
                   );
                 })}
@@ -766,9 +862,11 @@ export function JournalAnalyticsShowcase({ isBn }: Props) {
             <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
               <Lock className="h-4 w-4 text-cyan-500" />
               <span>
-                {isBn
-                  ? "সকল রেজিস্টার্ড মেম্বারদের জন্য আনলিমিটেড মাল্টি-বুক জার্নাল অন্তর্ভুক্ত।"
-                  : "Included with full student pass and institutional portal access."}
+                {selectText({
+                  en: "Included with full student pass and institutional portal access.",
+                  bn: "সকল রেজিস্টার্ড মেম্বারদের জন্য আনলিমিটেড মাল্টি-বুক জার্নাল অন্তর্ভুক্ত।",
+                  ur: "تمام رجسٹرڈ ممبران کے لیے لامحدود ملٹی بک جرنل شامل ہے۔",
+                })}
               </span>
             </div>
 
@@ -776,7 +874,13 @@ export function JournalAnalyticsShowcase({ isBn }: Props) {
               href="#roadmap"
               className="inline-flex items-center font-bold text-cyan-600 dark:text-cyan-400 hover:text-cyan-500 transition-colors gap-1 self-start sm:self-auto"
             >
-              <span>{isBn ? "রোডম্যাপে জার্নালিং স্টেজ দেখুন" : "Explore Journaling in Roadmap"}</span>
+              <span>
+                {selectText({
+                  en: "Explore Journaling in Roadmap",
+                  bn: "রোডম্যাপে জার্নালিং স্টেজ দেখুন",
+                  ur: "روڈ میپ میں جرنلنگ مرحلہ دیکھیں",
+                })}
+              </span>
               <ChevronRight className="h-3.5 w-3.5" />
             </a>
           </div>

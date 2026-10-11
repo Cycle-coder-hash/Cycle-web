@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "wouter";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface TopNavLinksProps {
   isBn?: boolean;
@@ -15,20 +16,21 @@ interface TopNavLinksProps {
 }
 
 export function TopNavLinks({
-  isBn = false,
+  isBn: _isBnProp,
   copy,
   mobile = false,
   onItemClick,
   className = "",
 }: TopNavLinksProps) {
+  const { t, selectText } = useLanguage();
   const [location] = useLocation();
   const [activeSection, setActiveSection] = useState<string>("");
 
   const labels = {
-    roadmap: copy?.navRoadmap || (isBn ? "রোডম্যাপ" : "Roadmap"),
-    store: copy?.navStore || (isBn ? "স্টোর" : "Store"),
-    leaderboard: copy?.navLeaderboard || (isBn ? "লিডারবোর্ড" : "Leaderboard"),
-    support: copy?.navSupport || (isBn ? "সাপোর্ট" : "Support"),
+    roadmap: copy?.navRoadmap || t("nav.roadmap", selectText({ en: "Roadmap", bn: "রোডম্যাপ", ur: "روڈ میپ" })),
+    store: copy?.navStore || t("nav.store", selectText({ en: "Store", bn: "স্টোর", ur: "اسٹور" })),
+    leaderboard: copy?.navLeaderboard || t("nav.leaderboard", selectText({ en: "Leaderboard", bn: "লিডারবোর্ড", ur: "لیڈر بورڈ" })),
+    support: copy?.navSupport || t("nav.support", selectText({ en: "Support", bn: "সাপোর্ট", ur: "سپورٹ" })),
   };
 
   useEffect(() => {

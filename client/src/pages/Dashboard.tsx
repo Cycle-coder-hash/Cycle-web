@@ -103,8 +103,7 @@ export default function Dashboard() {
     return "overview";
   });
   const [isMobileMoreOpen, setIsMobileMoreOpen] = useState(false);
-  const { t, language, isRTL } = useLanguage();
-  const isBn = language === "bn";
+  const { t, language, isBn, isUr, isRTL, selectText } = useLanguage();
   const { timezone, currentTimezone } = useUserPreferences();
   const [liveMarketTime, setLiveMarketTime] = useState<{ time: string; date: string }>({
     time: "",
@@ -512,15 +511,33 @@ export default function Dashboard() {
   const handleSaveName = async () => {
     const trimmed = nameInput.trim();
     if (!trimmed) {
-      setNameError(isBn ? "নাম খালি রাখা যাবে না" : "Name cannot be empty");
+      setNameError(
+        selectText({
+          en: "Name cannot be empty",
+          bn: "নাম খালি রাখা যাবে না",
+          ur: "نام خالی نہیں ہو سکتا",
+        })
+      );
       return;
     }
     if (trimmed.length < 2) {
-      setNameError(isBn ? "কমপক্ষে ২ অক্ষরের নাম লিখুন" : "Name must be at least 2 characters");
+      setNameError(
+        selectText({
+          en: "Name must be at least 2 characters",
+          bn: "কমপক্ষে ২ অক্ষরের নাম লিখুন",
+          ur: "نام کم از کم ۲ حروف پر مشتمل ہونا چاہیے",
+        })
+      );
       return;
     }
     if (trimmed.length > 50) {
-      setNameError(isBn ? "নাম সর্বোচ্চ ৫০ অক্ষরের হতে হবে" : "Name cannot exceed 50 characters");
+      setNameError(
+        selectText({
+          en: "Name cannot exceed 50 characters",
+          bn: "নাম সর্বোচ্চ ৫০ অক্ষরের হতে হবে",
+          ur: "نام ۵۰ حروف سے زیادہ نہیں ہو سکتا",
+        })
+      );
       return;
     }
 
@@ -572,14 +589,23 @@ export default function Dashboard() {
       );
 
       toast.success(
-        isBn ? "নাম সফলভাবে সেভ করা হয়েছে!" : "Display name updated successfully!"
+        selectText({
+          en: "Display name updated successfully!",
+          bn: "নাম সফলভাবে সেভ করা হয়েছে!",
+          ur: "ڈسپلے کا نام کامیابی سے محفوظ ہو گیا!",
+        })
       );
 
       setIsEditingName(false);
     } catch (err: any) {
       console.error("[Failed to update name]:", err);
-      setNameError(err.message || (isBn ? "নাম সেভ করতে সমস্যা হয়েছে" : "Failed to save name"));
-      toast.error(err.message || (isBn ? "নাম সেভ করতে সমস্যা হয়েছে" : "Failed to save name"));
+      const failMsg = selectText({
+        en: "Failed to save name",
+        bn: "নাম সেভ করতে সমস্যা হয়েছে",
+        ur: "نام محفوظ کرنے میں ناکامی",
+      });
+      setNameError(err.message || failMsg);
+      toast.error(err.message || failMsg);
     } finally {
       setIsSavingName(false);
     }
@@ -598,7 +624,13 @@ export default function Dashboard() {
 
     // Validate image format
     if (!file.type.match(/^image\/(jpeg|jpg|png|webp)$/i)) {
-      alert(isBn ? "অনুগ্রহ করে JPG, PNG অথবা WEBP ফরম্যাটের ছবি নির্বাচন করুন।" : "Please select a valid image file (JPG, PNG, WEBP).");
+      alert(
+        selectText({
+          en: "Please select a valid image file (JPG, PNG, WEBP).",
+          bn: "অনুগ্রহ করে JPG, PNG অথবা WEBP ফরম্যাটের ছবি নির্বাচন করুন।",
+          ur: "براہ کرم درست تصویر منتخب کریں (JPG, PNG, WEBP)۔",
+        })
+      );
       return;
     }
 
@@ -624,7 +656,13 @@ export default function Dashboard() {
 
         // Show instant preview while uploading to cloud
         setProfilePhoto(dataUrl);
-        const toastId = toast.loading(isBn ? "ক্লাউডে ছবি আপলোড হচ্ছে..." : "Uploading photo to cloud...");
+        const toastId = toast.loading(
+          selectText({
+            en: "Uploading photo to cloud...",
+            bn: "ক্লাউডে ছবি আপলোড হচ্ছে...",
+            ur: "کلاؤڈ پر تصویر اپ لوڈ ہو رہی ہے...",
+          })
+        );
 
         // Upload to ImgBB (with Free CDN fallback)
         uploadImage(dataUrl, `avatar_${userKey}.webp`)
@@ -666,11 +704,25 @@ export default function Dashboard() {
 
             // Dispatch window event for other listeners
             window.dispatchEvent(new CustomEvent("cycle_user_profile_updated", { detail: { userId: userKey, avatar: cloudUrl } }));
-            toast.success(isBn ? "প্রোফাইল ছবি সফলভাবে আপডেট হয়েছে!" : "Profile photo updated successfully!", { id: toastId });
+            toast.success(
+              selectText({
+                en: "Profile photo updated successfully!",
+                bn: "প্রোফাইল ছবি সফলভাবে আপডেট হয়েছে!",
+                ur: "پروفائل تصویر کامیابی سے اپ ڈیٹ ہو گئی!",
+              }),
+              { id: toastId }
+            );
           })
           .catch((err) => {
             console.error("[Avatar cloud upload failed]:", err);
-            toast.error(isBn ? "ক্লাউডে ছবি আপলোড ব্যর্থ হয়েছে।" : "Failed to upload photo to cloud.", { id: toastId });
+            toast.error(
+              selectText({
+                en: "Failed to upload photo to cloud.",
+                bn: "ক্লাউডে ছবি আপলোড ব্যর্থ হয়েছে।",
+                ur: "کلاؤڈ پر تصویر اپ لوڈ کرنے میں ناکامی۔",
+              }),
+              { id: toastId }
+            );
           });
       };
       img.src = event.target?.result as string;
@@ -847,10 +899,22 @@ export default function Dashboard() {
 
       const filename = `${itemTitle.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
       doc.save(filename);
-      toast.success(isBn ? "PDF সফলভাবে ডাউনলোড হয়েছে" : "PDF downloaded successfully");
+      toast.success(
+        selectText({
+          en: "PDF downloaded successfully",
+          bn: "PDF সফলভাবে ডাউনলোড হয়েছে",
+          ur: "PDF کامیابی سے ڈاؤن لوڈ ہو گئی",
+        })
+      );
     } catch (err) {
       console.error("[handleDownloadResource error]:", err);
-      toast.error(isBn ? "PDF ডাউনলোড ব্যর্থ হয়েছে" : "Failed to download PDF");
+      toast.error(
+        selectText({
+          en: "Failed to download PDF",
+          bn: "PDF ডাউনলোড ব্যর্থ হয়েছে",
+          ur: "PDF ڈاؤن لوڈ کرنے میں ناکامی",
+        })
+      );
     }
   };
 
@@ -861,7 +925,7 @@ export default function Dashboard() {
 
   const progressPercent = Math.min(100, Math.round((completedStagesCount / 12) * 100));
 
-  const dashboardStages = useMemo(() => getDashboardRoadmapStages(isBn), [isBn]);
+  const dashboardStages = useMemo(() => getDashboardRoadmapStages(language), [language]);
 
   const handleLogout = async () => {
     try {
@@ -911,25 +975,27 @@ export default function Dashboard() {
     id: "overview" | "roadmap" | "library" | "journal" | "notebook" | "discipline" | "calculator" | "orders" | "support";
     labelEn: string;
     labelBn: string;
+    labelUr: string;
     icon: any;
     badge?: string;
   };
 
   const navItems: NavItem[] = [
-    { id: "overview", labelEn: t("dashboard.tabOverview"), labelBn: "ওভারভিউ", icon: LayoutDashboard },
-    { id: "roadmap", labelEn: t("dashboard.tabRoadmap"), labelBn: "১২-স্টেজ রোডম্যাপ", icon: Layers, badge: `${completedStagesCount}/12` },
-    { id: "library", labelEn: t("dashboard.tabLibrary"), labelBn: "আমার লাইব্রেরি", icon: BookOpen, badge: entitlements?.length ? `${entitlements.length}` : undefined },
-    { id: "journal", labelEn: t("dashboard.tabJournal"), labelBn: "ট্রেডিং জার্নাল", icon: NotebookPen, badge: (localTrades?.length || journal?.length) ? `${localTrades?.length || journal?.length}` : undefined },
-    { id: "notebook", labelEn: "Private Trader Notebook", labelBn: "প্রাইভেট ট্রেডার নোটবুক", icon: BookMarked },
-    { id: "discipline", labelEn: t("dashboard.tabDiscipline"), labelBn: "ডেইলি রুটিন", icon: ClipboardCheck },
-    { id: "calculator", labelEn: "Position Size Calculator", labelBn: "পজিশন সাইজ ক্যালকুলেটর", icon: Calculator },
+    { id: "overview", labelEn: t("dashboard.tabOverview"), labelBn: "ওভারভিউ", labelUr: "اوور ویو", icon: LayoutDashboard },
+    { id: "roadmap", labelEn: t("dashboard.tabRoadmap"), labelBn: "১২-স্টেজ রোডম্যাপ", labelUr: "۱۲-مرحلہ روڈ میپ", icon: Layers, badge: `${completedStagesCount}/12` },
+    { id: "library", labelEn: t("dashboard.tabLibrary"), labelBn: "আমার লাইব্রেরি", labelUr: "میری لائبریری", icon: BookOpen, badge: entitlements?.length ? `${entitlements.length}` : undefined },
+    { id: "journal", labelEn: t("dashboard.tabJournal"), labelBn: "ট্রেডিং জার্নাল", labelUr: "ٹریڈنگ جرنل", icon: NotebookPen, badge: (localTrades?.length || journal?.length) ? `${localTrades?.length || journal?.length}` : undefined },
+    { id: "notebook", labelEn: "Private Trader Notebook", labelBn: "প্রাইভেট ট্রেডার নোটবুক", labelUr: "پرائیویٹ ٹریڈر نوٹ بک", icon: BookMarked },
+    { id: "discipline", labelEn: t("dashboard.tabDiscipline"), labelBn: "ডেইলি রুটিন", labelUr: "روزانہ کا معمول", icon: ClipboardCheck },
+    { id: "calculator", labelEn: "Position Size Calculator", labelBn: "পজিশন সাইজ ক্যালকুলেটর", labelUr: "پوزیشن سائز کیلکولیٹر", icon: Calculator },
     {
       id: "orders",
       labelEn: t("dashboard.tabOrders"),
       labelBn: "পেমেন্ট হিস্ট্রি",
+      labelUr: "ادائیگی کی تاریخ",
       icon: Receipt,
       badge: orders?.some((o: any) => o.orderStatus === "pending")
-        ? (isBn ? "পেন্ডিং" : "Pending")
+        ? selectText({ en: "Pending", bn: "পেন্ডিং", ur: "زیر التواء" })
         : orders?.length
         ? `${orders.length}`
         : undefined,
@@ -938,6 +1004,7 @@ export default function Dashboard() {
       id: "support",
       labelEn: t("dashboard.tabSupport"),
       labelBn: "সাপোর্ট চ্যাট",
+      labelUr: "سپورٹ چیٹ",
       icon: MessageSquare,
       badge: unreadSupportCount > 0 ? `${unreadSupportCount}` : undefined,
     },
@@ -959,8 +1026,9 @@ export default function Dashboard() {
 
   return (
     <div
+      dir={isRTL ? "rtl" : "ltr"}
       className={`min-h-screen bg-[#f8fafc] text-slate-900 dark:bg-[#070e1b] dark:text-slate-100 transition-colors duration-300 selection:bg-[#38bdf8] selection:text-slate-950 overflow-x-hidden ${
-        isBn ? "font-bangla" : ""
+        isBn ? "font-bangla" : isUr ? "font-urdu" : ""
       }`}
     >
       {/* Mobile Drawer Backdrop */}
@@ -993,8 +1061,16 @@ export default function Dashboard() {
               type="button"
               onClick={toggleSidebar}
               className="flex size-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition-colors cursor-pointer"
-              title={isBn ? "সাইডবার বন্ধ করুন" : "Close Sidebar"}
-              aria-label={isBn ? "সাইডবার বন্ধ করুন" : "Close Sidebar"}
+              title={
+                isSidebarOpen
+                  ? selectText({ en: "Close Sidebar", bn: "সাইডবার বন্ধ করুন", ur: "سائیڈ بار بند کریں" })
+                  : selectText({ en: "Open Sidebar", bn: "সাইডবার খুলুন", ur: "سائیڈ بار کھولیں" })
+              }
+              aria-label={
+                isSidebarOpen
+                  ? selectText({ en: "Close Sidebar", bn: "সাইডবার বন্ধ করুন", ur: "سائیڈ بار بند کریں" })
+                  : selectText({ en: "Open Sidebar", bn: "সাইডবার খুলুন", ur: "سائیڈ بار کھولیں" })
+              }
             >
               <PanelLeftClose size={16} />
             </button>
@@ -1008,9 +1084,9 @@ export default function Dashboard() {
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  aria-label={isBn ? "প্রোফাইল ছবি পরিবর্তন করুন" : "Change profile photo"}
+                  aria-label={selectText({ en: "Change profile photo", bn: "প্রোফাইল ছবি পরিবর্তন করুন", ur: "پروفائل تصویر تبدیل کریں" })}
                   className="relative flex size-10 items-center justify-center rounded-full overflow-hidden border border-slate-200/80 bg-[#081833] font-mono text-sm font-bold text-white shadow-md transition-transform active:scale-95 cursor-pointer dark:border-slate-700/80 dark:bg-sky-500 dark:text-slate-950 focus:outline-none focus:ring-2 focus:ring-sky-500"
-                  title={isBn ? "প্রোফাইল ছবি পরিবর্তন করতে ক্লিক করুন" : "Click to set or change profile photo"}
+                  title={selectText({ en: "Click to set or change profile photo", bn: "প্রোফাইল ছবি পরিবর্তন করতে ক্লিক করুন", ur: "پروفائل تصویر سیٹ یا تبدیل کرنے کے لیے کلک کریں" })}
                 >
                   {profilePhoto ? (
                     <img
@@ -1041,7 +1117,7 @@ export default function Dashboard() {
                   <div className="flex items-center gap-1.5 group/name">
                     <span
                       className="truncate text-sm font-extrabold text-slate-900 dark:text-white hover:text-sky-500 dark:hover:text-sky-400 cursor-pointer transition-colors"
-                      title={isBn ? "কাস্টম নাম এডিট করতে ক্লিক করুন" : "Click to edit your display name"}
+                      title={selectText({ en: "Click to edit your display name", bn: "কাস্টম নাম এডিট করতে ক্লিক করুন", ur: "ڈسپلے نام ایڈٹ کرنے کے لیے کلک کریں" })}
                       onClick={handleStartEditName}
                     >
                       {displayName}
@@ -1050,8 +1126,8 @@ export default function Dashboard() {
                       type="button"
                       onClick={handleStartEditName}
                       className="opacity-60 hover:opacity-100 text-slate-400 hover:text-sky-500 dark:hover:text-sky-400 transition-all p-0.5 rounded shrink-0 cursor-pointer"
-                      title={isBn ? "নাম পরিবর্তন করুন" : "Edit display name"}
-                      aria-label={isBn ? "নাম পরিবর্তন করুন" : "Edit display name"}
+                      title={selectText({ en: "Edit display name", bn: "নাম পরিবর্তন করুন", ur: "نام تبدیل کریں" })}
+                      aria-label={selectText({ en: "Edit display name", bn: "নাম পরিবর্তন করুন", ur: "نام تبدیل کریں" })}
                     >
                       <Edit2 size={12} />
                     </button>
@@ -1076,7 +1152,7 @@ export default function Dashboard() {
                           if (e.key === "Escape") handleCancelEditName();
                         }}
                         disabled={isSavingName}
-                        placeholder={isBn ? "আপনার নাম" : "Your name"}
+                        placeholder={selectText({ en: "Your name", bn: "আপনার নাম", ur: "آپ کا نام" })}
                         maxLength={50}
                         autoFocus
                         className={`w-full rounded-md border px-2 py-0.5 text-xs font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-1 ${
@@ -1089,8 +1165,8 @@ export default function Dashboard() {
                         type="submit"
                         disabled={isSavingName}
                         className="inline-flex size-6 shrink-0 items-center justify-center rounded-md bg-sky-500 text-white hover:bg-sky-600 disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
-                        title={isBn ? "সেভ করুন" : "Save name"}
-                        aria-label={isBn ? "সেভ করুন" : "Save name"}
+                        title={selectText({ en: "Save name", bn: "সেভ করুন", ur: "محفوظ کریں" })}
+                        aria-label={selectText({ en: "Save name", bn: "সেভ করুন", ur: "محفوظ کریں" })}
                       >
                         {isSavingName ? (
                           <Loader2 size={12} className="animate-spin" />
@@ -1103,8 +1179,8 @@ export default function Dashboard() {
                         disabled={isSavingName}
                         onClick={handleCancelEditName}
                         className="inline-flex size-6 shrink-0 items-center justify-center rounded-md bg-slate-200 text-slate-600 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 transition-colors cursor-pointer"
-                        title={isBn ? "বাতিল করুন" : "Cancel"}
-                        aria-label={isBn ? "বাতিল করুন" : "Cancel"}
+                        title={selectText({ en: "Cancel", bn: "বাতিল করুন", ur: "منسوخ کریں" })}
+                        aria-label={selectText({ en: "Cancel", bn: "বাতিল করুন", ur: "منسوخ کریں" })}
                       >
                         <X size={12} />
                       </button>
@@ -1122,7 +1198,7 @@ export default function Dashboard() {
                 {user.role === "admin" ? "ADMIN ACCESS" : user.role === "support" ? "SUPPORT ACCESS" : "STUDENT PASS"}
               </span>
               <span className="text-[10px] font-bold text-slate-400">
-                {isBn ? "সক্রিয় সদস্য" : "Active Member"}
+                {selectText({ en: "Active Member", bn: "সক্রিয় সদস্য", ur: "فعال رکن" })}
               </span>
             </div>
           </div>
@@ -1149,7 +1225,7 @@ export default function Dashboard() {
                 >
                   <div className="flex items-center gap-3">
                     <Icon size={17} className={isActive ? "text-[#38bdf8] dark:text-slate-950" : "text-slate-400"} />
-                    <span>{isBn ? item.labelBn : item.labelEn}</span>
+                    <span>{selectText({ en: item.labelEn, bn: item.labelBn, ur: item.labelUr })}</span>
                   </div>
                   {item.badge && (
                     <span
@@ -1177,7 +1253,7 @@ export default function Dashboard() {
             >
               <div className="flex items-center gap-3">
                 <Trophy size={17} className="text-amber-500 shrink-0" />
-                <span>{isBn ? "ট্রেডার লিডারবোর্ড" : "Leaderboard"}</span>
+                <span>{selectText({ en: "Leaderboard", bn: "ট্রেডার লিডারবোর্ড", ur: "ٹریڈر لیڈر بورڈ" })}</span>
               </div>
               <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-extrabold text-amber-500 uppercase tracking-wider">
                 Rankings
@@ -1195,7 +1271,7 @@ export default function Dashboard() {
             >
               <div className="flex items-center gap-3">
                 <SettingsIcon size={17} className="text-sky-500 shrink-0" />
-                <span>{isBn ? "অ্যাকাউন্ট সেটিংস" : "Account Settings"}</span>
+                <span>{selectText({ en: "Account Settings", bn: "অ্যাকাউন্ট সেটিংস", ur: "اکاؤنٹ کی ترتیبات" })}</span>
               </div>
               <span className="rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] font-extrabold text-sky-500 dark:text-sky-400 uppercase tracking-wider">
                 Manage
@@ -1250,21 +1326,13 @@ export default function Dashboard() {
               className="flex size-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
               title={
                 isSidebarOpen
-                  ? isBn
-                    ? "সাইডবার বন্ধ করুন"
-                    : "Close Sidebar"
-                  : isBn
-                    ? "সাইডবার খুলুন"
-                    : "Open Sidebar"
+                  ? selectText({ en: "Close Sidebar", bn: "সাইডবার বন্ধ করুন", ur: "سائیڈ بار بند کریں" })
+                  : selectText({ en: "Open Sidebar", bn: "সাইডবার খুলুন", ur: "سائیڈ بار کھولیں" })
               }
               aria-label={
                 isSidebarOpen
-                  ? isBn
-                    ? "সাইডবার বন্ধ করুন"
-                    : "Close Sidebar"
-                  : isBn
-                    ? "সাইডবার খুলুন"
-                    : "Open Sidebar"
+                  ? selectText({ en: "Close Sidebar", bn: "সাইডবার বন্ধ করুন", ur: "سائیড بار بند کریں" })
+                  : selectText({ en: "Open Sidebar", bn: "সাইডবার খুলুন", ur: "سائیڈ بار کھولیں" })
               }
             >
               {isSidebarOpen ? (
@@ -1279,10 +1347,18 @@ export default function Dashboard() {
             </Link>
             <div>
               <h1 className="text-sm font-extrabold text-slate-900 dark:text-white">
-                {isBn ? "ট্রেডিং রিয়েলিটি স্টুডেন্ট পোর্টাল" : "Institutional Trader Portal"}
+                {selectText({
+                  en: "Institutional Trader Portal",
+                  bn: "ট্রেডিং রিয়েলিটি স্টুডেন্ট পোর্টাল",
+                  ur: "ادارہ جاتی ٹریڈر پورٹل",
+                })}
               </h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
-                {isBn ? "আপনার স্টাডি লাইব্রেরি, জার্নাল ও ডিসিপ্লিন ট্র্যাকার" : "Process over emotion · Institutional Trader Portal"}
+                {selectText({
+                  en: "Process over emotion · Institutional Trader Portal",
+                  bn: "আপনার স্টাডি লাইব্রেরি, জার্নাল ও ডিসিপ্লিন ট্র্যাকার",
+                  ur: "جذبات پر طریقہ کار · ادارہ جاتی ٹریڈر پورٹل",
+                })}
               </p>
             </div>
           </div>
@@ -1293,38 +1369,38 @@ export default function Dashboard() {
                 onClick={() => window.dispatchEvent(new CustomEvent("open-telegram-modal"))}
                 size="sm"
                 className="gap-1.5 text-xs font-black bg-gradient-to-r from-sky-500 to-blue-600 text-white hover:from-sky-400 hover:to-blue-500 shadow-md shadow-sky-500/20 px-2 sm:px-3 h-8 sm:h-9"
-                title={isBn ? "ভিআইপি টেলিগ্রাম গ্রুপ" : "VIP Telegram Community"}
+                title={selectText({ en: "VIP Telegram Community", bn: "ভিআইপি টেলিগ্রাম গ্রুপ", ur: "وی آئی پی ٹیلیگرام کمیونٹی" })}
               >
                 <Send size={13} className="translate-x-0.5 -translate-y-0.5" />
-                <span className="hidden sm:inline">{isBn ? "ভিআইপি টেলিগ্রাম" : "VIP Telegram"}</span>
+                <span className="hidden sm:inline">{selectText({ en: "VIP Telegram", bn: "ভিআইপি টেলিগ্রাম", ur: "وی آئی پی ٹیلیگرام" })}</span>
               </Button>
             )}
 
             <Link href="/leaderboard" className="hidden sm:inline-flex">
               <Button size="sm" className="gap-1.5 text-xs font-extrabold bg-amber-500/15 text-amber-600 hover:bg-amber-500/25 dark:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/30 border border-amber-500/30 h-8 sm:h-9">
                 <Trophy size={13} className="text-amber-500 shrink-0" />
-                <span>{isBn ? "লিডারবোর্ড" : "Leaderboard"}</span>
+                <span>{selectText({ en: "Leaderboard", bn: "লিডারবোর্ড", ur: "لیڈر بورڈ" })}</span>
               </Button>
             </Link>
 
             <Link href="/" className="hidden sm:inline-flex">
               <Button variant="outline" size="sm" className="gap-1 text-xs font-bold border-slate-300 dark:border-slate-700 h-8 sm:h-9">
                 <ArrowLeft size={13} />
-                <span>{isBn ? "মূল ওয়েবসাইট" : "Main Website"}</span>
+                <span>{selectText({ en: "Main Website", bn: "মূল ওয়েবসাইট", ur: "مرکزی ویب سائٹ" })}</span>
               </Button>
             </Link>
 
             <Link href="/checkout">
               <Button size="sm" className="gap-1 text-xs font-extrabold bg-[#081833] text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 px-2.5 sm:px-3 h-8 sm:h-9">
                 <Sparkles size={13} />
-                <span className="hidden sm:inline">{isBn ? "স্টোর ব্রাউজ" : "Browse Store"}</span>
+                <span className="hidden sm:inline">{selectText({ en: "Browse Store", bn: "স্টোর ব্রাউজ", ur: "اسٹور براؤز کریں" })}</span>
               </Button>
             </Link>
 
             <Link href="/settings">
-              <Button variant="outline" size="sm" className="gap-1 text-xs font-bold border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50 px-2.5 sm:px-3 h-8 sm:h-9" title={isBn ? "অ্যাকাউন্ট সেটিংস" : "Account Settings"}>
+              <Button variant="outline" size="sm" className="gap-1 text-xs font-bold border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50 px-2.5 sm:px-3 h-8 sm:h-9" title={selectText({ en: "Account Settings", bn: "অ্যাকাউন্ট সেটিংস", ur: "اکاؤنٹ کی ترتیبات" })}>
                 <SettingsIcon size={13} className="text-sky-500" />
-                <span className="hidden sm:inline">{isBn ? "সেটিংস" : "Settings"}</span>
+                <span className="hidden sm:inline">{selectText({ en: "Settings", bn: "সেটিংস", ur: "ترتیبات" })}</span>
               </Button>
             </Link>
 
@@ -1490,10 +1566,19 @@ export default function Dashboard() {
                   {previewPdfModal.category ? `${previewPdfModal.category.toUpperCase()} RESOURCE` : "INSTITUTIONAL PDF GUIDE"}
                 </span>
                 <h3 className="text-base font-extrabold mt-0.5">
-                  {isBn && previewPdfModal.titleBn ? previewPdfModal.titleBn : (previewPdfModal.titleEn || previewPdfModal.title)}
+                  {selectText({
+                    en: previewPdfModal.titleEn || previewPdfModal.title || "",
+                    bn: previewPdfModal.titleBn || previewPdfModal.title || "",
+                    ur: previewPdfModal.titleUr || previewPdfModal.titleEn || previewPdfModal.title || "",
+                  })}
                 </h3>
               </div>
-              <button onClick={() => setPreviewPdfModal(null)} className="p-1 text-slate-400 hover:text-slate-600">
+              <button
+                onClick={() => setPreviewPdfModal(null)}
+                className="p-1 text-slate-400 hover:text-slate-600"
+                title={selectText({ en: "Close", bn: "বন্ধ করুন", ur: "بند کریں" })}
+                aria-label={selectText({ en: "Close", bn: "বন্ধ করুন", ur: "بند کریں" })}
+              >
                 <X size={18} />
               </button>
             </div>
@@ -1501,13 +1586,17 @@ export default function Dashboard() {
             <div className="mt-5 space-y-4 text-xs leading-relaxed">
               <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/50 space-y-3">
                 <div className="font-extrabold text-slate-800 dark:text-slate-200">
-                  {isBn && previewPdfModal.subtitleBn ? previewPdfModal.subtitleBn : (previewPdfModal.subtitleEn || previewPdfModal.subtitle)}
+                  {selectText({
+                    en: previewPdfModal.subtitleEn || previewPdfModal.subtitle || "",
+                    bn: previewPdfModal.subtitleBn || previewPdfModal.subtitle || "",
+                    ur: previewPdfModal.subtitleUr || previewPdfModal.subtitleEn || previewPdfModal.subtitle || "",
+                  })}
                 </div>
                 {previewPdfModal.keyConcepts && Array.isArray(previewPdfModal.keyConcepts) && previewPdfModal.keyConcepts.length > 0 && (
                   <div className="space-y-2">
                     {previewPdfModal.keyConcepts.map((c: string, idx: number) => (
                       <div key={idx} className="flex items-start gap-2 text-slate-600 dark:text-slate-300">
-                        <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-sky-100 font-mono text-[10px] font-bold text-sky-800 dark:bg-sky-950 dark:text-sky-400">
+                        <span dir="ltr" className="flex size-5 shrink-0 items-center justify-center rounded-full bg-sky-100 font-mono text-[10px] font-bold text-sky-800 dark:bg-sky-950 dark:text-sky-400">
                           {idx + 1}
                         </span>
                         <span>{c}</span>
@@ -1523,7 +1612,7 @@ export default function Dashboard() {
                   className="w-full gap-1.5 bg-[#081833] text-xs font-bold text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400"
                 >
                   <Download size={14} />
-                  <span>{isBn ? "সম্পূর্ণ PDF গাইড ডাউনলোড করুন" : "Download Full PDF Guide"}</span>
+                  <span>{selectText({ en: "Download Full PDF Guide", bn: "সম্পূর্ণ PDF গাইড ডাউনলোড করুন", ur: "مکمل PDF گائیڈ ڈاؤن لوڈ کریں" })}</span>
                 </Button>
               </div>
             </div>
@@ -1536,10 +1625,21 @@ export default function Dashboard() {
       {/* ========================================================================= */}
       {showNewJournalModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in" onClick={() => setShowNewJournalModal(false)}>
-          <div className="relative w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-2xl dark:border-slate-800 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
+          <div
+            dir={isRTL ? "rtl" : "ltr"}
+            className={`relative w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-2xl dark:border-slate-800 dark:bg-slate-900 ${
+              isUr ? "font-urdu" : ""
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
-              <h3 className="text-lg font-extrabold">{isBn ? "নতুন ট্রেড জার্নাল এন্ট্রি" : "Log Trade Setup"}</h3>
-              <button onClick={() => setShowNewJournalModal(false)} className="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+              <h3 className="text-lg font-extrabold">{selectText({ en: "Log Trade Setup", bn: "নতুন ট্রেড জার্নাল এন্ট্রি", ur: "نیا ٹریڈ لاগ درج کریں" })}</h3>
+              <button
+                onClick={() => setShowNewJournalModal(false)}
+                className="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                title={selectText({ en: "Close", bn: "বন্ধ করুন", ur: "بند کریں" })}
+                aria-label={selectText({ en: "Close", bn: "বন্ধ করুন", ur: "بند کریں" })}
+              >
                 <X size={18} />
               </button>
             </div>
@@ -1559,10 +1659,13 @@ export default function Dashboard() {
             >
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Trading Pair</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    {selectText({ en: "Trading Pair", bn: "ট্রেডিং পেয়ার", ur: "ٹریڈنگ پیئر" })}
+                  </label>
                   <select
                     value={journalPair}
                     onChange={(e) => setJournalPair(e.target.value)}
+                    dir="ltr"
                     className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-bold outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                   >
                     <option>EUR/USD</option>
@@ -1577,11 +1680,13 @@ export default function Dashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Direction & Setup</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    {selectText({ en: "Direction & Setup", bn: "ডিরেকশন ও সেটআপ", ur: "سمت اور سیٹ اپ" })}
+                  </label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Long 1:3.5 RR"
+                    placeholder={selectText({ en: "e.g. Long 1:3.5 RR", bn: "যেমন: Long 1:3.5 RR", ur: "مثلاً: Long 1:3.5 RR" })}
                     value={journalTitle}
                     onChange={(e) => setJournalTitle(e.target.value)}
                     className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-medium outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
@@ -1591,7 +1696,9 @@ export default function Dashboard() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Strategy Model</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    {selectText({ en: "Strategy Model", bn: "স্ট্র্যাটেজি মডেল", ur: "اسٹریٹجی ماڈل" })}
+                  </label>
                   <select
                     value={journalSetup}
                     onChange={(e) => setJournalSetup(e.target.value)}
@@ -1606,25 +1713,33 @@ export default function Dashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Outcome</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    {selectText({ en: "Outcome", bn: "ফলাফল", ur: "نتیجہ" })}
+                  </label>
                   <select
                     value={journalResult}
                     onChange={(e) => setJournalResult(e.target.value)}
                     className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-bold outline-none dark:border-slate-800 dark:bg-slate-950 dark:text-white"
                   >
-                    <option value="Win">Win (লাভ 🏆)</option>
-                    <option value="Loss">Loss (লস 🛑)</option>
-                    <option value="Breakeven">Breakeven (সমান ⚪)</option>
+                    <option value="Win">{selectText({ en: "Win 🏆", bn: "Win (লাভ 🏆)", ur: "Win (جیت 🏆)" })}</option>
+                    <option value="Loss">{selectText({ en: "Loss 🛑", bn: "Loss (লস 🛑)", ur: "Loss (نقصان 🛑)" })}</option>
+                    <option value="Breakeven">{selectText({ en: "Breakeven ⚪", bn: "Breakeven (সমান ⚪)", ur: "Breakeven (برابر ⚪)" })}</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Trade Logic, Discipline & Reflection</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                  {selectText({ en: "Trade Logic, Discipline & Reflection", bn: "ট্রেড লজিক, ডিসিপ্লিন ও প্রতিফলন", ur: "ٹریڈ لاجک، نظم و ضبط اور مشاہدہ" })}
+                </label>
                 <textarea
                   required
                   rows={4}
-                  placeholder="Why did you take this trade? Did you stick to your 1% risk rule? Any emotional hesitation?"
+                  placeholder={selectText({
+                    en: "Why did you take this trade? Did you stick to your 1% risk rule? Any emotional hesitation?",
+                    bn: "ট্রেডটি কেন নিয়েছিলেন? ১% রিস্ক রুল মেনেছেন তো? কোনো মানসিক দ্বিধা কাজ করেছে কি না লিখুন...",
+                    ur: "آپ نے یہ ٹریڈ کیوں لی؟ کیا آپ نے ۱٪ رسک کے اصول کی پیروی کی؟ کوئی جذباتی ہچکچاہٹ تھی؟",
+                  })}
                   value={journalContent}
                   onChange={(e) => setJournalContent(e.target.value)}
                   className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
@@ -1632,7 +1747,9 @@ export default function Dashboard() {
               </div>
 
               <Button type="submit" disabled={createJournalMutation.isPending} className="w-full bg-[#081833] font-bold text-white dark:bg-sky-500 dark:text-slate-950">
-                {createJournalMutation.isPending ? "Saving..." : isBn ? "জার্নালে সংরক্ষণ করুন" : "Save to Journal"}
+                {createJournalMutation.isPending
+                  ? selectText({ en: "Saving...", bn: "সংরক্ষণ করা হচ্ছে...", ur: "محفوظ ہو رہا ہے..." })
+                  : selectText({ en: "Save to Journal", bn: "জার্নালে সংরক্ষণ করুন", ur: "جرنل میں محفوظ کریں" })}
               </Button>
             </form>
           </div>
@@ -1652,10 +1769,21 @@ export default function Dashboard() {
       {/* ========================================================================= */}
       {showNewTicketModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in" onClick={() => setShowNewTicketModal(false)}>
-          <div className="relative w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-2xl dark:border-slate-800 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
+          <div
+            dir={isRTL ? "rtl" : "ltr"}
+            className={`relative w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-2xl dark:border-slate-800 dark:bg-slate-900 ${
+              isUr ? "font-urdu" : ""
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
-              <h3 className="text-lg font-extrabold">{isBn ? "নতুন সাপোর্ট টিকিট" : "Open Support Ticket"}</h3>
-              <button onClick={() => setShowNewTicketModal(false)} className="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
+              <h3 className="text-lg font-extrabold">{selectText({ en: "Open Support Ticket", bn: "নতুন সাপোর্ট টিকিট", ur: "نیا سپورٹ ٹکٹ کھولیں" })}</h3>
+              <button
+                onClick={() => setShowNewTicketModal(false)}
+                className="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                title={selectText({ en: "Close", bn: "বন্ধ করুন", ur: "بند کریں" })}
+                aria-label={selectText({ en: "Close", bn: "বন্ধ করুন", ur: "بند کریں" })}
+              >
                 <X size={18} />
               </button>
             </div>
@@ -1669,25 +1797,29 @@ export default function Dashboard() {
               className="mt-5 space-y-4"
             >
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Category</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                  {selectText({ en: "Category", bn: "ক্যাটাগরি", ur: "زمرہ" })}
+                </label>
                 <select
                   value={ticketCategory}
                   onChange={(e) => setTicketCategory(e.target.value)}
                   className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-bold outline-none dark:border-slate-800 dark:bg-slate-950"
                 >
-                  <option>Payment Verification</option>
-                  <option>Resource / eBook Access</option>
-                  <option>Roadmap Clarification</option>
-                  <option>Technical Issue</option>
+                  <option value="Payment Verification">{selectText({ en: "Payment Verification", bn: "পেমেন্ট ভেরিফিকেশন", ur: "ادائیگی کی تصدیق" })}</option>
+                  <option value="Resource / eBook Access">{selectText({ en: "Resource / eBook Access", bn: "রিসোর্স / ইবুক অ্যাক্সেস", ur: "وسائل / ای بک تک رسائی" })}</option>
+                  <option value="Roadmap Clarification">{selectText({ en: "Roadmap Clarification", bn: "রোডম্যাপ সম্পর্কিত প্রশ্ন", ur: "روڈ میپ کی وضاحت" })}</option>
+                  <option value="Technical Issue">{selectText({ en: "Technical Issue", bn: "কারিগরি সমস্যা", ur: "تکنیکی مسئلہ" })}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">{isBn ? "বিষয়" : "Subject"}</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                  {selectText({ en: "Subject", bn: "বিষয়", ur: "موضوع" })}
+                </label>
                 <input
                   type="text"
                   required
-                  placeholder={isBn ? "যেমন: পেমেন্ট ভেরিফিকেশন সহায়তা" : "e.g. Need assistance with eBook download"}
+                  placeholder={selectText({ en: "e.g. Need assistance with eBook download", bn: "যেমন: পেমেন্ট ভেরিফিকেশন সহায়তা", ur: "مثلاً: ای بک ڈاؤن لوڈ میں مدد درکار ہے" })}
                   value={ticketSubject}
                   onChange={(e) => setTicketSubject(e.target.value)}
                   className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none focus:border-[#0284c7] dark:border-slate-800 dark:bg-slate-950 dark:text-white"
@@ -1695,11 +1827,13 @@ export default function Dashboard() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">{isBn ? "বিস্তারিত বিবরণ" : "Message"}</label>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                  {selectText({ en: "Message", bn: "বিস্তারিত বিবরণ", ur: "پیغام" })}
+                </label>
                 <textarea
                   required
                   rows={4}
-                  placeholder={isBn ? "আপনার সমস্যার বিস্তারিত লিখুন..." : "Describe your inquiry or issue in detail..."}
+                  placeholder={selectText({ en: "Describe your inquiry or issue in detail...", bn: "আপনার সমস্যার বিস্তারিত লিখুন...", ur: "اپنے مسئلے کی تفصیل درج کریں..." })}
                   value={ticketMessage}
                   onChange={(e) => setTicketMessage(e.target.value)}
                   className="mt-1.5 w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm outline-none focus:border-[#0284c7] dark:border-slate-800 dark:bg-slate-950 dark:text-white"
@@ -1707,7 +1841,9 @@ export default function Dashboard() {
               </div>
 
               <Button type="submit" disabled={createTicketMutation.isPending} className="w-full bg-[#081833] font-bold text-white dark:bg-sky-500 dark:text-slate-950">
-                {createTicketMutation.isPending ? "Submitting..." : isBn ? "টিকিট জমা দিন" : "Submit Ticket"}
+                {createTicketMutation.isPending
+                  ? selectText({ en: "Submitting...", bn: "জমা হচ্ছে...", ur: "جمع ہو رہا ہے..." })
+                  : selectText({ en: "Submit Ticket", bn: "টিকিট জমা দিন", ur: "ٹکٹ جمع کروائیں" })}
               </Button>
             </form>
           </div>
@@ -1719,7 +1855,7 @@ export default function Dashboard() {
         <CourseTelegramModal
           isOpen={true}
           config={telegramPopupData.config}
-          lang={isBn ? "bn" : "en"}
+          lang={language}
           onClose={() => setIsTelegramModalDismissedLocally(true)}
           onJoin={async () => {
             try {

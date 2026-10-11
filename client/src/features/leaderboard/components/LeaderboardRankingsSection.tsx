@@ -11,27 +11,29 @@ import {
   Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
 import type { LeaderboardTrader } from "@shared/types/leaderboard";
 
 export interface LeaderboardRankingsSectionProps {
   topThree: LeaderboardTrader[];
   restRankings: LeaderboardTrader[];
-  isBn: boolean;
+  isBn?: boolean;
   onSelectTrader: (trader: LeaderboardTrader) => void;
 }
 
 export interface TraderPerformanceModalProps {
   selectedTrader: LeaderboardTrader | null;
   onClose: () => void;
-  isBn: boolean;
+  isBn?: boolean;
 }
 
 export function LeaderboardRankingsSection({
   topThree,
   restRankings,
-  isBn,
   onSelectTrader,
 }: LeaderboardRankingsSectionProps) {
+  const { selectText, isUr, isRTL } = useLanguage();
+
   // Podium arrangement:
   // Desktop: #2 Second Place (left), #1 First Place (center elevated), #3 Third Place (right)
   const podiumTraders = useMemo(() => {
@@ -43,23 +45,35 @@ export function LeaderboardRankingsSection({
       {
         trader: second,
         position: 2,
-        label: isBn ? "#২ দ্বিতীয় স্থান 🥈" : "#2 SECOND PLACE 🥈",
+        label: selectText({
+          en: "#2 SECOND PLACE 🥈",
+          bn: "#২ দ্বিতীয় স্থান 🥈",
+          ur: "#2 دوسرا مقام 🥈",
+        }),
         orderClass: "order-2 md:order-1",
       },
       {
         trader: first,
         position: 1,
-        label: isBn ? "#১ প্রথম স্থান 🥇" : "#1 FIRST PLACE 🥇",
+        label: selectText({
+          en: "#1 FIRST PLACE 🥇",
+          bn: "#১ প্রথম স্থান 🥇",
+          ur: "#1 پہلا مقام 🥇",
+        }),
         orderClass: "order-1 md:order-2",
       },
       {
         trader: third,
         position: 3,
-        label: isBn ? "#৩ তৃতীয় স্থান 🥉" : "#3 THIRD PLACE 🥉",
+        label: selectText({
+          en: "#3 THIRD PLACE 🥉",
+          bn: "#৩ তৃতীয় স্থান 🥉",
+          ur: "#3 تیسرا مقام 🥉",
+        }),
         orderClass: "order-3 md:order-3",
       },
     ].filter((item) => item.trader !== null);
-  }, [topThree, isBn]);
+  }, [topThree, selectText]);
 
   return (
     <>
@@ -67,11 +81,15 @@ export function LeaderboardRankingsSection({
       {/* TOP 3 PODIUM */}
       {/* ======================================================================= */}
       {topThree.length > 0 && (
-        <section className="space-y-4">
+        <section className={`space-y-4 ${isUr ? "font-urdu" : ""}`} dir={isRTL ? "rtl" : "ltr"}>
           <div className="flex items-center gap-2">
             <Sparkles size={18} className="text-amber-400" />
             <h2 className="text-sm font-extrabold uppercase tracking-widest text-slate-700 dark:text-slate-200">
-              {isBn ? "শীর্ষ ৩ পোডিয়াম (টপ ৩ ট্রেডার)" : "Top 3 Podium (Global Ranks #1–#3)"}
+              {selectText({
+                en: "Top 3 Podium (Global Ranks #1–#3)",
+                bn: "শীর্ষ ৩ পোডিয়াম (টপ ৩ ট্রেডার)",
+                ur: "ٹاپ 3 پوڈیم (عالمی رینک #1–#3)",
+              })}
             </h2>
           </div>
 
@@ -113,7 +131,7 @@ export function LeaderboardRankingsSection({
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
                     <div className={`flex items-center gap-1.5 rounded-full px-4 py-1 text-xs font-black uppercase tracking-wider ${badgeColor}`}>
                       {isChampion ? <Crown size={14} className="fill-slate-950" /> : <Medal size={14} />}
-                      <span>{label}</span>
+                      <span dir="ltr">{label}</span>
                     </div>
                   </div>
 
@@ -133,7 +151,7 @@ export function LeaderboardRankingsSection({
                         <span>{trader.name}</span>
                         <CheckCircle2 size={16} className="text-sky-400 shrink-0" />
                       </h3>
-                      <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                      <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400" dir="ltr">
                         {trader.bestPair}
                       </div>
                     </div>
@@ -141,9 +159,13 @@ export function LeaderboardRankingsSection({
                     {/* Overall Composite Score (Whole Number / 100) */}
                     <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-3 dark:border-slate-800/80 dark:bg-[#071124]/90 shadow-inner">
                       <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        {isBn ? "সামগ্রিক স্কোর" : "Overall Score"}
+                        {selectText({
+                          en: "Overall Score",
+                          bn: "সামগ্রিক স্কোর",
+                          ur: "مجموعی اسکور",
+                        })}
                       </div>
-                      <div className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-emerald-400">
+                      <div className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-emerald-400" dir="ltr">
                         {Math.round(trader.overallScore)} <span className="text-xs font-bold text-slate-400">/ 100</span>
                       </div>
                     </div>
@@ -153,9 +175,13 @@ export function LeaderboardRankingsSection({
                       {/* Rule Adherence */}
                       <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
                         <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                          {isBn ? "রিস্ক মেনে চলা" : "Rule Adherence"}
+                          {selectText({
+                            en: "Rule Adherence",
+                            bn: "রিস্ক মেনে চলা",
+                            ur: "قواعد کی پابندی",
+                          })}
                         </div>
-                        <div className="text-sm font-extrabold text-sky-600 dark:text-sky-400">
+                        <div className="text-sm font-extrabold text-sky-600 dark:text-sky-400" dir="ltr">
                           {trader.ruleComplianceRate}%
                         </div>
                       </div>
@@ -163,9 +189,13 @@ export function LeaderboardRankingsSection({
                       {/* Discipline Routine */}
                       <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
                         <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                          {isBn ? "ডিসিপ্লিন রুটিন" : "Discipline"}
+                          {selectText({
+                            en: "Discipline",
+                            bn: "ডিসিপ্লিন রুটিন",
+                            ur: "ڈسپلن",
+                          })}
                         </div>
-                        <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
+                        <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400" dir="ltr">
                           {trader.disciplineScore}%
                         </div>
                       </div>
@@ -173,23 +203,31 @@ export function LeaderboardRankingsSection({
                       {/* Consistency */}
                       <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
                         <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                          {isBn ? "ধারাবাহিকতা" : "Consistency"}
+                          {selectText({
+                            en: "Consistency",
+                            bn: "ধারাবাহিকতা",
+                            ur: "تسلسل",
+                          })}
                         </div>
-                        <div className="text-sm font-extrabold text-purple-600 dark:text-purple-400">
+                        <div className="text-sm font-extrabold text-purple-600 dark:text-purple-400" dir="ltr">
                           {trader.consistencyScore}%
                         </div>
-                        <div className="text-[10px] text-slate-400">{trader.currentStreak}d streak</div>
+                        <div className="text-[10px] text-slate-400" dir="ltr">{trader.currentStreak}d streak</div>
                       </div>
 
                       {/* Win Rate */}
                       <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
                         <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                          {isBn ? "উইন রেট" : "Win Rate"}
+                          {selectText({
+                            en: "Win Rate",
+                            bn: "উইন রেট",
+                            ur: "Win Rate",
+                          })}
                         </div>
-                        <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
+                        <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400" dir="ltr">
                           {trader.winRate}%
                         </div>
-                        <div className="text-[10px] text-slate-400">
+                        <div className="text-[10px] text-slate-400" dir="ltr">
                           {trader.winningTrades}W / {trader.losingTrades}L
                         </div>
                       </div>
@@ -197,9 +235,13 @@ export function LeaderboardRankingsSection({
                       {/* Total Trades */}
                       <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
                         <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                          {isBn ? "মোট ট্রেড" : "Total Trades"}
+                          {selectText({
+                            en: "Total Trades",
+                            bn: "মোট ট্রেড",
+                            ur: "کل ٹریڈز",
+                          })}
                         </div>
-                        <div className="text-sm font-extrabold text-slate-800 dark:text-slate-200">
+                        <div className="text-sm font-extrabold text-slate-800 dark:text-slate-200" dir="ltr">
                           {trader.totalTrades}
                         </div>
                       </div>
@@ -208,9 +250,13 @@ export function LeaderboardRankingsSection({
                       {hasPositiveProfit ? (
                         <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-2.5 dark:border-emerald-500/30 dark:bg-emerald-500/10">
                           <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-                            {isBn ? "প্রফিট" : "Profit"}
+                            {selectText({
+                              en: "Profit",
+                              bn: "প্রফিট",
+                              ur: "منافع",
+                            })}
                           </div>
-                          <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
+                          <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400" dir="ltr">
                             +${trader.totalPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </div>
                         </div>
@@ -222,8 +268,14 @@ export function LeaderboardRankingsSection({
                       type="button"
                       className="w-full mt-2 rounded-xl py-2 text-xs font-extrabold text-sky-500 hover:text-sky-400 hover:bg-sky-500/10 transition flex items-center justify-center gap-1.5"
                     >
-                      <span>{isBn ? "পারফরম্যান্স বিশদ" : "View Breakdown"}</span>
-                      <ChevronRight size={14} />
+                      <span>
+                        {selectText({
+                          en: "View Breakdown",
+                          bn: "পারফরম্যান্স বিশদ",
+                          ur: "تفصیلات دیکھیں",
+                        })}
+                      </span>
+                      <ChevronRight size={14} className={isRTL ? "rotate-180" : ""} />
                     </button>
                   </div>
                 </div>
@@ -237,16 +289,25 @@ export function LeaderboardRankingsSection({
       {/* RANKED LIST (RANKS #4–#30) */}
       {/* ======================================================================= */}
       {restRankings.length > 0 && (
-        <section className="space-y-4">
+        <section className={`space-y-4 ${isUr ? "font-urdu" : ""}`} dir={isRTL ? "rtl" : "ltr"}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Layers size={18} className="text-sky-400" />
               <h2 className="text-sm font-extrabold uppercase tracking-widest text-slate-700 dark:text-slate-200">
-                {isBn ? "র‌্যাঙ্কিং তালিকা (#৪–#৩০)" : "Global Rankings (#4–#30)"}
+                {selectText({
+                  en: "Global Rankings (#4–#30)",
+                  bn: "র‌্যাঙ্কিং তালিকা (#৪–#৩০)",
+                  ur: "عالمی درجہ بندی (#4–#30)",
+                })}
               </h2>
             </div>
             <span className="text-xs font-bold text-slate-500">
-              {restRankings.length} {isBn ? "জন ট্রেডার" : "traders"}
+              {restRankings.length}{" "}
+              {selectText({
+                en: "traders",
+                bn: "জন ট্রেডার",
+                ur: "ٹریڈرز",
+              })}
             </span>
           </div>
 
@@ -257,14 +318,62 @@ export function LeaderboardRankingsSection({
                 <tr className="border-b border-slate-200 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-900/60 text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   <th className="py-3.5 pl-6 pr-3">Rank</th>
                   <th className="py-3.5 px-3">Trader</th>
-                  <th className="py-3.5 px-3 text-center">{isBn ? "স্কোর" : "Overall Score"}</th>
-                  <th className="py-3.5 px-3 text-center">{isBn ? "রিস্ক মেনে চলা" : "Rule Adherence"}</th>
-                  <th className="py-3.5 px-3 text-center">{isBn ? "ডিসিপ্লিন" : "Discipline Routine"}</th>
-                  <th className="py-3.5 px-3 text-center">{isBn ? "ধারাবাহিকতা" : "Consistency"}</th>
-                  <th className="py-3.5 px-3 text-center">{isBn ? "মোট ট্রেড" : "Total Trades"}</th>
-                  <th className="py-3.5 px-3 text-center">{isBn ? "উইন রেট" : "Win Rate"}</th>
-                  <th className="py-3.5 px-3 text-right">{isBn ? "প্রফিট" : "Profit"}</th>
-                  <th className="py-3.5 pr-6 pl-3 text-right">{isBn ? "অ্যাকশন" : "Action"}</th>
+                  <th className="py-3.5 px-3 text-center">
+                    {selectText({
+                      en: "Overall Score",
+                      bn: "স্কোর",
+                      ur: "اسکور",
+                    })}
+                  </th>
+                  <th className="py-3.5 px-3 text-center">
+                    {selectText({
+                      en: "Rule Adherence",
+                      bn: "রিস্ক মেনে চলা",
+                      ur: "قواعد کی پابندی",
+                    })}
+                  </th>
+                  <th className="py-3.5 px-3 text-center">
+                    {selectText({
+                      en: "Discipline Routine",
+                      bn: "ডিসিপ্লিন",
+                      ur: "ڈسپلن",
+                    })}
+                  </th>
+                  <th className="py-3.5 px-3 text-center">
+                    {selectText({
+                      en: "Consistency",
+                      bn: "ধারাবাহিকতা",
+                      ur: "تسلسل",
+                    })}
+                  </th>
+                  <th className="py-3.5 px-3 text-center">
+                    {selectText({
+                      en: "Total Trades",
+                      bn: "মোট ট্রেড",
+                      ur: "کل ٹریڈز",
+                    })}
+                  </th>
+                  <th className="py-3.5 px-3 text-center">
+                    {selectText({
+                      en: "Win Rate",
+                      bn: "উইন রেট",
+                      ur: "Win Rate",
+                    })}
+                  </th>
+                  <th className="py-3.5 px-3 text-right">
+                    {selectText({
+                      en: "Profit",
+                      bn: "প্রফিট",
+                      ur: "منافع",
+                    })}
+                  </th>
+                  <th className="py-3.5 pr-6 pl-3 text-right">
+                    {selectText({
+                      en: "Action",
+                      bn: "অ্যাকশন",
+                      ur: "ایکشن",
+                    })}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
@@ -276,7 +385,7 @@ export function LeaderboardRankingsSection({
                   >
                     {/* Rank */}
                     <td className="py-4 pl-6 pr-3 font-mono font-bold text-slate-500">
-                      <span className="inline-flex size-7 items-center justify-center rounded-lg bg-slate-100 font-black text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                      <span className="inline-flex size-7 items-center justify-center rounded-lg bg-slate-100 font-black text-slate-700 dark:bg-slate-800 dark:text-slate-300" dir="ltr">
                         #{t.rank}
                       </span>
                     </td>
@@ -296,7 +405,7 @@ export function LeaderboardRankingsSection({
                             <span>{t.name}</span>
                             <CheckCircle2 size={13} className="text-sky-400" />
                           </div>
-                          <div className="text-[10px] text-slate-400">
+                          <div className="text-[10px] text-slate-400" dir="ltr">
                             {t.bestPair}
                           </div>
                         </div>
@@ -305,28 +414,28 @@ export function LeaderboardRankingsSection({
 
                     {/* Overall Composite Score */}
                     <td className="py-4 px-3 text-center">
-                      <span className="inline-flex rounded-full bg-cyan-500/10 px-2.5 py-1 text-xs font-black text-cyan-500">
+                      <span className="inline-flex rounded-full bg-cyan-500/10 px-2.5 py-1 text-xs font-black text-cyan-500" dir="ltr">
                         {Math.round(t.overallScore)} / 100
                       </span>
                     </td>
 
                     {/* Rule Compliance */}
                     <td className="py-4 px-3 text-center">
-                      <span className="inline-flex rounded-full bg-sky-500/10 px-2 py-0.5 text-[11px] font-extrabold text-sky-600 dark:text-sky-400">
+                      <span className="inline-flex rounded-full bg-sky-500/10 px-2 py-0.5 text-[11px] font-extrabold text-sky-600 dark:text-sky-400" dir="ltr">
                         {t.ruleComplianceRate}%
                       </span>
                     </td>
 
                     {/* Discipline Routine */}
                     <td className="py-4 px-3 text-center">
-                      <span className="inline-flex rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-extrabold text-emerald-600 dark:text-emerald-400">
+                      <span className="inline-flex rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-extrabold text-emerald-600 dark:text-emerald-400" dir="ltr">
                         {t.disciplineScore}%
                       </span>
                     </td>
 
                     {/* Consistency & Streak */}
                     <td className="py-4 px-3 text-center">
-                      <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-amber-500">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-amber-500" dir="ltr">
                         <Flame size={12} />
                         <span>{t.currentStreak}d</span>
                       </span>
@@ -334,15 +443,15 @@ export function LeaderboardRankingsSection({
 
                     {/* Total Trades */}
                     <td className="py-4 px-3 text-center text-slate-600 dark:text-slate-300">
-                      <span className="font-bold">{t.totalTrades}</span>{" "}
-                      <span className="text-[10px] text-slate-400">
+                      <span className="font-bold" dir="ltr">{t.totalTrades}</span>{" "}
+                      <span className="text-[10px] text-slate-400" dir="ltr">
                         ({t.winningTrades}W / {t.losingTrades}L)
                       </span>
                     </td>
 
                     {/* Win Rate */}
                     <td className="py-4 px-3 text-center">
-                      <span className="font-extrabold text-emerald-600 dark:text-emerald-400">
+                      <span className="font-extrabold text-emerald-600 dark:text-emerald-400" dir="ltr">
                         {t.winRate}%
                       </span>
                     </td>
@@ -350,7 +459,7 @@ export function LeaderboardRankingsSection({
                     {/* Profit (ONLY positive displayed) */}
                     <td className="py-4 px-3 text-right">
                       {t.totalPnl > 0 ? (
-                        <span className="font-black text-emerald-600 dark:text-emerald-400 font-mono">
+                        <span className="font-black text-emerald-600 dark:text-emerald-400 font-mono" dir="ltr">
                           +${t.totalPnl.toFixed(2)}
                         </span>
                       ) : (
@@ -365,7 +474,11 @@ export function LeaderboardRankingsSection({
                         variant="ghost"
                         className="h-8 text-xs font-bold text-sky-500 hover:text-sky-400 hover:bg-sky-500/10"
                       >
-                        {isBn ? "দেখুন" : "Details"}
+                        {selectText({
+                          en: "Details",
+                          bn: "দেখুন",
+                          ur: "دیکھیں",
+                        })}
                       </Button>
                     </td>
                   </tr>
@@ -384,7 +497,7 @@ export function LeaderboardRankingsSection({
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <span className="inline-flex size-7 items-center justify-center rounded-lg bg-slate-100 font-mono text-xs font-black text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                    <span className="inline-flex size-7 items-center justify-center rounded-lg bg-slate-100 font-mono text-xs font-black text-slate-700 dark:bg-slate-800 dark:text-slate-300" dir="ltr">
                       #{t.rank}
                     </span>
                     <div className="size-8 rounded-full overflow-hidden bg-slate-800 flex items-center justify-center font-bold text-white text-xs">
@@ -399,12 +512,12 @@ export function LeaderboardRankingsSection({
                         <span>{t.name}</span>
                         <CheckCircle2 size={12} className="text-sky-400" />
                       </div>
-                      <div className="text-[10px] text-slate-400">{t.bestPair}</div>
+                      <div className="text-[10px] text-slate-400" dir="ltr">{t.bestPair}</div>
                     </div>
                   </div>
 
                   <div className="text-right">
-                    <span className="inline-flex rounded-full bg-cyan-500/10 px-2 py-0.5 text-xs font-black text-cyan-500">
+                    <span className="inline-flex rounded-full bg-cyan-500/10 px-2 py-0.5 text-xs font-black text-cyan-500" dir="ltr">
                       {Math.round(t.overallScore)} / 100
                     </span>
                   </div>
@@ -413,25 +526,55 @@ export function LeaderboardRankingsSection({
                 {/* Metrics grid */}
                 <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 dark:border-slate-800/80">
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Rule Adherence:</span>
-                    <span className="font-bold text-sky-500">{t.ruleComplianceRate}%</span>
+                    <span className="text-slate-400">
+                      {selectText({
+                        en: "Rule Adherence:",
+                        bn: "রিস্ক মেনে চলা:",
+                        ur: "قواعد کی پابندی:",
+                      })}
+                    </span>
+                    <span className="font-bold text-sky-500" dir="ltr">{t.ruleComplianceRate}%</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Discipline:</span>
-                    <span className="font-bold text-emerald-500">{t.disciplineScore}%</span>
+                    <span className="text-slate-400">
+                      {selectText({
+                        en: "Discipline:",
+                        bn: "ডিসিপ্লিন:",
+                        ur: "ڈسپلن:",
+                      })}
+                    </span>
+                    <span className="font-bold text-emerald-500" dir="ltr">{t.disciplineScore}%</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Win Rate:</span>
-                    <span className="font-bold text-emerald-500">{t.winRate}%</span>
+                    <span className="text-slate-400">
+                      {selectText({
+                        en: "Win Rate:",
+                        bn: "উইন রেট:",
+                        ur: "Win Rate:",
+                      })}
+                    </span>
+                    <span className="font-bold text-emerald-500" dir="ltr">{t.winRate}%</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Trades:</span>
-                    <span className="font-bold">{t.totalTrades}</span>
+                    <span className="text-slate-400">
+                      {selectText({
+                        en: "Trades:",
+                        bn: "ট্রেডস:",
+                        ur: "ٹریڈز:",
+                      })}
+                    </span>
+                    <span className="font-bold" dir="ltr">{t.totalTrades}</span>
                   </div>
                   {t.totalPnl > 0 ? (
                     <div className="col-span-2 flex justify-between font-mono pt-1 border-t border-slate-100 dark:border-slate-800/60">
-                      <span className="text-slate-400">Profit:</span>
-                      <span className="font-extrabold text-emerald-500">+${t.totalPnl.toFixed(2)}</span>
+                      <span className="text-slate-400">
+                        {selectText({
+                          en: "Profit:",
+                          bn: "প্রফিট:",
+                          ur: "منافع:",
+                        })}
+                      </span>
+                      <span className="font-extrabold text-emerald-500" dir="ltr">+${t.totalPnl.toFixed(2)}</span>
                     </div>
                   ) : null}
                 </div>
@@ -447,18 +590,24 @@ export function LeaderboardRankingsSection({
 export function TraderPerformanceModal({
   selectedTrader,
   onClose,
-  isBn,
 }: TraderPerformanceModalProps) {
+  const { selectText, isUr, isRTL } = useLanguage();
+
   if (!selectedTrader) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-2xl overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 dark:border-slate-800 dark:bg-[#070e1b] shadow-2xl max-h-[90vh] overflow-y-auto space-y-6">
+      <div
+        dir={isRTL ? "rtl" : "ltr"}
+        className={`relative w-full max-w-2xl overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 dark:border-slate-800 dark:bg-[#070e1b] shadow-2xl max-h-[90vh] overflow-y-auto space-y-6 ${
+          isUr ? "font-urdu" : ""
+        }`}
+      >
         {/* Close Button */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-5 right-5 rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white transition"
+          className={`absolute top-5 ${isRTL ? "left-5" : "right-5"} rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white transition`}
         >
           <X size={20} />
         </button>
@@ -474,11 +623,15 @@ export function TraderPerformanceModal({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="rounded-lg bg-amber-500/10 px-2.5 py-0.5 font-mono text-xs font-black text-amber-500">
+              <span className="rounded-lg bg-amber-500/10 px-2.5 py-0.5 font-mono text-xs font-black text-amber-500" dir="ltr">
                 Rank #{selectedTrader.rank}
               </span>
               <span className="text-xs font-extrabold text-slate-400 uppercase">
-                All-Time
+                {selectText({
+                  en: "All-Time",
+                  bn: "অল-টাইম",
+                  ur: "ہمہ وقتی",
+                })}
               </span>
             </div>
             <h3 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-1.5 mt-0.5">
@@ -486,7 +639,12 @@ export function TraderPerformanceModal({
               <CheckCircle2 size={18} className="text-sky-400 shrink-0" />
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {selectedTrader.bestPair} · Verified Real Trader
+              <span dir="ltr">{selectedTrader.bestPair}</span> ·{" "}
+              {selectText({
+                en: "Verified Real Trader",
+                bn: "ভেরিফায়েড রিয়েল ট্রেডার",
+                ur: "تصدیق شدہ حقیقی ٹریڈر",
+              })}
             </p>
           </div>
         </div>
@@ -495,20 +653,26 @@ export function TraderPerformanceModal({
         <div className="rounded-2xl border border-sky-500/30 bg-gradient-to-r from-sky-500/10 via-cyan-500/5 to-emerald-500/10 p-4 sm:p-5 flex items-center justify-between">
           <div>
             <div className="text-xs font-black uppercase tracking-wider text-sky-600 dark:text-sky-400">
-              {isBn ? "সামগ্রিক লিডারবোর্ড স্কোর" : "Composite Leaderboard Score"}
+              {selectText({
+                en: "Composite Leaderboard Score",
+                bn: "সামগ্রিক লিডারবোর্ড স্কোর",
+                ur: "مجموعی لیڈر بورڈ اسکور",
+              })}
             </div>
-            <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white mt-0.5">
+            <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white mt-0.5" dir="ltr">
               {Math.round(selectedTrader.overallScore)}{" "}
               <span className="text-sm font-bold text-slate-400">/ 100</span>
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-              {isBn
-                ? "রিস্ক ম্যানেজমেন্ট, উইন রেট ও ডিসিপ্লিনের সমাহারে নির্ধারিত।"
-                : "Computed via multi-dimensional adherence matrix."}
+              {selectText({
+                en: "Computed via multi-dimensional adherence matrix.",
+                bn: "রিস্ক ম্যানেজমেন্ট, উইন রেট ও ডিসিপ্লিনের সমাহারে নির্ধারিত।",
+                ur: "ملٹی ڈائمینشنل اصولوں کے میٹرکس کے تحت حساب کردہ۔",
+              })}
             </p>
           </div>
 
-          <div className="size-16 rounded-full border-4 border-cyan-400 flex items-center justify-center font-black text-lg text-cyan-400 shadow-lg shadow-cyan-500/20 shrink-0">
+          <div className="size-16 rounded-full border-4 border-cyan-400 flex items-center justify-center font-black text-lg text-cyan-400 shadow-lg shadow-cyan-500/20 shrink-0" dir="ltr">
             {Math.round(selectedTrader.overallScore)}
           </div>
         </div>
@@ -516,7 +680,11 @@ export function TraderPerformanceModal({
         {/* Score Pillar Breakdown */}
         <div className="space-y-3">
           <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
-            {isBn ? "স্কোর বিশ্লেষণ কাঠামো" : "Score Pillar Breakdown"}
+            {selectText({
+              en: "Score Pillar Breakdown",
+              bn: "স্কোর বিশ্লেষণ কাঠামো",
+              ur: "اسکور کی درجہ بندی کا جائزہ",
+            })}
           </h4>
 
           <div className="space-y-2.5">
@@ -524,9 +692,13 @@ export function TraderPerformanceModal({
             <div className="space-y-1">
               <div className="flex justify-between text-xs font-bold">
                 <span className="text-slate-600 dark:text-slate-300">
-                  {isBn ? "রিস্ক ও ট্রেডিং রুলস মান্যতা" : "Rule & Risk Adherence"}
+                  {selectText({
+                    en: "Rule & Risk Adherence",
+                    bn: "রিস্ক ও ট্রেডিং রুলস মান্যতা",
+                    ur: "قواعد اور رسک کی پابندی",
+                  })}
                 </span>
-                <span className="text-sky-500 font-extrabold">{selectedTrader.ruleComplianceRate}%</span>
+                <span className="text-sky-500 font-extrabold" dir="ltr">{selectedTrader.ruleComplianceRate}%</span>
               </div>
               <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                 <div
@@ -540,9 +712,13 @@ export function TraderPerformanceModal({
             <div className="space-y-1">
               <div className="flex justify-between text-xs font-bold">
                 <span className="text-slate-600 dark:text-slate-300">
-                  {isBn ? "দৈনিক ডিসিপ্লিন রুটিন" : "Daily Discipline Routine"}
+                  {selectText({
+                    en: "Daily Discipline Routine",
+                    bn: "দৈনিক ডিসিপ্লিন রুটিন",
+                    ur: "روزانہ کا ڈسپلن",
+                  })}
                 </span>
-                <span className="text-emerald-500 font-extrabold">{selectedTrader.disciplineScore}%</span>
+                <span className="text-emerald-500 font-extrabold" dir="ltr">{selectedTrader.disciplineScore}%</span>
               </div>
               <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                 <div
@@ -556,9 +732,13 @@ export function TraderPerformanceModal({
             <div className="space-y-1">
               <div className="flex justify-between text-xs font-bold">
                 <span className="text-slate-600 dark:text-slate-300">
-                  {isBn ? "উইন রেট কোয়ালিটি" : "Win Rate Quality"}
+                  {selectText({
+                    en: "Win Rate Quality",
+                    bn: "উইন রেট কোয়ালিটি",
+                    ur: "Win Rate کوالٹی",
+                  })}
                 </span>
-                <span className="text-cyan-500 font-extrabold">{selectedTrader.winRate}%</span>
+                <span className="text-cyan-500 font-extrabold" dir="ltr">{selectedTrader.winRate}%</span>
               </div>
               <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                 <div
@@ -572,9 +752,13 @@ export function TraderPerformanceModal({
             <div className="space-y-1">
               <div className="flex justify-between text-xs font-bold">
                 <span className="text-slate-600 dark:text-slate-300">
-                  {isBn ? "ধারাবাহিকতা ও স্ট্রিক" : "Habit Consistency & Streaks"}
+                  {selectText({
+                    en: "Habit Consistency & Streaks",
+                    bn: "ধারাবাহিকতা ও স্ট্রিক",
+                    ur: "تسلسل اور اسٹریکس",
+                  })}
                 </span>
-                <span className="text-purple-500 font-extrabold">{selectedTrader.consistencyScore}%</span>
+                <span className="text-purple-500 font-extrabold" dir="ltr">{selectedTrader.consistencyScore}%</span>
               </div>
               <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                 <div
@@ -589,24 +773,40 @@ export function TraderPerformanceModal({
         {/* Performance Statistics Grid */}
         <div className="space-y-2">
           <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
-            {isBn ? "এক্সিকিউশন ও ট্রেড পরিসংখ্যান" : "Trade Execution Metrics"}
+            {selectText({
+              en: "Trade Execution Metrics",
+              bn: "এক্সিকিউশন ও ট্রেড পরিসংখ্যান",
+              ur: "ٹریڈ میٹرکس",
+            })}
           </h4>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/40">
-              <div className="text-[10px] font-bold text-slate-400">Total Trades</div>
-              <div className="text-base font-extrabold text-slate-900 dark:text-white">
+              <div className="text-[10px] font-bold text-slate-400">
+                {selectText({
+                  en: "Total Trades",
+                  bn: "মোট ট্রেড",
+                  ur: "کل ٹریڈز",
+                })}
+              </div>
+              <div className="text-base font-extrabold text-slate-900 dark:text-white" dir="ltr">
                 {selectedTrader.totalTrades}
               </div>
-              <div className="text-[10px] text-slate-400">
+              <div className="text-[10px] text-slate-400" dir="ltr">
                 {selectedTrader.winningTrades}W / {selectedTrader.losingTrades}L
               </div>
             </div>
 
             {selectedTrader.totalPnl > 0 ? (
               <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3 dark:border-emerald-500/30 dark:bg-emerald-500/10">
-                <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">Recorded Profit</div>
-                <div className="text-base font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">
+                <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                  {selectText({
+                    en: "Recorded Profit",
+                    bn: "রেকর্ডকৃত প্রফিট",
+                    ur: "ریکارڈ شدہ منافع",
+                  })}
+                </div>
+                <div className="text-base font-extrabold text-emerald-600 dark:text-emerald-400 font-mono" dir="ltr">
                   +${selectedTrader.totalPnl.toFixed(2)}
                 </div>
                 <div className="text-[10px] text-slate-400">Real PnL</div>
@@ -614,19 +814,48 @@ export function TraderPerformanceModal({
             ) : null}
 
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/40">
-              <div className="text-[10px] font-bold text-slate-400">Active Discipline</div>
-              <div className="text-base font-extrabold text-amber-500">
-                {selectedTrader.currentStreak} Days
+              <div className="text-[10px] font-bold text-slate-400">
+                {selectText({
+                  en: "Active Discipline",
+                  bn: "অ্যাক্টিভ ডিসিপ্লিন",
+                  ur: "فعال ڈسپلن",
+                })}
               </div>
-              <div className="text-[10px] text-slate-400">Current Streak</div>
+              <div className="text-base font-extrabold text-amber-500" dir="ltr">
+                {selectedTrader.currentStreak}{" "}
+                {selectText({
+                  en: "Days",
+                  bn: "দিন",
+                  ur: "دن",
+                })}
+              </div>
+              <div className="text-[10px] text-slate-400">
+                {selectText({
+                  en: "Current Streak",
+                  bn: "বর্তমান স্ট্রিক",
+                  ur: "موجودہ اسٹریک",
+                })}
+              </div>
             </div>
 
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900/40">
-              <div className="text-[10px] font-bold text-slate-400">Primary Pair</div>
-              <div className="text-base font-extrabold text-cyan-400">
+              <div className="text-[10px] font-bold text-slate-400">
+                {selectText({
+                  en: "Primary Pair",
+                  bn: "প্রধান পেয়ার",
+                  ur: "بنیادی پیئر",
+                })}
+              </div>
+              <div className="text-base font-extrabold text-cyan-400" dir="ltr">
                 {selectedTrader.bestPair}
               </div>
-              <div className="text-[10px] text-slate-400">Most Traded</div>
+              <div className="text-[10px] text-slate-400">
+                {selectText({
+                  en: "Most Traded",
+                  bn: "সর্বাধিক ট্রেডকৃত",
+                  ur: "سب سے زیادہ ٹریڈ شدہ",
+                })}
+              </div>
             </div>
           </div>
         </div>
@@ -636,11 +865,17 @@ export function TraderPerformanceModal({
           <Lock size={16} className="text-sky-500 shrink-0 mt-0.5" />
           <div className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
             <strong className="text-slate-700 dark:text-slate-200 font-bold">
-              {isBn ? "প্রাইভেসি নিশ্চয়তা:" : "Privacy & Confidentiality Guarantee:"}
+              {selectText({
+                en: "Privacy & Confidentiality Guarantee:",
+                bn: "প্রাইভেসি নিশ্চয়তা:",
+                ur: "رازداری کی ضمانت:",
+              })}
             </strong>{" "}
-            {isBn
-              ? "ট্রেডারের ব্যক্তিগত নোটস, সাইকোলজি জার্নাল এন্ট্রি এবং অ্যাকাউন্ট ক্রেডেনশিয়ালস সম্পূর্ণ গোপন ও সুরক্ষিত থাকে। শুধুমাত্র সংগৃহীত পারফরম্যান্স মেট্রিক্স এখানে প্রদর্শিত হয়।"
-              : "Private trade notes, strategy setups, account credentials, and personal journaling entries are strictly confidential and never exposed. Only aggregated performance metrics are computed for the leaderboard."}
+            {selectText({
+              en: "Private trade notes, strategy setups, account credentials, and personal journaling entries are strictly confidential and never exposed. Only aggregated performance metrics are computed for the leaderboard.",
+              bn: "ট্রেডারের ব্যক্তিগত নোটস, সাইকোলজি জার্নাল এন্ট্রি এবং অ্যাকাউন্ট ক্রেডেনশিয়ালস সম্পূর্ণ গোপন ও সুরক্ষিত থাকে। শুধুমাত্র সংগৃহীত পারফরম্যান্স মেট্রিক্স এখানে প্রদর্শিত হয়।",
+              ur: "نجی ٹریڈ نوٹس، حکمت عملی کے سیٹ اپ، اکاؤنٹ کی تفصیلات، اور ذاتی جرنلنگ مکمل طور پر خفیہ اور محفوظ ہیں۔ لیڈر بورڈ کے لیے صرف مجموعی کارکردگی کا حساب لگایا جاتا ہے۔",
+            })}
           </div>
         </div>
 
@@ -650,7 +885,11 @@ export function TraderPerformanceModal({
             onClick={onClose}
             className="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl px-5"
           >
-            {isBn ? "বন্ধ করুন" : "Close Breakdown"}
+            {selectText({
+              en: "Close Breakdown",
+              bn: "বন্ধ করুন",
+              ur: "بند کریں",
+            })}
           </Button>
         </div>
       </div>

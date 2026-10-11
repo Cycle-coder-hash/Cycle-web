@@ -29,6 +29,8 @@ import { BkashLogo, NagadLogo, RocketLogo } from "@/components/payment/PaymentIc
 
 export default function Checkout() {
   const { user } = useAuth();
+  const { language, selectText, isRTL } = useLanguage();
+  const isBn = language === "bn";
   const { data: bundles } = trpc.public.bundles.useQuery();
   const { data: settings } = trpc.public.paymentSettings.useQuery();
   const { data: entitlements, refetch: refetchEntitlements } = trpc.customer.entitlements.useQuery(undefined, {
@@ -154,7 +156,13 @@ export default function Checkout() {
     if (!text) return;
     navigator.clipboard.writeText(text);
     setCopiedNumber(true);
-    toast.success("Payment number copied to clipboard!");
+    toast.success(
+      selectText({
+        en: "Payment number copied to clipboard!",
+        bn: "পেমেন্ট নম্বর ক্লিপবোর্ডে কপি করা হয়েছে!",
+        ur: "ادائیگی کا نمبر کلپ بورڈ پر کاپی ہو گیا!",
+      })
+    );
     setTimeout(() => setCopiedNumber(false), 2500);
   };
 
@@ -165,14 +173,32 @@ export default function Checkout() {
           <div className="flex justify-center">
             <BrandLogo size={90} />
           </div>
-          <h1 className="mt-6 text-2xl sm:text-3xl font-extrabold tracking-tight">Sign in to continue</h1>
+          <h1 className="mt-6 text-2xl sm:text-3xl font-extrabold tracking-tight">
+            {selectText({
+              en: "Sign in to continue",
+              bn: "চালিয়ে যেতে সাইন ইন করুন",
+              ur: "جاری رکھنے کے لیے سائن ان کریں",
+            })}
+          </h1>
           <p className="mt-3 text-sm text-slate-300 leading-relaxed">
             {isFree
-              ? "Sign in or create your student account to claim and save your Free eBook Package."
-              : "Orders and payment submissions are tied to your secure customer account."}
+              ? selectText({
+                  en: "Sign in or create your student account to claim and save your Free eBook Package.",
+                  bn: "আপনার ফ্রি ই-বুক প্যাকেজটি সংগ্রহ ও সংরক্ষণ করতে সাইন ইন করুন বা নতুন অ্যাকাউন্ট তৈরি করুন।",
+                  ur: "اپنا مفت ای بک پیکیج حاصل کرنے اور محفوظ کرنے کے لیے سائن ان کریں یا اسٹوڈنٹ اکاؤنٹ بنائیں۔",
+                })
+              : selectText({
+                  en: "Orders and payment submissions are tied to your secure customer account.",
+                  bn: "অর্ডার এবং পেমেন্ট সাবমিশন আপনার নিরাপদ স্টুডেন্ট অ্যাকাউন্টের সাথে যুক্ত থাকে।",
+                  ur: "آرڈرز اور ادائیگی آپ کے محفوظ کسٹمر اکاؤنٹ سے منسلک ہوتے ہیں۔",
+                })}
           </p>
           <Button onClick={() => startLogin()} className="mt-6 w-full h-11 bg-sky-500 text-slate-950 font-extrabold hover:bg-sky-400 shadow-lg shadow-sky-500/20">
-            Sign In / Register
+            {selectText({
+              en: "Sign In / Register",
+              bn: "সাইন ইন / রেজিস্ট্রেশন",
+              ur: "سائن ان / رجسٹریشن",
+            })}
           </Button>
         </div>
       </div>
@@ -187,17 +213,39 @@ export default function Checkout() {
             <Check size={32} />
           </div>
           <h1 className="mt-5 text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
-            {alreadyHadAccess ? "Access Already Active!" : "Free Package Unlocked!"}
+            {alreadyHadAccess
+              ? selectText({
+                  en: "Access Already Active!",
+                  bn: "অ্যাক্সেস ইতিমধ্যে সক্রিয়!",
+                  ur: "رسائی پہلے ہی فعال ہے!",
+                })
+              : selectText({
+                  en: "Free Package Unlocked!",
+                  bn: "ফ্রি প্যাকেজ আনলক হয়েছে!",
+                  ur: "مفت پیکیج انلاک ہو گیا!",
+                })}
           </h1>
           <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-500 dark:text-slate-400">
             {alreadyHadAccess
-              ? "You already have active access to the Free eBook Package. You can access all your materials anytime in your dashboard library."
-              : "Your Free eBook Package has been activated and added to your student account. You can now access all institutional materials in your dashboard library."}
+              ? selectText({
+                  en: "You already have active access to the Free eBook Package. You can access all your materials anytime in your dashboard library.",
+                  bn: "আপনার ইতিমধ্যে ফ্রি ই-বুক প্যাকেজে সক্রিয় অ্যাক্সেস রয়েছে। আপনি আপনার ড্যাশবোর্ড লাইব্রেরিতে যেকোনো সময় সমস্ত মেটেরিয়াল অ্যাক্সেস করতে পারেন।",
+                  ur: "آپ کے پاس پہلے ہی مفت ای بک پیکیج کی فعال رسائی ہے۔ آپ اپنے ڈیش بورڈ لائبریری میں کسی بھی وقت تمام مواد تک رسائی حاصل کر سکتے ہیں۔",
+                })
+              : selectText({
+                  en: "Your Free eBook Package has been activated and added to your student account. You can now access all institutional materials in your dashboard library.",
+                  bn: "আপনার ফ্রি ই-বুক প্যাকেজ সক্রিয় করা হয়েছে এবং আপনার স্টুডেন্ট অ্যাকাউন্টে যোগ করা হয়েছে। এখন আপনি ড্যাশবোর্ড লাইব্রেরিতে সমস্ত প্রাতিষ্ঠানিক মেটেরিয়াল অ্যাক্সেস করতে পারবেন।",
+                  ur: "آپ کا مفت ای بک پیکیج فعال ہو گیا ہے اور آپ کے اکاؤنٹ میں شامل کر دیا گیا ہے۔ اب آپ ڈیش بورڈ لائبریری میں تمام ادارہ جاتی مواد تک رسائی حاصل کر سکتے ہیں۔",
+                })}
           </p>
           <div className="mt-6 space-y-2.5">
             <Link href="/dashboard">
               <Button className="w-full h-12 bg-[#081833] text-white font-bold hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400">
-                Go to Dashboard & Library →
+                {selectText({
+                  en: "Go to Dashboard & Library →",
+                  bn: "ড্যাশবোর্ড ও লাইব্রেরিতে যান →",
+                  ur: "ڈیش بورڈ اور لائبریری پر جائیں ←",
+                })}
               </Button>
             </Link>
           </div>
@@ -213,17 +261,37 @@ export default function Checkout() {
           <div className="mx-auto grid size-16 place-items-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
             <Check size={32} />
           </div>
-          <h1 className="mt-5 text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">Payment Submitted</h1>
+          <h1 className="mt-5 text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
+            {selectText({
+              en: "Payment Submitted",
+              bn: "পেমেন্ট সাবমিট হয়েছে",
+              ur: "ادائیگی جمع کرا دی گئی",
+            })}
+          </h1>
           <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-bold text-amber-600 dark:text-amber-400 border border-amber-500/20">
             <Clock size={13} />
-            <span>Review in Progress (15–30 mins)</span>
+            <span>
+              {selectText({
+                en: "Review in Progress (15–30 mins)",
+                bn: "ভেরিফিকেশন চলছে (১৫–৩০ মিনিট)",
+                ur: "جائزہ جاری ہے (15-30 منٹ)",
+              })}
+            </span>
           </div>
           <p className="mt-3 text-xs sm:text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-            Your payment for <strong>{chosen?.titleEn}</strong> with Transaction ID <code className="font-mono font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{tx.trim().toUpperCase()}</code> has been received. Your access will be automatically unlocked as soon as our verification team approves the transaction.
+            {selectText({
+              en: `Your payment for ${chosen?.titleEn} with Transaction ID ${tx.trim().toUpperCase()} has been received. Your access will be automatically unlocked as soon as our verification team approves the transaction.`,
+              bn: `ট্রানজ্যাকশন আইডি ${tx.trim().toUpperCase()} সহ ${chosen?.titleEn}-এর জন্য আপনার পেমেন্ট গৃহীত হয়েছে। ভেরিফিকেশন টিম অনুমোদন করলেই স্বয়ংক্রিয়ভাবে অ্যাক্সেস আনলক হবে।`,
+              ur: `ٹرانزیکشن ID ${tx.trim().toUpperCase()} کے ساتھ ${chosen?.titleEn} کی ادائیگی موصول ہو گئی ہے۔ تصدیقی ٹیم کی منظوری کے بعد آپ کی رسائی خودکار طور پر بحال ہو جائے گی۔`,
+            })}
           </p>
           <Link href="/dashboard">
             <Button className="mt-6 w-full h-12 bg-[#081833] text-white font-bold hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400">
-              Go to Dashboard
+              {selectText({
+                en: "Go to Dashboard",
+                bn: "ড্যাশবোর্ডে যান",
+                ur: "ڈیش بورڈ پر جائیں",
+              })}
             </Button>
           </Link>
         </div>
@@ -243,7 +311,11 @@ export default function Checkout() {
           <div className="flex items-center gap-3">
             <LanguageSelector variant="compact" />
             <Link href="/dashboard" className="text-xs sm:text-sm font-bold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
-              Dashboard →
+              {selectText({
+                en: "Dashboard →",
+                bn: "ড্যাশবোর্ড →",
+                ur: "ڈیش بورڈ ←",
+              })}
             </Link>
           </div>
         </div>
@@ -252,7 +324,12 @@ export default function Checkout() {
       {/* Main Content */}
       <main className="mx-auto max-w-5xl px-4 py-8 sm:py-12">
         <Link href="/" className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200">
-          <ArrowLeft size={14} /> Back to site
+          <ArrowLeft size={14} />
+          {selectText({
+            en: "Back to site",
+            bn: "সাইটে ফিরে যান",
+            ur: "سائٹ پر واپس",
+          })}
         </Link>
 
         {/* Optional Announcement Banner from Admin CMS */}
@@ -273,16 +350,38 @@ export default function Checkout() {
             )}
 
             <div className="text-[11px] font-extrabold uppercase tracking-widest text-[#0284c7] dark:text-[#38bdf8]">
-              {isFree ? "FREE ACCESS ENROLLMENT" : "CHECKOUT / MANUAL VERIFICATION"}
+              {isFree
+                ? selectText({
+                    en: "FREE ACCESS ENROLLMENT",
+                    bn: "ফ্রি অ্যাক্সেস এনরোলমেন্ট",
+                    ur: "مفت رسائی داخلہ",
+                  })
+                : selectText({
+                    en: "CHECKOUT / MANUAL VERIFICATION",
+                    bn: "চেকআউট / ম্যানুয়াল ভেরিফিকেশন",
+                    ur: "چیک آؤٹ / دستی تصدیق",
+                  })}
             </div>
 
             <h1 className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight">
-              Choose your learning path
+              {selectText({
+                en: "Choose your learning path",
+                bn: "আপনার লার্নিং পাথ বেছে নিন",
+                ur: "اپنا تعلیمی راستہ منتخب کریں",
+              })}
             </h1>
             <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-500 dark:text-slate-400">
               {isFree
-                ? "Claim instant free access to this package. No payment or transaction verification required."
-                : "Select an official payment gateway, send the exact package tuition, and enter your Transaction ID for verification."}
+                ? selectText({
+                    en: "Claim instant free access to this package. No payment or transaction verification required.",
+                    bn: "এই প্যাকেজে তাত্ক্ষণিক ফ্রি অ্যাক্সেস নিন। কোনো পেমেন্ট বা ট্রানজ্যাকশন ভেরিফিকেশনের প্রয়োজন নেই।",
+                    ur: "اس پیکیج تک فوری مفت رسائی حاصل کریں۔ کسی ادائیگی یا تصدیق کی ضرورت نہیں۔",
+                  })
+                : selectText({
+                    en: "Select an official payment gateway, send the exact package tuition, and enter your Transaction ID for verification.",
+                    bn: "অফিসিয়াল পেমেন্ট গেটওয়ে বেছে নিন, নির্ধারিত ফি পাঠান এবং ভেরিফিকেশনের জন্য ট্রানজ্যাকশন আইডি প্রদান করুন।",
+                    ur: "سرکاری ادائیگی کا گیٹ وے منتخب کریں، مقررہ فیس بھیجیں اور تصدیق کے لیے ٹرانزیکشن ID درج کریں۔",
+                  })}
             </p>
 
             {/* Bundle Selection */}
@@ -299,8 +398,12 @@ export default function Checkout() {
                   }`}
                 >
                   <div>
-                    <div className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">{b.titleEn}</div>
-                    <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{b.descriptionEn}</div>
+                    <div className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">
+                      {isBn ? b.titleBn || b.titleEn : b.titleEn}
+                    </div>
+                    <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                      {isBn ? b.descriptionBn || b.descriptionEn : b.descriptionEn}
+                    </div>
                   </div>
                   <div className="text-base sm:text-lg font-black text-[#0284c7] dark:text-[#38bdf8] shrink-0 text-right">
                     <span>৳{b.price}</span>
@@ -321,16 +424,28 @@ export default function Checkout() {
                 <div className="mt-8 space-y-3">
                   <div className="flex items-center justify-between">
                     <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                      Payment Gateway
+                      {selectText({
+                        en: "Payment Gateway",
+                        bn: "পেমেন্ট গেটওয়ে",
+                        ur: "ادائیگی کا گیٹ وے",
+                      })}
                     </label>
                     <span className="text-[11px] font-semibold text-slate-400">
-                      Select your preferred wallet
+                      {selectText({
+                        en: "Select your preferred wallet",
+                        bn: "আপনার পছন্দের ওয়ালেট বেছে নিন",
+                        ur: "اپنا پسندیدہ والٹ منتخب کریں",
+                      })}
                     </span>
                   </div>
 
                   {availableGateways.length === 0 ? (
                     <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs font-semibold text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-300 text-center">
-                      Payment gateways are temporarily offline for scheduled system maintenance. Please contact our support team to complete your enrollment manually.
+                      {selectText({
+                        en: "Payment gateways are temporarily offline for scheduled system maintenance. Please contact our support team to complete your enrollment manually.",
+                        bn: "সিস্টেম রক্ষণাবেক্ষণের জন্য পেমেন্ট গেটওয়ে সাময়িকভাবে বন্ধ আছে। ম্যানুয়ালি এনরোল করতে সাপোর্ট টিমের সাথে যোগাযোগ করুন।",
+                        ur: "طے شدہ دیکھ بھال کی وجہ سے ادائیگی کے گیٹ ویز عارضی طور پر آف لائن ہیں۔ براہ کرم سپورٹ ٹیم سے رابطہ کریں۔",
+                      })}
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -409,10 +524,20 @@ export default function Checkout() {
                           </div>
                           <div>
                             <div className="font-black text-sm sm:text-base text-slate-900 dark:text-white flex items-center gap-1.5 sm:justify-center">
-                              <span>Other Payment</span>
+                              <span>
+                                {selectText({
+                                  en: "Other Payment",
+                                  bn: "অন্যান্য পেমেন্ট",
+                                  ur: "دیگر طریقہ ادائیگی",
+                                })}
+                              </span>
                             </div>
                             <span className="mt-0.5 inline-block text-[10px] font-extrabold px-2 py-0.5 rounded-full border bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/25">
-                              Manual Contact
+                              {selectText({
+                                en: "Manual Contact",
+                                bn: "ম্যানুয়াল যোগাযোগ",
+                                ur: "دستی رابطہ",
+                              })}
                             </span>
                           </div>
                         </div>
@@ -441,13 +566,21 @@ export default function Checkout() {
                           <Send size={16} />
                         </div>
                         <span className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                          Alternative Payment Method
+                          {selectText({
+                            en: "Alternative Payment Method",
+                            bn: "বিকল্প পেমেন্ট মাধ্যম",
+                            ur: "متبادل طریقہ ادائیگی",
+                          })}
                         </span>
                       </div>
 
                       {/* Required Message */}
                       <p className="text-sm sm:text-base font-semibold text-slate-800 dark:text-slate-200 leading-relaxed">
-                        If you do not use bKash, Nagad, or Rocket, please contact us for an alternative payment method.
+                        {selectText({
+                          en: "If you do not use bKash, Nagad, or Rocket, please contact us for an alternative payment method.",
+                          bn: "আপনি যদি বিকাশ, নগদ বা রকেট ব্যবহার না করেন, তবে বিকল্প পেমেন্ট পদ্ধতির জন্য আমাদের সাথে যোগাযোগ করুন।",
+                          ur: "اگر آپ bKash، Nagad، یا Rocket استعمال نہیں کرتے ہیں، تو متبادل ادائیگی کے لیے ہم سے رابطہ کریں۔",
+                        })}
                       </p>
 
                       {/* Telegram Contact Card */}
@@ -473,7 +606,13 @@ export default function Checkout() {
                           className="inline-flex h-11 items-center justify-center gap-2 px-5 rounded-xl font-bold text-xs sm:text-sm bg-sky-500 hover:bg-sky-400 text-slate-950 shadow-md shadow-sky-500/20 transition-all cursor-pointer shrink-0"
                         >
                           <Send size={14} />
-                          <span>Contact on Telegram</span>
+                          <span>
+                            {selectText({
+                              en: "Contact on Telegram",
+                              bn: "টেলিগ্রামে যোগাযোগ করুন",
+                              ur: "ٹیلیگرام پر رابطہ کریں",
+                            })}
+                          </span>
                         </a>
                       </div>
 
@@ -481,7 +620,11 @@ export default function Checkout() {
                       <div className="flex items-start gap-2 pt-1 text-xs text-slate-500 dark:text-slate-400">
                         <Info size={14} className="text-sky-500 shrink-0 mt-0.5" />
                         <span>
-                          We support international payment cards, bank wire transfers, crypto (USDT), or other custom arrangements. Direct message us on Telegram for immediate setup.
+                          {selectText({
+                            en: "We support international payment cards, bank wire transfers, crypto (USDT), or other custom arrangements. Direct message us on Telegram for immediate setup.",
+                            bn: "আমরা আন্তর্জাতিক পেমেন্ট কার্ড, ব্যাংক ওয়্যার ট্রান্সফার, ক্রিপ্টো (USDT) বা অন্যান্য বিশেষ ব্যবস্থা সাপোর্ট করি। বিস্তারিত জানতে টেলিগ্রামে মেসেজ করুন।",
+                            ur: "ہم بین الاقوامی پیمنٹ کارڈز، بینک ٹرانسفر، کرپٹو (USDT) یا دیگر کسٹم انتظامات کو سپورٹ کرتے ہیں۔ فوری سیٹ اپ کے لیے ٹیلیگرام پر رابطہ کریں۔",
+                          })}
                         </span>
                       </div>
                     </div>
@@ -496,11 +639,17 @@ export default function Checkout() {
                               {React.createElement(activeGatewayMeta.logo, { size: 18 })}
                             </div>
                             <span className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">
-                              Official {activeGatewayMeta.name} Payment Details
+                              {selectText({
+                                en: `Official ${activeGatewayMeta.name} Payment Details`,
+                                bn: `অফিসিয়াল ${activeGatewayMeta.name} পেমেন্ট বিবরণ`,
+                                ur: `آفیشل ${activeGatewayMeta.name} ادائیگی کی تفصیلات`,
+                              })}
                             </span>
                           </div>
                           <span className={`inline-flex items-center gap-1 text-[11px] font-black px-2.5 py-0.5 rounded-full border ${activeGatewayMeta.badgeBg}`}>
-                            {currentAccountType === "Personal" ? "Personal (Send Money)" : "Merchant (Payment)"}
+                            {currentAccountType === "Personal"
+                              ? selectText({ en: "Personal (Send Money)", bn: "ব্যক্তিগত (Send Money)", ur: "ذاتی (Send Money)" })
+                              : selectText({ en: "Merchant (Payment)", bn: "মার্চেন্ট (Payment)", ur: "مرچنٹ (Payment)" })}
                           </span>
                         </div>
 
@@ -508,9 +657,19 @@ export default function Checkout() {
                         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-[#070e1b] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                           <div>
                             <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                              {currentAccountType === "Personal" ? "Send Money to this Official Number:" : "Make Payment to this Official Number:"}
+                              {currentAccountType === "Personal"
+                                ? selectText({
+                                    en: "Send Money to this Official Number:",
+                                    bn: "এই অফিসিয়াল নম্বরে Send Money করুন:",
+                                    ur: "اس آفیشل نمبر پر Send Money بھیجیں:",
+                                  })
+                                : selectText({
+                                    en: "Make Payment to this Official Number:",
+                                    bn: "এই অফিসিয়াল নম্বরে Payment করুন:",
+                                    ur: "اس آفیشل نمبر پر Payment کریں:",
+                                  })}
                             </div>
-                            <div className="text-xl sm:text-2xl font-black font-mono tracking-widest text-slate-900 dark:text-white mt-0.5">
+                            <div dir="ltr" className="text-xl sm:text-2xl font-black font-mono tracking-widest text-slate-900 dark:text-white mt-0.5 select-all">
                               {currentWalletNumber}
                             </div>
                           </div>
@@ -528,12 +687,12 @@ export default function Checkout() {
                             {copiedNumber ? (
                               <>
                                 <Check size={14} />
-                                <span>Copied!</span>
+                                <span>{selectText({ en: "Copied!", bn: "কপি হয়েছে!", ur: "کاپی ہو گیا!" })}</span>
                               </>
                             ) : (
                               <>
                                 <Copy size={14} />
-                                <span>Copy Number</span>
+                                <span>{selectText({ en: "Copy Number", bn: "নম্বর কপি করুন", ur: "نمبر کاپی کریں" })}</span>
                               </>
                             )}
                           </Button>
@@ -542,36 +701,54 @@ export default function Checkout() {
                         {/* Step-by-Step Payment Instructions */}
                         <div className="space-y-2 pt-1 text-xs">
                           <div className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                            Quick Payment Steps:
+                            {selectText({ en: "Quick Payment Steps:", bn: "পেমেন্টের সহজ ধাপসমূহ:", ur: "فوری ادائیگی کے مراحل:" })}
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                             <div className="rounded-xl border border-slate-200/60 bg-white/70 p-3 dark:border-slate-800 dark:bg-slate-900/60">
                               <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white text-[11px]">
                                 <span className="flex size-4 items-center justify-center rounded-full bg-sky-500/20 text-sky-600 dark:text-sky-400 text-[10px] font-black">1</span>
-                                <span>Open App</span>
+                                <span>{selectText({ en: "Open App", bn: "অ্যাপ খুলুন", ur: "ایپ کھولیں" })}</span>
                               </div>
                               <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                                Open your {activeGatewayMeta.name} app.
+                                {selectText({
+                                  en: `Open your ${activeGatewayMeta.name} app.`,
+                                  bn: `আপনার ${activeGatewayMeta.name} অ্যাপটি ওপেন করুন।`,
+                                  ur: `اپنی ${activeGatewayMeta.name} ایپ کھولیں۔`,
+                                })}
                               </p>
                             </div>
 
                             <div className="rounded-xl border border-slate-200/60 bg-white/70 p-3 dark:border-slate-800 dark:bg-slate-900/60">
                               <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white text-[11px]">
                                 <span className="flex size-4 items-center justify-center rounded-full bg-sky-500/20 text-sky-600 dark:text-sky-400 text-[10px] font-black">2</span>
-                                <span>Send ৳{price}</span>
+                                <span>
+                                  {selectText({
+                                    en: `Send ৳${price}`,
+                                    bn: `৳${price} পাঠান`,
+                                    ur: `৳${price} بھیجیں`,
+                                  })}
+                                </span>
                               </div>
                               <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                                {currentAccountType === "Personal" ? "Send Money" : "Payment"} of ৳{price} to {currentWalletNumber}.
+                                {selectText({
+                                  en: `${currentAccountType === "Personal" ? "Send Money" : "Payment"} of ৳${price} to ${currentWalletNumber}.`,
+                                  bn: `${currentWalletNumber} নম্বরে ৳${price} ${currentAccountType === "Personal" ? "Send Money" : "Payment"} করুন।`,
+                                  ur: `${currentWalletNumber} پر ৳${price} کی ${currentAccountType === "Personal" ? "Send Money" : "Payment"} کریں۔`,
+                                })}
                               </p>
                             </div>
 
                             <div className="rounded-xl border border-slate-200/60 bg-white/70 p-3 dark:border-slate-800 dark:bg-slate-900/60">
                               <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white text-[11px]">
                                 <span className="flex size-4 items-center justify-center rounded-full bg-sky-500/20 text-sky-600 dark:text-sky-400 text-[10px] font-black">3</span>
-                                <span>Paste TrxID</span>
+                                <span>{selectText({ en: "Paste TrxID", bn: "TrxID পেস্ট করুন", ur: "TrxID درج کریں" })}</span>
                               </div>
                               <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
-                                Copy Transaction ID from SMS/receipt & submit below.
+                                {selectText({
+                                  en: "Copy Transaction ID from SMS/receipt & submit below.",
+                                  bn: "SMS বা রসিদ থেকে Transaction ID কপি করে নিচে সাবমিট করুন।",
+                                  ur: "SMS یا رسید سے Transaction ID کاپی کر کے نیچے جمع کرائیں۔",
+                                })}
                               </p>
                             </div>
                           </div>
@@ -590,20 +767,33 @@ export default function Checkout() {
                     <div className="mt-6">
                       <div className="flex items-center justify-between mb-1.5">
                         <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                          Transaction ID (TrxID) *
+                          {selectText({
+                            en: "Transaction ID (TrxID) *",
+                            bn: "ট্রানজ্যাকশন আইডি (TrxID) *",
+                            ur: "ٹرانزیکشن آئی ڈی (TrxID) *",
+                          })}
                         </label>
                         <span className="text-[11px] text-slate-400">
-                          Found on your payment confirmation SMS
+                          {selectText({
+                            en: "Found on your payment confirmation SMS",
+                            bn: "পেমেন্ট নিশ্চিতকরণ SMS-এ পাওয়া যাবে",
+                            ur: "ادائیگی کی تصدیقی SMS میں موجود ہے",
+                          })}
                         </span>
                       </div>
                       <input
+                        dir="ltr"
                         value={tx}
                         onChange={(e) => setTx(e.target.value.toUpperCase())}
                         placeholder="e.g. 8A1B2C3D9E"
                         className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-base font-bold font-mono tracking-wider outline-none focus:border-[#0284c7] focus:bg-white focus:ring-2 focus:ring-sky-500/20 dark:border-slate-800 dark:bg-slate-950 dark:text-white uppercase"
                       />
                       <p className="mt-1.5 text-[11px] text-slate-400">
-                        Make sure to enter the exact Transaction ID provided by {activeGatewayMeta.name}.
+                        {selectText({
+                          en: `Make sure to enter the exact Transaction ID provided by ${activeGatewayMeta.name}.`,
+                          bn: `${activeGatewayMeta.name} থেকে পাওয়া সঠিক Transaction ID নিশ্চিত হয়ে প্রবেশ করান।`,
+                          ur: `${activeGatewayMeta.name} سے موصول ہونے والی درست Transaction ID درج کریں۔`,
+                        })}
                       </p>
                     </div>
 
@@ -616,7 +806,11 @@ export default function Checkout() {
                         className="mt-0.5 size-4 accent-[#081833] dark:accent-sky-500 rounded"
                       />
                       <span>
-                        I understand that this is a digital institutional education product and access is permanently granted to my account upon verification.
+                        {selectText({
+                          en: "I understand that this is a digital institutional education product and access is permanently granted to my account upon verification.",
+                          bn: "আমি বুঝতে পারছি যে এটি একটি ডিজিটাল প্রাতিষ্ঠানিক শিক্ষা প্রোগ্রাম এবং যাচাইকরণের পর আমার অ্যাকাউন্টে স্থায়ী অ্যাক্সেস দেওয়া হবে।",
+                          ur: "میں سمجھتا/سمجھتی ہوں کہ یہ ایک ڈیجیٹل ادارہ جاتی تعلیمی پروگرام ہے اور تصدیق کے بعد میرے اکاؤنٹ کو مستقل رسائی دی جائے گی۔",
+                        })}
                       </span>
                     </label>
 
@@ -635,7 +829,17 @@ export default function Checkout() {
                       }
                       className="mt-6 w-full h-12 bg-[#081833] text-white font-extrabold text-sm hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 active:scale-[0.99] disabled:opacity-50 shadow-lg shadow-sky-950/20"
                     >
-                      {submit.isPending ? "Submitting for Verification..." : "Submit Order for Verification →"}
+                      {submit.isPending
+                        ? selectText({
+                            en: "Submitting for Verification...",
+                            bn: "যাচাইয়ের জন্য পাঠানো হচ্ছে...",
+                            ur: "تصدیق کے لیے بھیجا جا رہا ہے...",
+                          })
+                        : selectText({
+                            en: "Submit Order for Verification →",
+                            bn: "যাচাইকরণের জন্য অর্ডার জমা দিন →",
+                            ur: "تصدیق کے لیے آرڈر جمع کرائیں ←",
+                          })}
                     </Button>
                   </>
                 )}
@@ -646,10 +850,20 @@ export default function Checkout() {
                 <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 text-xs text-emerald-950 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
                   <div className="flex items-center gap-2 font-extrabold text-emerald-700 dark:text-emerald-400">
                     <Sparkles size={16} className="shrink-0" />
-                    <span>Free Package · No Payment Required</span>
+                    <span>
+                      {selectText({
+                        en: "Free Package · No Payment Required",
+                        bn: "ফ্রি প্যাকেজ · কোনো পেমেন্টের প্রয়োজন নেই",
+                        ur: "مفت پیکج · کسی ادائیگی کی ضرورت نہیں",
+                      })}
+                    </span>
                   </div>
                   <p className="mt-1 text-[11px] leading-relaxed text-emerald-800/80 dark:text-emerald-400/80">
-                    Instant access will be activated directly to your student account and library with no payment or manual verification required.
+                    {selectText({
+                      en: "Instant access will be activated directly to your student account and library with no payment or manual verification required.",
+                      bn: "কোনো পেমেন্ট বা ম্যানুয়াল যাচাইকরণ ছাড়াই তাত্ক্ষণিকভাবে আপনার স্টুডেন্ট অ্যাকাউন্ট এবং লাইব্রেরিতে অ্যাক্সেস সক্রিয় হয়ে যাবে।",
+                      ur: "بغیر کسی ادائیگی یا دستی تصدیق کے فوری طور پر آپ کے اسٹوڈنٹ اکاؤنٹ اور لائبریری میں رسائی چالو ہو جائے گی۔",
+                    })}
                   </p>
                 </div>
 
@@ -665,10 +879,22 @@ export default function Checkout() {
                   className="mt-6 w-full h-12 bg-emerald-600 text-white font-extrabold text-sm hover:bg-emerald-700 active:scale-[0.99] disabled:opacity-50 shadow-md shadow-emerald-600/20"
                 >
                   {claimFree.isPending
-                    ? "Activating Access..."
+                    ? selectText({
+                        en: "Activating Access...",
+                        bn: "অ্যাক্সেস সক্রিয় করা হচ্ছে...",
+                        ur: "رسائی چالو کی جا رہی ہے...",
+                      })
                     : isAlreadyClaimed
-                    ? "Already Claimed — Re-sync Access"
-                    : "Claim Free Package"}
+                    ? selectText({
+                        en: "Already Claimed — Re-sync Access",
+                        bn: "ইতিমধ্যে নেওয়া হয়েছে — পুনরায় সিঙ্ক করুন",
+                        ur: "پہلے سے حاصل شدہ — دوبارہ رسائی ہم آہنگ کریں",
+                      })
+                    : selectText({
+                        en: "Claim Free Package",
+                        bn: "ফ্রি প্যাকেজ সংগ্রহ করুন",
+                        ur: "مفت پیکج حاصل کریں",
+                      })}
                 </Button>
               </>
             )}
@@ -678,25 +904,43 @@ export default function Checkout() {
           <aside className="h-fit rounded-3xl bg-[#081833] p-6 sm:p-7 text-white shadow-2xl space-y-6">
             <div className="flex items-center justify-between">
               <div className="text-xs font-black uppercase tracking-widest text-[#38bdf8]">
-                ORDER SUMMARY
+                {selectText({
+                  en: "ORDER SUMMARY",
+                  bn: "অর্ডার সারাংশ",
+                  ur: "آرڈر کا خلاصہ",
+                })}
               </div>
               <span className="rounded-full bg-sky-500/20 px-2.5 py-0.5 text-[10px] font-extrabold text-sky-300 border border-sky-500/30">
-                Encrypted Checkout
+                {selectText({
+                  en: "Encrypted Checkout",
+                  bn: "এনক্রিপ্ট করা চেকআউট",
+                  ur: "محفوظ چیک آؤٹ",
+                })}
               </span>
             </div>
 
             <div className="flex items-start justify-between gap-4 pt-1">
               <div>
                 <div className="text-lg sm:text-xl font-black">
-                  {chosen?.titleEn || (selected === 1 ? "Free eBook Package" : selected === 2 ? "CYCLE OF CHART BASIC TO ADVANCE COURSE" : "CYCLE OF CHART — PROFESSIONAL TRADING BLUEPRINT")}
+                  {chosen?.titleEn || (selected === 1 ? selectText({ en: "Free eBook Package", bn: "ফ্রি ইবুক প্যাকেজ", ur: "مفت ای بک پیکج" }) : selected === 2 ? "CYCLE OF CHART BASIC TO ADVANCE COURSE" : "CYCLE OF CHART — PROFESSIONAL TRADING BLUEPRINT")}
                 </div>
                 <div className="mt-1 text-xs text-slate-400">
-                  {isFree ? "100% Free · Instant Activation" : "BDT · Manual Verification"}
+                  {isFree
+                    ? selectText({
+                        en: "100% Free · Instant Activation",
+                        bn: "১০০% ফ্রি · তাৎক্ষণিক অ্যাক্টিভেশন",
+                        ur: "100% مفت · فوری ایکٹیویشن",
+                      })
+                    : selectText({
+                        en: "BDT · Manual Verification",
+                        bn: "BDT · ম্যানুয়াল যাচাইকরণ",
+                        ur: "BDT · دستی تصدیق",
+                      })}
                 </div>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-[#38bdf8] shrink-0 text-right">
+              <div dir="ltr" className="text-2xl sm:text-3xl font-black text-[#38bdf8] shrink-0 text-right">
                 {isFree ? (
-                  "FREE"
+                  selectText({ en: "FREE", bn: "ফ্রি", ur: "مفت" })
                 ) : (
                   <div>
                     <span>৳{price}</span>
@@ -715,23 +959,41 @@ export default function Checkout() {
               <div className="flex items-center justify-between text-slate-300">
                 <span className="flex items-center gap-1.5">
                   <Award size={13} className="text-sky-400" />
-                  <span>Lifetime Learning Access</span>
+                  <span>
+                    {selectText({
+                      en: "Lifetime Learning Access",
+                      bn: "লাইফটাইম শেখার অ্যাক্সেস",
+                      ur: "تاحیات سیکھنے کی رسائی",
+                    })}
+                  </span>
                 </span>
-                <span className="font-bold text-emerald-400">Lifetime</span>
+                <span className="font-bold text-emerald-400">
+                  {selectText({ en: "Lifetime", bn: "লাইফটাইম", ur: "تاحیات" })}
+                </span>
               </div>
               <div className="flex items-center justify-between text-slate-300">
                 <span className="flex items-center gap-1.5">
                   <Lock size={13} className="text-sky-400" />
-                  <span>Trader Dashboard & Habit Tracker</span>
+                  <span>
+                    {selectText({
+                      en: "Trader Dashboard & Habit Tracker",
+                      bn: "Trader Dashboard এবং হ্যাবিট ট্র্যাকার",
+                      ur: "Trader Dashboard اور عادت ٹریکر",
+                    })}
+                  </span>
                 </span>
-                <span className="font-bold text-emerald-400">Included</span>
+                <span className="font-bold text-emerald-400">
+                  {selectText({ en: "Included", bn: "যুক্ত রয়েছে", ur: "شامل ہے" })}
+                </span>
               </div>
             </div>
 
             {/* Total Amount */}
             <div className="border-t border-white/10 pt-4 flex items-center justify-between">
-              <span className="text-sm font-bold text-slate-300">Total Payable</span>
-              <span className="text-2xl font-black text-white">
+              <span className="text-sm font-bold text-slate-300">
+                {selectText({ en: "Total Payable", bn: "মোট প্রদেয়", ur: "کل واجب الادا" })}
+              </span>
+              <span dir="ltr" className="text-2xl font-black text-white">
                 {isFree ? "৳0.00" : `৳${price}`}
               </span>
             </div>
@@ -739,20 +1001,20 @@ export default function Checkout() {
             {/* Status & Assurance */}
             <div className="space-y-3 border-t border-white/10 pt-4 text-xs text-slate-300">
               <div className="flex justify-between items-center">
-                <span>Verification SLA</span>
-                <span className="inline-flex items-center gap-1 font-bold text-amber-300">
+                <span>{selectText({ en: "Verification SLA", bn: "যাচাইকরণের সময়", ur: "تصدیق کا وقت" })}</span>
+                <span dir="ltr" className="inline-flex items-center gap-1 font-bold text-amber-300">
                   <Clock size={12} />
                   <span>15–30 mins</span>
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span>Access Delivery</span>
+                <span>{selectText({ en: "Access Delivery", bn: "অ্যাক্সেস সরবরাহ", ur: "رسائی کی فراہمی" })}</span>
                 <span className="font-semibold text-white">
-                  Instant upon approval
+                  {selectText({ en: "Instant upon approval", bn: "অনুমোদনের সাথে সাথে", ur: "منظوری پر فوری" })}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span>Security Assurance</span>
+                <span>{selectText({ en: "Security Assurance", bn: "নিরাপত্তা নিশ্চয়তা", ur: "سیکیورٹی کا یقین" })}</span>
                 <span className="font-semibold text-emerald-400 flex items-center gap-1">
                   <ShieldCheck size={13} />
                   <span>256-Bit SSL Encrypted</span>
@@ -762,7 +1024,13 @@ export default function Checkout() {
 
             {/* Quick Contact Help */}
             <div className="border-t border-white/10 pt-4 text-xs">
-              <div className="text-[11px] font-bold text-slate-400 mb-2">Need assistance with your payment?</div>
+              <div className="text-[11px] font-bold text-slate-400 mb-2">
+                {selectText({
+                  en: "Need assistance with your payment?",
+                  bn: "আপনার পেমেন্ট নিয়ে কোনো সাহায্যের প্রয়োজন?",
+                  ur: "کیا آپ کو اپنی ادائیگی میں مدد چاہیے؟",
+                })}
+              </div>
               <a
                 href="https://t.me/cycleofchart"
                 target="_blank"
@@ -770,7 +1038,13 @@ export default function Checkout() {
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-sky-400 hover:text-sky-300 transition"
               >
                 <Send size={12} />
-                <span>Contact Telegram Official Support</span>
+                <span>
+                  {selectText({
+                    en: "Contact Telegram Official Support",
+                    bn: "Telegram অফিসিয়াল সাপোর্টে যোগাযোগ করুন",
+                    ur: "Telegram آفیشل سپورٹ سے رابطہ کریں",
+                  })}
+                </span>
               </a>
             </div>
           </aside>

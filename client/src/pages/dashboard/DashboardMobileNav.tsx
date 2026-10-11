@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export type DashboardTab =
   | "overview"
@@ -55,7 +56,7 @@ export interface DashboardMobileNavProps {
 export function DashboardMobileNav({
   tab,
   onSelectTab,
-  isBn,
+  isBn: _isBn,
   isMobileMoreOpen,
   onToggleDrawer,
   onCloseDrawer,
@@ -70,6 +71,10 @@ export function DashboardMobileNav({
   onLogout,
   onOpenTelegramModal,
 }: DashboardMobileNavProps) {
+  const { language, isRTL, selectText } = useLanguage();
+  const isBn = language === "bn";
+  const isUr = language === "ur";
+
   const handleOpenTelegram = () => {
     onCloseDrawer();
     if (onOpenTelegramModal) {
@@ -107,7 +112,7 @@ export function DashboardMobileNav({
               className={tab === "overview" && !isMobileMoreOpen ? "text-sky-400 scale-105" : "text-slate-400"}
             />
             <span className="text-[10px] mt-0.5 tracking-tight truncate max-w-[62px]">
-              {isBn ? "ওভারভিউ" : "Overview"}
+              {selectText({ en: "Overview", bn: "ওভারভিউ", ur: "اوور ویو" })}
             </span>
           </button>
 
@@ -129,7 +134,7 @@ export function DashboardMobileNav({
               className={tab === "journal" && !isMobileMoreOpen ? "text-sky-400 scale-105" : "text-slate-400"}
             />
             <span className="text-[10px] mt-0.5 tracking-tight truncate max-w-[62px]">
-              {isBn ? "জার্নাল" : "Journal"}
+              {selectText({ en: "Journal", bn: "জার্নাল", ur: "جرنل" })}
             </span>
             {hasJournalActivity && (
               <span className="absolute top-1 right-2.5 size-2 rounded-full bg-sky-500 ring-2 ring-[#070e1b]" />
@@ -154,7 +159,7 @@ export function DashboardMobileNav({
               className={tab === "discipline" && !isMobileMoreOpen ? "text-sky-400 scale-105" : "text-slate-400"}
             />
             <span className="text-[10px] mt-0.5 tracking-tight truncate max-w-[62px]">
-              {isBn ? "রুটিন" : "Routine"}
+              {selectText({ en: "Routine", bn: "রুটিন", ur: "روٹین" })}
             </span>
           </button>
 
@@ -166,7 +171,7 @@ export function DashboardMobileNav({
           >
             <Trophy size={19} className="text-amber-400" />
             <span className="text-[10px] mt-0.5 tracking-tight truncate max-w-[62px]">
-              {isBn ? "র‍্যাঙ্ক" : "Rank"}
+              {selectText({ en: "Rank", bn: "র‍্যাঙ্ক", ur: "رینک" })}
             </span>
           </Link>
 
@@ -187,7 +192,7 @@ export function DashboardMobileNav({
               }
             />
             <span className="text-[10px] mt-0.5 tracking-tight truncate max-w-[62px]">
-              {isBn ? "মেনু" : "More"}
+              {selectText({ en: "More", bn: "মেনু", ur: "مزید" })}
             </span>
           </button>
         </div>
@@ -197,7 +202,7 @@ export function DashboardMobileNav({
       {/* MOBILE "MORE" BOTTOM DRAWER */}
       {/* ========================================================================= */}
       {isMobileMoreOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-50 lg:hidden" dir={isRTL ? "rtl" : "ltr"}>
           {/* Backdrop */}
           <div
             onClick={onCloseDrawer}
@@ -205,19 +210,23 @@ export function DashboardMobileNav({
           />
 
           {/* Bottom Sheet */}
-          <div className="absolute inset-x-0 bottom-0 rounded-t-3xl border-t border-slate-800 bg-[#0b162a] p-5 shadow-2xl space-y-4 animate-in slide-in-from-bottom duration-200 max-h-[85vh] overflow-y-auto pb-8 safe-bottom">
+          <div
+            className={`absolute inset-x-0 bottom-0 rounded-t-3xl border-t border-slate-800 bg-[#0b162a] p-5 shadow-2xl space-y-4 animate-in slide-in-from-bottom duration-200 max-h-[85vh] overflow-y-auto pb-8 safe-bottom ${
+              isBn ? "font-bangla" : isUr ? "font-urdu" : ""
+            }`}
+          >
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div className="flex items-center gap-2">
                 <BrandLogo size={24} />
                 <span className="text-xs font-black uppercase tracking-wider text-slate-300">
-                  {isBn ? "সকল সেকশন ও টুলস" : "All Sections & Tools"}
+                  {selectText({ en: "All Sections & Tools", bn: "সকল সেকশন ও টুলস", ur: "تمام سیکشنز اور ٹولز" })}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={onCloseDrawer}
                 className="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white cursor-pointer"
-                aria-label="Close drawer"
+                aria-label={selectText({ en: "Close drawer", bn: "ড্রয়ার বন্ধ করুন", ur: "دراز بند کریں" })}
               >
                 <X size={18} />
               </button>
@@ -241,8 +250,14 @@ export function DashboardMobileNav({
                   <Layers size={18} />
                 </div>
                 <div className="min-w-0">
-                  <div className="truncate font-extrabold">{isBn ? "১২-স্টেজ রোডম্যাপ" : "Roadmap"}</div>
-                  <div className="text-[10px] text-slate-400 font-normal">{completedStagesCount}/12 completed</div>
+                  <div className="truncate font-extrabold">{selectText({ en: "Roadmap", bn: "১২-স্টেজ রোডম্যাপ", ur: "روڈ میپ" })}</div>
+                  <div className="text-[10px] text-slate-400 font-normal">
+                    {selectText({
+                      en: `${completedStagesCount}/12 completed`,
+                      bn: `${completedStagesCount}/১২ সম্পন্ন`,
+                      ur: `${completedStagesCount}/12 مکمل`,
+                    })}
+                  </div>
                 </div>
               </button>
 
@@ -263,8 +278,14 @@ export function DashboardMobileNav({
                   <BookOpen size={18} />
                 </div>
                 <div className="min-w-0">
-                  <div className="truncate font-extrabold">{isBn ? "আমার লাইব্রেরি" : "My Library"}</div>
-                  <div className="text-[10px] text-slate-400 font-normal">{entitlementsCount} active</div>
+                  <div className="truncate font-extrabold">{selectText({ en: "My Library", bn: "আমার লাইব্রেরি", ur: "میری لائبریری" })}</div>
+                  <div className="text-[10px] text-slate-400 font-normal">
+                    {selectText({
+                      en: `${entitlementsCount} active`,
+                      bn: `${entitlementsCount}টি সক্রিয়`,
+                      ur: `${entitlementsCount} فعال`,
+                    })}
+                  </div>
                 </div>
               </button>
 
@@ -285,8 +306,10 @@ export function DashboardMobileNav({
                   <BookMarked size={18} />
                 </div>
                 <div className="min-w-0">
-                  <div className="truncate font-extrabold">{isBn ? "প্রাইভেট ট্রেডার নোটবুক" : "Private Trader Notebook"}</div>
-                  <div className="text-[10px] text-slate-400 font-normal">{isBn ? "নোট ও প্লেবুক ভল্ট" : "Strategy Vault"}</div>
+                  <div className="truncate font-extrabold">{selectText({ en: "Private Trader Notebook", bn: "প্রাইভেট ট্রেডার নোটবুক", ur: "پرائیویٹ ٹریڈر نوٹ بک" })}</div>
+                  <div className="text-[10px] text-slate-400 font-normal">
+                    {selectText({ en: "Strategy Vault", bn: "নোট ও প্লেবুক ভল্ট", ur: "نوٹس اور اسٹریٹجی والٹ" })}
+                  </div>
                 </div>
               </button>
 
@@ -307,7 +330,7 @@ export function DashboardMobileNav({
                   <Calculator size={18} />
                 </div>
                 <div className="min-w-0">
-                  <div className="truncate font-extrabold">{isBn ? "ক্যালকুলেটর" : "Calculator"}</div>
+                  <div className="truncate font-extrabold">{selectText({ en: "Calculator", bn: "ক্যালকুলেটর", ur: "کیلکولیٹر" })}</div>
                   <div className="text-[10px] text-slate-400 font-normal">Risk & Sizing</div>
                 </div>
               </button>
@@ -329,8 +352,14 @@ export function DashboardMobileNav({
                   <Receipt size={18} />
                 </div>
                 <div className="min-w-0">
-                  <div className="truncate font-extrabold">{isBn ? "পেমেন্ট হিস্ট্রি" : "Orders"}</div>
-                  <div className="text-[10px] text-slate-400 font-normal">{ordersCount} orders</div>
+                  <div className="truncate font-extrabold">{selectText({ en: "Orders", bn: "পেমেন্ট হিস্ট্রি", ur: "ادائیگی کی تاریخ" })}</div>
+                  <div className="text-[10px] text-slate-400 font-normal">
+                    {selectText({
+                      en: `${ordersCount} orders`,
+                      bn: `${ordersCount}টি অর্ডার`,
+                      ur: `${ordersCount} آرڈرز`,
+                    })}
+                  </div>
                 </div>
               </button>
 
@@ -351,9 +380,15 @@ export function DashboardMobileNav({
                   <MessageSquare size={18} />
                 </div>
                 <div className="min-w-0">
-                  <div className="truncate font-extrabold">{isBn ? "সাপোর্ট চ্যাট" : "Support"}</div>
+                  <div className="truncate font-extrabold">{selectText({ en: "Support", bn: "সাপোর্ট চ্যাট", ur: "سپورٹ چیٹ" })}</div>
                   <div className="text-[10px] text-slate-400 font-normal">
-                    {unreadSupportCount > 0 ? `${unreadSupportCount} unread` : "Helpdesk"}
+                    {unreadSupportCount > 0
+                      ? selectText({
+                          en: `${unreadSupportCount} unread`,
+                          bn: `${unreadSupportCount}টি নতুন`,
+                          ur: `${unreadSupportCount} غیر پڑھا ہوا`,
+                        })
+                      : "Helpdesk"}
                   </div>
                 </div>
               </button>
@@ -369,7 +404,7 @@ export function DashboardMobileNav({
                     <Send size={18} />
                   </div>
                   <div className="min-w-0">
-                    <div className="truncate font-extrabold">{isBn ? "টেলিগ্রাম ভিআইপি" : "Telegram VIP"}</div>
+                    <div className="truncate font-extrabold">{selectText({ en: "Telegram VIP", bn: "টেলিগ্রাম ভিআইপি", ur: "ٹیلیگرام وی آئی پی" })}</div>
                     <div className="text-[10px] text-sky-400/70 font-normal">Community</div>
                   </div>
                 </button>
@@ -385,8 +420,10 @@ export function DashboardMobileNav({
                   <Sparkles size={18} />
                 </div>
                 <div className="min-w-0">
-                  <div className="truncate font-extrabold">{isBn ? "ব্রাউজ স্টোর" : "Browse Store"}</div>
-                  <div className="text-[10px] text-slate-400 font-normal">Books & Packages</div>
+                  <div className="truncate font-extrabold">{selectText({ en: "Browse Store", bn: "ব্রাউজ স্টোর", ur: "اسٹور دیکھیں" })}</div>
+                  <div className="text-[10px] text-slate-400 font-normal">
+                    {selectText({ en: "Books & Packages", bn: "বই ও প্যাকেজ", ur: "کتب اور پیکجز" })}
+                  </div>
                 </div>
               </Link>
 
@@ -400,7 +437,7 @@ export function DashboardMobileNav({
                   <SettingsIcon size={18} />
                 </div>
                 <div className="min-w-0">
-                  <div className="truncate font-extrabold">{isBn ? "অ্যাকাউন্ট সেটিংস" : "Settings"}</div>
+                  <div className="truncate font-extrabold">{selectText({ en: "Settings", bn: "অ্যাকাউন্ট সেটিংস", ur: "ترتیبات" })}</div>
                   <div className="text-[10px] text-slate-400 font-normal">Security & Pass</div>
                 </div>
               </Link>
@@ -428,8 +465,8 @@ export function DashboardMobileNav({
                 }}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-rose-900/40 bg-rose-950/20 text-xs font-bold text-rose-400 hover:bg-rose-950/40 cursor-pointer"
               >
-                <LogOut size={14} />
-                <span>{isBn ? "লগআউট" : "Sign Out"}</span>
+                <LogOut size={14} className={isRTL ? "rotate-180" : ""} />
+                <span>{selectText({ en: "Sign Out", bn: "লগআউট", ur: "سائن آؤٹ" })}</span>
               </button>
             </div>
           </div>

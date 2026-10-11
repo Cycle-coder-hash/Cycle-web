@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { jsPDF } from "jspdf";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface FreeEbookModalProps {
   isOpen: boolean;
@@ -22,7 +23,9 @@ interface FreeEbookModalProps {
   isBn?: boolean;
 }
 
-export function FreeEbookModal({ isOpen, onClose, isBn = false }: FreeEbookModalProps) {
+export function FreeEbookModal({ isOpen, onClose, isBn: _isBnProp }: FreeEbookModalProps) {
+  const { language, selectText, isRTL } = useLanguage();
+  const isBn = language === "bn";
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const [previewItem, setPreviewItem] = useState<any | null>(null);
   const [downloadSuccessMsg, setDownloadSuccessMsg] = useState<string | null>(null);
@@ -166,14 +169,23 @@ export function FreeEbookModal({ isOpen, onClose, isBn = false }: FreeEbookModal
         doc.save(cleanName);
       }
 
+      const targetTitle = isBn ? (ebook.titleBn || ebook.titleEn) : ebook.titleEn;
       setDownloadSuccessMsg(
-        isBn
-          ? `"${ebook.titleBn || ebook.titleEn}" সফলভাবে ডাউনলোড হয়েছে!`
-          : `Downloaded "${ebook.titleEn}" successfully!`
+        selectText({
+          en: `Downloaded "${targetTitle}" successfully!`,
+          bn: `"${targetTitle}" সফলভাবে ডাউনলোড হয়েছে!`,
+          ur: `"${targetTitle}" کامیابی کے ساتھ ڈاؤن لوڈ ہو گیا!`,
+        })
       );
     } catch (err: any) {
       console.error("PDF download error:", err);
-      alert(isBn ? "PDF ডাউনলোড ব্যর্থ হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।" : "Download failed. Please try again.");
+      alert(
+        selectText({
+          en: "Download failed. Please try again.",
+          bn: "PDF ডাউনলোড ব্যর্থ হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।",
+          ur: "ڈاؤن لوڈ ناکام رہا۔ براہ کرم دوبارہ کوشش کریں۔",
+        })
+      );
     } finally {
       setDownloadingId(null);
     }
@@ -197,17 +209,27 @@ export function FreeEbookModal({ isOpen, onClose, isBn = false }: FreeEbookModal
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white">
-                  {isBn ? "ফ্রি ই-বুক ও চিট-শীট লাইব্রেরি" : "Free eBook & Cheatsheet Library"}
+                  {selectText({
+                    en: "Free eBook & Cheatsheet Library",
+                    bn: "ফ্রি ই-বুক ও চিট-শীট লাইব্রেরি",
+                    ur: "مفت ای بکس اور چیٹ شیٹ لائبریری",
+                  })}
                 </h3>
                 <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400">
                   <ShieldCheck className="h-3 w-3" />
-                  {isBn ? "আনলকড" : "UNLOCKED"}
+                  {selectText({
+                    en: "UNLOCKED",
+                    bn: "আনলকড",
+                    ur: "کھلا ہوا",
+                  })}
                 </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {isBn
-                  ? "প্রতিটি প্রাতিষ্ঠানিক পিডিএফ আলাদা আলাদাভাবে আপনার ডিভাইসে ডাউনলোড করুন।"
-                  : "Download each institutional PDF individually to your device."}
+                {selectText({
+                  en: "Download each institutional PDF individually to your device.",
+                  bn: "প্রতিটি প্রাতিষ্ঠানিক পিডিএফ আলাদা আলাদাভাবে আপনার ডিভাইসে ডাউনলোড করুন।",
+                  ur: "ہر ادارہ جاتی PDF کو الگ سے اپنے ڈیوائس پر ڈاؤن لوڈ کریں۔",
+                })}
               </p>
             </div>
           </div>
@@ -235,20 +257,32 @@ export function FreeEbookModal({ isOpen, onClose, isBn = false }: FreeEbookModal
             <div className="flex h-64 flex-col items-center justify-center gap-3">
               <Sparkles className="h-8 w-8 animate-spin text-cyan-500" />
               <span className="text-xs font-bold text-slate-400">
-                {isBn ? "পিডিএফ রিসোর্স লোড হচ্ছে..." : "Loading institutional PDF resources..."}
+                {selectText({
+                  en: "Loading institutional PDF resources...",
+                  bn: "পিডিএফ রিসোর্স লোড হচ্ছে...",
+                  ur: "ادارہ جاتی PDF وسائل لوڈ ہو رہے ہیں...",
+                })}
               </span>
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-12 text-center text-red-500">
               <AlertCircle className="h-8 w-8 mb-2" />
               <p className="text-sm font-bold">
-                {isBn ? "রিসোর্স লোড করা সম্ভব হয়নি।" : "Could not load PDF library."}
+                {selectText({
+                  en: "Could not load PDF library.",
+                  bn: "রিসোর্স লোড করা সম্ভব হয়নি।",
+                  ur: "PDF لائبریری لوڈ نہیں ہو سکی۔",
+                })}
               </p>
               <p className="text-xs text-slate-400 mt-1">{error.message}</p>
             </div>
           ) : !ebooks || ebooks.length === 0 ? (
             <div className="py-12 text-center text-xs text-slate-400">
-              {isBn ? "কোনো ফ্রি ই-বুক বর্তমানে উপলব্ধ নেই।" : "No free eBooks currently available."}
+              {selectText({
+                en: "No free eBooks currently available.",
+                bn: "কোনো ফ্রি ই-বুক বর্তমানে উপলব্ধ নেই।",
+                ur: "فی الحال کوئی مفت ای بک دستیاب نہیں ہے۔",
+              })}
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
@@ -283,7 +317,11 @@ export function FreeEbookModal({ isOpen, onClose, isBn = false }: FreeEbookModal
                       {ebook.keyConcepts && ebook.keyConcepts.length > 0 && (
                         <div className="mt-3 space-y-1 rounded-xl bg-slate-50 p-2.5 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-850">
                           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                            {isBn ? "প্রধান বিষয়সমূহ:" : "Key Principles:"}
+                            {selectText({
+                              en: "Key Principles:",
+                              bn: "প্রধান বিষয়সমূহ:",
+                              ur: "بنیادی اصول:",
+                            })}
                           </span>
                           <ul className="text-[11px] text-slate-600 dark:text-slate-300 space-y-0.5 list-disc list-inside">
                             {ebook.keyConcepts.slice(0, 2).map((c: string, idx: number) => (
@@ -304,7 +342,13 @@ export function FreeEbookModal({ isOpen, onClose, isBn = false }: FreeEbookModal
                         className="flex items-center gap-1 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors"
                       >
                         <Eye className="h-3.5 w-3.5" />
-                        <span>{isBn ? "প্রিভিউ" : "Preview"}</span>
+                        <span>
+                          {selectText({
+                            en: "Preview",
+                            bn: "প্রিভিউ",
+                            ur: "پیش نظارہ",
+                          })}
+                        </span>
                       </button>
 
                       {/* Individual Download Button */}
@@ -317,12 +361,16 @@ export function FreeEbookModal({ isOpen, onClose, isBn = false }: FreeEbookModal
                         <Download className="h-3.5 w-3.5" />
                         <span>
                           {isDownloading
-                            ? isBn
-                              ? "ডাউনলোড হচ্ছে..."
-                              : "Downloading..."
-                            : isBn
-                            ? "ডাউনলোড"
-                            : "Download"}
+                            ? selectText({
+                                en: "Downloading...",
+                                bn: "ডাউনলোড হচ্ছে...",
+                                ur: "ڈاؤن لوڈ ہو رہا ہے...",
+                              })
+                            : selectText({
+                                en: "Download",
+                                bn: "ডাউনলোড",
+                                ur: "ڈاؤن لوڈ",
+                              })}
                         </span>
                       </button>
                     </div>
@@ -338,9 +386,11 @@ export function FreeEbookModal({ isOpen, onClose, isBn = false }: FreeEbookModal
           <div className="flex items-center gap-1.5">
             <ShieldCheck className="h-4 w-4 text-emerald-500" />
             <span>
-              {isBn
-                ? "সকল পিডিএফ স্টুডেন্ট অ্যাকাউন্টের সাথে সম্পূর্ণ বিনামূল্যে অ্যাক্সেসযোগ্য।"
-                : "Individual PDF downloads are completely free for all authenticated accounts."}
+              {selectText({
+                en: "Individual PDF downloads are completely free for all authenticated accounts.",
+                bn: "সকল পিডিএফ স্টুডেন্ট অ্যাকাউন্টের সাথে সম্পূর্ণ বিনামূল্যে অ্যাক্সেসযোগ্য।",
+                ur: "تمام تصدیق شدہ اکاؤنٹس کے لیے انفرادی PDF ڈاؤن لوڈ مکمل طور پر مفت ہے۔",
+              })}
             </span>
           </div>
           <button
@@ -348,7 +398,11 @@ export function FreeEbookModal({ isOpen, onClose, isBn = false }: FreeEbookModal
             onClick={onClose}
             className="rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 transition-colors"
           >
-            {isBn ? "বন্ধ করুন" : "Close"}
+            {selectText({
+              en: "Close",
+              bn: "বন্ধ করুন",
+              ur: "بند کریں",
+            })}
           </button>
         </div>
       </div>
@@ -386,7 +440,11 @@ export function FreeEbookModal({ isOpen, onClose, isBn = false }: FreeEbookModal
 
             <div className="mt-4 space-y-2 border-t border-slate-100 pt-3 dark:border-slate-800">
               <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                {isBn ? "বিস্তারিত বিষয় ও অ্যালগরিদমিক রুলস:" : "Core Concepts & Rules Included:"}
+                {selectText({
+                  en: "Core Concepts & Rules Included:",
+                  bn: "বিস্তারিত বিষয় ও অ্যালগরিদমিক রুলস:",
+                  ur: "بنیادی تصورات اور قواعد:",
+                })}
               </span>
               <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
                 {previewItem.keyConcepts?.map((c: string, idx: number) => (
@@ -404,7 +462,11 @@ export function FreeEbookModal({ isOpen, onClose, isBn = false }: FreeEbookModal
                 onClick={() => setPreviewItem(null)}
                 className="rounded-xl px-3 py-1.5 text-xs font-bold text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900"
               >
-                {isBn ? "বন্ধ করুন" : "Close"}
+                {selectText({
+                  en: "Close",
+                  bn: "বন্ধ করুন",
+                  ur: "بند کریں",
+                })}
               </button>
               <button
                 type="button"
@@ -415,7 +477,13 @@ export function FreeEbookModal({ isOpen, onClose, isBn = false }: FreeEbookModal
                 className="flex items-center gap-1.5 rounded-xl bg-cyan-500 px-4 py-1.5 text-xs font-black text-slate-950 hover:bg-cyan-400"
               >
                 <Download className="h-3.5 w-3.5" />
-                <span>{isBn ? "পিডিএফ ডাউনলোড" : "Download PDF"}</span>
+                <span>
+                  {selectText({
+                    en: "Download PDF",
+                    bn: "পিডিএফ ডাউনলোড",
+                    ur: "PDF ڈاؤن لوڈ کریں",
+                  })}
+                </span>
               </button>
             </div>
           </div>

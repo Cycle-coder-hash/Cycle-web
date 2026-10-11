@@ -1,4 +1,5 @@
 import React from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   ArrowRight,
   Eye,
@@ -46,7 +47,7 @@ export type AuthMode = "login" | "register" | "forgot_password" | "reset_passwor
 export interface AuthModeFormsProps {
   mode: AuthMode;
   setMode: React.Dispatch<React.SetStateAction<AuthMode>>;
-  isBn: boolean;
+  isBn?: boolean;
   name: string;
   setName: React.Dispatch<React.SetStateAction<string>>;
   email: string;
@@ -83,7 +84,6 @@ export interface AuthModeFormsProps {
 export function AuthModeForms({
   mode,
   setMode,
-  isBn,
   name,
   setName,
   email,
@@ -116,6 +116,8 @@ export function AuthModeForms({
   handleForgotPasswordSubmit,
   handleResetPasswordSubmit,
 }: AuthModeFormsProps) {
+  const { selectText } = useLanguage();
+
   return (
     <div className="overflow-hidden rounded-3xl border border-slate-200/90 bg-white/90 p-7 sm:p-9 shadow-2xl backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/90">
       {/* Top Brand Pill */}
@@ -129,19 +131,69 @@ export function AuthModeForms({
       {/* Title & Subtitle */}
       <div className="text-center">
         <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-          {mode === "login" && (isBn ? "আপনার অ্যাকাউন্টে লগইন করুন" : "Welcome back, Trader")}
-          {mode === "register" && (isBn ? "নতুন অ্যাকাউন্ট তৈরি করুন" : "Create your student account")}
-          {mode === "forgot_password" && (isBn ? "পাসওয়ার্ড ভুলে গেছেন?" : "Forgot Password")}
-          {mode === "reset_password" && (isBn ? "নতুন পাসওয়ার্ড সেট করুন" : "Set New Password")}
-          {mode === "verify_otp" && (isBn ? "ইমেইল ভেরিফিকেশন" : "Verify Your Email")}
+          {mode === "login" &&
+            selectText({
+              en: "Welcome back, Trader",
+              bn: "আপনার অ্যাকাউন্টে লগইন করুন",
+              ur: "خوش آمدید، ٹریڈر",
+            })}
+          {mode === "register" &&
+            selectText({
+              en: "Create your student account",
+              bn: "নতুন অ্যাকাউন্ট তৈরি করুন",
+              ur: "اپنا اسٹوڈنٹ اکاؤنٹ بنائیں",
+            })}
+          {mode === "forgot_password" &&
+            selectText({
+              en: "Forgot Password",
+              bn: "পাসওয়ার্ড ভুলে গেছেন?",
+              ur: "پاس ورڈ بھول گئے؟",
+            })}
+          {mode === "reset_password" &&
+            selectText({
+              en: "Set New Password",
+              bn: "নতুন পাসওয়ার্ড সেট করুন",
+              ur: "نیا پاس ورڈ سیٹ کریں",
+            })}
+          {mode === "verify_otp" &&
+            selectText({
+              en: "Verify Your Email",
+              bn: "ইমেইল ভেরিফিকেশন",
+              ur: "اپنا ای میل تصدیق کریں",
+            })}
         </h1>
 
         <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-          {mode === "login" && (isBn ? "আপনার ড্যাশবোর্ড, লাইব্রেরি ও জার্নাল অ্যাক্সেস করুন" : "Access your institutional library, discipline and trading journal")}
-          {mode === "register" && (isBn ? "সঠিক মার্কেট স্ট্রাকচার শিখতে আজই যোগ দিন" : "Join thousands mastering real market structure without hype")}
-          {mode === "forgot_password" && (isBn ? "আপনার ইমেইল দিলে আমরা পাসওয়ার্ড রিসেট লিঙ্ক পাঠাব" : "Enter your email to receive a password reset link")}
-          {mode === "reset_password" && (isBn ? "আপনার পছন্দের শক্তিশালী নতুন পাসওয়ার্ড দিন" : "Enter your new password below")}
-          {mode === "verify_otp" && (isBn ? "আপনার অ্যাকাউন্টে প্রবেশ করতে ইমেইলে পাঠানো কোডটি দিন" : "Enter the confirmation code sent to your email to activate your account")}
+          {mode === "login" &&
+            selectText({
+              en: "Access your institutional library, discipline and trading journal",
+              bn: "আপনার ড্যাশবোর্ড, লাইব্রেরি ও জার্নাল অ্যাক্সেস করুন",
+              ur: "اپنی ادارہ جاتی لائبریری، نظم و ضبط اور ٹریڈنگ جرنل تک رسائی حاصل کریں",
+            })}
+          {mode === "register" &&
+            selectText({
+              en: "Join thousands mastering real market structure without hype",
+              bn: "সঠিক মার্কেট স্ট্রাকচার শিখতে আজই যোগ দিন",
+              ur: "مارکیٹ اسٹرکچر میں مہارت حاصل کرنے والے ہزاروں طلباء میں شامل ہوں",
+            })}
+          {mode === "forgot_password" &&
+            selectText({
+              en: "Enter your email to receive a password reset link",
+              bn: "আপনার ইমেইল দিলে আমরা পাসওয়ার্ড রিসেট লিঙ্ক পাঠাব",
+              ur: "پاس ورڈ دوبارہ ترتیب دینے کا لنک حاصل کرنے کے لیے اپنا ای میل درج کریں",
+            })}
+          {mode === "reset_password" &&
+            selectText({
+              en: "Enter your new password below",
+              bn: "আপনার পছন্দের শক্তিশালী নতুন পাসওয়ার্ড দিন",
+              ur: "نیچے اپنا نیا پاس ورڈ درج کریں",
+            })}
+          {mode === "verify_otp" &&
+            selectText({
+              en: "Enter the confirmation code sent to your email to activate your account",
+              bn: "আপনার অ্যাকাউন্টে প্রবেশ করতে ইমেইলে পাঠানো কোডটি দিন",
+              ur: "اپنا اکاؤنٹ فعال کرنے کے لیے ای میل پر بھیجا گیا تصدیقی کوڈ درج کریں",
+            })}
         </p>
       </div>
 
@@ -162,7 +214,7 @@ export function AuthModeForms({
                 : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
             }`}
           >
-            {isBn ? "লগইন (Sign In)" : "Sign In"}
+            {selectText({ en: "Sign In", bn: "লগইন (Sign In)", ur: "سائن ان (Sign In)" })}
           </button>
           <button
             type="button"
@@ -178,7 +230,7 @@ export function AuthModeForms({
                 : "text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
             }`}
           >
-            {isBn ? "রেজিস্টার (Sign Up)" : "Sign Up"}
+            {selectText({ en: "Sign Up", bn: "রেজিস্টার (Sign Up)", ur: "سائن اپ (Sign Up)" })}
           </button>
         </div>
       )}
@@ -200,12 +252,12 @@ export function AuthModeForms({
                   <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
                   <span>
                     {cooldown > 0
-                      ? isBn
-                        ? `পুনরায় লিঙ্ক পাঠান (${cooldown}s)`
-                        : `Resend link (${cooldown}s)`
-                      : isBn
-                        ? "ভেরিফিকেশন লিঙ্ক আবার পাঠান"
-                        : "Resend Verification Link"}
+                      ? `${selectText({ en: "Resend link", bn: "পুনরায় লিঙ্ক পাঠান", ur: "دوبارہ لنک بھیجیں" })} (${cooldown}s)`
+                      : selectText({
+                          en: "Resend Verification Link",
+                          bn: "ভেরিফিকেশন লিঙ্ক আবার পাঠান",
+                          ur: "تصدیقی لنک دوبارہ بھیجیں",
+                        })}
                   </span>
                 </button>
               </div>
@@ -231,12 +283,12 @@ export function AuthModeForms({
                   <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
                   <span>
                     {cooldown > 0
-                      ? isBn
-                        ? `আবার পাঠাতে অপেক্ষা করুন (${cooldown}s)`
-                        : `Resend available in ${cooldown}s`
-                      : isBn
-                        ? "ইমেইল পাননি? পুনরায় পাঠান"
-                        : "Didn't receive email? Resend"}
+                      ? `${selectText({ en: "Resend available in", bn: "আবার পাঠাতে অপেক্ষা করুন", ur: "دوبارہ بھیجنے کا وقت" })} (${cooldown}s)`
+                      : selectText({
+                          en: "Didn't receive email? Resend",
+                          bn: "ইমেইল পাননি? পুনরায় পাঠান",
+                          ur: "ای میل نہیں ملا؟ دوبارہ بھیجیں",
+                        })}
                   </span>
                 </button>
               </div>
@@ -252,12 +304,20 @@ export function AuthModeForms({
             <Mail className="size-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
             <div className="space-y-1 text-amber-950 dark:text-amber-200 leading-relaxed">
               <div className="font-extrabold flex items-center gap-1.5">
-                <span>{isBn ? "📌 গুরুত্বপূর্ণ নোট (Spam ফোল্ডার চেক করুন):" : "📌 Important Note (Check Spam Folder):"}</span>
+                <span>
+                  {selectText({
+                    en: "📌 Important Note (Check Spam Folder):",
+                    bn: "📌 গুরুত্বপূর্ণ নোট (Spam ফোল্ডার চেক করুন):",
+                    ur: "📌 اہم نوٹ (Spam فولڈر چیک کریں):",
+                  })}
+                </span>
               </div>
               <p className="text-[11px] sm:text-xs text-amber-800 dark:text-amber-300">
-                {isBn
-                  ? "ভেরিফিকেশন ইমেইলটি অনেক সময় ইনবক্সে না গিয়ে 'Spam' (স্প্যাম) বা 'Junk' ফোল্ডারে জমা হতে পারে। ইনবক্সে ইমেইল না পেলে অনুগ্রহ করে আপনার Spam ফোল্ডার চেক করুন এবং 'Report not spam' বা লিঙ্কটিতে ক্লিক করুন।"
-                  : "Verification emails may occasionally be filtered into your 'Spam' or 'Junk' folder. If you don't see it in your inbox, please check your Spam folder and click the link to activate."}
+                {selectText({
+                  en: "Verification emails may occasionally be filtered into your 'Spam' or 'Junk' folder. If you don't see it in your inbox, please check your Spam folder and click the link to activate.",
+                  bn: "ভেরিফিকেশন ইমেইলটি অনেক সময় ইনবক্সে না গিয়ে 'Spam' (স্প্যাম) বা 'Junk' ফোল্ডারে জমা হতে পারে। ইনবক্সে ইমেইল না পেলে অনুগ্রহ করে আপনার Spam ফোল্ডার চেক করুন এবং 'Report not spam' বা লিঙ্কটিতে ক্লিক করুন।",
+                  ur: "تصدیقی ای میل بعض اوقات 'Spam' یا 'Junk' فولڈر میں جا سکتی ہے۔ اگر آپ کو ان باکس میں نہیں ملتی ہے تو براہ کرم اسپام فولڈر چیک کریں اور ایکٹیویٹ کریں۔",
+                })}
               </p>
             </div>
           </div>
@@ -272,11 +332,12 @@ export function AuthModeForms({
           <form onSubmit={handleLoginSubmit} className="mt-6 space-y-4">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                {isBn ? "ইমেইল অ্যাড্রেস" : "Email Address"}
+                {selectText({ en: "Email Address", bn: "ইমেইল অ্যাড্রেস", ur: "ای میل ایڈریس" })}
               </label>
               <div className="relative mt-1.5">
                 <Mail size={17} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" />
                 <input
+                  dir="ltr"
                   type="email"
                   required
                   placeholder="you@example.com"
@@ -290,7 +351,7 @@ export function AuthModeForms({
             <div>
               <div className="flex items-center justify-between">
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                  {isBn ? "পাসওয়ার্ড" : "Password"}
+                  {selectText({ en: "Password", bn: "পাসওয়ার্ড", ur: "پاس ورڈ" })}
                 </label>
                 <button
                   type="button"
@@ -302,12 +363,13 @@ export function AuthModeForms({
                   }}
                   className="text-xs font-bold text-[#0284c7] hover:underline dark:text-sky-400"
                 >
-                  {isBn ? "পাসওয়ার্ড ভুলে গেছেন?" : "Forgot password?"}
+                  {selectText({ en: "Forgot password?", bn: "পাসওয়ার্ড ভুলে গেছেন?", ur: "پاس ورڈ بھول گئے؟" })}
                 </button>
               </div>
               <div className="relative mt-1.5">
                 <Lock size={17} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" />
                 <input
+                  dir="ltr"
                   type={showPassword ? "text" : "password"}
                   required
                   placeholder="••••••••"
@@ -331,10 +393,22 @@ export function AuthModeForms({
               className="mt-6 h-12 w-full gap-2 rounded-2xl bg-[#081833] text-sm font-extrabold text-white shadow-xl shadow-[#081833]/20 transition hover:bg-[#0c244b] active:scale-[0.99] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 dark:shadow-sky-500/20"
             >
               {loading ? (
-                <span>{isBn ? "যাচাই হচ্ছে..." : "Signing in..."}</span>
+                <span>
+                  {selectText({
+                    en: "Signing in...",
+                    bn: "যাচাই হচ্ছে...",
+                    ur: "سائن ان ہو رہا ہے...",
+                  })}
+                </span>
               ) : (
                 <>
-                  <span>{isBn ? "ড্যাশবোর্ডে প্রবেশ করুন" : "Sign In to Dashboard"}</span>
+                  <span>
+                    {selectText({
+                      en: "Sign In to Dashboard",
+                      bn: "ড্যাশবোর্ডে প্রবেশ করুন",
+                      ur: "ڈیش بورڈ میں سائن ان کریں",
+                    })}
+                  </span>
                   <ArrowRight size={16} />
                 </>
               )}
@@ -348,7 +422,7 @@ export function AuthModeForms({
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-white/95 px-3 font-bold tracking-wider text-slate-400 dark:bg-slate-900/95">
-                {isBn ? "অথবা" : "Or continue with"}
+                {selectText({ en: "Or continue with", bn: "অথবা", ur: "یا جاری رکھیں" })}
               </span>
             </div>
           </div>
@@ -366,7 +440,11 @@ export function AuthModeForms({
               <GoogleIcon className="size-5 shrink-0" />
             )}
             <span className="text-sm font-bold">
-              {isBn ? "গুগল দিয়ে প্রবেশ করুন (Google)" : "Continue with Google"}
+              {selectText({
+                en: "Continue with Google",
+                bn: "গুগল দিয়ে প্রবেশ করুন (Google)",
+                ur: "گوگل کے ساتھ جاری رکھیں (Google)",
+              })}
             </span>
           </button>
         </div>
@@ -380,14 +458,14 @@ export function AuthModeForms({
           <form onSubmit={handleRegisterSubmit} className="mt-6 space-y-4">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                {isBn ? "আপনার পুরো নাম" : "Full Name"}
+                {selectText({ en: "Full Name", bn: "আপনার পুরো নাম", ur: "پورا نام" })}
               </label>
               <div className="relative mt-1.5">
                 <UserIcon size={17} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
                   required
-                  placeholder={isBn ? "যেমন: তানভীর হাসান" : "e.g. Alex Morgan"}
+                  placeholder={selectText({ en: "e.g. Alex Morgan", bn: "যেমন: তানভীর হাসান", ur: "مثلاً: علی احمد" })}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pr-4 pl-10 text-sm font-medium text-slate-900 outline-none transition focus:border-[#0284c7] focus:bg-white focus:ring-2 focus:ring-[#0284c7]/20 dark:border-slate-800 dark:bg-slate-950/50 dark:text-white dark:focus:border-sky-400"
@@ -397,11 +475,12 @@ export function AuthModeForms({
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                {isBn ? "ইমেইল অ্যাড্রেস" : "Email Address"}
+                {selectText({ en: "Email Address", bn: "ইমেইল অ্যাড্রেস", ur: "ای میل ایڈریس" })}
               </label>
               <div className="relative mt-1.5">
                 <Mail size={17} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" />
                 <input
+                  dir="ltr"
                   type="email"
                   required
                   placeholder="you@example.com"
@@ -414,14 +493,15 @@ export function AuthModeForms({
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                {isBn ? "পাসওয়ার্ড" : "Password"}
+                {selectText({ en: "Password", bn: "পাসওয়ার্ড", ur: "پاس ورڈ" })}
               </label>
               <div className="relative mt-1.5">
                 <Lock size={17} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" />
                 <input
+                  dir="ltr"
                   type={showPassword ? "text" : "password"}
                   required
-                  placeholder={isBn ? "কমপক্ষে ৬ অক্ষরের পাসওয়ার্ড" : "At least 6 characters"}
+                  placeholder={selectText({ en: "At least 6 characters", bn: "কমপক্ষে ৬ অক্ষরের পাসওয়ার্ড", ur: "کم از کم 6 حروف" })}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pr-10 pl-10 text-sm font-medium text-slate-900 outline-none transition focus:border-[#0284c7] focus:bg-white focus:ring-2 focus:ring-[#0284c7]/20 dark:border-slate-800 dark:bg-slate-950/50 dark:text-white dark:focus:border-sky-400"
@@ -438,11 +518,12 @@ export function AuthModeForms({
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                {isBn ? "ফোন নম্বর (ঐচ্ছিক)" : "Phone Number (Optional)"}
+                {selectText({ en: "Phone Number (Optional)", bn: "ফোন নম্বর (ঐচ্ছিক)", ur: "فون نمبر (اختیاری)" })}
               </label>
               <div className="relative mt-1.5">
                 <Phone size={17} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" />
                 <input
+                  dir="ltr"
                   type="tel"
                   placeholder="01XXXXXXXXX"
                   value={phone}
@@ -458,10 +539,22 @@ export function AuthModeForms({
               className="mt-6 h-12 w-full gap-2 rounded-2xl bg-[#081833] text-sm font-extrabold text-white shadow-xl shadow-[#081833]/20 transition hover:bg-[#0c244b] active:scale-[0.99] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 dark:shadow-sky-500/20"
             >
               {loading ? (
-                <span>{isBn ? "অ্যাকাউন্ট তৈরি হচ্ছে..." : "Creating Account..."}</span>
+                <span>
+                  {selectText({
+                    en: "Creating Account...",
+                    bn: "অ্যাকাউন্ট তৈরি হচ্ছে...",
+                    ur: "اکاؤنٹ بن رہا ہے...",
+                  })}
+                </span>
               ) : (
                 <>
-                  <span>{isBn ? "অ্যাকাউন্ট তৈরি করুন" : "Create Account"}</span>
+                  <span>
+                    {selectText({
+                      en: "Create Account",
+                      bn: "অ্যাকাউন্ট তৈরি করুন",
+                      ur: "اکاؤنٹ بنائیں",
+                    })}
+                  </span>
                   <ArrowRight size={16} />
                 </>
               )}
@@ -475,7 +568,7 @@ export function AuthModeForms({
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-white/95 px-3 font-bold tracking-wider text-slate-400 dark:bg-slate-900/95">
-                {isBn ? "অথবা" : "Or continue with"}
+                {selectText({ en: "Or continue with", bn: "অথবা", ur: "یا جاری رکھیں" })}
               </span>
             </div>
           </div>
@@ -493,7 +586,11 @@ export function AuthModeForms({
               <GoogleIcon className="size-5 shrink-0" />
             )}
             <span className="text-sm font-bold">
-              {isBn ? "গুগল দিয়ে রেজিস্টার করুন (Google)" : "Sign up with Google"}
+              {selectText({
+                en: "Sign up with Google",
+                bn: "গুগল দিয়ে রেজিস্টার করুন (Google)",
+                ur: "گوگل سے رجسٹر کریں (Google)",
+              })}
             </span>
           </button>
         </div>
@@ -506,11 +603,12 @@ export function AuthModeForms({
         <form onSubmit={handleForgotPasswordSubmit} className="mt-6 space-y-4">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-              {isBn ? "আপনার রেজিস্টার্ড ইমেইল" : "Your Registered Email"}
+              {selectText({ en: "Your Registered Email", bn: "আপনার রেজিস্টার্ড ইমেইল", ur: "آپ کا رجسٹرڈ ای میل" })}
             </label>
             <div className="relative mt-1.5">
               <Mail size={17} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" />
               <input
+                dir="ltr"
                 type="email"
                 required
                 placeholder="you@example.com"
@@ -527,10 +625,16 @@ export function AuthModeForms({
             className="mt-6 h-12 w-full gap-2 rounded-2xl bg-[#081833] text-sm font-extrabold text-white shadow-xl hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400"
           >
             {loading ? (
-              <span>{isBn ? "পাঠানো হচ্ছে..." : "Sending..."}</span>
+              <span>{selectText({ en: "Sending...", bn: "পাঠানো হচ্ছে...", ur: "بھیجا جا رہا ہے..." })}</span>
             ) : (
               <>
-                <span>{isBn ? "পাসওয়ার্ড রিসেট লিঙ্ক পাঠান" : "Send Reset Link"}</span>
+                <span>
+                  {selectText({
+                    en: "Send Reset Link",
+                    bn: "পাসওয়ার্ড রিসেট লিঙ্ক পাঠান",
+                    ur: "ری سیٹ لنک بھیجیں",
+                  })}
+                </span>
                 <Send size={16} />
               </>
             )}
@@ -547,7 +651,7 @@ export function AuthModeForms({
               }}
               className="text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
             >
-              ← {isBn ? "লগইন পেজে ফিরে যান" : "Back to Sign In"}
+              ← {selectText({ en: "Back to Sign In", bn: "লগইন পেজে ফিরে যান", ur: "سائن ان پر واپس جائیں" })}
             </button>
           </div>
         </form>
@@ -560,14 +664,15 @@ export function AuthModeForms({
         <form onSubmit={handleResetPasswordSubmit} className="mt-6 space-y-4">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-              {isBn ? "নতুন পাসওয়ার্ড" : "New Password"}
+              {selectText({ en: "New Password", bn: "নতুন পাসওয়ার্ড", ur: "نیا پاس ورڈ" })}
             </label>
             <div className="relative mt-1.5">
               <Lock size={17} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" />
               <input
+                dir="ltr"
                 type={showPassword ? "text" : "password"}
                 required
-                placeholder={isBn ? "কমপক্ষে ৬ অক্ষরের নতুন পাসওয়ার্ড" : "At least 6 characters"}
+                placeholder={selectText({ en: "At least 6 characters", bn: "কমপক্ষে ৬ অক্ষরের নতুন পাসওয়ার্ড", ur: "کم از کم 6 حروف" })}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="w-full rounded-xl border border-slate-200 bg-slate-50/50 py-3 pr-10 pl-10 text-sm font-medium text-slate-900 outline-none transition focus:border-[#0284c7] dark:border-slate-800 dark:bg-slate-950 dark:text-white"
@@ -588,10 +693,16 @@ export function AuthModeForms({
             className="mt-6 h-12 w-full gap-2 rounded-2xl bg-[#081833] text-sm font-extrabold text-white shadow-xl hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400"
           >
             {loading ? (
-              <span>{isBn ? "আপডেট হচ্ছে..." : "Updating..."}</span>
+              <span>{selectText({ en: "Updating...", bn: "আপডেট হচ্ছে...", ur: "اپ ڈیٹ ہو رہا ہے..." })}</span>
             ) : (
               <>
-                <span>{isBn ? "পাসওয়ার্ড আপডেট করুন" : "Update Password & Login"}</span>
+                <span>
+                  {selectText({
+                    en: "Update Password & Login",
+                    bn: "পাসওয়ার্ড আপডেট করুন",
+                    ur: "پاس ورڈ اپ ڈیٹ کریں اور لاگ ان ہوں",
+                  })}
+                </span>
                 <ArrowRight size={16} />
               </>
             )}
@@ -607,7 +718,7 @@ export function AuthModeForms({
               }}
               className="text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
             >
-              ← {isBn ? "লগইন পেজে ফিরে যান" : "Back to Sign In"}
+              ← {selectText({ en: "Back to Sign In", bn: "লগইন পেজে ফিরে যান", ur: "سائن ان پر واپس جائیں" })}
             </button>
           </div>
         </form>
@@ -624,15 +735,21 @@ export function AuthModeForms({
               <Mail size={24} />
             </div>
             <h3 className="mt-2.5 text-base font-extrabold text-slate-900 dark:text-white">
-              {isBn ? "ইমেইল চেক ও কনফার্ম করুন" : "Check & Confirm Your Email"}
+              {selectText({
+                en: "Check & Confirm Your Email",
+                bn: "ইমেইল চেক ও কনফার্ম করুন",
+                ur: "اپنا ای میل چیک اور تصدیق کریں",
+              })}
             </h3>
-            <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-sky-700 shadow-sm dark:bg-slate-900 dark:text-sky-300">
+            <div dir="ltr" className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 text-xs font-bold text-sky-700 shadow-sm dark:bg-slate-900 dark:text-sky-300">
               <span>{email}</span>
             </div>
             <p className="mt-3 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-              {isBn
-                ? "আপনার ইমেইলে (ইনবক্স অথবা Spam ফোল্ডারে) পাঠানো 'Confirm email address' লিঙ্কে ক্লিক করুন অথবা নিচের বক্সে ৬-সংখ্যার কোডটি দিন।"
-                : "Click the 'Confirm email address' link sent to your email (Inbox or Spam folder), or enter the 6-digit verification code below."}
+              {selectText({
+                en: "Click the 'Confirm email address' link sent to your email (Inbox or Spam folder), or enter the 6-digit verification code below.",
+                bn: "আপনার ইমেইলে (ইনবক্স অথবা Spam ফোল্ডারে) পাঠানো 'Confirm email address' লিঙ্কে ক্লিক করুন অথবা নিচের বক্সে ৬-সংখ্যার কোডটি দিন।",
+                ur: "آپ کے ای میل پر بھیجے گئے 'Confirm email address' لنک پر کلک کریں یا نیچے 6 ہندسوں کا کوڈ درج کریں۔",
+              })}
             </p>
           </div>
 
@@ -644,7 +761,13 @@ export function AuthModeForms({
             className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-sky-300 bg-white text-xs sm:text-sm font-extrabold text-sky-700 shadow-sm transition hover:bg-sky-50 active:scale-[0.99] dark:border-sky-700/60 dark:bg-slate-900 dark:text-sky-300 dark:hover:bg-slate-800"
           >
             <Mail size={16} className="text-red-500" />
-            <span>{isBn ? "জিমেইল ওপেন করুন (Open Gmail)" : "Open Gmail"}</span>
+            <span>
+              {selectText({
+                en: "Open Gmail",
+                bn: "জিমেইল ওপেন করুন (Open Gmail)",
+                ur: "جی میل کھولیں (Open Gmail)",
+              })}
+            </span>
             <ExternalLink size={14} className="opacity-70" />
           </a>
 
@@ -652,11 +775,16 @@ export function AuthModeForms({
           <form onSubmit={handleVerifyOtpSubmit} className="space-y-3 pt-1">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                {isBn ? "৬-সংখ্যার কোড দিন (যদি থাকে)" : "Enter 6-Digit Code (if provided)"}
+                {selectText({
+                  en: "Enter 6-Digit Code (if provided)",
+                  bn: "৬-সংখ্যার কোড দিন (যদি থাকে)",
+                  ur: "6 ہندسوں کا کوڈ درج کریں (اگر موصول ہوا ہو)",
+                })}
               </label>
               <div className="relative mt-1">
                 <KeyRound size={17} className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-slate-400" />
                 <input
+                  dir="ltr"
                   type="text"
                   maxLength={8}
                   placeholder="123456"
@@ -672,7 +800,11 @@ export function AuthModeForms({
               disabled={loading || !otpCode.trim()}
               className="h-11 w-full rounded-xl bg-slate-900 text-xs font-bold text-white shadow-md hover:bg-slate-800 dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400"
             >
-              {isBn ? "কোড দিয়ে প্রবেশ করুন" : "Verify Code & Enter"}
+              {selectText({
+                en: "Verify Code & Enter",
+                bn: "কোড দিয়ে প্রবেশ করুন",
+                ur: "کوڈ کی تصدیق کریں اور داخل ہوں",
+              })}
             </Button>
           </form>
 
@@ -688,15 +820,21 @@ export function AuthModeForms({
               {loading ? (
                 <span className="flex items-center gap-2">
                   <RefreshCw size={14} className="animate-spin" />
-                  {isBn ? "চেক করা হচ্ছে..." : "Checking..."}
+                  {selectText({
+                    en: "Checking...",
+                    bn: "চেক করা হচ্ছে...",
+                    ur: "جانچ کی جا رہی ہے...",
+                  })}
                 </span>
               ) : (
                 <>
                   <CheckCircle2 size={15} className="text-emerald-600" />
                   <span>
-                    {isBn
-                      ? "আমি লিঙ্কে ক্লিক করেছি → ড্যাশবোর্ডে যান"
-                      : "I Clicked Email Link → Enter Dashboard"}
+                    {selectText({
+                      en: "I Clicked Email Link → Enter Dashboard",
+                      bn: "আমি লিঙ্কে ক্লিক করেছি → ড্যাশবোর্ডে যান",
+                      ur: "میں نے ای میل لنک پر کلک کیا ہے ← ڈیش بورڈ کھولیں",
+                    })}
                   </span>
                 </>
               )}
@@ -715,7 +853,7 @@ export function AuthModeForms({
               }}
               className="text-xs font-bold text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
             >
-              ← {isBn ? "লগইনে ফিরে যান" : "Back to Sign In"}
+              ← {selectText({ en: "Back to Sign In", bn: "লগইনে ফিরে যান", ur: "سائن ان پر واپس جائیں" })}
             </button>
 
             <button
@@ -725,10 +863,12 @@ export function AuthModeForms({
               className="text-xs font-bold text-sky-600 hover:text-sky-700 dark:text-sky-400 underline disabled:opacity-50"
             >
               {cooldown > 0
-                ? `${isBn ? "পুনরায় পাঠান" : "Resend"} (${cooldown}s)`
-                : isBn
-                  ? "ইমেইল পাননি? আবার পাঠান"
-                  : "Resend Email"}
+                ? `${selectText({ en: "Resend", bn: "পুনরায় পাঠান", ur: "دوبارہ بھیجیں" })} (${cooldown}s)`
+                : selectText({
+                    en: "Resend Email",
+                    bn: "ইমেইল পাননি? আবার পাঠান",
+                    ur: "ای میل نہیں ملا؟ دوبارہ بھیجیں",
+                  })}
             </button>
           </div>
         </div>
@@ -738,9 +878,11 @@ export function AuthModeForms({
       <div className="mt-8 flex items-center justify-center gap-2 border-t border-slate-100 pt-5 text-center text-[11px] font-semibold text-slate-400 dark:border-slate-800">
         <ShieldCheck size={14} className="text-emerald-500 shrink-0" />
         <span>
-          {isBn
-            ? "Supabase Auth দ্বারা সুরক্ষিত ও এনক্রিপ্টেড"
-            : "Secured & encrypted with Supabase Auth"}
+          {selectText({
+            en: "Secured & encrypted with Supabase Auth",
+            bn: "Supabase Auth দ্বারা সুরক্ষিত ও এনক্রিপ্টেড",
+            ur: "Supabase Auth کے ساتھ محفوظ اور خفیہ کردہ",
+          })}
         </span>
       </div>
     </div>

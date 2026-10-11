@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "wouter";
 import { CheckCircle2, Crown, LockKeyhole, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export type HomePlanModalType = "free" | "pro" | "premium" | null;
 
@@ -21,11 +22,14 @@ export interface HomePlansSectionProps {
 }
 
 export function HomePlansSection({
-  isBn,
+  isBn: _isBnProp,
   selectedPlanModal,
   setSelectedPlanModal,
   pricing,
 }: HomePlansSectionProps) {
+  const { language, selectText } = useLanguage();
+  const isBn = language === "bn";
+
   const formatBdt = (val: string | number | undefined, bn: boolean, fallback: string) => {
     const raw = val !== undefined && val !== null && String(val).trim() !== "" ? String(val) : fallback;
     const num = parseInt(raw.replace(/\D/g, "") || "0", 10);
@@ -58,15 +62,23 @@ export function HomePlansSection({
           <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-[#0284c7]/10 text-[#0284c7] dark:bg-sky-500/20 dark:text-sky-400 border border-sky-500/30">
               <Sparkles size={14} />
-              <span className="uppercase tracking-widest">{isBn ? "ট্রেডার অ্যাক্সেস প্ল্যান" : "Plans For Every Trader"}</span>
+              <span className="uppercase tracking-widest">
+                {selectText({ en: "Plans For Every Trader", bn: "ট্রেডার অ্যাক্সেস প্ল্যান", ur: "ہر ٹریڈر کے لیے منصوبے" })}
+              </span>
             </div>
             <h2 className="mt-4 text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
-              {isBn ? "স্বচ্ছ মাসিক অ্যাক্সেস। কোনো লুকানো চার্জ নেই।" : "Transparent Trader Access. No Hidden Deductions."}
+              {selectText({
+                en: "Transparent Trader Access. No Hidden Deductions.",
+                bn: "স্বচ্ছ মাসিক অ্যাক্সেস। কোনো লুকানো চার্জ নেই।",
+                ur: "شفاف ماہانہ رسائی۔ کوئی پوشیدہ کٹوتی نہیں۔",
+              })}
             </h2>
             <p className="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
-              {isBn
-                ? "বিনামূল্যে ৩০ দিনের ট্রায়াল দিয়ে শুরু করুন অথবা সম্পূর্ণ আনলিমিটেড ট্রেড, একাধিক জার্নাল বুক, ভিডিও সেভিং এবং ১-অন-১ প্রাতিষ্ঠানিক মেন্টরশিপের জন্য প্রো বা প্রিমিয়ামে আপগ্রেড করুন।"
-                : "Start with an anchored 30-day Free Trial or upgrade to Pro or Premium for unlimited trade logging, dedicated journal books, video uploads, daily workout routines, and direct institutional mentorship."}
+              {selectText({
+                en: "Start with an anchored 30-day Free Trial or upgrade to Pro or Premium for unlimited trade logging, dedicated journal books, video uploads, daily workout routines, and direct institutional mentorship.",
+                bn: "বিনামূল্যে ৩০ দিনের ট্রায়াল দিয়ে শুরু করুন অথবা সম্পূর্ণ আনলিমিটেড ট্রেড, একাধিক জার্নাল বুক, ভিডিও সেভিং এবং ১-অন-১ প্রাতিষ্ঠানিক মেন্টরশিপের জন্য প্রো বা প্রিমিয়ামে আপগ্রেড করুন।",
+                ur: "مفت 30 دن کی آزمائش سے شروع کریں یا لامحدود ٹریڈز، متعدد جرنلز، ویڈیو اپ لوڈز، روزانہ ورزش کے معمولات اور 1-آن-1 رہنمائی کے لیے پرو یا پریمیم میں اپ گریڈ کریں۔",
+              })}
             </p>
           </div>
 
@@ -77,10 +89,10 @@ export function HomePlansSection({
               <div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-                    {isBn ? "ফ্রি ট্রায়াল" : "Free Trial"}
+                    {selectText({ en: "Free Trial", bn: "ফ্রি ট্রায়াল", ur: "مفت آزمائش" })}
                   </span>
                   <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                    30 DAYS FULL TRIAL
+                    {selectText({ en: "30 DAYS FULL TRIAL", bn: "৩০ দিন পূর্ণ ট্রায়াল", ur: "30 دن کی مکمل آزمائش" })}
                   </span>
                 </div>
                 <div className="mt-4 flex items-baseline flex-wrap gap-1.5">
@@ -91,39 +103,57 @@ export function HomePlansSection({
                     / ${formatUsd(freeTrialUsd, isBn, "0")}
                   </span>
                   <span className="text-xs text-slate-500 dark:text-slate-400 font-medium ml-1">
-                    {isBn ? "/ ৩০ দিন" : "/ 30 days"}
+                    {selectText({ en: "/ 30 days", bn: "/ ৩০ দিন", ur: "/ 30 دن" })}
                   </span>
                 </div>
                 <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {isBn
-                    ? "অ্যাকাউন্ট তৈরির সাথে সাথে স্বয়ংক্রিয়ভাবে সক্রিয় হয়। ৩০ দিন পর প্রতি মাসে ৫টি ট্রেড ও ৫টি ডিসিপ্লিন দিনে সীমাবদ্ধ থাকবে।"
-                    : "Strictly anchored to your account creation date. After 30 days, converts to Free 5 trades & 5 discipline days per month."}
+                  {selectText({
+                    en: "Strictly anchored to your account creation date. After 30 days, converts to Free 5 trades & 5 discipline days per month.",
+                    bn: "অ্যাকাউন্ট তৈরির সাথে সাথে স্বয়ংক্রিয়ভাবে সক্রিয় হয়। ৩০ দিন পর প্রতি মাসে ৫টি ট্রেড ও ৫টি ডিসিপ্লিন দিনে সীমাবদ্ধ থাকবে।",
+                    ur: "اکاؤنٹ بننے کی تاریخ سے منسلک۔ 30 دن بعد، اکاؤنٹ مستقل طور پر ماہانہ 5 ٹریڈز اور 5 ڈسپلن دنوں تک محدود رہے گا۔",
+                  })}
                 </p>
 
                 <div className="mt-6 border-t border-slate-200/80 pt-5 dark:border-slate-800/80">
                   <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
-                    {isBn ? "সুবিধাসমূহ" : "Included Features"}
+                    {selectText({ en: "Included Features", bn: "সুবিধাসমূহ", ur: "شامل خصوصیات" })}
                   </div>
                   <ul className="space-y-2.5 text-xs text-slate-700 dark:text-slate-300">
                     <li className="flex items-center gap-2.5">
                       <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-                      <span><strong className="text-slate-900 dark:text-white">1 Journal Book</strong> max</span>
+                      <span>
+                        <strong className="text-slate-900 dark:text-white">
+                          {selectText({ en: "1 Journal Book", bn: "১টি জার্নাল বুক", ur: "1 جرنل بک" })}
+                        </strong>{" "}
+                        {selectText({ en: "max", bn: "সর্বোচ্চ", ur: "تک" })}
+                      </span>
                     </li>
                     <li className="flex items-center gap-2.5">
                       <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-                      <span><strong className="text-slate-900 dark:text-white">Unlimited Trades</strong> during 30 days</span>
+                      <span>
+                        <strong className="text-slate-900 dark:text-white">
+                          {selectText({ en: "Unlimited Trades", bn: "আনলিমিটেড ট্রেড", ur: "لامحدود ٹریڈز" })}
+                        </strong>{" "}
+                        {selectText({ en: "during 30 days", bn: "৩০ দিনের মধ্যে", ur: "30 دنوں میں" })}
+                      </span>
                     </li>
                     <li className="flex items-center gap-2.5">
                       <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-                      <span>Standard Journal Analytics</span>
+                      <span>
+                        {selectText({ en: "Standard Journal Analytics", bn: "স্ট্যান্ডার্ড জার্নাল অ্যানালিটিক্স", ur: "معیاری جرنل اینالیٹکس" })}
+                      </span>
                     </li>
                     <li className="flex items-center gap-2.5 text-slate-400 dark:text-slate-500">
                       <LockKeyhole size={15} className="shrink-0" />
-                      <span>Video saving locked</span>
+                      <span>
+                        {selectText({ en: "Video saving locked", bn: "ভিডিও সেভিং লকড", ur: "ویڈیو محفوظ کرنا مقفل" })}
+                      </span>
                     </li>
                     <li className="flex items-center gap-2.5 text-slate-400 dark:text-slate-500">
                       <LockKeyhole size={15} className="shrink-0" />
-                      <span>Workout Routine & Community locked</span>
+                      <span>
+                        {selectText({ en: "Workout Routine & Community locked", bn: "ওয়ার্কআউট রুটিন ও কমিউনিটি লকড", ur: "ورزش معمول اور کمیونٹی مقفل" })}
+                      </span>
                     </li>
                   </ul>
                 </div>
@@ -135,14 +165,14 @@ export function HomePlansSection({
                   className="w-full text-xs font-bold border-slate-200 text-slate-800 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                   onClick={() => setSelectedPlanModal("free")}
                 >
-                  {isBn ? "বিস্তারিত দেখুন" : "View Details"}
+                  {selectText({ en: "View Details", bn: "বিস্তারিত দেখুন", ur: "تفصیلات دیکھیں" })}
                 </Button>
                 <Link href="/dashboard" className="block w-full">
                   <Button
                     variant="ghost"
                     className="w-full text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800/60"
                   >
-                    {isBn ? "ড্যাশবোর্ডে যান" : "Go to Dashboard"}
+                    {selectText({ en: "Go to Dashboard", bn: "ড্যাশবোর্ডে যান", ur: "ڈیش بورڈ پر جائیں" })}
                   </Button>
                 </Link>
               </div>
@@ -151,16 +181,16 @@ export function HomePlansSection({
             {/* CARD 2: PRO PLAN (MOST POPULAR) */}
             <div className="relative flex flex-col justify-between rounded-3xl border-2 border-sky-500 bg-white p-7 shadow-xl shadow-sky-500/10 dark:border-sky-500 dark:bg-[#0c182e] ring-2 ring-sky-500/20">
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-md">
-                ★ MOST POPULAR ★
+                {selectText({ en: "★ MOST POPULAR ★", bn: "★ সবচেয়ে জনপ্রিয় ★", ur: "★ سب سے مقبول ★" })}
               </div>
 
               <div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">
-                    {isBn ? "প্রো প্ল্যান" : "Pro Plan"}
+                    {selectText({ en: "Pro Plan", bn: "প্রো প্ল্যান", ur: "پرو پلان" })}
                   </span>
                   <span className="rounded-full bg-sky-500/10 px-3 py-1 text-[11px] font-bold text-sky-700 dark:text-sky-300 border border-sky-500/25 dark:border-sky-500/20">
-                    +5 BONUS DAYS IN TRIAL
+                    {selectText({ en: "+5 BONUS DAYS IN TRIAL", bn: "+৫ বোনাস দিন ট্রায়ালে", ur: "آزمائش میں +5 اضافی دن" })}
                   </span>
                 </div>
                 <div className="mt-4 flex items-baseline flex-wrap gap-1.5">
@@ -171,47 +201,49 @@ export function HomePlansSection({
                     / ${formatUsd(proUsd, isBn, "5")}
                   </span>
                   <span className="text-xs text-slate-500 dark:text-slate-400 font-medium ml-1">
-                    {isBn ? "প্রতি মাস" : "per month"}
+                    {selectText({ en: "per month", bn: "প্রতি মাস", ur: "فی مہینہ" })}
                   </span>
                 </div>
                 <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {isBn
-                    ? "ম্যানুয়াল মাসিক নবায়ন। ট্রায়াল চলাকালে নিলে পাবেন অতিরিক্ত ৫ বোনাস দিন (মোট ৩৫ দিন)।"
-                    : "Manual monthly renewal. Upgrading during trial adds +5 Bonus Days (35 days total first period)."}
+                  {selectText({
+                    en: "Manual monthly renewal. Upgrading during trial adds +5 Bonus Days (35 days total first period).",
+                    bn: "ম্যানুয়াল মাসিক নবায়ন। ট্রায়াল চলাকালে নিলে পাবেন অতিরিক্ত ৫ বোনাস দিন (মোট ৩৫ দিন)।",
+                    ur: "دستی ماہانہ تجدید۔ آزمائش کے دوران اپ گریڈ کرنے پر 5 اضافی دن (پہلے مہینے میں کل 35 دن)۔",
+                  })}
                 </p>
 
                 <div className="mt-6 border-t border-slate-200/80 pt-5 dark:border-slate-800/80">
                   <div className="text-[11px] font-bold uppercase tracking-wider text-sky-600 dark:text-sky-500 mb-3">
-                    {isBn ? "প্রো সুবিধাসমূহ" : "Pro Features"}
+                    {selectText({ en: "Pro Features", bn: "প্রো সুবিধাসমূহ", ur: "پرو خصوصیات" })}
                   </div>
                   <ul className="space-y-2.5 text-xs text-slate-700 dark:text-slate-300">
                     <li className="flex items-center gap-2.5 font-semibold text-slate-900 dark:text-white">
                       <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
-                      <span><strong>Up to 5 Dedicated Journal Books</strong></span>
+                      <span><strong>{selectText({ en: "Up to 5 Dedicated Journal Books", bn: "সর্বোচ্চ ৫টি ডেডিকেটেড জার্নাল বুক", ur: "5 تک مخصوص جرনল بکس" })}</strong></span>
                     </li>
                     <li className="flex items-center gap-2.5 font-semibold text-slate-900 dark:text-white">
                       <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
-                      <span><strong>Unlimited Trade Entries</strong></span>
+                      <span><strong>{selectText({ en: "Unlimited Trade Entries", bn: "আনলিমিটেড ট্রেড এন্ট্রি", ur: "لامحدود ٹریڈ اندراجات" })}</strong></span>
                     </li>
                     <li className="flex items-center gap-2.5">
                       <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
-                      <span><strong className="text-slate-900 dark:text-white">30 Trade Videos / mo</strong> (restored on delete)</span>
+                      <span><strong className="text-slate-900 dark:text-white">{selectText({ en: "30 Trade Videos / mo", bn: "প্রতি মাসে ৩০টি ট্রেড ভিডিও", ur: "ماہانہ 30 ٹریڈ ویڈیوز" })}</strong> {selectText({ en: "(restored on delete)", bn: "(ডিলিট করলে রিস্টোর হয়)", ur: "(ڈیلیٹ پر کوٹہ بحال)" })}</span>
                     </li>
                     <li className="flex items-center gap-2.5">
                       <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
-                      <span><strong className="text-slate-900 dark:text-white">10 Notebook Pages & 5 Videos / mo</strong></span>
+                      <span><strong className="text-slate-900 dark:text-white">{selectText({ en: "10 Notebook Pages & 5 Videos / mo", bn: "১০টি নোটবুক পেজ এবং ৫টি ভিডিও / মাস", ur: "10 نوٹ بک صفحات اور 5 ویڈیوز / ماہ" })}</strong></span>
                     </li>
                     <li className="flex items-center gap-2.5">
                       <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
-                      <span><strong className="text-slate-900 dark:text-white">Full Workout Routine Access</strong></span>
+                      <span><strong className="text-slate-900 dark:text-white">{selectText({ en: "Full Workout Routine Access", bn: "সম্পূর্ণ ওয়ার্কআউট রুটিন এক্সেস", ur: "ورزش کے معمولات تک رسائی" })}</strong></span>
                     </li>
                     <li className="flex items-center gap-2.5">
                       <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
-                      <span><strong className="text-slate-900 dark:text-white">Full Community Chat Access</strong></span>
+                      <span><strong className="text-slate-900 dark:text-white">{selectText({ en: "Full Community Chat Access", bn: "সম্পূর্ণ কমিউনিটি চ্যাট এক্সেস", ur: "کمیونٹی چیٹ تک رسائی" })}</strong></span>
                     </li>
                     <li className="flex items-center gap-2.5">
                       <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
-                      <span><strong className="text-slate-900 dark:text-white">Global Leaderboard Eligible</strong> (verified)</span>
+                      <span><strong className="text-slate-900 dark:text-white">{selectText({ en: "Global Leaderboard Eligible", bn: "গ্লোবাল লিডারবোর্ডের জন্য যোগ্য", ur: "عالمی لیڈر بورڈ کے اہل" })}</strong> ({selectText({ en: "verified", bn: "ভেরিফায়েড", ur: "تصدیق شدہ" })})</span>
                     </li>
                   </ul>
                 </div>
@@ -220,9 +252,11 @@ export function HomePlansSection({
               <div className="mt-8 space-y-2.5">
                 <Link href="/checkout?plan=pro" className="block w-full">
                   <Button className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-xs h-10 shadow-lg shadow-sky-500/25">
-                    {isBn
-                      ? `প্রো কিনুন — ৳${formatBdt(proBdt, true, "599")} / $${formatUsd(proUsd, true, "5")} প্রতি মাস`
-                      : `Get Pro — ৳${formatBdt(proBdt, false, "599")} / $${formatUsd(proUsd, false, "5")} per month`}
+                    {selectText({
+                      en: `Get Pro — ৳${formatBdt(proBdt, false, "599")} / $${formatUsd(proUsd, false, "5")} per month`,
+                      bn: `প্রো কিনুন — ৳${formatBdt(proBdt, true, "599")} / $${formatUsd(proUsd, true, "5")} প্রতি মাস`,
+                      ur: `پرو حاصل کریں — ৳${formatBdt(proBdt, false, "599")} / $${formatUsd(proUsd, false, "5")} فی مہینہ`,
+                    })}
                   </Button>
                 </Link>
                 <Button
@@ -230,7 +264,7 @@ export function HomePlansSection({
                   className="w-full text-xs font-bold border-sky-500/40 dark:border-sky-500/30 text-sky-700 dark:text-sky-300 hover:bg-sky-500/10 hover:text-sky-800 dark:hover:text-sky-200"
                   onClick={() => setSelectedPlanModal("pro")}
                 >
-                  {isBn ? "বিস্তারিত দেখুন" : "View Details"}
+                  {selectText({ en: "View Details", bn: "বিস্তারিত দেখুন", ur: "تفصیلات دیکھیں" })}
                 </Button>
               </div>
             </div>
@@ -241,10 +275,10 @@ export function HomePlansSection({
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500 flex items-center gap-1.5">
                     <Crown size={15} />
-                    {isBn ? "প্রিমিয়াম প্ল্যান" : "Premium Plan"}
+                    {selectText({ en: "Premium Plan", bn: "প্রিমিয়াম প্ল্যান", ur: "پریمیم پلان" })}
                   </span>
                   <span className="rounded-full bg-amber-500/15 px-3 py-1 text-[11px] font-bold text-amber-700 dark:text-amber-300 border border-amber-500/40 dark:border-amber-500/30">
-                    INSTITUTIONAL
+                    {selectText({ en: "INSTITUTIONAL", bn: "ইন্সটিটিউশনাল", ur: "ادارہ جاتی" })}
                   </span>
                 </div>
                 <div className="mt-4 flex items-baseline flex-wrap gap-1.5">
@@ -255,51 +289,53 @@ export function HomePlansSection({
                     / ${formatUsd(premiumUsd, isBn, "10")}
                   </span>
                   <span className="text-xs text-slate-500 dark:text-slate-400 font-medium ml-1">
-                    {isBn ? "প্রতি মাস" : "per month"}
+                    {selectText({ en: "per month", bn: "প্রতি মাস", ur: "فی مہینہ" })}
                   </span>
                 </div>
                 <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {isBn
-                    ? "সর্বোচ্চ প্রাতিষ্ঠানিক সুযোগ-সুবিধা। মেন্টরদের সরাসরি গাইডেন্স ও ফাউন্ডারের সাথে ওয়ান-টু-ওয়ান চ্যাট।"
-                    : "The ultimate institutional trader suite with 1-on-1 mentorship and direct private chat with the founder."}
+                  {selectText({
+                    en: "The ultimate institutional trader suite with 1-on-1 mentorship and direct private chat with the founder.",
+                    bn: "সর্বোচ্চ প্রাতিষ্ঠানিক সুযোগ-সুবিধা। মেন্টরদের সরাসরি গাইডেন্স ও ফাউন্ডারের সাথে ওয়ান-টু-ওয়ান চ্যাট।",
+                    ur: "ادارہ جاتی سطح کا مکمل پیکیج بشمول 1-آن-1 رہنمائی اور بانی کے ساتھ براہ راست ذاتی چیٹ۔",
+                  })}
                 </p>
 
                 <div className="mt-6 border-t border-slate-200/80 pt-5 dark:border-slate-800/80">
                   <div className="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500 mb-3">
-                    {isBn ? "প্রিমিয়াম সুবিধাসমূহ" : "Premium Exclusive"}
+                    {selectText({ en: "Premium Exclusive", bn: "প্রিমিয়াম সুবিধাসমূহ", ur: "خصوصی پریمیم سہولیات" })}
                   </div>
                   <ul className="space-y-2.5 text-xs text-slate-700 dark:text-slate-300">
                     <li className="flex items-center gap-2.5 font-semibold text-slate-900 dark:text-white">
                       <CheckCircle2 size={16} className="text-amber-600 dark:text-amber-500 shrink-0" />
-                      <span><strong>Unlimited Journal Books</strong></span>
+                      <span><strong>{selectText({ en: "Unlimited Journal Books", bn: "আনলিমিটেড জার্নাল বুক", ur: "لامحدود جرنل بکس" })}</strong></span>
                     </li>
                     <li className="flex items-center gap-2.5 font-semibold text-slate-900 dark:text-white">
                       <CheckCircle2 size={16} className="text-amber-600 dark:text-amber-500 shrink-0" />
-                      <span><strong>Unlimited Log New Trade entries</strong></span>
+                      <span><strong>{selectText({ en: "Unlimited Log New Trade entries", bn: "আনলিমিটেড ট্রেড লগ করার সুবিধা", ur: "لامحدود نئی ٹریڈز درج کرنے کی سہولت" })}</strong></span>
                     </li>
                     <li className="flex items-center gap-2.5 font-semibold text-slate-900 dark:text-white">
                       <CheckCircle2 size={16} className="text-amber-600 dark:text-amber-500 shrink-0" />
-                      <span><strong>Unlimited Video Saving & Notebook Pages</strong></span>
+                      <span><strong>{selectText({ en: "Unlimited Video Saving & Notebook Pages", bn: "আনলিমিটেড ভিডিও সেভিং ও নোটবুক পেজ", ur: "لامحدود ویڈیوز اور نوٹ بک صفحات" })}</strong></span>
                     </li>
                     <li className="flex items-center gap-2.5">
                       <CheckCircle2 size={16} className="text-amber-600 dark:text-amber-500 shrink-0" />
-                      <span>Workout Routine & Community Chat</span>
+                      <span>{selectText({ en: "Workout Routine & Community Chat", bn: "ওয়ার্কআউট রুটিন ও কমিউনিটি চ্যাট", ur: "ورزش معمول اور کمیونٹی چیٹ" })}</span>
                     </li>
                     <li className="flex items-center gap-2.5">
                       <CheckCircle2 size={16} className="text-amber-600 dark:text-amber-500 shrink-0" />
-                      <span><strong className="text-slate-900 dark:text-white">Global Leaderboard Eligible</strong> (verified)</span>
+                      <span><strong className="text-slate-900 dark:text-white">{selectText({ en: "Global Leaderboard Eligible", bn: "গ্লোবাল লিডারবোর্ডের জন্য যোগ্য", ur: "عالمی لیڈر بورڈ کے اہل" })}</strong> ({selectText({ en: "verified", bn: "ভেরিফায়েড", ur: "تصدیق شدہ" })})</span>
                     </li>
                     <li className="flex items-center gap-2.5 font-bold text-amber-600 dark:text-amber-500">
                       <Crown size={15} className="shrink-0" />
-                      <span><strong>Direct 1-on-1 Mentor Support</strong></span>
+                      <span><strong>{selectText({ en: "Direct 1-on-1 Mentor Support", bn: "সরাসরি ১-অন-১ মেন্টর সাপোর্ট", ur: "براہ راست 1-آن-1 رہنمائی" })}</strong></span>
                     </li>
                     <li className="flex items-center gap-2.5 font-bold text-amber-600 dark:text-amber-500">
                       <Crown size={15} className="shrink-0" />
-                      <span><strong>Direct Owner Personal Chat Access</strong></span>
+                      <span><strong>{selectText({ en: "Direct Owner Personal Chat Access", bn: "ফাউন্ডারের সাথে সরাসরি পার্সোনাল চ্যাট এক্সেস", ur: "بانی کے ساتھ براہ راست ذاتی چیٹ" })}</strong></span>
                     </li>
                     <li className="flex items-center gap-2.5">
                       <CheckCircle2 size={16} className="text-amber-600 dark:text-amber-500 shrink-0" />
-                      <span>Pro Remaining Days Paused & Preserved</span>
+                      <span>{selectText({ en: "Pro Remaining Days Paused & Preserved", bn: "প্রো-র অবশিষ্ট দিনগুলো সুরক্ষিত ও পজ থাকবে", ur: "پرو کے باقی ماندہ دن محفوظ اور روک دیے جائیں گے" })}</span>
                     </li>
                   </ul>
                 </div>
@@ -308,9 +344,11 @@ export function HomePlansSection({
               <div className="mt-8 space-y-2.5">
                 <Link href="/checkout?plan=premium" className="block w-full">
                   <Button className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black font-bold text-xs h-10 shadow-lg shadow-amber-500/25">
-                    {isBn
-                      ? `প্রিমিয়াম কিনুন — ৳${formatBdt(premiumBdt, true, "999")} / $${formatUsd(premiumUsd, true, "10")} প্রতি মাস`
-                      : `Get Premium — ৳${formatBdt(premiumBdt, false, "999")} / $${formatUsd(premiumUsd, false, "10")} per month`}
+                    {selectText({
+                      en: `Get Premium — ৳${formatBdt(premiumBdt, false, "999")} / $${formatUsd(premiumUsd, false, "10")} per month`,
+                      bn: `প্রিমিয়াম কিনুন — ৳${formatBdt(premiumBdt, true, "999")} / $${formatUsd(premiumUsd, true, "10")} প্রতি মাস`,
+                      ur: `پریمیم حاصل کریں — ৳${formatBdt(premiumBdt, false, "999")} / $${formatUsd(premiumUsd, false, "10")} فی مہینہ`,
+                    })}
                   </Button>
                 </Link>
                 <Button
@@ -318,7 +356,7 @@ export function HomePlansSection({
                   className="w-full text-xs font-bold border-amber-500/40 dark:border-amber-500/30 text-amber-700 dark:text-amber-300 hover:bg-amber-500/10 hover:text-amber-800 dark:hover:text-amber-200"
                   onClick={() => setSelectedPlanModal("premium")}
                 >
-                  {isBn ? "বিস্তারিত দেখুন" : "View Details"}
+                  {selectText({ en: "View Details", bn: "বিস্তারিত দেখুন", ur: "تفصیلات دیکھیں" })}
                 </Button>
               </div>
             </div>
@@ -334,7 +372,7 @@ export function HomePlansSection({
         >
           <div
             className={`relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-2xl dark:border-slate-800 dark:bg-slate-900 transition-all duration-300 scale-100 animate-in zoom-in-95 ${
-              isBn ? "font-bangla" : ""
+              language === "bn" ? "font-bangla" : language === "ur" ? "font-urdu" : ""
             }`}
             onClick={(e) => e.stopPropagation()}
           >
@@ -346,10 +384,10 @@ export function HomePlansSection({
                 </span>
                 <span className="text-xs font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400">
                   {selectedPlanModal === "free"
-                    ? "Free Trial & Free-After-Trial System"
+                    ? selectText({ en: "Free Trial & Free-After-Trial System", bn: "ফ্রি ট্রায়াল ও ট্রায়াল-পরবর্তী সিস্টেম", ur: "مفت آزمائش اور بعد از آزمائش کا نظام" })
                     : selectedPlanModal === "pro"
-                    ? "Pro Plan Breakdown"
-                    : "Premium Plan Breakdown"}
+                    ? selectText({ en: "Pro Plan Breakdown", bn: "প্রো প্ল্যান বিস্তারিত বিবরণ", ur: "پرو پلان کی مکمل تفصیلات" })
+                    : selectText({ en: "Premium Plan Breakdown", bn: "প্রিমিয়াম প্ল্যান বিস্তারিত বিবরণ", ur: "پریمیم پلان کی مکمل تفصیلات" })}
                 </span>
               </div>
 
@@ -365,17 +403,40 @@ export function HomePlansSection({
             <div className="mt-5 space-y-5">
               <div>
                 <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-                  {selectedPlanModal === "free" && "30-Day Free Trial & Permanent Free Tier"}
-                  {selectedPlanModal === "pro" && `Pro Trader Plan — ৳${formatBdt(proBdt, false, "599")} / $${formatUsd(proUsd, false, "5")} per month`}
-                  {selectedPlanModal === "premium" && `Premium Institutional Plan — ৳${formatBdt(premiumBdt, false, "999")} / $${formatUsd(premiumUsd, false, "10")} per month`}
+                  {selectedPlanModal === "free" &&
+                    selectText({ en: "30-Day Free Trial & Permanent Free Tier", bn: "৩০ দিনের ফ্রি ট্রায়াল ও পার্মানেন্ট ফ্রি টিয়ার", ur: "30 دن کی مفت آزمائش اور مستقل مفت درجہ" })}
+                  {selectedPlanModal === "pro" &&
+                    selectText({
+                      en: `Pro Trader Plan — ৳${formatBdt(proBdt, false, "599")} / $${formatUsd(proUsd, false, "5")} per month`,
+                      bn: `প্রো ট্রেডার প্ল্যান — ৳${formatBdt(proBdt, true, "599")} / $${formatUsd(proUsd, true, "5")} প্রতি মাস`,
+                      ur: `پرو ٹریڈر پلان — ৳${formatBdt(proBdt, false, "599")} / $${formatUsd(proUsd, false, "5")} فی مہینہ`,
+                    })}
+                  {selectedPlanModal === "premium" &&
+                    selectText({
+                      en: `Premium Institutional Plan — ৳${formatBdt(premiumBdt, false, "999")} / $${formatUsd(premiumUsd, false, "10")} per month`,
+                      bn: `প্রিমিয়াম ইন্সটিটিউশনাল প্ল্যান — ৳${formatBdt(premiumBdt, true, "999")} / $${formatUsd(premiumUsd, true, "10")} প্রতি মাস`,
+                      ur: `پریمیم ادارہ جاتی پلان — ৳${formatBdt(premiumBdt, false, "999")} / $${formatUsd(premiumUsd, false, "10")} فی مہینہ`,
+                    })}
                 </h3>
                 <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                   {selectedPlanModal === "free" &&
-                    "Every new account automatically receives a 30-day Free Trial anchored to the exact moment of registration. During this period, you have 1 Journal Book with unlimited trade entries. After 30 days expire, your account permanently enters Free-After-Trial mode (max 5 trade entries and 5 discipline days per rolling 30-day cycle)."}
+                    selectText({
+                      en: "Every new account automatically receives a 30-day Free Trial anchored to the exact moment of registration. During this period, you have 1 Journal Book with unlimited trade entries. After 30 days expire, your account permanently enters Free-After-Trial mode (max 5 trade entries and 5 discipline days per rolling 30-day cycle).",
+                      bn: "প্রতিটি নতুন অ্যাকাউন্ট তৈরির সাথে সাথে স্বয়ংক্রিয়ভাবে ৩০ দিনের পূর্ণ ফ্রি ট্রায়াল শুরু হয়। এই সময়কালে ১টি জার্নাল বুকে আনলিমিটেড ট্রেড এন্ট্রি পাওয়া যায়। ৩০ দিন পর অ্যাকাউন্টটি স্থায়ীভাবে ফ্রি-আফটার-ট্রায়াল মোডে চলে যায় (প্রতি ৩০ দিনে সর্বোচ্চ ৫টি ট্রেড ও ৫টি ডিসিপ্লিন দিন)।",
+                      ur: "ہر نیا اکاؤنٹ رجسٹریشن کے وقت سے 30 دن کی مفت آزمائش حاصل کرتا ہے۔ اس دوران 1 جرنل بک میں لامحدود ٹریڈز درج کی جا سکتی ہیں۔ 30 دن بعد، اکاؤنٹ مستقل طور پر فری موڈ میں چلا جاتا ہے (ماہانہ زیادہ سے زیادہ 5 ٹریڈز اور 5 ڈسپلن دن)۔",
+                    })}
                   {selectedPlanModal === "pro" &&
-                    "The Pro Plan is crafted for active disciplined traders needing separate books, video storage, structured fitness routines, and community collaboration. Renew manually every month with zero automatic debits. If upgraded during your Free Trial, you receive 5 BONUS DAYS (35 days total)."}
+                    selectText({
+                      en: "The Pro Plan is crafted for active disciplined traders needing separate books, video storage, structured fitness routines, and community collaboration. Renew manually every month with zero automatic debits. If upgraded during your Free Trial, you receive 5 BONUS DAYS (35 days total).",
+                      bn: "প্রো প্ল্যানটি সুশৃঙ্খল ট্রেডারদের জন্য ডিজাইন করা হয়েছে যাদের একাধিক জার্নাল বুক, ভিডিও স্টোরেজ, ফিটনেস রুটিন এবং কমিউনিটি সুবিধা প্রয়োজন। কোনো অটো-ডেবিট ছাড়া প্রতি মাসে ম্যানুয়ালি নবায়নযোগ্য। ফ্রি ট্রায়াল চলাকালে আপগ্রেড করলে পাবেন অতিরিক্ত ৫ বোনাস দিন (মোট ৩৫ দিন)।",
+                      ur: "پرو پلان فعال اور منظم ٹریڈرز کے لیے بنایا گیا ہے جنہیں علیحدہ جرنل بکس، ویڈیو اسٹوریج، فٹنس معمولات اور کمیونٹی سپورٹ درکار ہو۔ کوئی خودکار کٹوتی نہیں، ہر ماہ دستی تجدید۔ آزمائش کے دوران اپ گریڈ پر 5 بونس دن (کل 35 دن)۔",
+                    })}
                   {selectedPlanModal === "premium" &&
-                    "The Premium Plan unlocks unlimited institutional scale: unlimited journal books, unlimited trade entries, unlimited video uploads, full access to daily workout routine and community chat, verified Global Leaderboard eligibility, plus direct 1-on-1 private Mentor Support and direct Owner Personal Chat access with the founder."}
+                    selectText({
+                      en: "The Premium Plan unlocks unlimited institutional scale: unlimited journal books, unlimited trade entries, unlimited video uploads, full access to daily workout routine and community chat, verified Global Leaderboard eligibility, plus direct 1-on-1 private Mentor Support and direct Owner Personal Chat access with the founder.",
+                      bn: "প্রিমিয়াম প্ল্যান সম্পূর্ণ প্রাতিষ্ঠানিক সুবিধা উন্মুক্ত করে: আনলিমিটেড জার্নাল বুক, আনলিমিটেড ট্রেড এন্ট্রি, আনলিমিটেড ভিডিও আপলোড, ওয়ার্কআউট রুটিন ও কমিউনিটি চ্যাট, ভেরিফায়েড গ্লোবাল লিডারবোর্ড অ্যাক্সেস, এবং সরাসরি ১-অন-১ মেন্টর সাপোর্ট ও ফাউন্ডারের সাথে পার্সোনাল চ্যাট।",
+                      ur: "پریمیم پلان مکمل ادارہ جاتی پیمانہ کھولتا ہے: لامحدود جرنل بکس، لامحدود ٹریڈ اندراجات، لامحدود ویڈیو اپ لوڈز، ورزش اور کمیونٹی چیٹ تک مکمل رسائی، تصدیق شدہ عالمی لیڈر بورڈ، اور بانی کے ساتھ براہ راست 1-آن-1 رہنمائی اور ذاتی چیٹ۔",
+                    })}
                 </p>
               </div>
 
@@ -384,66 +445,66 @@ export function HomePlansSection({
                 <table className="min-w-[500px] w-full text-left text-xs">
                   <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
                     <tr>
-                      <th className="p-3">Feature</th>
-                      <th className="p-3 text-center">Free Trial (৳0 / $0)</th>
-                      <th className="p-3 text-center">Pro (৳{formatBdt(proBdt, false, "599")} / ${formatUsd(proUsd, false, "5")})</th>
-                      <th className="p-3 text-center">Premium (৳{formatBdt(premiumBdt, false, "999")} / ${formatUsd(premiumUsd, false, "10")})</th>
+                      <th className="p-3">{selectText({ en: "Feature", bn: "সুবিধা", ur: "خصوصیت" })}</th>
+                      <th className="p-3 text-center">{selectText({ en: "Free Trial (৳0 / $0)", bn: "ফ্রি ট্রায়াল (৳০ / $০)", ur: "مفت آزمائش (৳0 / $0)" })}</th>
+                      <th className="p-3 text-center">{selectText({ en: `Pro (৳${formatBdt(proBdt, false, "599")} / $${formatUsd(proUsd, false, "5")})`, bn: `প্রো (৳${formatBdt(proBdt, true, "599")} / $${formatUsd(proUsd, true, "5")})`, ur: `پرو (৳${formatBdt(proBdt, false, "599")} / $${formatUsd(proUsd, false, "5")})` })}</th>
+                      <th className="p-3 text-center">{selectText({ en: `Premium (৳${formatBdt(premiumBdt, false, "999")} / $${formatUsd(premiumUsd, false, "10")})`, bn: `প্রিমিয়াম (৳${formatBdt(premiumBdt, true, "999")} / $${formatUsd(premiumUsd, true, "10")})`, ur: `پریمیم (৳${formatBdt(premiumBdt, false, "999")} / $${formatUsd(premiumUsd, false, "10")})` })}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
                     <tr>
-                      <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">Journal Books</td>
-                      <td className="p-3 text-center text-slate-600 dark:text-slate-400">1 Book</td>
-                      <td className="p-3 text-center font-bold text-sky-600 dark:text-sky-400">5 Books</td>
-                      <td className="p-3 text-center font-bold text-amber-500">Unlimited</td>
+                      <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">{selectText({ en: "Journal Books", bn: "জার্নাল বুক", ur: "جرنل بکس" })}</td>
+                      <td className="p-3 text-center text-slate-600 dark:text-slate-400">{selectText({ en: "1 Book", bn: "১টি বুক", ur: "1 بک" })}</td>
+                      <td className="p-3 text-center font-bold text-sky-600 dark:text-sky-400">{selectText({ en: "5 Books", bn: "৫টি বুক", ur: "5 بکس" })}</td>
+                      <td className="p-3 text-center font-bold text-amber-500">{selectText({ en: "Unlimited", bn: "আনলিমিটেড", ur: "لامحدود" })}</td>
                     </tr>
                     <tr>
-                      <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">Log New Trade</td>
-                      <td className="p-3 text-center text-slate-600 dark:text-slate-400">Unlimited (Trial) / 5 (Post)</td>
-                      <td className="p-3 text-center font-bold text-sky-600 dark:text-sky-400">Unlimited</td>
-                      <td className="p-3 text-center font-bold text-amber-500">Unlimited</td>
+                      <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">{selectText({ en: "Log New Trade", bn: "ট্রেড লগ এন্ট্রি", ur: "ٹریڈ لاگ اندراج" })}</td>
+                      <td className="p-3 text-center text-slate-600 dark:text-slate-400">{selectText({ en: "Unlimited (Trial) / 5 (Post)", bn: "আনলিমিটেড (ট্রায়াল) / ৫ (পরে)", ur: "لامحدود (آزمائش) / 5 (بعد میں)" })}</td>
+                      <td className="p-3 text-center font-bold text-sky-600 dark:text-sky-400">{selectText({ en: "Unlimited", bn: "আনলিমিটেড", ur: "لامحدود" })}</td>
+                      <td className="p-3 text-center font-bold text-amber-500">{selectText({ en: "Unlimited", bn: "আনলিমিটেড", ur: "لامحدود" })}</td>
                     </tr>
                     <tr>
-                      <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">Trade Videos</td>
-                      <td className="p-3 text-center text-rose-500">Locked</td>
-                      <td className="p-3 text-center font-bold text-sky-600 dark:text-sky-400">30 / mo (Restored on del)</td>
-                      <td className="p-3 text-center font-bold text-amber-500">Unlimited</td>
+                      <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">{selectText({ en: "Trade Videos", bn: "ট্রেড ভিডিও", ur: "ٹریڈ ویڈیوز" })}</td>
+                      <td className="p-3 text-center text-rose-500">{selectText({ en: "Locked", bn: "লকড", ur: "مقفل" })}</td>
+                      <td className="p-3 text-center font-bold text-sky-600 dark:text-sky-400">{selectText({ en: "30 / mo (Restored on del)", bn: "৩০টি / মাস (ডিলিটে রিস্টোর)", ur: "30 / ماہ (ڈیلیٹ پر بحال)" })}</td>
+                      <td className="p-3 text-center font-bold text-amber-500">{selectText({ en: "Unlimited", bn: "আনলিমিটেড", ur: "لامحدود" })}</td>
                     </tr>
                     <tr>
-                      <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">Notebook Pages & Videos</td>
-                      <td className="p-3 text-center text-slate-600 dark:text-slate-400">Templates only</td>
-                      <td className="p-3 text-center text-slate-700 dark:text-slate-300">10 Pages / 5 Videos</td>
-                      <td className="p-3 text-center font-bold text-amber-500">Unlimited</td>
+                      <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">{selectText({ en: "Notebook Pages & Videos", bn: "নোটবুক পেজ ও ভিডিও", ur: "نوٹ بک صفحات اور ویڈیوز" })}</td>
+                      <td className="p-3 text-center text-slate-600 dark:text-slate-400">{selectText({ en: "Templates only", bn: "শুধুমাত্র টেমপ্লেট", ur: "صرف ٹیمپلیٹس" })}</td>
+                      <td className="p-3 text-center text-slate-700 dark:text-slate-300">{selectText({ en: "10 Pages / 5 Videos", bn: "১০টি পেজ / ৫টি ভিডিও", ur: "10 صفحات / 5 ویڈیوز" })}</td>
+                      <td className="p-3 text-center font-bold text-amber-500">{selectText({ en: "Unlimited", bn: "আনলিমিটেড", ur: "لامحدود" })}</td>
                     </tr>
                     <tr>
-                      <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">Workout Routine</td>
-                      <td className="p-3 text-center text-rose-500">Locked</td>
-                      <td className="p-3 text-center text-emerald-500 font-bold">Full Access</td>
-                      <td className="p-3 text-center text-emerald-500 font-bold">Full Access</td>
+                      <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">{selectText({ en: "Workout Routine", bn: "ওয়ার্কআউট রুটিন", ur: "ورزش کے معمولات" })}</td>
+                      <td className="p-3 text-center text-rose-500">{selectText({ en: "Locked", bn: "লকড", ur: "مقفل" })}</td>
+                      <td className="p-3 text-center text-emerald-500 font-bold">{selectText({ en: "Full Access", bn: "সম্পূর্ণ এক্সেস", ur: "مکمل رسائی" })}</td>
+                      <td className="p-3 text-center text-emerald-500 font-bold">{selectText({ en: "Full Access", bn: "সম্পূর্ণ এক্সেস", ur: "مکمل رسائی" })}</td>
                     </tr>
                     <tr>
-                      <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">Community Chat</td>
-                      <td className="p-3 text-center text-rose-500">Locked</td>
-                      <td className="p-3 text-center text-emerald-500 font-bold">Full Access</td>
-                      <td className="p-3 text-center text-emerald-500 font-bold">Full Access</td>
+                      <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">{selectText({ en: "Community Chat", bn: "কমিউনিটি চ্যাট", ur: "کمیونٹی چیٹ" })}</td>
+                      <td className="p-3 text-center text-rose-500">{selectText({ en: "Locked", bn: "লকড", ur: "مقفل" })}</td>
+                      <td className="p-3 text-center text-emerald-500 font-bold">{selectText({ en: "Full Access", bn: "সম্পূর্ণ এক্সেস", ur: "مکمل رسائی" })}</td>
+                      <td className="p-3 text-center text-emerald-500 font-bold">{selectText({ en: "Full Access", bn: "সম্পূর্ণ এক্সেস", ur: "مکمل رسائی" })}</td>
                     </tr>
                     <tr>
-                      <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">Global Leaderboard</td>
-                      <td className="p-3 text-center text-slate-600 dark:text-slate-400">View Only</td>
-                      <td className="p-3 text-center font-bold text-sky-600 dark:text-sky-400">Eligible (Verified)</td>
-                      <td className="p-3 text-center font-bold text-amber-500">Eligible (Verified)</td>
+                      <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">{selectText({ en: "Global Leaderboard", bn: "গ্লোবাল লিডারবোর্ড", ur: "عالمی لیڈر بورڈ" })}</td>
+                      <td className="p-3 text-center text-slate-600 dark:text-slate-400">{selectText({ en: "View Only", bn: "শুধুমাত্র দেখা", ur: "صرف دیکھنا" })}</td>
+                      <td className="p-3 text-center font-bold text-sky-600 dark:text-sky-400">{selectText({ en: "Eligible (Verified)", bn: "যোগ্য (ভেরিফায়েড)", ur: "اہل (تصدیق شدہ)" })}</td>
+                      <td className="p-3 text-center font-bold text-amber-500">{selectText({ en: "Eligible (Verified)", bn: "যোগ্য (ভেরিফায়েড)", ur: "اہل (تصدیق شدہ)" })}</td>
                     </tr>
                     <tr>
-                      <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">1-on-1 Mentor Support</td>
-                      <td className="p-3 text-center text-rose-500">Locked</td>
-                      <td className="p-3 text-center text-rose-500">Locked</td>
-                      <td className="p-3 text-center font-bold text-amber-500">Direct 1-on-1</td>
+                      <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">{selectText({ en: "1-on-1 Mentor Support", bn: "১-অন-১ মেন্টর সাপোর্ট", ur: "1-آن-1 رہنمائی" })}</td>
+                      <td className="p-3 text-center text-rose-500">{selectText({ en: "Locked", bn: "লকড", ur: "مقفل" })}</td>
+                      <td className="p-3 text-center text-rose-500">{selectText({ en: "Locked", bn: "লকড", ur: "مقفل" })}</td>
+                      <td className="p-3 text-center font-bold text-amber-500">{selectText({ en: "Direct 1-on-1", bn: "সরাসরি ১-অন-১", ur: "براہ راست 1-آن-1" })}</td>
                     </tr>
                     <tr>
-                      <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">Owner Personal Chat</td>
-                      <td className="p-3 text-center text-rose-500">Locked</td>
-                      <td className="p-3 text-center text-rose-500">Locked</td>
-                      <td className="p-3 text-center font-bold text-amber-500">Direct Founder Channel</td>
+                      <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">{selectText({ en: "Owner Personal Chat", bn: "ফাউন্ডার পার্সোনাল চ্যাট", ur: "بانی کے ساتھ ذاتی چیٹ" })}</td>
+                      <td className="p-3 text-center text-rose-500">{selectText({ en: "Locked", bn: "লকড", ur: "مقفل" })}</td>
+                      <td className="p-3 text-center text-rose-500">{selectText({ en: "Locked", bn: "লকড", ur: "مقفل" })}</td>
+                      <td className="p-3 text-center font-bold text-amber-500">{selectText({ en: "Direct Channel", bn: "সরাসরি চ্যানেল", ur: "براہ راست چینل" })}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -453,13 +514,21 @@ export function HomePlansSection({
               <div className="p-4 rounded-2xl bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/40 text-xs text-sky-900 dark:text-sky-200 space-y-1">
                 <div className="font-bold flex items-center gap-1.5 text-sky-700 dark:text-sky-300">
                   <Sparkles size={14} />
-                  <span>Special Bonus & Pausing Rules</span>
+                  <span>{selectText({ en: "Special Bonus & Pausing Rules", bn: "বিশেষ বোনাস ও পজ করার নিয়মাবলী", ur: "خصوصی بونس اور توقف کے اصول" })}</span>
                 </div>
                 <p className="leading-relaxed">
-                  • <strong>Trial Bonus:</strong> Purchasing Pro or Premium during your 30-day Free Trial immediately adds <strong>5 Bonus Days</strong> (35 days total for that first month).
+                  • <strong>{selectText({ en: "Trial Bonus:", bn: "ট্রায়াল বোনাস:", ur: "آزمائشی بونس:" })}</strong> {selectText({
+                    en: "Purchasing Pro or Premium during your 30-day Free Trial immediately adds 5 Bonus Days (35 days total for that first month).",
+                    bn: "৩০ দিনের ফ্রি ট্রায়াল চলাকালে প্রো বা প্রিমিয়াম কিনলে সাথে সাথে ৫টি বোনাস দিন যোগ হবে (প্রথম মাসে মোট ৩৫ দিন)।",
+                    ur: "30 دن کی مفت آزمائش کے دوران پرو یا پریمیم خریدنے پر فوری 5 اضافی بونس دن ملیں گے (پہلے مہینے میں کل 35 دن)۔",
+                  })}
                 </p>
                 <p className="leading-relaxed">
-                  • <strong>Plan Switching:</strong> If you are on Pro and upgrade to Premium, your remaining Pro days are paused and preserved in the database. When Premium expires, your remaining Pro days automatically resume.
+                  • <strong>{selectText({ en: "Plan Switching:", bn: "প্ল্যান পরিবর্তন:", ur: "پلان کی تبدیلی:" })}</strong> {selectText({
+                    en: "If you are on Pro and upgrade to Premium, your remaining Pro days are paused and preserved in the database. When Premium expires, your remaining Pro days automatically resume.",
+                    bn: "আপনি প্রো-তে থাকা অবস্থায় প্রিমিয়ামে আপগ্রেড করলে অবশিষ্ট প্রো দিনগুলো ডাটাবেজে পজ ও সংরক্ষিত থাকবে। প্রিমিয়াম শেষ হলে প্রো দিনগুলো পুনরায় চালু হবে।",
+                    ur: "اگر آپ پرو پلان پر ہیں اور پریمیم میں اپ گریڈ کرتے ہیں تو آپ کے باقی ماندہ پرو دن محفوظ رہیں گے۔ پریمیم ختم ہونے پر پرو کے دن دوبارہ شروع ہو جائیں گے۔",
+                  })}
                 </p>
               </div>
             </div>
@@ -471,19 +540,27 @@ export function HomePlansSection({
                 onClick={() => setSelectedPlanModal(null)}
                 className="w-full sm:w-auto text-xs"
               >
-                Close
+                {selectText({ en: "Close", bn: "বন্ধ করুন", ur: "بند کریں" })}
               </Button>
               {selectedPlanModal === "pro" && (
                 <Link href="/checkout?plan=pro" className="w-full sm:w-auto">
                   <Button className="w-full sm:w-auto bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold text-xs">
-                    Proceed to Checkout (৳{formatBdt(proBdt, false, "599")} / ${formatUsd(proUsd, false, "5")} / mo)
+                    {selectText({
+                      en: `Proceed to Checkout (৳${formatBdt(proBdt, false, "599")} / $${formatUsd(proUsd, false, "5")} / mo)`,
+                      bn: `চেকআউটে যান (৳${formatBdt(proBdt, true, "599")} / $${formatUsd(proUsd, true, "5")} / মাস)`,
+                      ur: `چیک آؤٹ پر جائیں (৳${formatBdt(proBdt, false, "599")} / $${formatUsd(proUsd, false, "5")} / ماہ)`,
+                    })}
                   </Button>
                 </Link>
               )}
               {selectedPlanModal === "premium" && (
                 <Link href="/checkout?plan=premium" className="w-full sm:w-auto">
                   <Button className="w-full sm:w-auto bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-bold text-xs">
-                    Proceed to Checkout (৳{formatBdt(premiumBdt, false, "999")} / ${formatUsd(premiumUsd, false, "10")} / mo)
+                    {selectText({
+                      en: `Proceed to Checkout (৳${formatBdt(premiumBdt, false, "999")} / $${formatUsd(premiumUsd, false, "10")} / mo)`,
+                      bn: `চেকআউটে যান (৳${formatBdt(premiumBdt, true, "999")} / $${formatUsd(premiumUsd, true, "10")} / মাস)`,
+                      ur: `چیک آؤٹ پر جائیں (৳${formatBdt(premiumBdt, false, "999")} / $${formatUsd(premiumUsd, false, "10")} / ماہ)`,
+                    })}
                   </Button>
                 </Link>
               )}

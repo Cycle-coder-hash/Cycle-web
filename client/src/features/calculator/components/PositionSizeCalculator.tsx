@@ -38,8 +38,7 @@ function parseNumericField(raw: string): number {
 export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
   initialBalance,
 }) => {
-  const { language } = useLanguage();
-  const isBn = language === "bn";
+  const { selectText, isUr, isRTL } = useLanguage();
   const { formatCurrency, currency } = useUserPreferences();
 
   // Form State
@@ -130,7 +129,10 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
     activeInstrument.category === "indices" || activeInstrument.category === "crypto";
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div
+      dir={isRTL ? "rtl" : "ltr"}
+      className={`space-y-8 animate-in fade-in duration-300 ${isUr ? "font-urdu" : ""}`}
+    >
       {/* Tool Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800">
         <div>
@@ -140,12 +142,18 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
             </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-                {isBn ? "পজিশন সাইজ ও রিস্ক ক্যালকুলেটর" : "Position Size & Risk Calculator"}
+                {selectText({
+                  en: "Position Size & Risk Calculator",
+                  bn: "পজিশন সাইজ ও রিস্ক ক্যালকুলেটর",
+                  ur: "پوزیشن سائز اور رسک کیلکولیٹر",
+                })}
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                {isBn
-                  ? "ক্যান্ডেল রেঞ্জ থিওরি (CRT) নীতি অনুযায়ী সঠিক লট সাইজ ও ক্যাপিটাল রিস্ক নির্ধারণ করুন।"
-                  : "Calculate precise lot sizing, cash at risk, and contract units to protect your trading capital."}
+                {selectText({
+                  en: "Calculate precise lot sizing, cash at risk, and contract units to protect your trading capital.",
+                  bn: "ক্যান্ডেল রেঞ্জ থিওরি (CRT) নীতি অনুযায়ী সঠিক লট সাইজ ও ক্যাপিটাল রিস্ক নির্ধারণ করুন।",
+                  ur: "اپنے ٹریڈنگ سرمائے کے تحفظ کے لیے درست لاٹ سائزنگ اور متوقع خطرے کا حساب لگائیں۔",
+                })}
               </p>
             </div>
           </div>
@@ -160,7 +168,13 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
             className="gap-1.5 text-xs font-bold border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50"
           >
             <RotateCcw size={13} />
-            <span>{isBn ? "রিসেট করুন" : "Reset Default"}</span>
+            <span>
+              {selectText({
+                en: "Reset Default",
+                bn: "রিসেট করুন",
+                ur: "طے شدہ ری سیٹ کریں",
+              })}
+            </span>
           </Button>
         </div>
       </div>
@@ -177,7 +191,11 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
             <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
               <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-2">
                 <Layers size={14} className="text-sky-500" />
-                {isBn ? "প্যারামিটার ইনপুট" : "Trade Parameters"}
+                {selectText({
+                  en: "Trade Parameters",
+                  bn: "প্যারামিটার ইনপুট",
+                  ur: "ٹریڈ پیرامیٹرز",
+                })}
               </span>
               <span className="rounded-full bg-sky-500/10 px-2.5 py-0.5 text-[10px] font-bold text-sky-500 dark:text-sky-400">
                 Institutional CRT
@@ -189,7 +207,13 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
               <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-600 dark:text-rose-400 space-y-1">
                 <div className="flex items-center gap-2 font-bold">
                   <AlertCircle size={15} />
-                  <span>{isBn ? "ইনপুট সংশোধন করুন" : "Please check your inputs:"}</span>
+                  <span>
+                    {selectText({
+                      en: "Please check your inputs:",
+                      bn: "ইনপুট সংশোধন করুন:",
+                      ur: "براہ کرم اپنے ان پٹس کی تصدیق کریں:",
+                    })}
+                  </span>
                 </div>
                 <ul className="list-disc pl-6 space-y-0.5 text-[11px]">
                   {Object.values(validationErrors).map((err, idx) => (
@@ -202,7 +226,11 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
             {/* 1. Trading Instrument Selector */}
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                {isBn ? "ট্রেডিং ইনস্ট্রুমেন্ট / পেয়ার" : "Trading Instrument"}
+                {selectText({
+                  en: "Trading Instrument",
+                  bn: "ট্রেডিং ইনস্ট্রুমেন্ট / পেয়ার",
+                  ur: "ٹریڈنگ انسٹرومنٹ",
+                })}
               </label>
               <select
                 value={symbol}
@@ -250,7 +278,11 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                  {isBn ? "অ্যাকাউন্ট ব্যালেন্স ($)" : "Account Balance ($ USD)"}
+                  {selectText({
+                    en: "Account Balance ($ USD)",
+                    bn: "অ্যাকাউন্ট ব্যালেন্স ($ USD)",
+                    ur: "اکاؤنٹ بیلنس ($ USD)",
+                  })}
                 </label>
                 {initialBalance && initialBalance > 0 && (
                   <button
@@ -258,9 +290,11 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                     onClick={() => setBalance(String(initialBalance))}
                     className="text-[11px] font-bold text-sky-500 hover:underline"
                   >
-                    {isBn
-                      ? `জার্নাল ব্যালেন্স ব্যবহার করুন ($${initialBalance})`
-                      : `Use Journal Balance ($${initialBalance.toLocaleString()})`}
+                    {selectText({
+                      en: `Use Journal Balance ($${initialBalance.toLocaleString()})`,
+                      bn: `জার্নাল ব্যালেন্স ব্যবহার করুন ($${initialBalance.toLocaleString()})`,
+                      ur: `جرنل بیلنس استعمال کریں ($${initialBalance.toLocaleString()})`,
+                    })}
                   </button>
                 )}
               </div>
@@ -274,6 +308,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                   min="1"
                   required
                   placeholder="10000"
+                  dir="ltr"
                   value={balance}
                   onChange={(e) => setBalance(e.target.value)}
                   className={`w-full rounded-2xl border bg-slate-50 py-3 pl-8 pr-4 text-sm font-extrabold text-slate-900 outline-none transition dark:bg-slate-900 dark:text-white ${
@@ -294,15 +329,24 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                  {isBn ? "রিস্ক শতাংশ (% Risk)" : "Risk Percentage (%)"}
+                  {selectText({
+                    en: "Risk Percentage (%)",
+                    bn: "রিস্ক শতাংশ (% Risk)",
+                    ur: "رسک کا تناسب (%)",
+                  })}
                 </label>
                 <span className="text-[11px] font-extrabold text-sky-500 dark:text-sky-400">
-                  ${previewRiskAmount.toFixed(2)} USD at risk
+                  <span dir="ltr">${previewRiskAmount.toFixed(2)} USD</span>{" "}
+                  {selectText({
+                    en: "at risk",
+                    bn: "ঝুঁকিতে",
+                    ur: "خطرے میں",
+                  })}
                 </span>
               </div>
 
               {/* Quick Select Pill Buttons */}
-              <div className="grid grid-cols-5 gap-2 mb-2">
+              <div className="grid grid-cols-5 gap-2 mb-2" dir="ltr">
                 {QUICK_RISK_PRESETS.map((preset) => {
                   const isActive = parseNumericField(riskPercent) === preset;
                   return (
@@ -331,6 +375,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                   max="100"
                   required
                   placeholder="1.0"
+                  dir="ltr"
                   value={riskPercent}
                   onChange={(e) => setRiskPercent(e.target.value)}
                   className={`w-full rounded-2xl border bg-slate-50 py-3 pl-4 pr-9 text-sm font-extrabold text-slate-900 outline-none transition dark:bg-slate-900 dark:text-white ${
@@ -354,7 +399,11 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                  {isBn ? "স্টপ লস দূরত্ব (Pips / Points)" : "Stop Loss Distance (Pips / Points)"}
+                  {selectText({
+                    en: "Stop Loss Distance (Pips / Points)",
+                    bn: "স্টপ লস দূরত্ব (Pips / Points)",
+                    ur: "Stop Loss فاصلہ (Pips / Points)",
+                  })}
                 </label>
                 <span className="text-[11px] text-slate-400">
                   {isPointsInstrument ? "Points" : "Pips"}
@@ -366,6 +415,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                 min="0.1"
                 required
                 placeholder="20"
+                dir="ltr"
                 value={stopLossPips}
                 onChange={(e) => setStopLossPips(e.target.value)}
                 className={`w-full rounded-2xl border bg-slate-50 p-3 text-sm font-extrabold text-slate-900 outline-none transition dark:bg-slate-900 dark:text-white ${
@@ -387,7 +437,13 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
               className="w-full h-12 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 text-slate-950 font-black text-sm shadow-lg shadow-sky-500/25 hover:from-sky-400 hover:to-blue-500 transition-all gap-2"
             >
               <Calculator size={18} />
-              <span>{isBn ? "পজিশন সাইজ হিসাব করুন" : "Calculate Position Size"}</span>
+              <span>
+                {selectText({
+                  en: "Calculate Position Size",
+                  bn: "পজিশন সাইজ হিসাব করুন",
+                  ur: "پوزیشن سائز کا حساب لگائیں",
+                })}
+              </span>
             </Button>
           </form>
         </div>
@@ -403,7 +459,11 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
               <div className="flex items-center justify-between">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-[#38bdf8] flex items-center gap-1.5">
                   <Sparkles size={14} className="text-[#38bdf8]" />
-                  {isBn ? "হিসাবকৃত সঠিক পজিশন সাইজ" : "Recommended Lot Sizing"}
+                  {selectText({
+                    en: "Recommended Lot Sizing",
+                    bn: "হিসাবকৃত সঠিক পজিশন সাইজ",
+                    ur: "تجویز کردہ لاٹ سائز",
+                  })}
                 </span>
                 <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-400 border border-emerald-500/30">
                   {activeInstrument.symbol}
@@ -413,20 +473,27 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
               {/* Main Prominent Lot Display */}
               <div className="rounded-2xl border border-sky-500/20 bg-gradient-to-br from-[#091830] to-[#061122] p-6 text-center space-y-1 shadow-inner">
                 <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                  {isBn ? "স্ট্যান্ডার্ড লট সাইজ" : "Standard Lot Size"}
+                  {selectText({
+                    en: "Standard Lot Size",
+                    bn: "স্ট্যান্ডার্ড লট সাইজ",
+                    ur: "اسٹینڈرڈ لاٹ سائز",
+                  })}
                 </div>
-                <div className="text-4xl sm:text-5xl font-black text-white tracking-tight text-glow-cyan">
+                <div className="text-4xl sm:text-5xl font-black text-white tracking-tight text-glow-cyan" dir="ltr">
                   {calculationResult.isValid
                     ? calculationResult.standardLots.toFixed(lotDecimals)
                     : "0.00"}{" "}
                   <span className="text-base sm:text-lg font-bold text-sky-400">Lots</span>
                 </div>
                 <div className="text-xs font-semibold text-slate-300 pt-1">
-                  {isBn
-                    ? `সর্বোচ্চ ক্যাপিটাল ঝুঁকি: $${calculationResult.riskAmount.toFixed(2)} USD`
-                    : `Max Capital At Risk: $${calculationResult.riskAmount.toFixed(2)} USD`}
+                  {selectText({
+                    en: "Max Capital At Risk: ",
+                    bn: "সর্বোচ্চ ক্যাপিটাল ঝুঁকি: ",
+                    ur: "زیادہ سے زیادہ متوقع خطرہ: ",
+                  })}
+                  <span dir="ltr">${calculationResult.riskAmount.toFixed(2)} USD</span>
                   {currency !== "USD" && (
-                    <span className="text-slate-400 ml-1.5">
+                    <span className="text-slate-400 ml-1.5" dir="ltr">
                       ({formatCurrency(calculationResult.riskAmount * (currency === "BDT" ? 120 : 1))})
                     </span>
                   )}
@@ -434,9 +501,11 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                 {calculationResult.isValid &&
                   Math.abs(calculationResult.actualRiskAmount - calculationResult.riskAmount) >= 0.01 && (
                     <div className="text-[11px] text-sky-400/90">
-                      {isBn
-                        ? `সঠিক লট অনুযায়ী প্রকৃত এসএল ঝুঁকি: $${calculationResult.actualRiskAmount.toFixed(2)} USD`
-                        : `Actual SL Risk at ${calculationResult.standardLots.toFixed(lotDecimals)} Lots: $${calculationResult.actualRiskAmount.toFixed(2)} USD`}
+                      {selectText({
+                        en: `Actual SL Risk at ${calculationResult.standardLots.toFixed(lotDecimals)} Lots: $${calculationResult.actualRiskAmount.toFixed(2)} USD`,
+                        bn: `সঠিক লট অনুযায়ী প্রকৃত এসএল ঝুঁকি: $${calculationResult.actualRiskAmount.toFixed(2)} USD`,
+                        ur: `${calculationResult.standardLots.toFixed(lotDecimals)} لاٹس پر اصل SL رسک: $${calculationResult.actualRiskAmount.toFixed(2)} USD`,
+                      })}
                     </div>
                   )}
               </div>
@@ -455,9 +524,11 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                     </div>
                     {calculationResult.isBelowMinLot && (
                       <div className="text-[11px] text-amber-600/80 dark:text-amber-300/80">
-                        {isBn
-                          ? `হিসাবকৃত সাইজ: ${calculationResult.rawLots.toFixed(4)} লট (ন্যূনতম প্রয়োজন: ${activeInstrument.minLot} লট)।`
-                          : `Calculated raw size: ${calculationResult.rawLots.toFixed(4)} lots (Broker minimum: ${activeInstrument.minLot} lots).`}
+                        {selectText({
+                          en: `Calculated raw size: ${calculationResult.rawLots.toFixed(4)} lots (Broker minimum: ${activeInstrument.minLot} lots).`,
+                          bn: `হিসাবকৃত সাইজ: ${calculationResult.rawLots.toFixed(4)} লট (ন্যূনতম প্রয়োজন: ${activeInstrument.minLot} লট)।`,
+                          ur: `حساب کردہ خام سائز: ${calculationResult.rawLots.toFixed(4)} لاٹس (بروکر کم از کم: ${activeInstrument.minLot} لاٹس)۔`,
+                        })}
                       </div>
                     )}
                   </div>
@@ -469,31 +540,43 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                 {/* Mini Lots */}
                 <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
                   <div className="text-[10px] font-bold text-slate-400 uppercase">
-                    {isBn ? "মিনি লটস" : "Mini Lots"}
+                    {selectText({
+                      en: "Mini Lots",
+                      bn: "মিনি লটস",
+                      ur: "منی لاٹس",
+                    })}
                   </div>
-                  <div className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5">
+                  <div className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5" dir="ltr">
                     {calculationResult.isValid ? calculationResult.miniLots.toFixed(2) : "0.00"}
                   </div>
-                  <div className="text-[10px] text-slate-400">0.1x Lot</div>
+                  <div className="text-[10px] text-slate-400" dir="ltr">0.1x Lot</div>
                 </div>
 
                 {/* Micro Lots */}
                 <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
                   <div className="text-[10px] font-bold text-slate-400 uppercase">
-                    {isBn ? "মাইক্রো লটস" : "Micro Lots"}
+                    {selectText({
+                      en: "Micro Lots",
+                      bn: "মাইক্রো লটস",
+                      ur: "مائیکرو لاٹس",
+                    })}
                   </div>
-                  <div className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5">
+                  <div className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5" dir="ltr">
                     {calculationResult.isValid ? calculationResult.microLots.toFixed(2) : "0.00"}
                   </div>
-                  <div className="text-[10px] text-slate-400">0.01x Lot</div>
+                  <div className="text-[10px] text-slate-400" dir="ltr">0.01x Lot</div>
                 </div>
 
                 {/* Total Units / Contract Quantity */}
                 <div className="col-span-2 sm:col-span-1 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
                   <div className="text-[10px] font-bold text-slate-400 uppercase">
-                    {isBn ? "মোট ভলিউম / ইউনিট" : "Total Volume"}
+                    {selectText({
+                      en: "Total Volume",
+                      bn: "মোট ভলিউম / ইউনিট",
+                      ur: "کل والیوم / یونٹس",
+                    })}
                   </div>
-                  <div className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5 truncate">
+                  <div className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5 truncate" dir="ltr">
                     {calculationResult.isValid
                       ? `${calculationResult.contractUnits.toLocaleString()} ${calculationResult.unitName}`
                       : `0 ${calculationResult.unitName}`}
@@ -504,9 +587,13 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                 {/* Pip Value */}
                 <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
                   <div className="text-[10px] font-bold text-slate-400 uppercase">
-                    {isBn ? "পিপ ভ্যালু / লট" : "Pip Value / Lot"}
+                    {selectText({
+                      en: "Pip Value / Lot",
+                      bn: "পিপ ভ্যালু / লট",
+                      ur: "پپ ویلیو / لاٹ",
+                    })}
                   </div>
-                  <div className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5">
+                  <div className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5" dir="ltr">
                     ${calculationResult.pipValuePerLot.toFixed(2)}
                   </div>
                   <div className="text-[10px] text-slate-400">
@@ -517,9 +604,13 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                 {/* Balance After Loss */}
                 <div className="col-span-2 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
                   <div className="text-[10px] font-bold text-slate-400 uppercase">
-                    {isBn ? "এসএল হিট হলে অবশিষ্ট ব্যালেন্স" : "Balance After Stop Loss"}
+                    {selectText({
+                      en: "Balance After Stop Loss",
+                      bn: "এসএল হিট হলে অবশিষ্ট ব্যালেন্স",
+                      ur: "اسٹاپ لاس کے بعد باقی بیلنس",
+                    })}
                   </div>
-                  <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                  <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5" dir="ltr">
                     $
                     {calculationResult.isValid
                       ? calculationResult.balanceAfterLoss.toLocaleString(undefined, {
@@ -530,7 +621,11 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                     USD
                   </div>
                   <div className="text-[10px] text-slate-400">
-                    {isBn ? "নিরাপদ অ্যাকাউন্ট টিকে থাকা নিশ্চিত" : "Account remains protected"}
+                    {selectText({
+                      en: "Account remains protected",
+                      bn: "নিরাপদ অ্যাকাউন্ট টিকে থাকা নিশ্চিত",
+                      ur: "اکاؤنٹ محفوظ رہے گا",
+                    })}
                   </div>
                 </div>
               </div>
@@ -543,16 +638,18 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
               <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
                   <Target size={15} className="text-amber-500" />
-                  {isBn
-                    ? "প্রত্যাশিত রিটার্ন ম্যাট্রিক্স (R:R Targets)"
-                    : "Risk-to-Reward Projections"}
+                  {selectText({
+                    en: "Risk-to-Reward Projections",
+                    bn: "প্রত্যাশিত রিটার্ন ম্যাট্রিক্স (R:R Targets)",
+                    ur: "رسک ٹو ریوارڈ پروجیکشنز (R:R)",
+                  })}
                 </span>
                 <span className="text-[11px] font-bold text-slate-400">
                   SL: {calculationResult.instrument.symbol}
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5" dir="ltr">
                 {calculationResult.riskRewardTargets.map((target) => (
                   <div
                     key={target.ratio}
@@ -581,15 +678,19 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
             <div className="flex items-center gap-2 font-black text-sky-600 dark:text-sky-400 text-xs uppercase tracking-wider">
               <ShieldCheck size={16} />
               <span>
-                {isBn
-                  ? "ক্যান্ডেল রেঞ্জ থিওরি (CRT) রিস্ক আর্কিটেকচার"
-                  : "Institutional Risk Architecture"}
+                {selectText({
+                  en: "Institutional Risk Architecture",
+                  bn: "ক্যান্ডেল রেঞ্জ থিওরি (CRT) রিস্ক আর্কিটেকচার",
+                  ur: "ادارہ جاتی رسک آرکیٹیکچر (CRT)",
+                })}
               </span>
             </div>
             <p className="leading-relaxed text-[11px]">
-              {isBn
-                ? "একজন প্রাতিষ্ঠানিক ট্রেডারের প্রথম লক্ষ্য লাভ নয়, মূলধন রক্ষা করা। কোনো একক সেটআপে কখনোই ১% থেকে ২% এর বেশি রিস্ক নেওয়া উচিত নয়।"
-                : "Professional institutional traders prioritize capital preservation over speculative returns. Never allocate more than 1%–2% of total equity to any single execution."}
+              {selectText({
+                en: "Professional institutional traders prioritize capital preservation over speculative returns. Never allocate more than 1%–2% of total equity to any single execution.",
+                bn: "একজন প্রাতিষ্ঠানিক ট্রেডারের প্রথম লক্ষ্য লাভ নয়, মূলধন রক্ষা করা। কোনো একক সেটআপে কখনোই ১% থেকে ২% এর বেশি রিস্ক নেওয়া উচিত নয়।",
+                ur: "پیشہ ور ادارہ جاتی ٹریڈرز غیر یقینی منافع کے مقابلے میں سرمائے کے تحفظ کو ترجیح دیتے ہیں۔ کبھی بھی کسی ایک ٹریڈ پر اپنے کل سرمائے کا 1% سے 2% سے زیادہ رسک نہ لیں۔",
+              })}
             </p>
           </div>
         </div>

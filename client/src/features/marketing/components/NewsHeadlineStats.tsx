@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Phase = "enter" | "active" | "exit" | "empty";
 type LabelPhase = "hidden" | "entering" | "visible" | "exiting";
@@ -7,7 +8,8 @@ interface NewsHeadlineStatsProps {
   isBn?: boolean;
 }
 
-export function NewsHeadlineStats({ isBn = false }: NewsHeadlineStatsProps) {
+export function NewsHeadlineStats({ isBn: _isBnProp }: NewsHeadlineStatsProps) {
+  const { language, selectText } = useLanguage();
   const [phase, setPhase] = useState<Phase>("enter");
   const [labelPhase, setLabelPhase] = useState<LabelPhase>("hidden");
 
@@ -119,7 +121,7 @@ export function NewsHeadlineStats({ isBn = false }: NewsHeadlineStatsProps) {
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-500" />
               </span>
               <span className="bg-gradient-to-r from-cyan-600 via-blue-600 to-violet-600 bg-clip-text text-transparent dark:from-cyan-400 dark:via-blue-400 dark:to-violet-400">
-                YOUR POINT
+                {selectText({ en: "YOUR POINT", bn: "আপনার পয়েন্ট", ur: "اہم نکتہ" })}
               </span>
             </div>
           </div>
@@ -129,10 +131,10 @@ export function NewsHeadlineStats({ isBn = false }: NewsHeadlineStatsProps) {
             {/* Headline 1: 12+ LEARNING STAGES */}
             <div className="flex items-baseline gap-2">
               <span className="font-mono text-2xl sm:text-3xl font-black tracking-tight text-emerald-600 dark:text-[#00ff88] drop-shadow-[0_0_16px_rgba(0,255,136,0.55)]">
-                {isBn ? "১২+" : "12+"}
+                {language === "bn" ? "১২+" : "12+"}
               </span>
               <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-300 drop-shadow-[0_0_10px_rgba(16,185,129,0.35)]">
-                {isBn ? "লার্নিং স্টেজ" : "LEARNING STAGES"}
+                {selectText({ en: "LEARNING STAGES", bn: "লার্নিং স্টেজ", ur: "تعلیمی مراحل" })}
               </span>
             </div>
 
@@ -145,7 +147,7 @@ export function NewsHeadlineStats({ isBn = false }: NewsHeadlineStatsProps) {
                 A–Z
               </span>
               <span className="text-xs sm:text-sm font-bold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-300 drop-shadow-[0_0_10px_rgba(16,185,129,0.35)]">
-                {isBn ? "স্ট্রাকচার্ড রোডম্যাপ" : "STRUCTURED ROADMAP"}
+                {selectText({ en: "STRUCTURED ROADMAP", bn: "স্ট্রাকচার্ড রোডম্যাপ", ur: "منظم روڈ میپ" })}
               </span>
             </div>
           </div>

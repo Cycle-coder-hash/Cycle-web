@@ -75,7 +75,47 @@ export function getOptionById(id: string): CountryLanguageOption {
   return COUNTRY_LANGUAGE_OPTIONS.find((o) => o.id === id) || COUNTRY_LANGUAGE_OPTIONS[1];
 }
 
+export const PROTECTED_TRADING_TERMS = [
+  "Cycle of Chart",
+  "SMC",
+  "ICT",
+  "CRT",
+  "Candle Range Theory",
+  "Forex",
+  "XAU/USD",
+  "BTC/USD",
+  "EUR/USD",
+  "GBP/USD",
+  "USD/JPY",
+  "BOS",
+  "Break of Structure",
+  "CHoCH",
+  "Change of Character",
+  "MSS",
+  "Market Structure Shift",
+  "FVG",
+  "Fair Value Gap",
+  "Order Block",
+  "OB",
+  "Liquidity Sweep",
+  "Stop Loss",
+  "SL",
+  "Take Profit",
+  "TP",
+  "Risk:Reward",
+  "R:R",
+  "Lot Size",
+  "TradingView",
+  "MetaTrader",
+  "MT4",
+  "MT5",
+  "bKash",
+  "Nagad",
+  "Rocket",
+] as const;
+
 export interface TranslationSchema {
+  [key: string]: any;
   nav: {
     roadmap: string;
     store: string;

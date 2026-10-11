@@ -32,7 +32,7 @@ export default function Settings() {
   const [location, setLocation] = useLocation();
   const { user, loading: authLoading, logout } = useAuth();
   const { theme, setTheme } = useTheme();
-  const { t, language, currentOption, setCountryLanguage, allOptions, isRTL } = useLanguage();
+  const { t, language, currentOption, setCountryLanguage, allOptions, isRTL, selectText } = useLanguage();
   const isBn = language === "bn";
 
   const {
@@ -168,7 +168,11 @@ export default function Settings() {
       setUsernameAvailability({
         checking: false,
         available: false,
-        reason: isBn ? "ইউজারনেম কমপক্ষে ৩ অক্ষরের হতে হবে" : "Must be at least 3 characters",
+        reason: selectText({
+          en: "Must be at least 3 characters",
+          bn: "ইউজারনেম কমপক্ষে ৩ অক্ষরের হতে হবে",
+          ur: "صارف نام کم از کم 3 حروف کا ہونا چاہیے",
+        }),
       });
       return;
     }
@@ -177,7 +181,11 @@ export default function Settings() {
       setUsernameAvailability({
         checking: false,
         available: false,
-        reason: isBn ? "শুধুমাত্র ইংরেজি অক্ষর, সংখ্যা এবং _ ব্যবহারযোগ্য" : "Letters, numbers, and _ only",
+        reason: selectText({
+          en: "Letters, numbers, and _ only",
+          bn: "শুধুমাত্র ইংরেজি অক্ষর, সংখ্যা এবং _ ব্যবহারযোগ্য",
+          ur: "صرف حروف، اعداد اور _ کی اجازت ہے",
+        }),
       });
       return;
     }
@@ -197,18 +205,30 @@ export default function Settings() {
     }, 450);
 
     return () => clearTimeout(timer);
-  }, [username, settingsData?.username, utils, isBn]);
+  }, [username, settingsData?.username, utils, language]);
 
   // Save Display Name
   const handleSaveName = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = name.trim();
     if (trimmed.length < 2) {
-      toast.error(isBn ? "নাম কমপক্ষে ২ অক্ষরের হতে হবে" : "Name must be at least 2 characters");
+      toast.error(
+        selectText({
+          en: "Name must be at least 2 characters",
+          bn: "নাম কমপক্ষে ২ অক্ষরের হতে হবে",
+          ur: "نام کم از کم 2 حروف کا ہونا چاہیے",
+        })
+      );
       return;
     }
     if (trimmed.length > 50) {
-      toast.error(isBn ? "নাম সর্বোচ্চ ৫০ অক্ষরের হতে হবে" : "Name cannot exceed 50 characters");
+      toast.error(
+        selectText({
+          en: "Name cannot exceed 50 characters",
+          bn: "নাম সর্বোচ্চ ৫০ অক্ষরের হতে হবে",
+          ur: "نام 50 حروف سے زیادہ نہیں ہو سکتا",
+        })
+      );
       return;
     }
 
@@ -242,9 +262,22 @@ export default function Settings() {
         })
       );
 
-      toast.success(isBn ? "প্রোফাইল নাম সফলভাবে সেভ হয়েছে!" : "Display name updated successfully!");
+      toast.success(
+        selectText({
+          en: "Display name updated successfully!",
+          bn: "প্রোফাইল নাম সফলভাবে সেভ হয়েছে!",
+          ur: "ڈسپلے نام کامیابی سے اپ ڈیٹ ہو گیا!",
+        })
+      );
     } catch (err: any) {
-      toast.error(err.message || (isBn ? "নাম সেভ করা যায়নি" : "Failed to update display name"));
+      toast.error(
+        err.message ||
+          selectText({
+            en: "Failed to update display name",
+            bn: "নাম সেভ করা যায়নি",
+            ur: "ڈسپلے نام اپ ڈیٹ کرنے میں ناکامی",
+          })
+      );
     } finally {
       setIsSavingName(false);
     }
@@ -257,7 +290,14 @@ export default function Settings() {
     if (!clean) return;
 
     if (usernameAvailability.available === false) {
-      toast.error(usernameAvailability.reason || (isBn ? "ইউজারনেম ব্যবহার করা যাবে না" : "Username unavailable"));
+      toast.error(
+        usernameAvailability.reason ||
+          selectText({
+            en: "Username unavailable",
+            bn: "ইউজারনেম ব্যবহার করা যাবে না",
+            ur: "صارف نام دستیاب نہیں ہے",
+          })
+      );
       return;
     }
 
@@ -267,9 +307,22 @@ export default function Settings() {
       await utils.auth.me.invalidate();
       await utils.auth.getSettings.invalidate();
 
-      toast.success(isBn ? `@${clean} ইউজারনেম সফলভাবে সেভ হয়েছে!` : `Username claimed: @${clean}`);
+      toast.success(
+        selectText({
+          en: `Username claimed: @${clean}`,
+          bn: `@${clean} ইউজারনেম সফলভাবে সেভ হয়েছে!`,
+          ur: `صارف نام کامیابی سے محفوظ ہو گیا: @${clean}`,
+        })
+      );
     } catch (err: any) {
-      toast.error(err.message || (isBn ? "ইউজারনেম সেভ করা যায়নি" : "Failed to save username"));
+      toast.error(
+        err.message ||
+          selectText({
+            en: "Failed to save username",
+            bn: "ইউজারনেম সেভ করা যায়নি",
+            ur: "صارف نام محفوظ کرنے میں ناکامی",
+          })
+      );
     } finally {
       setIsSavingUsername(false);
     }
@@ -465,10 +518,23 @@ export default function Settings() {
       utils.auth.me.setData(undefined, null);
       await utils.auth.me.invalidate();
 
-      toast.success(isBn ? "সকল ডিভাইস থেকে লগআউট সফল হয়েছে" : "Logged out from all devices");
+      toast.success(
+        selectText({
+          en: "Logged out from all devices",
+          bn: "সকল ডিভাইস থেকে লগআউট সফল হয়েছে",
+          ur: "تمام ڈیوائسز سے لاگ آؤٹ کامیاب رہا",
+        })
+      );
       window.location.href = "/login";
     } catch (err: any) {
-      toast.error(err.message || (isBn ? "লগআউট ব্যর্থ হয়েছে" : "Failed to logout from all devices"));
+      toast.error(
+        err.message ||
+          selectText({
+            en: "Failed to logout from all devices",
+            bn: "লগআউট ব্যর্থ হয়েছে",
+            ur: "تمام ڈیوائسز سے لاگ آؤٹ کرنے میں ناکامی",
+          })
+      );
     } finally {
       setIsLoggingOutAll(false);
       setShowLogoutAllModal(false);
@@ -481,7 +547,11 @@ export default function Settings() {
       <div className="min-h-screen bg-[#070e1b] flex flex-col items-center justify-center gap-4 text-slate-300">
         <BrandLogo size={56} className="animate-pulse" />
         <p className="text-xs font-mono font-bold tracking-widest uppercase text-slate-400">
-          {isBn ? "সেটিংস লোড হচ্ছে..." : "Loading Settings..."}
+          {selectText({
+            en: "Loading Settings...",
+            bn: "সেটিংস লোড হচ্ছে...",
+            ur: "سیٹنگز لوڈ ہو رہی ہیں...",
+          })}
         </p>
       </div>
     );
@@ -493,62 +563,91 @@ export default function Settings() {
       <div className="min-h-screen bg-[#070e1b] flex flex-col items-center justify-center p-6 text-center text-slate-200">
         <BrandLogo size={56} className="mb-4" />
         <h2 className="text-xl font-extrabold text-white mb-2">
-          {isBn ? "লগইন করা আবশ্যক" : "Sign In Required"}
+          {selectText({
+            en: "Sign In Required",
+            bn: "লগইন করা আবশ্যক",
+            ur: "سائن ان درکار ہے",
+          })}
         </h2>
         <p className="text-sm text-slate-400 mb-6 max-w-md">
-          {isBn
-            ? "আপনার অ্যাকাউন্ট সেটিংস পরিচালনা করতে অনুগ্রহ করে আপনার অ্যাকাউন্টে সাইন ইন করুন।"
-            : "Please sign in to your trader account to manage your profile and preferences."}
+          {selectText({
+            en: "Please sign in to your trader account to manage your profile and preferences.",
+            bn: "আপনার অ্যাকাউন্ট সেটিংস পরিচালনা করতে অনুগ্রহ করে আপনার অ্যাকাউন্টে সাইন ইন করুন।",
+            ur: "اپنے پروفائل اور ترجیحات کا انتظام کرنے کے لیے براہ کرم اپنے ٹریڈر اکاؤنٹ میں سائن ان کریں۔",
+          })}
         </p>
         <Link href="/login">
           <Button className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold px-6">
-            {isBn ? "সাইন ইন করুন" : "Sign In to Account"}
+            {selectText({
+              en: "Sign In to Account",
+              bn: "সাইন ইন করুন",
+              ur: "اکاؤنٹ میں سائن ان کریں",
+            })}
           </Button>
         </Link>
       </div>
     );
   }
 
-  const tabs: { id: SettingsTab; labelEn: string; labelBn: string; icon: any; descEn: string; descBn: string }[] = [
+  const tabs: {
+    id: SettingsTab;
+    labelEn: string;
+    labelBn: string;
+    labelUr: string;
+    icon: any;
+    descEn: string;
+    descBn: string;
+    descUr: string;
+  }[] = [
     {
       id: "account",
       labelEn: "Profile Account",
       labelBn: "প্রোফাইল অ্যাকাউন্ট",
+      labelUr: "پروفائل اکاؤنٹ",
       icon: User,
       descEn: "Name, photo, username, verified email",
       descBn: "নাম, ছবি, ইউজারনেম, ইমেইল",
+      descUr: "نام، تصویر، صارف نام، تصدیق شدہ ای میل",
     },
     {
       id: "appearance",
       labelEn: "Appearance",
       labelBn: "থিম ও ডিসপ্লে",
+      labelUr: "تھیم اور ظاہری شکل",
       icon: Palette,
       descEn: "Dark mode, institutional contrast",
       descBn: "ডার্ক মোড ও ভিজ্যুয়াল স্টাইল",
+      descUr: "ڈارک موڈ، ادارہ جاتی کنٹراسٹ",
     },
     {
       id: "region",
       labelEn: "Language & Region",
       labelBn: "ভাষা ও অঞ্চল",
+      labelUr: "زبان اور خطہ",
       icon: Globe,
       descEn: "Bangla, English, Urdu, live timezone, currency",
       descBn: "বাংলা, English, اردو, টাইমজোন ও কারেন্সি",
+      descUr: "اردو، انگریزی، بنگلہ، لائیو ٹائم زون، کرنسی",
     },
     {
       id: "security",
       labelEn: "Security & Access",
       labelBn: "সিকিউরিটি ও সেশন",
+      labelUr: "سیکیورٹی اور رسائی",
       icon: ShieldCheck,
       descEn: "Password update, global session signout",
       descBn: "পাসওয়ার্ড ও অল-ডিভাইস লগআউট",
+      descUr: "پاس ورڈ اپ ڈیٹ، تمام سیشنز سے لاگ آؤٹ",
     },
     {
       id: "support",
       labelEn: "Support & Help",
       labelBn: "সহায়তা ও গাইড",
+      labelUr: "سپورٹ اور مدد",
       icon: HelpCircle,
       descEn: "1-on-1 mentor desk, curriculum docs",
       descBn: "১-অন-১ মেন্টর ও কারিকুলাম গাইড",
+      descUr: "1-on-1 مینٹور ڈیسک، نصابی دستاویزات",
     },
   ];
 
@@ -564,7 +663,13 @@ export default function Settings() {
               className="gap-1.5 text-xs font-bold border-slate-300 dark:border-slate-700 bg-white/60 dark:bg-slate-900/60"
             >
               <ArrowLeft size={14} />
-              <span className="hidden sm:inline">{isBn ? "ড্যাশবোর্ডে ফিরুন" : "Dashboard"}</span>
+              <span className="hidden sm:inline">
+                {selectText({
+                  en: "Dashboard",
+                  bn: "ড্যাশবোর্ডে ফিরুন",
+                  ur: "ڈیش بورڈ پر واپس جائیں",
+                })}
+              </span>
             </Button>
           </Link>
           <div className="h-5 w-px bg-slate-300 dark:bg-slate-800 hidden sm:block" />
@@ -573,7 +678,11 @@ export default function Settings() {
             <div>
               <HeaderBrandWordmark className="text-xs" />
               <p className="text-[10px] font-bold text-sky-600 dark:text-sky-400 tracking-wider">
-                {isBn ? "অ্যাকাউন্ট সেটিংস" : "INSTITUTIONAL SETTINGS"}
+                {selectText({
+                  en: "INSTITUTIONAL SETTINGS",
+                  bn: "অ্যাকাউন্ট সেটিংস",
+                  ur: "ادارہ جاتی ترتیبات",
+                })}
               </p>
             </div>
           </Link>
@@ -584,7 +693,7 @@ export default function Settings() {
           {/* User Badge */}
           <div className="hidden md:flex items-center gap-2 rounded-full border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900/80 px-3 py-1">
             <div className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[11px] font-bold font-mono text-slate-700 dark:text-slate-300">
+            <span dir="ltr" className="text-[11px] font-bold font-mono text-slate-700 dark:text-slate-300">
               {username ? `@${username}` : (name || user.name || "Student")}
             </span>
           </div>
@@ -606,15 +715,23 @@ export default function Settings() {
         {/* Page Title & Breadcrumb */}
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
-            <span>{isBn ? "ট্রেডার অ্যাকাউন্ট সেটিংস" : "Trader Account Settings"}</span>
+            <span>
+              {selectText({
+                en: "Trader Account Settings",
+                bn: "ট্রেডার অ্যাকাউন্ট সেটিংস",
+                ur: "ٹریڈر اکاؤنٹ ترتیبات",
+              })}
+            </span>
             <span className="rounded-full bg-sky-500/10 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/30 px-2.5 py-0.5 text-xs font-mono font-bold uppercase tracking-wider">
               {user.role === "admin" ? "Admin" : "Verified Student"}
             </span>
           </h1>
           <p className="mt-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            {isBn
-              ? "আপনার প্রোফাইল, সিকিউরিটি, ভাষা, টাইমজোন ও ডিসপ্লে প্রেফারেন্স নিয়ন্ত্রণ করুন।"
-              : "Manage your personal profile, security credentials, appearance, and regional trading environment."}
+            {selectText({
+              en: "Manage your personal profile, security credentials, appearance, and regional trading environment.",
+              bn: "আপনার প্রোফাইল, সিকিউরিটি, ভাষা, টাইমজোন ও ডিসপ্লে প্রেফারেন্স নিয়ন্ত্রণ করুন।",
+              ur: "اپنے ذاتی پروفائل، سیکیورٹی اسناد، ظاہری شکل اور علاقائی تجارتی ماحول کا انتظام کریں۔",
+            })}
           </p>
         </div>
 
@@ -634,7 +751,7 @@ export default function Settings() {
                 }`}
               >
                 <Icon size={14} />
-                <span>{isBn ? tab.labelBn : tab.labelEn}</span>
+                <span>{selectText({ en: tab.labelEn, bn: tab.labelBn, ur: tab.labelUr })}</span>
               </button>
             );
           })}
@@ -645,7 +762,11 @@ export default function Settings() {
           {/* Desktop Left Navigation Sidebar */}
           <aside className="hidden lg:block lg:col-span-4 sticky top-24 space-y-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-[#0a192f]/70 p-3 shadow-xs">
             <div className="px-3 py-2 text-[11px] font-black uppercase tracking-wider text-slate-400">
-              {isBn ? "সেটিংস ক্যাটাগরি" : "Settings Menu"}
+              {selectText({
+                en: "Settings Menu",
+                bn: "সেটিংস ক্যাটাগরি",
+                ur: "ترتیبات مینو",
+              })}
             </div>
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -671,13 +792,15 @@ export default function Settings() {
                       <Icon size={16} />
                     </div>
                     <div>
-                      <div className="text-xs font-bold">{isBn ? tab.labelBn : tab.labelEn}</div>
+                      <div className="text-xs font-bold">
+                        {selectText({ en: tab.labelEn, bn: tab.labelBn, ur: tab.labelUr })}
+                      </div>
                       <div
                         className={`text-[10px] line-clamp-1 ${
                           isActive ? "text-slate-300 dark:text-slate-800" : "text-slate-400 dark:text-slate-500"
                         }`}
                       >
-                        {isBn ? tab.descBn : tab.descEn}
+                        {selectText({ en: tab.descEn, bn: tab.descBn, ur: tab.descUr })}
                       </div>
                     </div>
                   </div>

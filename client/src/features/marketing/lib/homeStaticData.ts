@@ -5,17 +5,22 @@ export interface StoreBundleStaticItem {
   slug: string;
   titleEn: string;
   titleBn: string;
+  titleUr?: string;
   descriptionEn: string;
   descriptionBn: string;
+  descriptionUr?: string;
   originalPrice?: string;
   price: string;
   priceUsd?: string;
   badgeEn: string;
   badgeBn: string;
+  badgeUr?: string;
   topRibbonEn?: string;
   topRibbonBn?: string;
+  topRibbonUr?: string;
   featuresEn: string[];
   featuresBn: string[];
+  featuresUr?: string[];
   highlight: boolean;
 }
 
@@ -24,6 +29,7 @@ export interface TradingPlatformStaticItem {
   name: string;
   descEn: string;
   descBn: string;
+  descUr?: string;
   devices: string;
   url: string;
   icon: React.ReactNode;
@@ -62,6 +68,15 @@ export const HYPE_ITEMS_BN = [
   "সম্পূর্ণ একাউন্ট জিরো এবং মানসিক হতাশা",
 ];
 
+export const HYPE_ITEMS_UR = [
+  "سوشل میڈیا پر پرتعیش طرز زندگی کی نمائش",
+  "راتوں رات امیر بننے کے غیر حقیقت پسندانہ جھوٹے وعدے",
+  "پیسے لے کر چلائے جانے والے VIP اور سگنل ٹیلیگرام گروپس",
+  "ضرورت سے زیادہ لیوریج کے ساتھ جوئے جیسی ٹریڈنگ اور انتقامی جذبہ",
+  "مارکیٹ کو سمجھے بغیر اندھا دھند بڑا ڈپازٹ کرنا",
+  "پورے اکاؤنٹ کا صفایا (Blowout) اور شدید نفسیاتی تناؤ",
+];
+
 export const REALITY_ITEMS_EN = [
   "Solid foundation & financial literacy",
   "Structured step-by-step institutional learning",
@@ -80,18 +95,30 @@ export const REALITY_ITEMS_BN = [
   "নিয়মিত ট্রেড জার্নালিং ও পারফরম্যান্স রিভিউ",
 ];
 
+export const REALITY_ITEMS_UR = [
+  "مضبوط بنیادی معلومات اور مارکیٹ کی مالی سمجھ بوجھ",
+  "مرحلہ وار منظم اور پیشہ ورانہ ادارہ جاتی تعلیم",
+  "مارکیٹ کا ڈھانچہ (Market Structure)، لیکویڈیٹی اور اسمارٹ منی لاجک",
+  "ہر ٹریڈ پر سخت 1% رسک مینجمنٹ اور سرمائے کا تحفظ",
+  "جذبات پر قابو، صبر اور طویل مدتی مستقل مزاجی",
+  "باقاعدہ ٹریڈ جرنلنگ اور اپنی کارکردگی کا مسلسل جائزہ",
+];
+
 export const STORE_BUNDLES_STATIC: StoreBundleStaticItem[] = [
   {
     id: 1,
     slug: "pdf-package",
     titleEn: "Free eBook Package",
     titleBn: "Free eBook Package",
+    titleUr: "Free eBook Package",
     descriptionEn: "Select from 15 structured learning PDFs with complete chart breakdowns.",
     descriptionBn: "১৫টি স্ট্রাকচার্ড চার্ট ব্রেকডাউন ও প্রাইস অ্যাকশন PDF থেকে সিলেক্ট করুন।",
+    descriptionUr: "15 منظم چارٹ بریک ڈاؤن اور پرائس ایکشن PDF گائیڈز میں سے منتخب کریں۔",
     price: "0",
     priceUsd: "0",
     badgeEn: "STARTER",
     badgeBn: "স্টার্টার",
+    badgeUr: "ابتدائی پیکج",
     featuresEn: [
       "15 Structured Chart PDF Guides",
       "Candlestick Anatomy & Patterns",
@@ -104,6 +131,12 @@ export const STORE_BUNDLES_STATIC: StoreBundleStaticItem[] = [
       "লাইফটাইম ডাউনলোড এক্সেস",
       "মোবাইল ও পিসিতে পড়ার সুবিধা",
     ],
+    featuresUr: [
+      "15 منظم چارٹ PDF گائیڈز",
+      "کینڈل اسٹک ایناٹمی اور چارٹ پیٹرنز",
+      "لائف ٹائم ڈاؤن لوڈ رسائی",
+      "موبائل اور ڈیسک ٹاپ پر پڑھنے کی سہولت",
+    ],
     highlight: false,
   },
   {
@@ -111,14 +144,18 @@ export const STORE_BUNDLES_STATIC: StoreBundleStaticItem[] = [
     slug: "course-ebook",
     titleEn: "CYCLE OF CHART BASIC TO ADVANCE COURSE",
     titleBn: "CYCLE OF CHART BASIC TO ADVANCE COURSE",
+    titleUr: "CYCLE OF CHART BASIC TO ADVANCE COURSE",
     descriptionEn: "A complete structured learning path with an included comprehensive eBook.",
     descriptionBn: "একটি সম্পূর্ণ ভিডিও কোর্স সাথে সম্পূর্ণ ফ্রি প্রফেশনাল গাইড eBook।",
+    descriptionUr: "مکمل ویڈیو کورس ساتھ میں مفت جامع ادارہ جاتی گائیڈ eBook۔",
     price: "2499",
     priceUsd: "20",
     badgeEn: "CORE PATH",
     badgeBn: "কোর পাথ",
+    badgeUr: "بنیادی راستہ",
     topRibbonEn: "★ MOST POPULAR",
     topRibbonBn: "★ সবচেয়ে জনপ্রিয় চয়েস",
+    topRibbonUr: "★ سب سے مقبول انتخاب",
     featuresEn: [
       "Complete Video Course Lessons",
       "Free Institutional Trading eBook",
@@ -131,6 +168,12 @@ export const STORE_BUNDLES_STATIC: StoreBundleStaticItem[] = [
       "১২-স্টেজ স্ট্রাকচার্ড রোডম্যাপ",
       "ডিরেক্ট সাপোর্ট ও গাইডেন্স",
     ],
+    featuresUr: [
+      "مکمل ویڈیو کورس اسباق",
+      "مفت ادارہ جاتی ٹریڈنگ eBook",
+      "12 مراحل پر مشتمل منظم روڈ میپ",
+      "براہ راست سپورٹ اور رہنمائی",
+    ],
     highlight: true,
   },
   {
@@ -138,13 +181,16 @@ export const STORE_BUNDLES_STATIC: StoreBundleStaticItem[] = [
     slug: "pro-blueprint",
     titleEn: "CYCLE OF CHART — PROFESSIONAL TRADING BLUEPRINT",
     titleBn: "CYCLE OF CHART — PROFESSIONAL TRADING BLUEPRINT",
+    titleUr: "CYCLE OF CHART — PROFESSIONAL TRADING BLUEPRINT",
     descriptionEn: "",
     descriptionBn: "",
+    descriptionUr: "",
     originalPrice: "5550",
     price: "4999",
     priceUsd: "40",
     badgeEn: "PROFESSIONAL",
     badgeBn: "প্রফেশনাল",
+    badgeUr: "پیشہ ورانہ",
     featuresEn: [
       "Complete A–Z Trading Blueprint",
       "To take this course, you need to have a basic understanding of the market.",
@@ -154,6 +200,11 @@ export const STORE_BUNDLES_STATIC: StoreBundleStaticItem[] = [
       "Complete A–Z Trading Blueprint",
       "To take this course, you need to have a basic understanding of the market.",
       "Lifetime Access + Future Update",
+    ],
+    featuresUr: [
+      "Complete A–Z Trading Blueprint",
+      "اس کورس کے لیے مارکیٹ کی بنیادی سمجھ بوجھ ضروری ہے۔",
+      "لائف ٹائم رسائی + تمام مستقبل کی اپ ڈیٹس",
     ],
     highlight: false,
   },
@@ -165,6 +216,7 @@ export const TRADING_PLATFORMS: TradingPlatformStaticItem[] = [
     name: "TradingView",
     descEn: "Advanced charting, market analysis & indicators",
     descBn: "অ্যাডভান্সড চার্ট, টেকনিক্যাল অ্যানালাইসিস ও ইন্ডিকেটরস",
+    descUr: "جدید چارٹنگ، مارکیٹ کا تکنیکی تجزیہ اور اشاریے",
     devices: "Windows · macOS · iOS · Android",
     url: "https://www.tradingview.com/desktop/",
     icon: React.createElement(
@@ -186,6 +238,7 @@ export const TRADING_PLATFORMS: TradingPlatformStaticItem[] = [
     name: "Forex Factory",
     descEn: "Economic calendar, market news & sentiment analysis",
     descBn: "ইকোনমিক ক্যালেন্ডার, মার্কেট নিউজ ও সেন্টিনেন্ট অ্যানালাইসিস",
+    descUr: "معاشی کیلنڈر، معاشی خبریں اور مارکیٹ کے جذبات کا تجزیہ",
     devices: "Web · Mobile · Market Intel",
     url: "https://www.forexfactory.com/",
     icon: React.createElement(
@@ -230,6 +283,7 @@ export const TRADING_PLATFORMS: TradingPlatformStaticItem[] = [
     name: "Forex Trading Hours",
     descEn: "Live 24h market session clock & liquidity overlaps",
     descBn: "লাইভ ২৪ঘণ্টা মার্কেট সেশন ক্লক ও লিকুইডিটি ওভারল্যাপ",
+    descUr: "لائیو 24 گھنٹے مارکیٹ سیشن کلاک اور لیکویڈیٹی اوورلیپ",
     devices: "Web · Live Clock · All Sessions",
     url: "https://www.babypips.com/tools/forex-market-hours",
     icon: React.createElement(

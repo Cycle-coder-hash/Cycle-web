@@ -10,15 +10,19 @@ export interface CourseTelegramModalProps {
     telegramUrl: string;
     titleEn: string;
     titleBn: string;
+    titleUr?: string;
     messageEn: string;
     messageBn: string;
+    messageUr?: string;
     joinButtonTextEn: string;
     joinButtonTextBn: string;
+    joinButtonTextUr?: string;
     dismissButtonTextEn: string;
     dismissButtonTextBn: string;
+    dismissButtonTextUr?: string;
     displayMode: "once" | "until_joined";
   };
-  lang: "en" | "bn";
+  lang: "en" | "bn" | "ur";
   onJoin: () => Promise<void> | void;
   onDismiss: () => Promise<void> | void;
 }
@@ -33,13 +37,33 @@ export const CourseTelegramModal: React.FC<CourseTelegramModalProps> = ({
 }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const isBn = lang === "bn";
+  const isUr = lang === "ur";
 
   if (!isOpen || !config.enabled) return null;
 
-  const title = isBn ? config.titleBn || config.titleEn : config.titleEn;
-  const message = isBn ? config.messageBn || config.messageEn : config.messageEn;
-  const joinText = isBn ? config.joinButtonTextBn || config.joinButtonTextEn : config.joinButtonTextEn;
-  const dismissText = isBn ? config.dismissButtonTextBn || config.dismissButtonTextEn : config.dismissButtonTextEn;
+  const title = isUr
+    ? config.titleUr || "وی آئی پی ٹیلیگرام کمیونٹی میں شامل ہوں"
+    : isBn
+    ? config.titleBn || config.titleEn
+    : config.titleEn;
+
+  const message = isUr
+    ? config.messageUr || config.messageEn
+    : isBn
+    ? config.messageBn || config.messageEn
+    : config.messageEn;
+
+  const joinText = isUr
+    ? config.joinButtonTextUr || "ٹیلیگرام میں شامل ہوں"
+    : isBn
+    ? config.joinButtonTextBn || config.joinButtonTextEn
+    : config.joinButtonTextEn;
+
+  const dismissText = isUr
+    ? config.dismissButtonTextUr || "بعد میں"
+    : isBn
+    ? config.dismissButtonTextBn || config.dismissButtonTextEn
+    : config.dismissButtonTextEn;
 
   const handleJoinClick = async () => {
     setIsProcessing(true);
@@ -69,7 +93,10 @@ export const CourseTelegramModal: React.FC<CourseTelegramModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="course-telegram-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-200"
+      dir={isUr ? "rtl" : "ltr"}
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-200 ${
+        isBn ? "font-bangla" : isUr ? "font-urdu" : ""
+      }`}
     >
       {/* Modal Container */}
       <div className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-2xl transition-all dark:border-slate-800 dark:bg-[#070e1b] dark:shadow-sky-500/5 sm:my-8 animate-in zoom-in-95 duration-200">
@@ -81,8 +108,10 @@ export const CourseTelegramModal: React.FC<CourseTelegramModalProps> = ({
         <button
           onClick={handleDismissClick}
           disabled={isProcessing}
-          aria-label={isBn ? "বন্ধ করুন" : "Close"}
-          className="absolute right-4 top-4 z-10 flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-900 dark:bg-slate-800/80 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-white transition-colors cursor-pointer"
+          aria-label={isUr ? "بند کریں" : isBn ? "বন্ধ করুন" : "Close"}
+          className={`absolute top-4 z-10 flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-900 dark:bg-slate-800/80 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-white transition-colors cursor-pointer ${
+            isUr ? "left-4" : "right-4"
+          }`}
         >
           <X size={17} />
         </button>
@@ -96,7 +125,13 @@ export const CourseTelegramModal: React.FC<CourseTelegramModalProps> = ({
             <div>
               <div className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/10 px-2.5 py-0.5 text-[11px] font-extrabold text-sky-600 dark:text-sky-400 border border-sky-500/20">
                 <Sparkles size={11} />
-                <span>{isBn ? "কোর্স অ্যাক্সেস ভেরিফায়েড" : "Course Access Verified"}</span>
+                <span>
+                  {isUr
+                    ? "کورس تک رسائی کی تصدیق ہو گئی"
+                    : isBn
+                    ? "কোর্স অ্যাক্সেস ভেরিফায়েড"
+                    : "Course Access Verified"}
+                </span>
               </div>
               <h3
                 id="course-telegram-modal-title"
@@ -115,7 +150,13 @@ export const CourseTelegramModal: React.FC<CourseTelegramModalProps> = ({
             
             <div className="mt-3.5 pt-3.5 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center gap-2 text-[11px] font-bold text-slate-500 dark:text-slate-400">
               <ShieldCheck size={14} className="text-emerald-500 shrink-0" />
-              <span>{isBn ? "শুধুমাত্র অনুমোদিত শিক্ষার্থীদের জন্য প্রাইভেট কমিউনিটি" : "Private Community exclusively for enrolled students"}</span>
+              <span>
+                {isUr
+                  ? "صرف رجسٹرڈ طلباء کے لیے پرائیویٹ کمیونٹی"
+                  : isBn
+                  ? "শুধুমাত্র অনুমোদিত শিক্ষার্থীদের জন্য প্রাইভেট কমিউনিটি"
+                  : "Private Community exclusively for enrolled students"}
+              </span>
             </div>
           </div>
 

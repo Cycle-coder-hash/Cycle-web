@@ -13,15 +13,21 @@ import {
   getOptionById,
 } from "../i18n/types";
 import { LOCALES_MAP } from "../i18n/locales";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
 
-interface LanguageContextType {
+export interface LanguageContextType {
   currentOption: CountryLanguageOption;
   language: SupportedLanguage;
   dir: TextDirection;
   isRTL: boolean;
+  isBn: boolean;
+  isUr: boolean;
+  isEn: boolean;
   setCountryLanguage: (optionId: string) => void;
   setLanguage: (lang: string) => void;
   t: (path: string, fallback?: string) => string;
+  selectText: <T = string>(options: { en: T; bn?: T; ur?: T }) => T;
   allOptions: CountryLanguageOption[];
   activeLanguages: readonly ["bn", "en", "ur"];
 }
@@ -81,7 +87,16 @@ function resolveInitialOptionId(): string {
 }
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
   const [currentOptionId, setCurrentOptionId] = useState<string>(resolveInitialOptionId);
+
+  const settingsQuery = trpc.auth.getSettings.useQuery(undefined, {
+    enabled: !!user,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  });
+
+  const updatePreferencesMutation = trpc.auth.updatePreferences.useMutation();
 
   const currentOption = useMemo(() => {
     return getOptionById(currentOptionId);
@@ -90,6 +105,21 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const language = currentOption.langCode;
   const dir = currentOption.dir;
   const isRTL = dir === "rtl";
+  const isBn = language === "bn";
+  const isUr = language === "ur";
+  const isEn = language === "en";
+
+  // Sync server preference when user logs in or settings query data arrives
+  useEffect(() => {
+    if (settingsQuery.data?.preferences?.language) {
+      const serverLang = settingsQuery.data.preferences.language;
+      const normalized = normalizeLanguage(serverLang);
+      const opt = getOptionByLanguage(normalized);
+      if (opt && opt.id !== currentOptionId) {
+        setCurrentOptionId(opt.id);
+      }
+    }
+  }, [settingsQuery.data?.preferences?.language, currentOptionId]);
 
   // Enforce DOM, cookies, and localStorage normalization
   useEffect(() => {
@@ -121,21 +151,43 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     sanitizeCookies();
   }, [currentOption, language, dir, isRTL]);
 
-  const setCountryLanguage = useCallback((optionId: string) => {
-    const exists = COUNTRY_LANGUAGE_OPTIONS.some((o) => o.id === optionId);
-    if (exists) {
-      setCurrentOptionId(optionId);
-    } else {
-      // Fallback safely to English if unsupported option passed
-      setCurrentOptionId(DEFAULT_OPTION_ID);
-    }
-  }, []);
+  const setCountryLanguage = useCallback(
+    (optionId: string) => {
+      const exists = COUNTRY_LANGUAGE_OPTIONS.some((o) => o.id === optionId);
+      const targetId = exists ? optionId : DEFAULT_OPTION_ID;
+      setCurrentOptionId(targetId);
+      const opt = getOptionById(targetId);
+      if (user) {
+        updatePreferencesMutation.mutate({ language: opt.langCode });
+      }
+    },
+    [user, updatePreferencesMutation]
+  );
 
-  const setLanguage = useCallback((lang: string) => {
-    const normalized = normalizeLanguage(lang);
-    const opt = getOptionByLanguage(normalized);
-    setCurrentOptionId(opt.id);
-  }, []);
+  const setLanguage = useCallback(
+    (lang: string) => {
+      const normalized = normalizeLanguage(lang);
+      const opt = getOptionByLanguage(normalized);
+      setCurrentOptionId(opt.id);
+      if (user) {
+        updatePreferencesMutation.mutate({ language: opt.langCode });
+      }
+    },
+    [user, updatePreferencesMutation]
+  );
+
+  const selectText = useCallback(
+    <T = string,>(options: { en: T; bn?: T; ur?: T }): T => {
+      if (language === "bn") {
+        return options.bn !== undefined && options.bn !== null ? options.bn : options.en;
+      }
+      if (language === "ur") {
+        return options.ur !== undefined && options.ur !== null ? options.ur : options.en;
+      }
+      return options.en;
+    },
+    [language]
+  );
 
   const getNestedValue = (obj: any, path: string): string | undefined => {
     if (!obj || !path) return undefined;
@@ -171,13 +223,29 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       language,
       dir,
       isRTL,
+      isBn,
+      isUr,
+      isEn,
       setCountryLanguage,
       setLanguage,
       t,
+      selectText,
       allOptions: COUNTRY_LANGUAGE_OPTIONS,
       activeLanguages: ACTIVE_LANGUAGES,
     }),
-    [currentOption, language, dir, isRTL, setCountryLanguage, setLanguage, t]
+    [
+      currentOption,
+      language,
+      dir,
+      isRTL,
+      isBn,
+      isUr,
+      isEn,
+      setCountryLanguage,
+      setLanguage,
+      t,
+      selectText,
+    ]
   );
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;

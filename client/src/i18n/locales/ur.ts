@@ -77,7 +77,7 @@ export const ur: TranslationSchema = {
   },
   founder: {
     eyebrow: "بانی کا تعارف",
-    title: "سائیکل آف چارٹ کے بانی",
+    title: "Cycle of Chart کے بانی",
     desc: "ادارہ جاتی ٹریڈنگ کے تجربے اور گہری مارکیٹ حقیقت پر مبنی معتبر تعلیمی ادارہ۔",
     experience: "مارکیٹ کا تجربہ",
     students: "تربیت یافتہ ٹریڈرز",
@@ -86,7 +86,7 @@ export const ur: TranslationSchema = {
   footer: {
     tagline: "ٹریڈنگ کی حقیقت · منظم ادارہ جاتی تعلیم",
     disclaimer: "صرف تعلیمی مقاصد کے لیے۔ ہم کوئی سگنل فروخت نہیں کرتے، نہ ہی منافع کی ضمانت دیتے ہیں۔ ڈپازٹ سے پہلے ٹریڈنگ سمجھیں۔",
-    rights: "جملہ حقوق محفوظ ہیں۔ سائیکل آف چارٹ۔",
+    rights: "جملہ حقوق محفوظ ہیں۔ Cycle of Chart.",
   },
   dashboard: {
     welcome: "خوش آمدید",
@@ -161,7 +161,7 @@ export const ur: TranslationSchema = {
   },
   support: {
     title: "1-آن-1 براہ راست سپورٹ",
-    subtitle: "سائیکل آف چارٹ کے اساتذہ اور سپورٹ ڈیسک کے ساتھ براہ راست رابطہ۔",
+    subtitle: "Cycle of Chart کے اساتذہ اور سپورٹ ڈیسک کے ساتھ براہ راست رابطہ۔",
     typePlaceholder: "اپنا پیغام یہاں لکھیں...",
     send: "پیغام بھیجیں",
     supportStaff: "سپورٹ ڈیسک",

@@ -1,15 +1,18 @@
 import { Link } from "wouter";
 import { Download, Eye, FileText, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export interface DashboardLibraryPdfItem {
   id: number | string;
   title?: string | null;
   titleEn?: string | null;
   titleBn?: string | null;
+  titleUr?: string | null;
   subtitle?: string | null;
   subtitleEn?: string | null;
   subtitleBn?: string | null;
+  subtitleUr?: string | null;
   category?: string | null;
   pages?: number | null;
   fileSize?: string | null;
@@ -21,7 +24,7 @@ export interface DashboardLibraryPdfItem {
 }
 
 export interface DashboardLibraryTabProps {
-  isBn: boolean;
+  isBn?: boolean;
   isLoadingLibrary: boolean;
   libraryPdfs: ReadonlyArray<DashboardLibraryPdfItem> | null | undefined;
   onPreviewPdf: (pdf: DashboardLibraryPdfItem) => void;
@@ -29,23 +32,33 @@ export interface DashboardLibraryTabProps {
 }
 
 export function DashboardLibraryTab({
-  isBn,
   isLoadingLibrary,
   libraryPdfs,
   onPreviewPdf,
   onDownloadResource,
 }: DashboardLibraryTabProps) {
+  const { selectText, isUr, isRTL } = useLanguage();
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div
+      dir={isRTL ? "rtl" : "ltr"}
+      className={`space-y-8 animate-in fade-in duration-300 ${isUr ? "font-urdu" : ""}`}
+    >
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h2 className="text-2xl font-extrabold tracking-tight">
-            {isBn ? "আমার লাইব্রেরি ও প্রাতিষ্ঠানিক রিসোর্স" : "Institutional PDF Library & Course"}
+            {selectText({
+              en: "Institutional PDF Library & Course",
+              bn: "আমার লাইব্রেরি ও প্রাতিষ্ঠানিক রিসোর্স",
+              ur: "ادارہ جاتی PDF لائبریری اور کورس",
+            })}
           </h2>
           <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            {isBn
-              ? "অনলাইনে প্রিভিউ দেখুন অথবা সম্পূর্ণ চিট-শীট ফাইলটি সরাসরি ডাউনলোড করুন।"
-              : "Preview interactive cheat-sheets in browser or download printable study files."}
+            {selectText({
+              en: "Preview interactive cheat-sheets in browser or download printable study files.",
+              bn: "অনলাইনে প্রিভিউ দেখুন অথবা সম্পূর্ণ চিট-শীট ফাইলটি সরাসরি ডাউনলোড করুন।",
+              ur: "براؤزر میں انٹرایکٹو چیٹ شیٹس کا پیش نظارہ دیکھیں یا مکمل اسٹڈی فائلیں ڈاؤن لوڈ کریں۔",
+            })}
           </p>
         </div>
 
@@ -54,7 +67,12 @@ export function DashboardLibraryTab({
             size="sm"
             className="gap-1.5 bg-[#081833] text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 font-bold"
           >
-            <Plus size={15} /> {isBn ? "নতুন রিসোর্স আনলক করুন" : "Browse Store Bundles"}
+            <Plus size={15} />{" "}
+            {selectText({
+              en: "Browse Store Bundles",
+              bn: "নতুন রিসোর্স আনলক করুন",
+              ur: "اسٹور بنڈلز دیکھیں",
+            })}
           </Button>
         </Link>
       </div>
@@ -85,16 +103,27 @@ export function DashboardLibraryTab({
             <FileText size={32} />
           </div>
           <h3 className="text-lg font-black text-slate-900 dark:text-white">
-            {isBn ? "আপনার লাইব্রেরিতে কোনো PDF নেই" : "No PDFs in your library yet."}
+            {selectText({
+              en: "No PDFs in your library yet.",
+              bn: "আপনার লাইব্রেরিতে কোনো PDF নেই",
+              ur: "آپ کی لائبریری میں ابھی کوئی PDF نہیں ہے۔",
+            })}
           </h3>
           <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md">
-            {isBn
-              ? "আমাদের প্রাতিষ্ঠানিক স্ট্র্যাটেজি গাইড, চিট-শীট ও সম্পূর্ণ ট্রেডিং কোর্স আনলক করতে স্টোর বান্ডেলগুলো দেখুন।"
-              : "Explore our institutional blueprints, high-resolution cheat-sheets, and comprehensive trading courses to unlock them here."}
+            {selectText({
+              en: "Explore our institutional blueprints, high-resolution cheat-sheets, and comprehensive trading courses to unlock them here.",
+              bn: "আমাদের প্রাতিষ্ঠানিক স্ট্র্যাটেজি গাইড, চিট-শীট ও সম্পূর্ণ ট্রেডিং কোর্স আনলক করতে স্টোর বান্ডেলগুলো দেখুন।",
+              ur: "ہمارے ادارہ جاتی بلیو پرنٹس، اعلیٰ کوالٹی چیٹ شیٹس اور مکمل ٹریڈنگ کورسز حاصل کرنے کے لیے اسٹور بنڈلز دیکھیں۔",
+            })}
           </p>
           <Link href="/checkout">
             <Button className="mt-6 gap-2 bg-[#081833] text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 font-bold px-6 py-2.5 rounded-2xl shadow-md">
-              <Plus size={16} /> {isBn ? "স্টোর বান্ডেল দেখুন" : "Browse Store Bundles"}
+              <Plus size={16} />{" "}
+              {selectText({
+                en: "Browse Store Bundles",
+                bn: "স্টোর বান্ডেল দেখুন",
+                ur: "اسٹور بنڈلز دیکھیں",
+              })}
             </Button>
           </Link>
         </div>
@@ -104,9 +133,23 @@ export function DashboardLibraryTab({
       {!isLoadingLibrary && libraryPdfs && libraryPdfs.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {libraryPdfs.map((pdf) => {
-            const title = isBn && pdf.titleBn ? pdf.titleBn : (pdf.titleEn || pdf.title);
-            const subtitle = isBn && pdf.subtitleBn ? pdf.subtitleBn : (pdf.subtitleEn || pdf.subtitle || "");
+            const title = selectText({
+              en: pdf.titleEn || pdf.title || "",
+              bn: pdf.titleBn || pdf.title || "",
+              ur: pdf.titleUr || pdf.titleEn || pdf.title || "",
+            });
+            const subtitle = selectText({
+              en: pdf.subtitleEn || pdf.subtitle || "",
+              bn: pdf.subtitleBn || pdf.subtitle || "",
+              ur: pdf.subtitleUr || pdf.subtitleEn || pdf.subtitle || "",
+            });
             const isFree = pdf.isFree === true || Number(pdf.price) === 0 || !pdf.price;
+
+            const categoryBadge =
+              pdf.category ||
+              (isFree
+                ? selectText({ en: "FREE PDF", bn: "ফ্রি PDF", ur: "مفت PDF" })
+                : selectText({ en: "INSTITUTIONAL PDF", bn: "প্রাতিষ্ঠানিক PDF", ur: "ادارہ جاتی PDF" }));
 
             return (
               <div
@@ -116,14 +159,22 @@ export function DashboardLibraryTab({
                 <div>
                   <div className="flex items-center justify-between">
                     <span className="rounded-full bg-emerald-100 px-3 py-0.5 text-[10px] font-black uppercase text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
-                      {pdf.category || (isFree ? "FREE PDF" : "INSTITUTIONAL PDF")}
+                      {categoryBadge}
                     </span>
                     <FileText size={18} className="text-[#0284c7] dark:text-sky-400" />
                   </div>
                   <h3 className="mt-4 text-base font-extrabold">{title}</h3>
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{subtitle}</p>
-                  <div className="mt-3 text-[11px] font-mono text-slate-400">
-                    {pdf.pages || 15} Pages · {pdf.fileSize || "High Resolution Reference"}
+                  {subtitle && (
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{subtitle}</p>
+                  )}
+                  <div dir="ltr" className="mt-3 text-[11px] font-mono text-slate-400">
+                    {pdf.pages || 15} {selectText({ en: "Pages", bn: "পৃষ্ঠা", ur: "صفحات" })} ·{" "}
+                    {pdf.fileSize ||
+                      selectText({
+                        en: "High Resolution Reference",
+                        bn: "হাই রেজোলিউশন রেফারেন্স",
+                        ur: "اعلیٰ معیار کا ریفرنس",
+                      })}
                   </div>
                 </div>
 
@@ -135,7 +186,7 @@ export function DashboardLibraryTab({
                     className="w-1/2 text-xs font-bold border-slate-300 dark:border-slate-700"
                   >
                     <Eye size={13} className="mr-1" />
-                    <span>{isBn ? "প্রিভিউ" : "Preview"}</span>
+                    <span>{selectText({ en: "Preview", bn: "প্রিভিউ", ur: "پیش نظارہ" })}</span>
                   </Button>
 
                   <Button
@@ -144,7 +195,7 @@ export function DashboardLibraryTab({
                     className="w-1/2 gap-1 bg-[#081833] text-xs font-bold text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950"
                   >
                     <Download size={13} />
-                    <span>{isBn ? "ডাউনলোড" : "Download"}</span>
+                    <span>{selectText({ en: "Download", bn: "ডাউনলোড", ur: "ڈاؤن لوڈ" })}</span>
                   </Button>
                 </div>
               </div>

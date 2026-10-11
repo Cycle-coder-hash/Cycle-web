@@ -48,6 +48,8 @@ import {
   type StageDetail,
   STAGES_DETAILS_EN,
   STAGES_DETAILS_BN,
+  STAGES_DETAILS_UR,
+  getDashboardRoadmapStages,
 } from "@/data/roadmapStages";
 import {
   STORE_BUNDLES_STATIC,
@@ -61,12 +63,13 @@ export {
   type StageDetail,
   STAGES_DETAILS_EN,
   STAGES_DETAILS_BN,
+  STAGES_DETAILS_UR,
 };
 
 export default function Home() {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { t, language, isRTL } = useLanguage();
+  const { t, language, isRTL, selectText } = useLanguage();
   const isBn = language === "bn";
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeStage, setActiveStage] = useState(0);
@@ -209,7 +212,7 @@ export default function Home() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const stagesData = isBn ? STAGES_DETAILS_BN : STAGES_DETAILS_EN;
+  const stagesData = useMemo(() => getDashboardRoadmapStages(language), [language]);
   const activeModalData = selectedStageModal !== null ? stagesData[selectedStageModal] : null;
 
   const copy = useMemo(
@@ -253,11 +256,21 @@ export default function Home() {
       viewBundle: t("store.viewBundle"),
       ebookNotice: t("store.includedNotice"),
       productsReady: t("store.productsReady"),
-      ctaEyebrow: isBn ? "আপনার মূলধন, আপনার সিদ্ধান্ত" : "YOUR CAPITAL, YOUR DECISION",
-      ctaTitle: isBn
-        ? "আপনার অতিরিক্ত VIP Group বা Signal-এর প্রয়োজন নেই।\nআপনার প্রয়োজন সঠিকভাবে Market বোঝার ক্ষমতা।"
-        : "You do not need more signals.\nYou need more understanding.",
-      ctaButton: isBn ? "আপনার প্রসেস তৈরি করুন" : "Build your process",
+      ctaEyebrow: selectText({
+        en: "YOUR CAPITAL, YOUR DECISION",
+        bn: "আপনার মূলধন, আপনার সিদ্ধান্ত",
+        ur: "آپ کا سرمایہ، آپ کا فیصلہ",
+      }),
+      ctaTitle: selectText({
+        en: "You do not need more signals.\nYou need more understanding.",
+        bn: "আপনার অতিরিক্ত VIP Group বা Signal-এর প্রয়োজন নেই।\nআপনার প্রয়োজন সঠিকভাবে Market বোঝার ক্ষমতা।",
+        ur: "آپ کو مزید سگنلز کی ضرورت نہیں۔\nآپ کو مارکیٹ کو سمجھنے کی ضرورت ہے۔",
+      }),
+      ctaButton: selectText({
+        en: "Build your process",
+        bn: "আপনার প্রসেস তৈরি করুন",
+        ur: "اپنا منظم نظام بنائیں",
+      }),
       platformsEyebrow: t("platforms.eyebrow"),
       platformsTitle: t("platforms.title"),
       platformsDesc: t("platforms.desc"),
@@ -280,13 +293,13 @@ export default function Home() {
       modalClose: t("roadmap.close"),
       clickPrompt: t("roadmap.clickPrompt"),
     }),
-    [t, isBn]
+    [t, selectText]
   );
 
   return (
     <div
       className={`min-h-screen bg-[#f8fafc] text-[#09111f] selection:bg-[#38bdf8] selection:text-[#09111f] dark:bg-transparent dark:text-slate-100 transition-colors duration-300 ${
-        isBn ? "font-bangla" : ""
+        language === "bn" ? "font-bangla" : language === "ur" ? "font-urdu" : ""
       }`}
     >
       {/* ========================================================================= */}
@@ -437,7 +450,7 @@ export default function Home() {
             </div>
 
             <div className="z-10 flex w-full items-center justify-center lg:justify-end">
-              <HeroCandle3D lang={isBn ? "bn" : "en"} />
+              <HeroCandle3D lang={language} />
             </div>
           </div>
 
@@ -480,20 +493,28 @@ export default function Home() {
             <div ref={pricingRef} className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8 items-stretch max-w-7xl mx-auto">
               {storeBundles.map((item: any, i: number) => {
                 const isPopular = item.highlight || i === 1;
-                const topRibbonText = isBn
-                  ? item.topRibbonBn || "★ সবচেয়ে জনপ্রিয় চয়েস"
-                  : item.topRibbonEn || "★ MOST POPULAR";
-                const features = isBn
-                  ? item.featuresBn || [
-                      "১৫টি স্ট্রাকচার্ড চার্ট গাইড",
-                      "লাইফটাইম এক্সেস",
-                      "মোবাইল ও পিসিতে পড়ার সুবিধা",
-                    ]
-                  : item.featuresEn || [
-                      "Structured Chart Guides",
-                      "Lifetime Access",
-                      "Mobile & Desktop Readable",
-                    ];
+                const topRibbonText = selectText({
+                  en: item.topRibbonEn || "★ MOST POPULAR",
+                  bn: item.topRibbonBn || "★ সবচেয়ে জনপ্রিয় চয়েস",
+                  ur: item.topRibbonUr || "★ سب سے مقبول انتخاب",
+                });
+                const features = selectText({
+                  en: item.featuresEn || [
+                    "Structured Chart Guides",
+                    "Lifetime Access",
+                    "Mobile & Desktop Readable",
+                  ],
+                  bn: item.featuresBn || [
+                    "১৫টি স্ট্রাকচার্ড চার্ট গাইড",
+                    "লাইফটাইম এক্সেস",
+                    "মোবাইল ও পিসিতে পড়ার সুবিধা",
+                  ],
+                  ur: item.featuresUr || [
+                    "15 منظم چارٹ گائیڈز",
+                    "لائف ٹائم ڈاؤن لوڈ رسائی",
+                    "موبائل اور ڈیسک ٹاپ پر پڑھنے کی سہولت",
+                  ],
+                });
 
                 const isFreePackage = item.id === 1 || item.slug === "pdf-package" || item.titleEn?.toLowerCase().includes("free ebook");
 
@@ -532,7 +553,7 @@ export default function Home() {
                                 : "bg-[#eef3f6] text-slate-600 dark:bg-slate-800 dark:text-slate-400"
                             }`}
                           >
-                            {isBn ? item.badgeBn || "প্যাকেজ" : item.badgeEn || "PACKAGE"}
+                            {selectText({ en: item.badgeEn || "PACKAGE", bn: item.badgeBn || "প্যাকেজ", ur: item.badgeUr || "پیکج" })}
                           </span>
                         ) : (
                           <span />
@@ -547,17 +568,17 @@ export default function Home() {
 
                       {/* Title */}
                       <h3 className="mt-6 text-2xl font-extrabold tracking-tight">
-                        {isBn ? item.titleBn : item.titleEn}
+                        {selectText({ en: item.titleEn, bn: item.titleBn, ur: item.titleUr || item.titleEn })}
                       </h3>
 
                       {/* Description */}
-                      {Boolean(isBn ? item.descriptionBn : item.descriptionEn) && (
+                      {Boolean(selectText({ en: item.descriptionEn, bn: item.descriptionBn, ur: item.descriptionUr })) && (
                         <p
                           className={`mt-2.5 text-xs sm:text-sm leading-relaxed ${
                             isPopular ? "text-slate-300" : "text-slate-500 dark:text-slate-400"
                           }`}
                         >
-                          {isBn ? item.descriptionBn : item.descriptionEn}
+                          {selectText({ en: item.descriptionEn, bn: item.descriptionBn, ur: item.descriptionUr })}
                         </p>
                       )}
 
@@ -699,7 +720,7 @@ export default function Home() {
                       {platform.name}
                     </h3>
                     <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                      {isBn ? platform.descBn : platform.descEn}
+                      {selectText({ en: platform.descEn, bn: platform.descBn, ur: platform.descUr })}
                     </p>
                   </div>
 

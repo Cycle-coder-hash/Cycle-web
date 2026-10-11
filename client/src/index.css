@@ -28,6 +28,9 @@
   html[lang="bn"], .font-bangla {
     font-family: 'Hind Siliguri', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
   }
+  html[lang="ur"], .font-urdu {
+    font-family: 'Noto Sans Arabic', 'Segoe UI', Tahoma, Arial, sans-serif !important;
+  }
   button:not(:disabled), a[href] {
     @apply cursor-pointer;
     touch-action: manipulation;
@@ -588,6 +591,43 @@
     animation: none !important;
     width: 100% !important;
   }
+}
+
+/* ========================================================================= */
+/* URDU & RTL TEXT PRESENTATION & LAYOUT RULES                               */
+/* ========================================================================= */
+html[dir="rtl"], html.direction-rtl {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] body, html.direction-rtl body {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Isolate and protect numbers, financial symbols, trading codes, inputs, and charts */
+html[dir="rtl"] .ltr-data,
+html[dir="rtl"] [dir="ltr"],
+html[dir="rtl"] input[type="number"],
+html[dir="rtl"] input[type="tel"],
+html[dir="rtl"] input[type="email"],
+html[dir="rtl"] input[type="url"],
+html[dir="rtl"] .font-mono,
+html[dir="rtl"] code,
+html[dir="rtl"] canvas {
+  direction: ltr !important;
+  text-align: left;
+  unicode-bidi: isolate;
+}
+
+/* Ensure currency badges (e.g. ৳4,999 / $40) stay formatted left-to-right */
+html[dir="rtl"] .financial-price,
+html[dir="rtl"] .price-display {
+  direction: ltr !important;
+  display: inline-flex;
+  align-items: baseline;
+  unicode-bidi: isolate;
 }
 
 

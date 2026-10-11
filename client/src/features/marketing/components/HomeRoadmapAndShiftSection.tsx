@@ -12,11 +12,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { AnimatedCardBorder } from "@/components/AnimatedCardBorder";
 import type { StageDetail } from "@/data/roadmapStages";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   HYPE_ITEMS_BN,
   HYPE_ITEMS_EN,
+  HYPE_ITEMS_UR,
   REALITY_ITEMS_BN,
   REALITY_ITEMS_EN,
+  REALITY_ITEMS_UR,
   ROADMAP_CARD_FLOAT_DELAYS,
 } from "../lib/homeStaticData";
 
@@ -63,6 +66,8 @@ export function HomeRoadmapAndShiftSection({
   setSelectedStageModal,
   activeModalData,
 }: HomeRoadmapAndShiftSectionProps) {
+  const { language, selectText } = useLanguage();
+
   return (
     <>
       {/* ========================================================================= */}
@@ -95,12 +100,12 @@ export function HomeRoadmapAndShiftSection({
                 {HYPE_ITEMS_EN.map((_, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <span className="grid size-6 place-items-center rounded-full bg-rose-50 text-[10px] font-bold text-rose-600 dark:bg-rose-950/60 dark:text-rose-400">
-                      {isBn
+                      {language === "bn"
                         ? String(i + 1).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[+d])
                         : String(i + 1).padStart(2, "0")}
                     </span>
                     <span className="leading-tight">
-                      {isBn ? HYPE_ITEMS_BN[i] : HYPE_ITEMS_EN[i]}
+                      {selectText({ en: HYPE_ITEMS_EN[i], bn: HYPE_ITEMS_BN[i], ur: HYPE_ITEMS_UR[i] })}
                     </span>
                   </div>
                 ))}
@@ -119,12 +124,12 @@ export function HomeRoadmapAndShiftSection({
                 {REALITY_ITEMS_EN.map((_, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <span className="grid size-6 place-items-center rounded-full bg-white/10 text-[10px] font-bold text-[#38bdf8]">
-                      {isBn
+                      {language === "bn"
                         ? String(i + 1).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[+d])
                         : String(i + 1).padStart(2, "0")}
                     </span>
                     <span className="leading-tight">
-                      {isBn ? REALITY_ITEMS_BN[i] : REALITY_ITEMS_EN[i]}
+                      {selectText({ en: REALITY_ITEMS_EN[i], bn: REALITY_ITEMS_BN[i], ur: REALITY_ITEMS_UR[i] })}
                     </span>
                   </div>
                 ))}
@@ -256,7 +261,7 @@ export function HomeRoadmapAndShiftSection({
         >
           <div
             className={`relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-2xl dark:border-slate-800 dark:bg-slate-900 transition-all duration-300 scale-100 animate-in zoom-in-95 ${
-              isBn ? "font-bangla" : ""
+              language === "bn" ? "font-bangla" : language === "ur" ? "font-urdu" : ""
             }`}
             onClick={(e) => e.stopPropagation()}
           >

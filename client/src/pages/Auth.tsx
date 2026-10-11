@@ -21,7 +21,7 @@ export default function Auth() {
   const [mode, setMode] = useState<AuthMode>(() =>
     location === "/register" ? "register" : "login"
   );
-  const { t, language, isRTL } = useLanguage();
+  const { t, language, isRTL, selectText } = useLanguage();
   const isBn = language === "bn";
 
   // Form Fields
@@ -94,9 +94,11 @@ export default function Auth() {
       const params = new URLSearchParams(hash ? hash.replace(/^#/, "") : search.replace(/^\?/, ""));
       const desc = params.get("error_description") || params.get("error");
       setErrorMsg(
-        isBn
-          ? `ভেরিফিকেশন বা সাইন-ইন লিঙ্কে সমস্যা হয়েছে (${desc || "Error"}). অনুগ্রহ করে আবার চেষ্টা করুন।`
-          : `Verification or authentication error (${desc || "Error"}). Please try again.`
+        selectText({
+          en: `Verification or authentication error (${desc || "Error"}). Please try again.`,
+          bn: `ভেরিফিকেশন বা সাইন-ইন লিঙ্কে সমস্যা হয়েছে (${desc || "Error"}). অনুগ্রহ করে আবার চেষ্টা করুন।`,
+          ur: `تصدیق یا سائن ان لنک میں خرابی پیش آگئی (${desc || "Error"})۔ براہ کرم دوبارہ کوشش کریں۔`,
+        })
       );
       setShowResend(true);
       try {
@@ -109,9 +111,11 @@ export default function Auth() {
     if (hash.includes("type=recovery") || search.includes("type=recovery")) {
       setMode("reset_password");
       setSuccessMsg(
-        isBn
-          ? "ভেরিফিকেশন লিঙ্ক নিশ্চিত হয়েছে। অনুগ্রহ করে আপনার নতুন পাসওয়ার্ড দিন।"
-          : "Recovery link confirmed. Please enter your new password."
+        selectText({
+          en: "Recovery link confirmed. Please enter your new password.",
+          bn: "ভেরিফিকেশন লিঙ্ক নিশ্চিত হয়েছে। অনুগ্রহ করে আপনার নতুন পাসওয়ার্ড দিন।",
+          ur: "بحالی کا لنک تصدیق ہو گیا۔ براہ کرم اپنا نیا پاس ورڈ درج کریں۔",
+        })
       );
       return;
     }
@@ -129,9 +133,11 @@ export default function Auth() {
           if (data?.session) {
             localStorage.setItem("cycle_session_token", data.session.access_token);
             setSuccessMsg(
-              isBn
-                ? "গুগল দিয়ে সফলভাবে লগইন হয়েছে! প্রবেশ করানো হচ্ছে..."
-                : "Signed in with Google successfully! Entering portal..."
+              selectText({
+                en: "Signed in with Google successfully! Entering portal...",
+                bn: "গুগল দিয়ে সফলভাবে লগইন হয়েছে! প্রবেশ করানো হচ্ছে...",
+                ur: "Google کے ساتھ کامیابی سے لاگ ان ہو گئے! پورٹل میں داخل کیا جا رہا ہے...",
+              })
             );
             try {
               window.history.replaceState(null, "", window.location.pathname);
@@ -145,9 +151,11 @@ export default function Auth() {
           console.error("[OAuth code exchange error]:", err);
           setErrorMsg(
             err.message ||
-              (isBn
-                ? "গুগল সাইন ইন সম্পন্ন করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।"
-                : "Failed to complete Google sign-in. Please try again.")
+              selectText({
+                en: "Failed to complete Google sign-in. Please try again.",
+                bn: "গুগল সাইন ইন সম্পন্ন করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।",
+                ur: "Google سائن ان مکمل نہیں ہو سکا۔ براہ کرم دوبارہ کوشش کریں۔",
+              })
           );
         })
         .finally(() => {
@@ -169,9 +177,11 @@ export default function Auth() {
           }
         } catch {}
         setSuccessMsg(
-          isBn
-            ? "সফলভাবে প্রবেশ সম্পন্ন হয়েছে! ড্যাশবোর্ডে নিয়ে যাওয়া হচ্ছে..."
-            : "Signed in successfully! Entering portal..."
+          selectText({
+            en: "Signed in successfully! Entering portal...",
+            bn: "সফলভাবে প্রবেশ সম্পন্ন হয়েছে! ড্যাশবোর্ডে নিয়ে যাওয়া হচ্ছে...",
+            ur: "کامیابی سے لاگ ان ہو گئے! ڈیش بورڈ پر لے جایا جا رہا ہے...",
+          })
         );
         try {
           window.history.replaceState(null, "", window.location.pathname);
@@ -181,7 +191,7 @@ export default function Auth() {
         }, 500);
       }
     }
-  }, [isBn]);
+  }, [selectText]);
 
   // If already logged in and not resetting password, redirect to target or dashboard
   if (user && mode !== "reset_password") {
@@ -224,9 +234,11 @@ export default function Auth() {
       console.error("[Google Auth Error]:", err);
       setErrorMsg(
         err.message ||
-          (isBn
-            ? "গুগল দিয়ে সাইন ইন করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।"
-            : "Failed to sign in with Google. Please try again.")
+          selectText({
+            en: "Failed to sign in with Google. Please try again.",
+            bn: "গুগল দিয়ে সাইন ইন করতে সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।",
+            ur: "Google سے سائن ان کرنے میں مسئلہ پیش آیا۔ براہ کرم دوبارہ کوشش کریں۔",
+          })
       );
       setGoogleLoading(false);
     }
@@ -240,7 +252,13 @@ export default function Auth() {
     setShowResend(false);
 
     if (!email.trim() || !password) {
-      setErrorMsg(isBn ? "ইমেইল এবং পাসওয়ার্ড পূরণ করুন" : "Please enter email and password");
+      setErrorMsg(
+        selectText({
+          en: "Please enter email and password",
+          bn: "ইমেইল এবং পাসওয়ার্ড পূরণ করুন",
+          ur: "براہ کرم ای میل اور پاس ورڈ درج کریں",
+        })
+      );
       return;
     }
 
@@ -256,9 +274,11 @@ export default function Auth() {
         if (error.message.toLowerCase().includes("email not confirmed")) {
           setMode("verify_otp");
           setErrorMsg(
-            isBn
-              ? "আপনার ইমেইল এখনও নিশ্চিত করা হয়নি। আপনার ইনবক্স অথবা Spam ফোল্ডার থেকে 'Confirm email address' লিঙ্কে ক্লিক করুন।"
-              : "Email not confirmed yet. Please open your Inbox or Spam folder and click the 'Confirm email address' link."
+            selectText({
+              en: "Email not confirmed yet. Please open your Inbox or Spam folder and click the 'Confirm email address' link.",
+              bn: "আপনার ইমেইল এখনও নিশ্চিত করা হয়নি। আপনার ইনবক্স অথবা Spam ফোল্ডার থেকে 'Confirm email address' লিঙ্কে ক্লিক করুন।",
+              ur: "آپ کا ای میل ابھی تصدیق نہیں ہوا۔ براہ کرم اپنا ان باکس یا اسپام فولڈر چیک کریں اور 'Confirm email address' لنک پر کلک کریں۔",
+            })
           );
           setShowResend(true);
           try {
@@ -282,9 +302,11 @@ export default function Auth() {
           if (serverRes?.requiresVerification) {
             setMode("verify_otp");
             setErrorMsg(
-              isBn
-                ? "আপনার অ্যাকাউন্ট অ্যাক্টিভ করতে ইমেইলে পাঠানো ৬-সংখ্যার কোডটি নিচে দিন।"
-                : "Please enter the 6-digit code sent to your email to activate your account."
+              selectText({
+                en: "Please enter the 6-digit code sent to your email to activate your account.",
+                bn: "আপনার অ্যাকাউন্ট অ্যাক্টিভ করতে ইমেইলে পাঠানো ৬-সংখ্যার কোডটি নিচে দিন।",
+                ur: "اپنا اکاؤنٹ فعال کرنے کے لیے اپنے ای میل پر بھیجا گیا 6 ہندسوں کا کوڈ نیچے درج کریں۔",
+              })
             );
             setShowResend(true);
             return;
@@ -297,7 +319,13 @@ export default function Auth() {
           }
         } catch (serverErr: any) {
           if (error.message.toLowerCase().includes("invalid login credentials")) {
-            setErrorMsg(isBn ? "ইমেইল বা পাসওয়ার্ড সঠিক নয়।" : "Invalid email or password.");
+            setErrorMsg(
+              selectText({
+                en: "Invalid email or password.",
+                bn: "ইমেইল বা পাসওয়ার্ড সঠিক নয়।",
+                ur: "غلط ای میل یا پاس ورڈ۔",
+              })
+            );
           } else {
             setErrorMsg(error.message || serverErr.message);
           }
@@ -360,11 +388,23 @@ export default function Auth() {
     setShowResend(false);
 
     if (!name.trim() || !email.trim() || !password) {
-      setErrorMsg(isBn ? "সকল প্রয়োজনীয় তথ্য পূরণ করুন" : "Please fill in all required fields");
+      setErrorMsg(
+        selectText({
+          en: "Please fill in all required fields",
+          bn: "সকল প্রয়োজনীয় তথ্য পূরণ করুন",
+          ur: "براہ کرم تمام مطلوبہ خانے پر کریں",
+        })
+      );
       return;
     }
     if (password.length < 6) {
-      setErrorMsg(isBn ? "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে" : "Password must be at least 6 characters");
+      setErrorMsg(
+        selectText({
+          en: "Password must be at least 6 characters",
+          bn: "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে",
+          ur: "پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے",
+        })
+      );
       return;
     }
 
@@ -395,9 +435,11 @@ export default function Auth() {
           ) {
             setMode("login");
             setErrorMsg(
-              isBn
-                ? "এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট খোলা হয়েছে। অনুগ্রহ করে আপনার পাসওয়ার্ড দিয়ে সাইন ইন করুন।"
-                : "An account with this email already exists. Please sign in with your password."
+              selectText({
+                en: "An account with this email already exists. Please sign in with your password.",
+                bn: "এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট খোলা হয়েছে। অনুগ্রহ করে আপনার পাসওয়ার্ড দিয়ে সাইন ইন করুন।",
+                ur: "اس ای میل سے پہلے سے اکاؤنٹ موجود ہے۔ براہ کرم اپنے پاس ورڈ سے سائن ان کریں۔",
+              })
             );
             return;
           }
@@ -408,9 +450,11 @@ export default function Auth() {
         if (data?.user?.identities && data.user.identities.length === 0) {
           setMode("login");
           setErrorMsg(
-            isBn
-              ? "এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট তৈরি করা হয়েছে। অনুগ্রহ করে আপনার পাসওয়ার্ড দিয়ে সাইন ইন করুন বা পাসওয়ার্ড রিসেট করুন।"
-              : "This email is already registered. Please sign in with your password or reset your password."
+            selectText({
+              en: "This email is already registered. Please sign in with your password or reset your password.",
+              bn: "এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট তৈরি করা হয়েছে। অনুগ্রহ করে আপনার পাসওয়ার্ড দিয়ে সাইন ইন করুন বা পাসওয়ার্ড রিসেট করুন।",
+              ur: "یہ ای میل پہلے سے رجسٹرڈ ہے۔ براہ کرم اپنے پاس ورڈ سے سائن ان کریں یا پاس ورڈ ری سیٹ کریں۔",
+            })
           );
           return;
         }
@@ -479,9 +523,11 @@ export default function Auth() {
       // If no immediate session, user must verify email / OTP
       setMode("verify_otp");
       setSuccessMsg(
-        isBn
-          ? `রেজিস্ট্রেশন সফল হয়েছে! আমরা ${email} ঠিকানায় কনফার্মেশন লিঙ্ক পাঠিয়েছি। অনুগ্রহ করে আপনার ইনবক্স অথবা Spam ফোল্ডার থেকে 'Confirm email address' লিঙ্কে ক্লিক করুন।`
-          : `Registration successful! We have sent a confirmation link to ${email}. Please check your Inbox or Spam folder and click 'Confirm email address'.`
+        selectText({
+          en: `Registration successful! We have sent a confirmation link to ${email}. Please check your Inbox or Spam folder and click 'Confirm email address'.`,
+          bn: `রেজিস্ট্রেশন সফল হয়েছে! আমরা ${email} ঠিকানায় কনফার্মেশন লিঙ্ক পাঠিয়েছি। অনুগ্রহ করে আপনার ইনবক্স অথবা Spam ফোল্ডার থেকে 'Confirm email address' লিঙ্কে ক্লিক করুন।`,
+          ur: `رجسٹریشن کامیاب ہو گئی! ہم نے ${email} پر تصدیقی لنک بھیج دیا ہے۔ براہ کرم اپنا ان باکس یا اسپام فولڈر دیکھیں اور 'Confirm email address' پر کلک کریں۔`,
+        })
       );
       setShowResend(true);
       setCooldown(60);
@@ -517,9 +563,11 @@ export default function Auth() {
 
       setCooldown(60);
       setSuccessMsg(
-        isBn
-          ? `কনফার্মেশন লিঙ্ক ও কোড পুনরায় পাঠানো হয়েছে (${email})। ইনবক্সে না পেলে Spam ফোল্ডার দেখুন।`
-          : `Confirmation link and code resent to ${email}. If not in inbox, please check your Spam folder.`
+        selectText({
+          en: `Confirmation link and code resent to ${email}. If not in inbox, please check your Spam folder.`,
+          bn: `কনফার্মেশন লিঙ্ক ও কোড পুনরায় পাঠানো হয়েছে (${email})। ইনবক্সে না পেলে Spam ফোল্ডার দেখুন।`,
+          ur: `تصدیقی لنک اور کوڈ دوبارہ بھیج دیا گیا (${email})۔ اگر ان باکس میں نہ ملے تو اسپام فولڈر دیکھیں۔`,
+        })
       );
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to resend");
@@ -540,7 +588,13 @@ export default function Auth() {
       const { data: sessionData } = await supabase.auth.getSession();
       if (sessionData?.session) {
         localStorage.setItem("cycle_session_token", sessionData.session.access_token);
-        setSuccessMsg(isBn ? "ইমেইল ভেরিফাই হয়েছে! ড্যাশবোর্ডে প্রবেশ করানো হচ্ছে..." : "Email verified! Entering dashboard...");
+        setSuccessMsg(
+          selectText({
+            en: "Email verified! Entering dashboard...",
+            bn: "ইমেইল ভেরিফাই হয়েছে! ড্যাশবোর্ডে প্রবেশ করানো হচ্ছে...",
+            ur: "ای میل کی تصدیق ہو گئی! ڈیش بورڈ میں داخل کیا جا رہا ہے...",
+          })
+        );
         window.location.href = getRedirectUrl();
         return;
       }
@@ -554,7 +608,13 @@ export default function Auth() {
 
         if (signData?.session) {
           localStorage.setItem("cycle_session_token", signData.session.access_token);
-          setSuccessMsg(isBn ? "ইমেইল ভেরিফাই হয়েছে! ড্যাশবোর্ডে প্রবেশ করানো হচ্ছে..." : "Email verified! Entering dashboard...");
+          setSuccessMsg(
+            selectText({
+              en: "Email verified! Entering dashboard...",
+              bn: "ইমেইল ভেরিফাই হয়েছে! ড্যাশবোর্ডে প্রবেশ করানো হচ্ছে...",
+              ur: "ای میل کی تصدیق ہو گئی! ڈیش بورڈ میں داخل کیا جا رہا ہے...",
+            })
+          );
           window.location.href = getRedirectUrl();
           return;
         }
@@ -563,9 +623,11 @@ export default function Auth() {
           const msg = signErr.message.toLowerCase();
           if (msg.includes("not confirmed") || msg.includes("email_not_confirmed")) {
             setErrorMsg(
-              isBn
-                ? "আপনার ইমেইলটি এখনও কনফার্ম করা হয়নি। অনুগ্রহ করে জিমেইল (Inbox অথবা Spam ফোল্ডার) থেকে 'Confirm email address' লিঙ্কে ক্লিক করুন।"
-                : "Your email has not been confirmed yet. Please check your Gmail (Inbox or Spam folder) and click the 'Confirm email address' link."
+              selectText({
+                en: "Your email has not been confirmed yet. Please check your Gmail (Inbox or Spam folder) and click the 'Confirm email address' link.",
+                bn: "আপনার ইমেইলটি এখনও কনফার্ম করা হয়নি। অনুগ্রহ করে জিমেইল (Inbox অথবা Spam ফোল্ডার) থেকে 'Confirm email address' লিঙ্কে ক্লিক করুন।",
+                ur: "آپ کا ای میل ابھی تصدیق نہیں ہوا۔ براہ کرم اپنا جی میل (ان باکس یا اسپام فولڈر) چیک کریں اور 'Confirm email address' لنک پر کلک کریں۔",
+              })
             );
             return;
           }
@@ -575,13 +637,22 @@ export default function Auth() {
         // Switch to login with instruction
         setMode("login");
         setSuccessMsg(
-          isBn
-            ? "ইমেইল কনফার্ম করা হয়ে থাকলে আপনার পাসওয়ার্ড দিয়ে সাইন ইন করুন।"
-            : "If you clicked the email confirmation link, please sign in with your password."
+          selectText({
+            en: "If you clicked the email confirmation link, please sign in with your password.",
+            bn: "ইমেইল কনফার্ম করা হয়ে থাকলে আপনার পাসওয়ার্ড দিয়ে সাইন ইন করুন।",
+            ur: "اگر آپ نے ای میل کی تصدیق کے لنک پر کلک کیا ہے، تو براہ کرم اپنے پاس ورڈ کے ساتھ سائن ان کریں۔",
+          })
         );
       }
     } catch (err: any) {
-      setErrorMsg(err.message || (isBn ? "কনফার্মেশন পাওয়া যায়নি।" : "Confirmation not detected yet."));
+      setErrorMsg(
+        err.message ||
+          selectText({
+            en: "Confirmation not detected yet.",
+            bn: "কনফার্মেশন পাওয়া যায়নি।",
+            ur: "ابھی تک تصدیق نہیں مل سکی۔",
+          })
+      );
     } finally {
       setLoading(false);
     }
@@ -591,7 +662,13 @@ export default function Auth() {
   const handleVerifyOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otpCode.trim() || otpCode.trim().length < 4) {
-      setErrorMsg(isBn ? "সঠিক ভেরিফিকেশন কোড লিখুন" : "Please enter a valid verification code");
+      setErrorMsg(
+        selectText({
+          en: "Please enter a valid verification code",
+          bn: "সঠিক ভেরিফিকেশন কোড লিখুন",
+          ur: "براہ کرم درست تصدیقی کوڈ درج کریں",
+        })
+      );
       return;
     }
 
@@ -612,7 +689,13 @@ export default function Auth() {
 
         if (supaData?.session) {
           localStorage.setItem("cycle_session_token", supaData.session.access_token);
-          setSuccessMsg(isBn ? "ভেরিফিকেশন সফল হয়েছে!" : "Verification successful!");
+          setSuccessMsg(
+            selectText({
+              en: "Verification successful!",
+              bn: "ভেরিফিকেশন সফল হয়েছে!",
+              ur: "تصدیق کامیاب ہو گئی!",
+            })
+          );
           window.location.href = getRedirectUrl();
           return;
         }
@@ -625,7 +708,13 @@ export default function Auth() {
           });
           if (retryRes.data?.session) {
             localStorage.setItem("cycle_session_token", retryRes.data.session.access_token);
-            setSuccessMsg(isBn ? "ভেরিফিকেশন সফল হয়েছে!" : "Verification successful!");
+            setSuccessMsg(
+              selectText({
+                en: "Verification successful!",
+                bn: "ভেরিফিকেশন সফল হয়েছে!",
+                ur: "تصدیق کامیاب ہو گئی!",
+              })
+            );
             window.location.href = getRedirectUrl();
             return;
           }
@@ -642,14 +731,33 @@ export default function Auth() {
 
       if (serverRes?.token) {
         localStorage.setItem("cycle_session_token", serverRes.token);
-        setSuccessMsg(isBn ? "ভেরিফিকেশন সফল হয়েছে!" : "Verification successful!");
+        setSuccessMsg(
+          selectText({
+            en: "Verification successful!",
+            bn: "ভেরিফিকেশন সফল হয়েছে!",
+            ur: "تصدیق کامیاب ہو گئی!",
+          })
+        );
         window.location.href = getRedirectUrl();
         return;
       }
 
-      throw new Error(isBn ? "ভেরিফিকেশন কোডটি সঠিক নয় বা মেয়াদ শেষ হয়েছে" : "Invalid or expired verification code");
+      throw new Error(
+        selectText({
+          en: "Invalid or expired verification code",
+          bn: "ভেরিফিকেশন কোডটি সঠিক নয় বা মেয়াদ শেষ হয়েছে",
+          ur: "غلط یا زائد المیعاد تصدیقی کوڈ",
+        })
+      );
     } catch (err: any) {
-      setErrorMsg(err.message || (isBn ? "ভেরিফিকেশন কোডটি সঠিক নয়" : "Invalid verification code"));
+      setErrorMsg(
+        err.message ||
+          selectText({
+            en: "Invalid verification code",
+            bn: "ভেরিফিকেশন কোডটি সঠিক নয়",
+            ur: "غلط تصدیقی کوڈ",
+          })
+      );
     } finally {
       setLoading(false);
     }
@@ -662,7 +770,13 @@ export default function Auth() {
     setSuccessMsg("");
 
     if (!email.trim()) {
-      setErrorMsg(isBn ? "আপনার ইমেইল অ্যাড্রেস দিন" : "Please enter your email address");
+      setErrorMsg(
+        selectText({
+          en: "Please enter your email address",
+          bn: "আপনার ইমেইল অ্যাড্রেস দিন",
+          ur: "براہ کرم اپنا ای میل ایڈریس درج کریں",
+        })
+      );
       return;
     }
 
@@ -676,9 +790,11 @@ export default function Auth() {
         setErrorMsg(error.message);
       } else {
         setSuccessMsg(
-          isBn
-            ? `পাসওয়ার্ড রিসেট করার লিঙ্ক ${email} ঠিকানায় পাঠানো হয়েছে। অনুগ্রহ করে আপনার ইনবক্স অথবা Spam ফোল্ডার চেক করুন।`
-            : `Password reset link sent to ${email}. Please check your Inbox or Spam folder.`
+          selectText({
+            en: `Password reset link sent to ${email}. Please check your Inbox or Spam folder.`,
+            bn: `পাসওয়ার্ড রিসেট করার লিঙ্ক ${email} ঠিকানায় পাঠানো হয়েছে। অনুগ্রহ করে আপনার ইনবক্স অথবা Spam ফোল্ডার চেক করুন।`,
+            ur: `پاس ورڈ ری سیٹ لنک ${email} پر بھیج دیا گیا ہے۔ براہ کرم اپنا ان باکس یا اسپام فولڈر چیک کریں۔`,
+          })
         );
         setCooldown(60);
       }
@@ -697,11 +813,23 @@ export default function Auth() {
     setSuccessMsg("");
 
     if (!newPassword) {
-      setErrorMsg(isBn ? "নতুন পাসওয়ার্ড দিন" : "Please enter your new password");
+      setErrorMsg(
+        selectText({
+          en: "Please enter your new password",
+          bn: "নতুন পাসওয়ার্ড দিন",
+          ur: "براہ کرم اپنا نیا پاس ورڈ درج کریں",
+        })
+      );
       return;
     }
     if (newPassword.length < 6) {
-      setErrorMsg(isBn ? "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে" : "Password must be at least 6 characters");
+      setErrorMsg(
+        selectText({
+          en: "Password must be at least 6 characters",
+          bn: "পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে",
+          ur: "پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے",
+        })
+      );
       return;
     }
 
@@ -715,9 +843,11 @@ export default function Auth() {
         setErrorMsg(error.message);
       } else {
         setSuccessMsg(
-          isBn
-            ? "পাসওয়ার্ড সফলভাবে পরিবর্তন করা হয়েছে! এখন লগইন করুন।"
-            : "Password updated successfully! You can now sign in."
+          selectText({
+            en: "Password updated successfully! You can now sign in.",
+            bn: "পাসওয়ার্ড সফলভাবে পরিবর্তন করা হয়েছে! এখন লগইন করুন।",
+            ur: "پاس ورڈ کامیابی سے تبدیل ہو گیا! اب آپ سائن ان کر سکتے ہیں۔",
+          })
         );
         setMode("login");
         setPassword("");
@@ -733,8 +863,9 @@ export default function Auth() {
   return (
     <div
       className={`min-h-screen bg-[#f8fafc] text-slate-900 selection:bg-[#38bdf8] selection:text-slate-950 dark:bg-[#070e1b] dark:text-slate-100 transition-colors duration-300 ${
-        isBn ? "font-bangla" : ""
+        language === "bn" ? "font-bangla" : language === "ur" ? "font-urdu" : ""
       }`}
+      dir={isRTL ? "rtl" : "ltr"}
     >
       {/* Background ambient glows */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden ambient-blur-blob hidden sm:block">
@@ -769,8 +900,14 @@ export default function Auth() {
               size="sm"
               className="gap-1 text-xs font-bold border-slate-300 dark:border-slate-700"
             >
-              <ArrowLeft size={14} />
-              <span>{isBn ? "হোমপেজ" : "Home"}</span>
+              <ArrowLeft size={14} className={isRTL ? "rotate-180" : ""} />
+              <span>
+                {selectText({
+                  en: "Home",
+                  bn: "হোমপেজ",
+                  ur: "ہوم",
+                })}
+              </span>
             </Button>
           </Link>
         </div>

@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 import type { CountryLanguageOption, SupportedLanguage } from "@/i18n/types";
 import type { CurrencyConfig, TimezoneOption } from "@/contexts/UserPreferencesContext";
 import {
@@ -101,6 +102,8 @@ export function SettingsPreferencesAndSecurityPanels({
   isLoggingOutAll,
   handleLogoutAllDevices,
 }: SettingsPreferencesAndSecurityPanelsProps) {
+  const { selectText } = useLanguage();
+
   if (activeTab === "account" && !showLogoutAllModal) {
     return null;
   }
@@ -116,12 +119,20 @@ export function SettingsPreferencesAndSecurityPanels({
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Palette size={18} className="text-sky-500" />
-                <span>{isBn ? "থিম ও ডিসপ্লে মোড" : "Theme & Visual Appearance"}</span>
+                <span>
+                  {selectText({
+                    en: "Theme & Visual Appearance",
+                    bn: "থিম ও ডিসপ্লে মোড",
+                    ur: "تھیم اور ظاہری شکل",
+                  })}
+                </span>
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {isBn
-                  ? "আপনার পছন্দ অনুযায়ী ডার্ক মোড বা লাইট মোড নির্বাচন করুন। ডার্ক মোড স্ট্যান্ডার্ড রাখা হয়েছে।"
-                  : "Select your preferred visual theme. Dark mode is the recommended institutional standard."}
+                {selectText({
+                  en: "Select your preferred visual theme. Dark mode is the recommended institutional standard.",
+                  bn: "আপনার পছন্দ অনুযায়ী ডার্ক মোড বা লাইট মোড নির্বাচন করুন। ডার্ক মোড স্ট্যান্ডার্ড রাখা হয়েছে।",
+                  ur: "اپنی پسندیدہ بصری تھیم منتخب کریں۔ ڈارک موڈ ادارہ جاتی معیار ہے۔",
+                })}
               </p>
             </div>
 
@@ -132,7 +143,13 @@ export function SettingsPreferencesAndSecurityPanels({
                 onClick={() => {
                   setTheme("dark");
                   onUpdatePreferences({ theme: "dark" });
-                  toast.success(isBn ? "ডার্ক মোড সক্রিয় করা হয়েছে" : "Dark theme enabled");
+                  toast.success(
+                    selectText({
+                      en: "Dark theme enabled",
+                      bn: "ডার্ক মোড সক্রিয় করা হয়েছে",
+                      ur: "ڈارک تھیم فعال ہو گئی",
+                    })
+                  );
                 }}
                 className={`cursor-pointer rounded-2xl border-2 p-5 transition-all duration-200 relative ${
                   theme === "dark"
@@ -149,12 +166,18 @@ export function SettingsPreferencesAndSecurityPanels({
                   <Moon size={20} />
                 </div>
                 <div className="font-extrabold text-sm text-slate-900 dark:text-white">
-                  {isBn ? "ডার্ক মোড (ডিফল্ট)" : "Dark Navy Theme (Default)"}
+                  {selectText({
+                    en: "Dark Navy Theme (Default)",
+                    bn: "ডার্ক মোড (ডিফল্ট)",
+                    ur: "ڈارک نیوی تھیم (طے شدہ)",
+                  })}
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                  {isBn
-                    ? "দীর্ঘ সময় চার্ট অ্যানালাইসিস ও পড়াশোনায় চোখের ক্লান্তি দূর করতে ডিপ ব্লু-ব্ল্যাক নান্দনিক ইন্টারফেস।"
-                    : "Institutional deep blue-black interface built for low glare during night sessions and CRT markups."}
+                  {selectText({
+                    en: "Institutional deep blue-black interface built for low glare during night sessions and CRT markups.",
+                    bn: "দীর্ঘ সময় চার্ট অ্যানালাইসিস ও পড়াশোনায় চোখের ক্লান্তি দূর করতে ডিপ ব্লু-ব্ল্যাক নান্দনিক ইন্টারফেস।",
+                    ur: "رات کے سیشنز اور مارک اپس کے دوران آنکھوں کی حفاظت کے لیے گہرا نیلا انٹرفیس۔",
+                  })}
                 </p>
                 <div className="mt-4 flex items-center gap-1.5 text-[10px] font-mono font-bold text-sky-600 dark:text-sky-400">
                   <Sparkles size={11} />
@@ -167,7 +190,13 @@ export function SettingsPreferencesAndSecurityPanels({
                 onClick={() => {
                   setTheme("light");
                   onUpdatePreferences({ theme: "light" });
-                  toast.success(isBn ? "লাইট মোড সক্রিয় করা হয়েছে" : "Light theme enabled");
+                  toast.success(
+                    selectText({
+                      en: "Light theme enabled",
+                      bn: "লাইট মোড সক্রিয় করা হয়েছে",
+                      ur: "لائٹ تھیم فعال ہو گئی",
+                    })
+                  );
                 }}
                 className={`cursor-pointer rounded-2xl border-2 p-5 transition-all duration-200 relative ${
                   theme === "light"
@@ -184,12 +213,18 @@ export function SettingsPreferencesAndSecurityPanels({
                   <Sun size={20} />
                 </div>
                 <div className="font-extrabold text-sm text-slate-900 dark:text-white">
-                  {isBn ? "লাইট মোড" : "Light Clean Theme"}
+                  {selectText({
+                    en: "Light Clean Theme",
+                    bn: "লাইট মোড",
+                    ur: "لائٹ کلین تھیم",
+                  })}
                 </div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                  {isBn
-                    ? "উজ্জ্বল আলোর পরিবেশে হাই কন্ট্রাস্ট পঠন ও নোট লেখার জন্য উপযুক্ত।"
-                    : "High-contrast daylight theme for reading trading notes and curriculum articles."}
+                  {selectText({
+                    en: "High-contrast daylight theme for reading trading notes and curriculum articles.",
+                    bn: "উজ্জ্বল আলোর পরিবেশে হাই কন্ট্রাস্ট পঠন ও নোট লেখার জন্য উপযুক্ত।",
+                    ur: "دن کی روشنی میں پڑھنے اور نوٹس لکھنے کے لیے ہائی کنٹراسٹ تھیم۔",
+                  })}
                 </p>
                 <div className="mt-4 flex items-center gap-1.5 text-[10px] font-mono font-bold text-slate-500">
                   <Laptop size={11} />
@@ -211,12 +246,20 @@ export function SettingsPreferencesAndSecurityPanels({
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Globe size={18} className="text-sky-500" />
-                <span>{isBn ? "ওয়েবসাইট ভাষা ও দেশ নির্বাচন" : "Language & Country Selection"}</span>
+                <span>
+                  {selectText({
+                    en: "Language & Country Selection",
+                    bn: "ওয়েবসাইট ভাষা ও দেশ নির্বাচন",
+                    ur: "زبان اور ملک کا انتخاب",
+                  })}
+                </span>
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {isBn
-                  ? "সম্পূর্ণ কার্যকরী মাল্টি-ল্যাঙ্গুয়েজ সিস্টেম (বাংলা, English, اردو)। যেকোনো ভাষা নির্বাচন করলেই পুরো ওয়েবসাইট সেই ভাষায় পরিবর্তিত হবে।"
-                  : "Active multi-language system supporting Bangla, English, and Urdu with immediate site-wide translation."}
+                {selectText({
+                  en: "Active multi-language system supporting Bangla, English, and Urdu with immediate site-wide translation.",
+                  bn: "সম্পূর্ণ কার্যকরী মাল্টি-ল্যাঙ্গুয়েজ সিস্টেম (বাংলা, English, اردو)। যেকোনো ভাষা নির্বাচন করলেই পুরো ওয়েবসাইট সেই ভাষায় পরিবর্তিত হবে।",
+                  ur: "فعال کثیر لسانی نظام جو اردو، انگریزی اور بنگلہ کی فوری ترجمانی کرتا ہے۔",
+                })}
               </p>
             </div>
 
@@ -264,19 +307,27 @@ export function SettingsPreferencesAndSecurityPanels({
               <div>
                 <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <Clock size={18} className="text-sky-500" />
-                  <span>{isBn ? "ট্রেডিং টাইমজোন ও লাইভ ঘড়ি" : "Financial Market Time Zone"}</span>
+                  <span>
+                    {selectText({
+                      en: "Financial Market Time Zone",
+                      bn: "ট্রেডিং টাইমজোন ও লাইভ ঘড়ি",
+                      ur: "تجارتی مارکیٹ ٹائم زون",
+                    })}
+                  </span>
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  {isBn
-                    ? "আপনার সুবিধাজনক মার্কেট সেশন অনুযায়ী টাইমজোন নির্ধারণ করুন।"
-                    : "Set your reference timezone for trade logging, session times, and daily discipline resets."}
+                  {selectText({
+                    en: "Set your reference timezone for trade logging, session times, and daily discipline resets.",
+                    bn: "আপনার সুবিধাজনক মার্কেট সেশন অনুযায়ী টাইমজোন নির্ধারণ করুন।",
+                    ur: "ٹریڈ لاگنگ اور سیشن کے اوقات کے لیے اپنا مرجع ٹائم زون سیٹ کریں۔",
+                  })}
                 </p>
               </div>
 
               {/* Live Digital Clock Badge */}
               <div className="rounded-xl border border-sky-500/30 bg-sky-500/10 px-3.5 py-1.5 flex items-center gap-2">
                 <div className="size-2 rounded-full bg-emerald-500 animate-ping" />
-                <div className="text-xs font-mono font-extrabold text-sky-600 dark:text-sky-400 tracking-wider">
+                <div dir="ltr" className="text-xs font-mono font-extrabold text-sky-600 dark:text-sky-400 tracking-wider">
                   {liveClock || "Calculating..."}
                 </div>
               </div>
@@ -290,7 +341,13 @@ export function SettingsPreferencesAndSecurityPanels({
                     key={tz.value}
                     onClick={() => {
                       setTimezone(tz.value);
-                      toast.success(isBn ? `টাইমজোন আপডেট হয়েছে: ${tz.city}` : `Timezone set to ${tz.city}`);
+                      toast.success(
+                        selectText({
+                          en: `Timezone set to ${tz.city}`,
+                          bn: `টাইমজোন আপডেট হয়েছে: ${tz.city}`,
+                          ur: `ٹائم زون سیٹ ہو گیا: ${tz.city}`,
+                        })
+                      );
                     }}
                     className={`cursor-pointer rounded-xl border p-3.5 transition-all ${
                       isSelected
@@ -302,7 +359,7 @@ export function SettingsPreferencesAndSecurityPanels({
                       <span className="text-xs font-bold text-slate-900 dark:text-white">
                         {tz.city}
                       </span>
-                      <span className="font-mono text-[10px] font-bold text-slate-500 bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                      <span dir="ltr" className="font-mono text-[10px] font-bold text-slate-500 bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded">
                         {tz.offset}
                       </span>
                     </div>
@@ -323,12 +380,20 @@ export function SettingsPreferencesAndSecurityPanels({
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Coins size={18} className="text-amber-500" />
-                <span>{isBn ? "ডিসপ্লে কারেন্সি নির্বাচন" : "Display Currency"}</span>
+                <span>
+                  {selectText({
+                    en: "Display Currency",
+                    bn: "ডিসপ্লে কারেন্সি নির্বাচন",
+                    ur: "ڈسپلے کرنسی",
+                  })}
+                </span>
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {isBn
-                  ? "স্টোর ও সাধারণ মূল্যের জন্য আপনার পছন্দের মুদ্রা প্রতীক বেছে নিন।"
-                  : "Select your preferred currency symbol for store packages and account figures."}
+                {selectText({
+                  en: "Select your preferred currency symbol for store packages and account figures.",
+                  bn: "স্টোর ও সাধারণ মূল্যের জন্য আপনার পছন্দের মুদ্রা প্রতীক বেছে নিন।",
+                  ur: "اسٹور پیکجز اور اعداد و شمار کے لیے اپنی ترجیحی کرنسی منتخب کریں۔",
+                })}
               </p>
             </div>
 
@@ -340,7 +405,13 @@ export function SettingsPreferencesAndSecurityPanels({
                     key={c.code}
                     onClick={() => {
                       setCurrency(c.code);
-                      toast.success(isBn ? `মুদ্রা পরিবর্তিত হয়েছে: ${c.code}` : `Currency changed to ${c.code}`);
+                      toast.success(
+                        selectText({
+                          en: `Currency changed to ${c.code}`,
+                          bn: `মুদ্রা পরিবর্তিত হয়েছে: ${c.code}`,
+                          ur: `کرنسی تبدیل ہو گئی: ${c.code}`,
+                        })
+                      );
                     }}
                     className={`cursor-pointer rounded-xl border p-4 text-center transition-all ${
                       isSelected
@@ -349,7 +420,7 @@ export function SettingsPreferencesAndSecurityPanels({
                     }`}
                   >
                     <span className="text-2xl">{c.flag}</span>
-                    <div className="text-base font-black font-mono mt-1 text-slate-900 dark:text-white">
+                    <div dir="ltr" className="text-base font-black font-mono mt-1 text-slate-900 dark:text-white">
                       {c.symbol}
                     </div>
                     <div className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-0.5">
@@ -376,12 +447,20 @@ export function SettingsPreferencesAndSecurityPanels({
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Lock size={18} className="text-sky-500" />
-                <span>{isBn ? "পাসওয়ার্ড পরিবর্তন করুন" : "Change Password"}</span>
+                <span>
+                  {selectText({
+                    en: "Change Password",
+                    bn: "পাসওয়ার্ড পরিবর্তন করুন",
+                    ur: "پاس ورڈ تبدیل کریں",
+                  })}
+                </span>
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {isBn
-                  ? "আপনার অ্যাকাউন্টের নিরাপত্তা নিশ্চিত করতে নিয়মিত পাসওয়ার্ড আপডেট করুন।"
-                  : "Ensure your account is protected with a strong, distinct password."}
+                {selectText({
+                  en: "Ensure your account is protected with a strong, distinct password.",
+                  bn: "আপনার অ্যাকাউন্টের নিরাপত্তা নিশ্চিত করতে নিয়মিত পাসওয়ার্ড আপডেট করুন।",
+                  ur: "اپنے اکاؤنٹ کے تحفظ کے لیے ایک مضبوط اور محفوظ پاس ورڈ استعمال کریں۔",
+                })}
               </p>
             </div>
 
@@ -389,15 +468,20 @@ export function SettingsPreferencesAndSecurityPanels({
               {/* Current Password */}
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-                  {isBn ? "বর্তমান পাসওয়ার্ড" : "Current Password"}
+                  {selectText({
+                    en: "Current Password",
+                    bn: "বর্তমান পাসওয়ার্ড",
+                    ur: "موجودہ پاس ورڈ",
+                  })}
                 </label>
                 <div className="relative">
                   <Input
+                    dir="ltr"
                     type={showCurrentPw ? "text" : "password"}
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="pr-10 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700"
+                    className="pr-10 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 font-mono"
                   />
                   <button
                     type="button"
@@ -413,16 +497,21 @@ export function SettingsPreferencesAndSecurityPanels({
               {/* New Password */}
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-                  {isBn ? "নতুন পাসওয়ার্ড" : "New Password"}
+                  {selectText({
+                    en: "New Password",
+                    bn: "নতুন পাসওয়ার্ড",
+                    ur: "نیا پاس ورڈ",
+                  })}
                 </label>
                 <div className="relative">
                   <Input
+                    dir="ltr"
                     type={showNewPw ? "text" : "password"}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="••••••••"
                     minLength={6}
-                    className="pr-10 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700"
+                    className="pr-10 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 font-mono"
                   />
                   <button
                     type="button"
@@ -434,23 +523,32 @@ export function SettingsPreferencesAndSecurityPanels({
                   </button>
                 </div>
                 <p className="text-[11px] text-slate-400">
-                  {isBn ? "কমপক্ষে ৬ অক্ষরের শক্তিশালী পাসওয়ার্ড দিন।" : "Minimum 6 characters."}
+                  {selectText({
+                    en: "Minimum 6 characters.",
+                    bn: "কমপক্ষে ৬ অক্ষরের শক্তিশালী পাসওয়ার্ড দিন।",
+                    ur: "کم از کم 6 حروف۔",
+                  })}
                 </p>
               </div>
 
               {/* Confirm New Password */}
               <div className="space-y-1.5">
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-                  {isBn ? "নতুন পাসওয়ার্ড নিশ্চিত করুন" : "Confirm New Password"}
+                  {selectText({
+                    en: "Confirm New Password",
+                    bn: "নতুন পাসওয়ার্ড নিশ্চিত করুন",
+                    ur: "نئے پاس ورڈ کی تصدیق کریں",
+                  })}
                 </label>
                 <div className="relative">
                   <Input
+                    dir="ltr"
                     type={showConfirmPw ? "text" : "password"}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
                     minLength={6}
-                    className="pr-10 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700"
+                    className="pr-10 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 font-mono"
                   />
                   <button
                     type="button"
@@ -469,7 +567,13 @@ export function SettingsPreferencesAndSecurityPanels({
                 className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs gap-1.5 mt-2"
               >
                 {isChangingPassword ? <Loader2 size={14} className="animate-spin" /> : <Lock size={14} />}
-                <span>{isBn ? "পাসওয়ার্ড আপডেট করুন" : "Update Password"}</span>
+                <span>
+                  {selectText({
+                    en: "Update Password",
+                    bn: "পাসওয়ার্ড আপডেট করুন",
+                    ur: "پاس ورڈ اپ ڈیٹ کریں",
+                  })}
+                </span>
               </Button>
             </form>
           </div>
@@ -480,20 +584,30 @@ export function SettingsPreferencesAndSecurityPanels({
               <div>
                 <h2 className="text-base font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
                   <LogOut size={18} />
-                  <span>{isBn ? "সকল ডিভাইস থেকে লগআউট" : "Logout From All Devices"}</span>
+                  <span>
+                    {selectText({
+                      en: "Logout From All Devices",
+                      bn: "সকল ডিভাইস থেকে লগআউট",
+                      ur: "تمام ڈیوائسز سے لاگ آؤٹ",
+                    })}
+                  </span>
                 </h2>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  {isBn
-                    ? "আপনার অ্যাকাউন্ট অন্য কোনো ব্রাউজার বা ডিভাইসে খোলা থাকলে সব সেশন তাৎক্ষণিক বাতিল হবে।"
-                    : "Terminate and invalidate all active sessions across any phones, tablets, or other browsers."}
+                  {selectText({
+                    en: "Terminate and invalidate all active sessions across any phones, tablets, or other browsers.",
+                    bn: "আপনার অ্যাকাউন্ট অন্য কোনো ব্রাউজার বা ডিভাইসে খোলা থাকলে সব সেশন তাৎক্ষণিক বাতিল হবে।",
+                    ur: "تمام فونز، ٹیبلٹس یا دیگر براؤزرز پر تمام فعال سیشنز فوری طور پر ختم کریں۔",
+                  })}
                 </p>
               </div>
             </div>
 
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-              {isBn
-                ? "আপনি যদি অন্য কোনো পাবলিক কম্পিউটার বা ডিভাইসে লগইন করে ভুলে গিয়ে থাকেন, এই বোতামে ক্লিক করলে সমস্ত সক্রিয় অথেনটিকেশন টোকেন ইনভ্যালিড হয়ে যাবে এবং নতুন করে পাসওয়ার্ড দিয়ে প্রবেশ করতে হবে।"
-                : "If you logged in from a shared computer or suspect unauthorized session access, clicking below instantly revokes all authentication tokens and forces a clean sign-in."}
+              {selectText({
+                en: "If you logged in from a shared computer or suspect unauthorized session access, clicking below instantly revokes all authentication tokens and forces a clean sign-in.",
+                bn: "আপনি যদি অন্য কোনো পাবলিক কম্পিউটার বা ডিভাইসে লগইন করে ভুলে গিয়ে থাকেন, এই বোতামে ক্লিক করলে সমস্ত সক্রিয় অথেনটিকেশন টোকেন ইনভ্যালিড হয়ে যাবে এবং নতুন করে পাসওয়ার্ড দিয়ে প্রবেশ করতে হবে।",
+                ur: "اگر آپ نے کسی مشترکہ کمپیوٹر سے لاگ ان کیا تھا، تو نیچے کلک کرنے سے تمام ٹوکنز منسوخ ہو جائیں گے اور دوبارہ لاگ ان درکار ہوگا۔",
+              })}
             </p>
 
             <div>
@@ -503,7 +617,13 @@ export function SettingsPreferencesAndSecurityPanels({
                 className="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs gap-2"
               >
                 <LogOut size={14} />
-                <span>{isBn ? "সকল ডিভাইস থেকে সাইন আউট" : "Sign Out From All Devices"}</span>
+                <span>
+                  {selectText({
+                    en: "Sign Out From All Devices",
+                    bn: "সকল ডিভাইস থেকে সাইন আউট",
+                    ur: "تمام ڈیوائسز سے سائن آؤٹ کریں",
+                  })}
+                </span>
               </Button>
             </div>
           </div>
@@ -519,22 +639,36 @@ export function SettingsPreferencesAndSecurityPanels({
           <div className="rounded-2xl border border-sky-500/30 bg-gradient-to-br from-sky-500/10 via-[#0a192f] to-[#070e1b] p-6 shadow-md space-y-4">
             <div className="flex items-center justify-between">
               <span className="rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30 px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
-                {isBn ? "১-অন-১ অফিসিয়াল সাপোর্ট" : "Direct Admin Desk"}
+                {selectText({
+                  en: "Direct Admin Desk",
+                  bn: "১-অন-১ অফিসিয়াল সাপোর্ট",
+                  ur: "براہ راست ایڈمن ڈیسک",
+                })}
               </span>
               <span className="text-[11px] font-mono text-emerald-400 flex items-center gap-1.5">
                 <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-                {isBn ? "লাইভ সাপোর্ট সক্রিয়" : "Desk Active 24/7"}
+                {selectText({
+                  en: "Desk Active 24/7",
+                  bn: "লাইভ সাপোর্ট সক্রিয়",
+                  ur: "ڈیسک 24/7 فعال ہے",
+                })}
               </span>
             </div>
 
             <div>
               <h2 className="text-lg font-extrabold text-white">
-                {isBn ? "অ্যাডমিন ও মেন্টরের সাথে সরাসরি চ্যাট" : "Contact Official Mentor Support"}
+                {selectText({
+                  en: "Contact Official Mentor Support",
+                  bn: "অ্যাডমিন ও মেন্টরের সাথে সরাসরি চ্যাট",
+                  ur: "آفیشل مینٹور سپورٹ سے رابطہ",
+                })}
               </h2>
               <p className="text-xs text-slate-300 mt-1 leading-relaxed">
-                {isBn
-                  ? "কোর্স এনরোলমেন্ট, পেমেন্ট ভেরিফিকেশন, কিংবা চার্ট সম্পর্কিত যেকোনো সমস্যায় সরাসরি অ্যাডমিনের সাথে ১-অন-১ মেসেজিং সিস্টেমে যোগাযোগ করুন।"
-                  : "Connect directly with platform administrators and institutional mentors for payment approvals, curriculum queries, and technical assistance."}
+                {selectText({
+                  en: "Connect directly with platform administrators and institutional mentors for payment approvals, curriculum queries, and technical assistance.",
+                  bn: "কোর্স এনরোলমেন্ট, পেমেন্ট ভেরিফিকেশন, কিংবা চার্ট সম্পর্কিত যেকোনো সমস্যায় সরাসরি অ্যাডমিনের সাথে ১-অন-১ মেসেজিং সিস্টেমে যোগাযোগ করুন।",
+                  ur: "ادائیگی کی توثیق، نصابی سوالات اور تکنیکی مدد کے لیے پلیٹ فارم ایڈمنسٹریٹرز اور مینٹورز سے براہ راست رابطہ کریں۔",
+                })}
               </p>
             </div>
 
@@ -542,7 +676,13 @@ export function SettingsPreferencesAndSecurityPanels({
               <Link href="/support">
                 <Button className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs gap-2 shadow-lg shadow-sky-500/20">
                   <MessageSquare size={15} />
-                  <span>{isBn ? "সাপোর্ট সেন্টারে প্রবেশ করুন" : "Open 1-on-1 Support Desk"}</span>
+                  <span>
+                    {selectText({
+                      en: "Open 1-on-1 Support Desk",
+                      bn: "সাপোর্ট সেন্টারে প্রবেশ করুন",
+                      ur: "1-on-1 سپورٹ ڈیسک کھولیں",
+                    })}
+                  </span>
                 </Button>
               </Link>
             </div>
@@ -553,12 +693,20 @@ export function SettingsPreferencesAndSecurityPanels({
             <div>
               <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <HelpCircle size={18} className="text-sky-500" />
-                <span>{isBn ? "স্টাডি রিসোর্স ও কারিকুলাম গাইড" : "Curriculum & Help Center"}</span>
+                <span>
+                  {selectText({
+                    en: "Curriculum & Help Center",
+                    bn: "স্টাডি রিসোর্স ও কারিকুলাম গাইড",
+                    ur: "نصاب اور ہیلپ سنٹر",
+                  })}
+                </span>
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {isBn
-                  ? "ক্যান্ডেল রেঞ্জ থিওরি (CRT) ও প্রাতিষ্ঠানিক রোডম্যাপ বিষয়ক প্রয়োজনীয় লিঙ্কসমূহ।"
-                  : "Quick access to verified study materials, roadmap stages, and official documentation."}
+                {selectText({
+                  en: "Quick access to verified study materials, roadmap stages, and official documentation.",
+                  bn: "ক্যান্ডেল রেঞ্জ থিওরি (CRT) ও প্রাতিষ্ঠানিক রোডম্যাপ বিষয়ক প্রয়োজনীয় লিঙ্কসমূহ।",
+                  ur: "تصدیق شدہ مطالعاتی مواد اور روڈ میپ کے مراحل تک فوری رسائی۔",
+                })}
               </p>
             </div>
 
@@ -570,13 +718,21 @@ export function SettingsPreferencesAndSecurityPanels({
                     <div className="flex items-center gap-2.5">
                       <Layers size={18} className="text-sky-500 group-hover:scale-110 transition-transform" />
                       <span className="text-xs font-bold text-slate-900 dark:text-white">
-                        {isBn ? "১২-স্টেজ প্রাতিষ্ঠানিক রোডম্যাপ" : "12-Stage Institutional Roadmap"}
+                        {selectText({
+                          en: "12-Stage Institutional Roadmap",
+                          bn: "১২-স্টেজ প্রাতিষ্ঠানিক রোডম্যাপ",
+                          ur: "12-اسٹیج ادارہ جاتی روڈ میپ",
+                        })}
                       </span>
                     </div>
                     <ExternalLink size={14} className="text-slate-400 group-hover:text-sky-400" />
                   </div>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">
-                    {isBn ? "ফাউন্ডেশন থেকে অ্যাডভান্সড CRT মাস্টারি পর্যন্ত ধাপে ধাপে গাইড।" : "Step-by-step framework from foundation to algorithmic execution."}
+                    {selectText({
+                      en: "Step-by-step framework from foundation to algorithmic execution.",
+                      bn: "ফাউন্ডেশন থেকে অ্যাডভান্সড CRT মাস্টারি পর্যন্ত ধাপে ধাপে গাইড।",
+                      ur: "بنیاد سے الگورتھمک نفاذ تک مرحلہ وار فریم ورک۔",
+                    })}
                   </p>
                 </div>
               </Link>
@@ -588,13 +744,21 @@ export function SettingsPreferencesAndSecurityPanels({
                     <div className="flex items-center gap-2.5">
                       <BookOpen size={18} className="text-emerald-500 group-hover:scale-110 transition-transform" />
                       <span className="text-xs font-bold text-slate-900 dark:text-white">
-                        {isBn ? "স্টাডি লাইব্রেরি ও চিটশিট" : "Institutional PDF Library"}
+                        {selectText({
+                          en: "Institutional PDF Library",
+                          bn: "স্টাডি লাইব্রেরি ও চিটশিট",
+                          ur: "ادارہ جاتی PDF لائبریری",
+                        })}
                       </span>
                     </div>
                     <ExternalLink size={14} className="text-slate-400 group-hover:text-emerald-400" />
                   </div>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">
-                    {isBn ? "প্রিন্টযোগ্য রেফারেন্স পিডিএফ ও ডাউনলোড গাইড।" : "Downloadable cheat sheets, risk management templates, and CRT rules."}
+                    {selectText({
+                      en: "Downloadable cheat sheets, risk management templates, and CRT rules.",
+                      bn: "প্রিন্টযোগ্য রেফারেন্স পিডিএফ ও ডাউনলোড গাইড।",
+                      ur: "ڈاؤن لوڈ کے قابل چیٹ شیٹس، رسک مینجمنٹ ٹیمپلیٹس اور CRT قواعد۔",
+                    })}
                   </p>
                 </div>
               </Link>
@@ -612,14 +776,20 @@ export function SettingsPreferencesAndSecurityPanels({
                 <AlertTriangle size={24} />
               </div>
               <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-                {isBn ? "আপনি কি নিশ্চিত?" : "Confirm Global Sign-out?"}
+                {selectText({
+                  en: "Confirm Global Sign-out?",
+                  bn: "আপনি কি নিশ্চিত?",
+                  ur: "کیا آپ تمام ڈیوائسز سے لاگ آؤٹ کی تصدیق کرتے ہیں؟",
+                })}
               </h3>
             </div>
 
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-              {isBn
-                ? "এটি আপনার সমস্ত সক্রিয় মোবাইল ফোন, ল্যাপটপ এবং ব্রাউজারের সেশন স্থায়ীভাবে বন্ধ করে দেবে। আপনাকে আবার লগইন পেজে নিয়ে যাওয়া হবে।"
-                : "This action will terminate all active login sessions on all devices and browsers immediately. You will be redirected to the login page."}
+              {selectText({
+                en: "This action will terminate all active login sessions on all devices and browsers immediately. You will be redirected to the login page.",
+                bn: "এটি আপনার সমস্ত সক্রিয় মোবাইল ফোন, ল্যাপটপ এবং ব্রাউজারের সেশন স্থায়ীভাবে বন্ধ করে দেবে। আপনাকে আবার লগইন পেজে নিয়ে যাওয়া হবে।",
+                ur: "یہ عمل تمام ڈیوائسز اور براؤزرز پر آپ کے تمام فعال لاگ ان سیشنز کو فوری طور پر ختم کر دے گا۔",
+              })}
             </p>
 
             <div className="flex items-center justify-end gap-2.5 pt-2">
@@ -631,7 +801,7 @@ export function SettingsPreferencesAndSecurityPanels({
                 onClick={() => setShowLogoutAllModal(false)}
                 className="text-xs font-bold border-slate-300 dark:border-slate-700"
               >
-                {isBn ? "বাতিল করুন" : "Cancel"}
+                {selectText({ en: "Cancel", bn: "বাতিল করুন", ur: "منسوخ کریں" })}
               </Button>
               <Button
                 type="button"
@@ -641,7 +811,9 @@ export function SettingsPreferencesAndSecurityPanels({
                 className="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs gap-1.5"
               >
                 {isLoggingOutAll ? <Loader2 size={13} className="animate-spin" /> : <LogOut size={13} />}
-                <span>{isBn ? "হ্যাঁ, লগআউট করুন" : "Yes, Sign Out All"}</span>
+                <span>
+                  {selectText({ en: "Yes, Sign Out All", bn: "হ্যাঁ, লগআউট করুন", ur: "ہاں، سب سے لاگ آؤٹ کریں" })}
+                </span>
               </Button>
             </div>
           </div>

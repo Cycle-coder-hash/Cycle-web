@@ -107,7 +107,7 @@ export const CANDLE_THEMES: CandleTheme[] = [
 ];
 
 interface HeroCandle3DProps {
-  lang?: "en" | "bn";
+  lang?: "en" | "bn" | "ur";
   className?: string;
 }
 
@@ -342,7 +342,7 @@ export function HeroCandle3D({ lang = "en", className = "" }: HeroCandle3DProps)
                     <ShieldCheck size={13} />
                   </div>
                   <span className="text-[10px] sm:text-[11px] font-extrabold tracking-wider text-emerald-700 dark:text-emerald-400">
-                    {lang === "bn" ? "ট্রেডিং রিয়েলিটি" : "TRADING REALITY"}
+                    {lang === "bn" ? "ট্রেডিং রিয়েলিটি" : lang === "ur" ? "ٹریڈنگ حقیقت" : "TRADING REALITY"}
                   </span>
                 </div>
                 <span className="size-2 rounded-full bg-emerald-500 animate-ping" />
@@ -352,19 +352,19 @@ export function HeroCandle3D({ lang = "en", className = "" }: HeroCandle3DProps)
                 <div className="flex items-start gap-1.5">
                   <CheckCircle size={12} className="mt-0.5 shrink-0 text-emerald-500" />
                   <span className="font-bold leading-tight text-emerald-900 dark:text-emerald-300">
-                    {lang === "bn" ? "লার্নিং > প্রসেস" : "Learning > process"}
+                    {lang === "bn" ? "লার্নিং > প্রসেস" : lang === "ur" ? "سیکھنا > عمل" : "Learning > process"}
                   </span>
                 </div>
                 <div className="flex items-start gap-1.5">
                   <CheckCircle size={12} className="mt-0.5 shrink-0 text-emerald-500" />
                   <span className="font-bold leading-tight text-emerald-900 dark:text-emerald-300">
-                    {lang === "bn" ? "স্কিল তৈরি" : "build skill"}
+                    {lang === "bn" ? "স্কিল তৈরি" : lang === "ur" ? "مہارت پیدا کریں" : "build skill"}
                   </span>
                 </div>
                 <div className="flex items-start gap-1.5">
                   <CheckCircle size={12} className="mt-0.5 shrink-0 text-emerald-500" />
                   <span className="font-bold leading-tight text-emerald-900 dark:text-emerald-300">
-                    {lang === "bn" ? "নিজের এজ বেছে নিন" : "choose your edge"}
+                    {lang === "bn" ? "নিজের এজ বেছে নিন" : lang === "ur" ? "اپنا تجارتی ایج منتخب کریں" : "choose your edge"}
                   </span>
                 </div>
               </div>
@@ -395,7 +395,7 @@ export function HeroCandle3D({ lang = "en", className = "" }: HeroCandle3DProps)
                     <AlertTriangle size={13} />
                   </div>
                   <span className="text-[10px] sm:text-[11px] font-extrabold tracking-wider text-rose-700 dark:text-rose-400">
-                    {lang === "bn" ? "ট্রেডিং হাইপ" : "TRADING HYPE"}
+                    {lang === "bn" ? "ট্রেডিং হাইপ" : lang === "ur" ? "ٹریڈنگ کا دھوکہ" : "TRADING HYPE"}
                   </span>
                 </div>
                 <span className="size-2 rounded-full bg-rose-500" />
@@ -405,19 +405,19 @@ export function HeroCandle3D({ lang = "en", className = "" }: HeroCandle3DProps)
                 <div className="flex items-start gap-1.5">
                   <XCircle size={12} className="mt-0.5 shrink-0 text-rose-500" />
                   <span className="font-bold leading-tight text-rose-800 dark:text-rose-300">
-                    {lang === "bn" ? "রাতারাতি কোটিপতি স্বপ্ন" : "Overnight Rich Illusion"}
+                    {lang === "bn" ? "রাতারাতি কোটিপতি স্বপ্ন" : lang === "ur" ? "راتوں رات امیر بننے کا فریب" : "Overnight Rich Illusion"}
                   </span>
                 </div>
                 <div className="flex items-start gap-1.5">
                   <XCircle size={12} className="mt-0.5 shrink-0 text-rose-500" />
                   <span className="font-bold leading-tight text-rose-800 dark:text-rose-300">
-                    {lang === "bn" ? "অ্যাকাউন্ট লিঙ্ক" : "link to account"}
+                    {lang === "bn" ? "অ্যাকাউন্ট লিঙ্ক" : lang === "ur" ? "اکاؤنٹ لنک" : "link to account"}
                   </span>
                 </div>
                 <div className="flex items-start gap-1.5">
                   <XCircle size={12} className="mt-0.5 shrink-0 text-rose-500" />
                   <span className="font-bold leading-tight text-rose-800 dark:text-rose-300">
-                    {lang === "bn" ? "সিগন্যাল" : "signal"}
+                    {lang === "bn" ? "সিগন্যাল" : lang === "ur" ? "سگنل" : "signal"}
                   </span>
                 </div>
               </div>
@@ -602,8 +602,8 @@ export function HeroCandle3D({ lang = "en", className = "" }: HeroCandle3DProps)
           <MousePointerClick size={13} className={isInteractive ? "text-emerald-500" : "text-slate-400"} />
           <span>
             {isInteractive
-              ? (lang === "bn" ? "✨ রিয়ালিটি ও হাইপ প্রদর্শিত হচ্ছে" : "✨ Showing Reality vs Hype")
-              : (lang === "bn" ? "💡 ক্যান্ডেল স্পর্শ/হোভার করুন ট্রুথ দেখতে" : "💡 Hover or tap candle for Reality vs Hype")}
+              ? (lang === "bn" ? "✨ রিয়ালিটি ও হাইপ প্রদর্শিত হচ্ছে" : lang === "ur" ? "✨ حقیقت بمقابلہ فریب ظاہر ہے" : "✨ Showing Reality vs Hype")
+              : (lang === "bn" ? "💡 ক্যান্ডেল স্পর্শ/হোভার করুন ট্রুথ দেখতে" : lang === "ur" ? "💡 حقیقت اور فریب دیکھنے کے لیے کینڈل کو چھوئیں یا ہاور کریں" : "💡 Hover or tap candle for Reality vs Hype")}
           </span>
         </button>
       </div>

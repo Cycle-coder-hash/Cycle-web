@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   User,
   ShieldCheck,
@@ -18,7 +19,7 @@ import type { SettingsTab } from "./SettingsPreferencesAndSecurityPanels";
 
 export interface SettingsAccountProfilePanelProps {
   activeTab: SettingsTab;
-  isBn: boolean;
+  isBn?: boolean;
   avatar: string | null;
   name: string;
   setName: React.Dispatch<React.SetStateAction<string>>;
@@ -69,6 +70,8 @@ export function SettingsAccountProfilePanel({
   isSavingUsername,
   usernameAvailability,
 }: SettingsAccountProfilePanelProps) {
+  const { selectText } = useLanguage();
+
   if (activeTab !== "account") {
     return null;
   }
@@ -81,17 +84,29 @@ export function SettingsAccountProfilePanel({
           <div>
             <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Camera size={18} className="text-sky-500" />
-              <span>{isBn ? "প্রোফাইল ছবি / অবতার" : "Profile Photo / Avatar"}</span>
+              <span>
+                {selectText({
+                  en: "Profile Photo / Avatar",
+                  bn: "প্রোফাইল ছবি / অবতার",
+                  ur: "پروفائل تصویر / اوتار",
+                })}
+              </span>
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {isBn
-                ? "আপনার ছবি ড্যাশবোর্ড ও গ্লোবাল লিডারবোর্ডে প্রদর্শিত হবে।"
-                : "Your photo syncs across your Dashboard, Journal, and Global Leaderboard."}
+              {selectText({
+                en: "Your photo syncs across your Dashboard, Journal, and Global Leaderboard.",
+                bn: "আপনার ছবি ড্যাশবোর্ড ও গ্লোবাল লিডারবোর্ডে প্রদর্শিত হবে।",
+                ur: "آپ کی تصویر ڈیش بورڈ، جرنل اور گلوبل لیڈر بورڈ پر ظاہر ہوگی۔",
+              })}
             </p>
           </div>
           {avatar && (
             <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2.5 py-0.5 text-[10px] font-bold">
-              {isBn ? "ছবি সক্রিয়" : "Active Photo"}
+              {selectText({
+                en: "Active Photo",
+                bn: "ছবি সক্রিয়",
+                ur: "فعال تصویر",
+              })}
             </span>
           )}
         </div>
@@ -120,8 +135,8 @@ export function SettingsAccountProfilePanel({
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploadingAvatar || isRemovingAvatar}
               className="absolute bottom-0 right-0 size-8 rounded-full bg-sky-500 text-slate-950 flex items-center justify-center shadow-md hover:bg-sky-400 transition-transform active:scale-95 disabled:opacity-50"
-              title={isBn ? "ছবি আপলোড করুন" : "Upload Photo"}
-              aria-label={isBn ? "ছবি আপলোড করুন" : "Upload Photo"}
+              title={selectText({ en: "Upload Photo", bn: "ছবি আপলোড করুন", ur: "تصویر اپ لوڈ کریں" })}
+              aria-label={selectText({ en: "Upload Photo", bn: "ছবি আপলোড করুন", ur: "تصویر اپ لوڈ کریں" })}
             >
               <Camera size={14} className="stroke-[2.5]" />
             </button>
@@ -146,7 +161,11 @@ export function SettingsAccountProfilePanel({
                 className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs gap-1.5"
               >
                 <Camera size={14} />
-                <span>{avatar ? (isBn ? "ছবি পরিবর্তন করুন" : "Change Photo") : (isBn ? "নতুন ছবি আপলোড" : "Upload Photo")}</span>
+                <span>
+                  {avatar
+                    ? selectText({ en: "Change Photo", bn: "ছবি পরিবর্তন করুন", ur: "تصویر تبدیل کریں" })
+                    : selectText({ en: "Upload Photo", bn: "নতুন ছবি আপলোড", ur: "تصویر اپ لوڈ کریں" })}
+                </span>
               </Button>
 
               {avatar && (
@@ -159,19 +178,37 @@ export function SettingsAccountProfilePanel({
                   className="border-rose-300 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 font-bold text-xs gap-1.5"
                 >
                   <Trash2 size={13} />
-                  <span>{isBn ? "ছবি মুছে ফেলুন" : "Remove Photo"}</span>
+                  <span>{selectText({ en: "Remove Photo", bn: "ছবি মুছে ফেলুন", ur: "تصویر ہٹائیں" })}</span>
                 </Button>
               )}
             </div>
 
             <div className="rounded-xl border border-slate-100 dark:border-slate-800/60 bg-slate-50/70 dark:bg-slate-900/40 p-3 text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
               <p className="font-semibold text-slate-700 dark:text-slate-300">
-                {isBn ? "ছবি সংক্রান্ত গাইডলাইন:" : "Avatar Guidelines:"}
+                {selectText({ en: "Avatar Guidelines:", bn: "ছবি সংক্রান্ত গাইডলাইন:", ur: "تصویر کی ہدایات:" })}
               </p>
               <ul className="list-disc list-inside space-y-0.5">
-                <li>{isBn ? "JPG, PNG বা WebP ফরম্যাট (সর্বোচ্চ ৮ মেগাবাইট)" : "JPG, PNG, or WebP format (max 8MB)"}</li>
-                <li>{isBn ? "স্বয়ংক্রিয়ভাবে ৪০০x৪০০ স্কয়ার ক্রপ ও অপটিমাইজ করা হয়" : "Auto-cropped to a crisp 400x400 square for fast cloud loading"}</li>
-                <li>{isBn ? "প্রতিটি ইউজারের ছবি সম্পূর্ণ আলাদা ও সুরক্ষিত" : "Strictly isolated per account and never shared with other traders"}</li>
+                <li>
+                  {selectText({
+                    en: "JPG, PNG, or WebP format (max 8MB)",
+                    bn: "JPG, PNG বা WebP ফরম্যাট (সর্বোচ্চ ৮ মেগাবাইট)",
+                    ur: "JPG, PNG یا WebP فارمیٹ (زیادہ سے زیادہ 8MB)",
+                  })}
+                </li>
+                <li>
+                  {selectText({
+                    en: "Auto-cropped to a crisp 400x400 square for fast cloud loading",
+                    bn: "স্বয়ংক্রিয়ভাবে ৪০০x৪০০ স্কয়ার ক্রপ ও অপটিমাইজ করা হয়",
+                    ur: "تیز کلاؤڈ لوڈنگ کے لیے خودکار طور پر 400x400 مربع سائز میں تیار کی جاتی ہے",
+                  })}
+                </li>
+                <li>
+                  {selectText({
+                    en: "Strictly isolated per account and never shared with other traders",
+                    bn: "প্রতিটি ইউজারের ছবি সম্পূর্ণ আলাদা ও সুরক্ষিত",
+                    ur: "ہر اکاؤنٹ کے لیے مکمل طور پر محفوظ اور الگ",
+                  })}
+                </li>
               </ul>
             </div>
           </div>
@@ -183,25 +220,33 @@ export function SettingsAccountProfilePanel({
         <div>
           <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <User size={18} className="text-sky-500" />
-            <span>{isBn ? "নাম ও ট্রেডার ইউজারনেম" : "Display Name & Username"}</span>
+            <span>
+              {selectText({
+                en: "Display Name & Username",
+                bn: "নাম ও ট্রেডার ইউজারনেম",
+                ur: "ڈسپلے کا نام اور ٹریڈر صارف نام",
+              })}
+            </span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            {isBn
-              ? "আপনার ট্রেডার প্রোফাইলের নাম ও ইউনিক হ্যান্ডেল নিয়ন্ত্রণ করুন।"
-              : "Configure your public display name and unique trader identifier."}
+            {selectText({
+              en: "Configure your public display name and unique trader identifier.",
+              bn: "আপনার ট্রেডার প্রোফাইলের নাম ও ইউনিক হ্যান্ডেল নিয়ন্ত্রণ করুন।",
+              ur: "اپنا عوامی ڈسپلے نام اور منفرد ٹریڈر ہینڈل ترتیب دیں۔",
+            })}
           </p>
         </div>
 
         {/* Form 1: Display Name */}
         <form onSubmit={handleSaveName} className="space-y-2">
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-            {isBn ? "প্রোফাইল নাম" : "Profile / Display Name"}
+            {selectText({ en: "Profile / Display Name", bn: "প্রোফাইল নাম", ur: "پروفائل / ڈسپلے کا نام" })}
           </label>
           <div className="flex gap-2.5">
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={isBn ? "আপনার পুরো নাম" : "Your full name or trading alias"}
+              placeholder={selectText({ en: "Your full name or trading alias", bn: "আপনার পুরো নাম", ur: "آپ کا پورا نام یا تجارتی عرف" })}
               maxLength={50}
               className="bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-xs sm:text-sm font-semibold"
             />
@@ -212,13 +257,15 @@ export function SettingsAccountProfilePanel({
               className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs shrink-0 gap-1.5"
             >
               {isSavingName ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
-              <span>{isBn ? "সেভ করুন" : "Save Name"}</span>
+              <span>{selectText({ en: "Save Name", bn: "সেভ করুন", ur: "نام محفوظ کریں" })}</span>
             </Button>
           </div>
           <p className="text-[11px] text-slate-400">
-            {isBn
-              ? "সর্বনিম্ন ২ এবং সর্বোচ্চ ৫০ অক্ষর। ড্যাশবোর্ড ও লিডারবোর্ডে প্রদর্শিত হবে।"
-              : "Between 2 and 50 characters. Syncs instantly across the platform."}
+            {selectText({
+              en: "Between 2 and 50 characters. Syncs instantly across the platform.",
+              bn: "সর্বনিম্ন ২ এবং সর্বোচ্চ ৫০ অক্ষর। ড্যাশবোর্ড ও লিডারবোর্ডে প্রদর্শিত হবে।",
+              ur: "2 سے 50 حروف کے درمیان۔ پلیٹ فارم پر فوری ہم آہنگ ہوتا ہے۔",
+            })}
           </p>
         </form>
 
@@ -227,18 +274,18 @@ export function SettingsAccountProfilePanel({
           <form onSubmit={handleSaveUsername} className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-                {isBn ? "ইউনিক ইউজারনেম" : "Unique Username / Handle"}
+                {selectText({ en: "Unique Username / Handle", bn: "ইউনিক ইউজারনেম", ur: "منفرد صارف نام / ہینڈل" })}
               </label>
               {usernameAvailability.checking && (
                 <span className="text-[11px] font-mono text-slate-400 flex items-center gap-1">
                   <Loader2 size={11} className="animate-spin" />
-                  {isBn ? "যাচাই হচ্ছে..." : "Checking availability..."}
+                  {selectText({ en: "Checking availability...", bn: "যাচাই হচ্ছে...", ur: "دستیابی کی جانچ ہو رہی ہے..." })}
                 </span>
               )}
               {!usernameAvailability.checking && usernameAvailability.available === true && (
                 <span className="text-[11px] font-bold text-emerald-500 flex items-center gap-1">
                   <CheckCircle2 size={12} />
-                  {isBn ? "ইউজারনেম খালি আছে" : "Available"}
+                  {selectText({ en: "Available", bn: "ইউজারনেম খালি আছে", ur: "دستیاب ہے" })}
                 </span>
               )}
               {!usernameAvailability.checking && usernameAvailability.available === false && (
@@ -255,6 +302,7 @@ export function SettingsAccountProfilePanel({
                   @
                 </span>
                 <Input
+                  dir="ltr"
                   value={username}
                   onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
                   placeholder="username"
@@ -274,13 +322,15 @@ export function SettingsAccountProfilePanel({
                 className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs shrink-0 gap-1.5"
               >
                 {isSavingUsername ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
-                <span>{isBn ? "ইউজারনেম সেভ" : "Claim Username"}</span>
+                <span>{selectText({ en: "Claim Username", bn: "ইউজারনেম সেভ", ur: "صارف نام محفوظ کریں" })}</span>
               </Button>
             </div>
             <p className="text-[11px] text-slate-400">
-              {isBn
-                ? "৩-২০ অক্ষরের অনন্য পরিচয়। শুধুমাত্র ইংরেজি ছোট অক্ষর, সংখ্যা এবং আন্ডারস্কোর (_)।"
-                : "3 to 20 characters. Lowercase letters, numbers, and underscores only. Guaranteed unique."}
+              {selectText({
+                en: "3 to 20 characters. Lowercase letters, numbers, and underscores only. Guaranteed unique.",
+                bn: "৩-২০ অক্ষরের অনন্য পরিচয়। শুধুমাত্র ইংরেজি ছোট অক্ষর, সংখ্যা এবং আন্ডারস্কোর (_)।",
+                ur: "3 سے 20 حروف۔ صرف انگریزی کے چھوٹے حروف، اعداد اور انڈر اسکور (_)।",
+              })}
             </p>
           </form>
         </div>
@@ -292,22 +342,30 @@ export function SettingsAccountProfilePanel({
           <div>
             <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <ShieldCheck size={18} className="text-emerald-500" />
-              <span>{isBn ? "অ্যাকাউন্ট ইমেইল" : "Account Email Address"}</span>
+              <span>
+                {selectText({ en: "Account Email Address", bn: "অ্যাকাউন্ট ইমেইল", ur: "اکاؤنٹ کا ای میل ایڈریس" })}
+              </span>
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {isBn ? "আপনার বর্তমান লগইন এবং ক্রয়কৃত পণ্যের লাইসেন্স ইমেইল।" : "Primary sign-in and purchase entitlement credentials."}
+              {selectText({
+                en: "Primary sign-in and purchase entitlement credentials.",
+                bn: "আপনার বর্তমান লগইন এবং ক্রয়কৃত পণ্যের লাইসেন্স ইমেইল।",
+                ur: "بنیادی سائن ان اور خریدی گئی مصنوعات کا لائسنس ای میل۔",
+              })}
             </p>
           </div>
           <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
             <CheckCircle size={11} />
-            {isBn ? "যাচাইকৃত অ্যাকাউন্ট" : "Verified Account"}
+            {selectText({ en: "Verified Account", bn: "যাচাইকৃত অ্যাকাউন্ট", ur: "تصدیق شدہ اکاؤنٹ" })}
           </span>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60">
           <div>
-            <div className="text-xs text-slate-400 font-medium">{isBn ? "লগইন ইমেইল:" : "Current Account Email:"}</div>
-            <div className="text-sm font-bold font-mono text-slate-900 dark:text-white mt-0.5">
+            <div className="text-xs text-slate-400 font-medium">
+              {selectText({ en: "Current Account Email:", bn: "লগইন ইমেইল:", ur: "موجودہ اکاؤنٹ ای میل:" })}
+            </div>
+            <div dir="ltr" className="text-sm font-bold font-mono text-slate-900 dark:text-white mt-0.5">
               {userEmailFallback || settingsEmail || "No email linked"}
             </div>
           </div>
@@ -319,15 +377,23 @@ export function SettingsAccountProfilePanel({
               className="text-xs font-bold border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 gap-1.5"
             >
               <MessageSquare size={13} />
-              <span>{isBn ? "ইমেইল পরিবর্তনের অনুরোধ" : "Request Email Transfer"}</span>
+              <span>
+                {selectText({
+                  en: "Request Email Transfer",
+                  bn: "ইমেইল পরিবর্তনের অনুরোধ",
+                  ur: "ای میل منتقلی کی درخواست",
+                })}
+              </span>
             </Button>
           </Link>
         </div>
 
         <p className="text-[11px] text-slate-400 leading-relaxed">
-          {isBn
-            ? "নিরাপত্তাজনিত কারণে এবং কেনাকাটার অ্যাক্সেস সুরক্ষিত রাখতে ইমেইল সরাসরি পরিবর্তন বন্ধ রাখা হয়েছে। ইমেইল ট্রান্সফার করতে চাইলে সাপোর্ট ডেস্কে যোগাযোগ করুন।"
-            : "For security and ownership protection of your purchased course packages and eBook licenses, account email changes require manual administrative verification. Contact support if you need to transfer your email."}
+          {selectText({
+            en: "For security and ownership protection of your purchased course packages and eBook licenses, account email changes require manual administrative verification. Contact support if you need to transfer your email.",
+            bn: "নিরাপত্তাজনিত কারণে এবং কেনাকাটার অ্যাক্সেস সুরক্ষিত রাখতে ইমেইল সরাসরি পরিবর্তন বন্ধ রাখা হয়েছে। ইমেইল ট্রান্সফার করতে চাইলে সাপোর্ট ডেস্কে যোগাযোগ করুন।",
+            ur: "سیکیورٹی اور خریدے گئے کورسز اور ای بک لائسنسز کے تحفظ کے لیے، اکاؤنٹ ای میل تبدیل کرنے کے لیے دستی انتظامی تصدیق درکار ہے۔ سپورٹ سے رابطہ کریں۔",
+          })}
         </p>
       </div>
     </div>

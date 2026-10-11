@@ -327,9 +327,11 @@ interface StatPillar {
   id: string;
   titleEn: string;
   titleBn: string;
+  titleUr: string;
   weight: string;
   subEn: string;
   subBn: string;
+  subUr: string;
   baseColor: string;
   hoverClasses: string;
 }
@@ -339,9 +341,11 @@ const STAT_PILLARS: StatPillar[] = [
     id: "rule-adherence",
     titleEn: "Rule Adherence",
     titleBn: "রিস্ক মেনে চলা",
+    titleUr: "قواعد کی پابندی",
     weight: "25%",
     subEn: "Base Weight",
     subBn: "বেস ওয়েট",
+    subUr: "بنیادی وزن",
     baseColor: "border-sky-500/20 bg-sky-500/5 text-sky-600 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-400",
     hoverClasses: "hover:border-sky-400/80 hover:bg-sky-500/15 hover:shadow-[0_0_24px_rgba(14,165,233,0.38)]",
   },
@@ -349,9 +353,11 @@ const STAT_PILLARS: StatPillar[] = [
     id: "discipline-routine",
     titleEn: "Discipline Routine",
     titleBn: "ডেইলি ডিসিপ্লিন",
+    titleUr: "ڈسپلن روٹین",
     weight: "25%",
     subEn: "Execution Habit",
     subBn: "এক্সিকিউশন হ্যাবিট",
+    subUr: "ٹریڈنگ عادت",
     baseColor: "border-emerald-500/20 bg-emerald-500/5 text-emerald-600 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-400",
     hoverClasses: "hover:border-emerald-400/80 hover:bg-emerald-500/15 hover:shadow-[0_0_24px_rgba(16,185,129,0.38)]",
   },
@@ -359,9 +365,11 @@ const STAT_PILLARS: StatPillar[] = [
     id: "win-rate",
     titleEn: "Win Rate",
     titleBn: "উইন রেট",
+    titleUr: "Win Rate",
     weight: "20%",
     subEn: "Trade Quality",
     subBn: "ট্রেড কোয়ালিটি",
+    subUr: "ٹریڈ کوالٹی",
     baseColor: "border-cyan-500/20 bg-cyan-500/5 text-cyan-600 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-400",
     hoverClasses: "hover:border-cyan-400/80 hover:bg-cyan-500/15 hover:shadow-[0_0_24px_rgba(6,182,212,0.38)]",
   },
@@ -369,9 +377,11 @@ const STAT_PILLARS: StatPillar[] = [
     id: "consistency",
     titleEn: "Consistency",
     titleBn: "ধারাবাহিকতা",
+    titleUr: "تسلسل",
     weight: "15%",
     subEn: "Streaks & Days",
     subBn: "স্ট্রিক্স ও দিন",
+    subUr: "اسٹریکس اور ایام",
     baseColor: "border-purple-500/20 bg-purple-500/5 text-purple-600 dark:border-purple-500/30 dark:bg-purple-500/10 dark:text-purple-400",
     hoverClasses: "hover:border-purple-400/80 hover:bg-purple-500/15 hover:shadow-[0_0_24px_rgba(168,85,247,0.38)]",
   },
@@ -379,9 +389,11 @@ const STAT_PILLARS: StatPillar[] = [
     id: "profit-factor",
     titleEn: "Profit Factor",
     titleBn: "প্রফিট ফ্যাক্টর",
+    titleUr: "پرافٹ فیکٹر",
     weight: "15%",
     subEn: "Risk : Reward",
     subBn: "রিস্ক : রিওয়ার্ড",
+    subUr: "رسک : ریوارڈ",
     baseColor: "border-amber-500/20 bg-amber-500/5 text-amber-600 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400",
     hoverClasses: "hover:border-amber-400/80 hover:bg-amber-500/15 hover:shadow-[0_0_24px_rgba(245,158,11,0.38)]",
   },
@@ -393,8 +405,7 @@ export default function Leaderboard() {
   const { user, loading: isAuthLoading } = useAuth({ redirectOnUnauthenticated: true, redirectPath: "/login" });
 
   // Language state (synced with LanguageContext)
-  const { language } = useLanguage();
-  const isBn = language === "bn";
+  const { selectText, isUr, isRTL, isBn } = useLanguage();
 
   // Auth gate fallback
   useEffect(() => {
@@ -479,8 +490,9 @@ export default function Leaderboard() {
 
   return (
     <div
+      dir={isRTL ? "rtl" : "ltr"}
       className={`min-h-screen bg-[#f8fafc] text-[#09111f] dark:bg-[#070e1b] dark:text-slate-100 transition-colors duration-300 ${
-        isBn ? "font-bangla" : ""
+        isUr ? "font-urdu" : isBn ? "font-bangla" : ""
       }`}
     >
       {/* ========================================================================= */}
@@ -493,7 +505,11 @@ export default function Leaderboard() {
             <div className="flex flex-col">
               <HeaderBrandWordmark className="text-xs sm:text-sm" />
               <span className="text-[10px] font-bold text-[#0284c7] dark:text-sky-400">
-                {isBn ? "গ্লোবাল লিডারবোর্ড" : "GLOBAL LEADERBOARD"}
+                {selectText({
+                  en: "GLOBAL LEADERBOARD",
+                  bn: "গ্লোবাল লিডারবোর্ড",
+                  ur: "عالمی لیڈر بورڈ",
+                })}
               </span>
             </div>
           </Link>
@@ -518,7 +534,11 @@ export default function Leaderboard() {
             {/* User portal CTA */}
             <Link href="/dashboard">
               <Button size="sm" className="hidden sm:inline-flex bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs rounded-xl">
-                {isBn ? "আমার ড্যাশবোর্ড" : "My Dashboard"}
+                {selectText({
+                  en: "My Dashboard",
+                  bn: "আমার ড্যাশবোর্ড",
+                  ur: "میرا ڈیش بورڈ",
+                })}
               </Button>
             </Link>
           </div>
@@ -554,31 +574,50 @@ export default function Leaderboard() {
                   aria-hidden="true"
                 />
                 <Trophy size={14} className="text-amber-500 shrink-0 relative z-10" />
-                <span className="relative z-10">{isBn ? "রিয়েল ট্রেডার পারফরম্যান্স সিস্টেম" : "REAL TRADER PERFORMANCE SYSTEM"}</span>
+                <span className="relative z-10">
+                  {selectText({
+                    en: "REAL TRADER PERFORMANCE SYSTEM",
+                    bn: "রিয়েল ট্রেডার পারফরম্যান্স সিস্টেম",
+                    ur: "حقیقی ٹریڈر کارکردگی کا نظام",
+                  })}
+                </span>
               </div>
 
               <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
-                {isBn ? (
-                  <>
-                    সুশৃঙ্খল নিয়ম ও রিয়েল এক্সিকিউশন। <br />
-                    <span className="heading-gradient-shimmer">
-                      আন্দাজে জুয়া নয়, প্রসেস-ভিত্তিক লিডারবোর্ড।
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    Rule Compliance & Authentic Execution. <br />
-                    <span className="heading-gradient-shimmer">
-                      Ranked by Process, Not Blind Gambling.
-                    </span>
-                  </>
-                )}
+                {selectText({
+                  en: (
+                    <>
+                      Rule Compliance & Authentic Execution. <br />
+                      <span className="heading-gradient-shimmer">
+                        Ranked by Process, Not Blind Gambling.
+                      </span>
+                    </>
+                  ),
+                  bn: (
+                    <>
+                      সুশৃঙ্খল নিয়ম ও রিয়েল এক্সিকিউশন। <br />
+                      <span className="heading-gradient-shimmer">
+                        আন্দাজে জুয়া নয়, প্রসেস-ভিত্তিক লিডারবোর্ড।
+                      </span>
+                    </>
+                  ),
+                  ur: (
+                    <>
+                      قواعد کی پابندی اور حقیقی عمل درآمد۔ <br />
+                      <span className="heading-gradient-shimmer">
+                        اندھا دھند جوا نہیں، طریقہ کار پر مبنی درجہ بندی۔
+                      </span>
+                    </>
+                  ),
+                })}
               </h1>
 
               <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
-                {isBn
-                  ? "সাইকেল অব চার্ট লিডারবোর্ড শুধুমাত্র লাভের অঙ্কে নির্ধারণ করা হয় না। ট্রেডিং রুলস অনুসরণ, দৈনিক ডিসিপ্লিন রুটিন, ধারাবাহিক জার্নালিং এবং সুশৃঙ্খল রিস্ক ম্যানেজমেন্টের ওপর ভিত্তি করে অল-টাইম স্কোর নির্ণয় করা হয়।"
-                  : "The Cycle of Chart Global Leaderboard is not dictated by raw profit alone. Real rankings are computed from verified trader adherence, daily discipline habits, consistency streaks, and risk management quality."}
+                {selectText({
+                  en: "The Cycle of Chart Global Leaderboard is not dictated by raw profit alone. Real rankings are computed from verified trader adherence, daily discipline habits, consistency streaks, and risk management quality.",
+                  bn: "সাইকেল অব চার্ট লিডারবোর্ড শুধুমাত্র লাভের অঙ্কে নির্ধারণ করা হয় না। ট্রেডিং রুলস অনুসরণ, দৈনিক ডিসিপ্লিন রুটিন, ধারাবাহিক জার্নালিং এবং সুশৃঙ্খল রিস্ক ম্যানেজমেন্টের ওপর ভিত্তি করে অল-টাইম স্কোর নির্ণয় করা হয়।",
+                  ur: "Cycle of Chart گلوبل لیڈر بورڈ صرف خام منافع پر مبنی نہیں ہے۔ حقیقی رینکنگ کی بنیاد اصولوں کی پابندی، روزانہ کے ڈسپلن کی عادات، تسلسل اور رسک مینجمنٹ پر رکھی گئی ہے۔",
+                })}
               </p>
             </div>
 
@@ -593,19 +632,27 @@ export default function Leaderboard() {
                     }`}
                   >
                     <div className="text-[10px] font-bold uppercase tracking-wider">
-                      {isBn ? pillar.titleBn : pillar.titleEn}
+                      {selectText({
+                        en: pillar.titleEn,
+                        bn: pillar.titleBn,
+                        ur: pillar.titleUr,
+                      })}
                     </div>
-                    <div className="text-base font-extrabold text-slate-900 dark:text-white">
+                    <div className="text-base font-extrabold text-slate-900 dark:text-white" dir="ltr">
                       {pillar.weight}
                     </div>
                     <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                      {isBn ? pillar.subBn : pillar.subEn}
+                      {selectText({
+                        en: pillar.subEn,
+                        bn: pillar.subBn,
+                        ur: pillar.subUr,
+                      })}
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="relative pt-1 w-full max-w-4xl overflow-hidden stat-ticker-mask">
+              <div className="relative pt-1 w-full max-w-4xl overflow-hidden stat-ticker-mask" dir="ltr">
                 <div className="stat-ticker-track py-3">
                   {/* Set 1 (5 cards) */}
                   <div className="flex shrink-0 items-center gap-3 pr-3">
@@ -615,13 +662,21 @@ export default function Leaderboard() {
                         className={`w-[170px] sm:w-[195px] shrink-0 text-center rounded-xl border p-2.5 transition-all duration-300 ease-out cursor-default hover:-translate-y-1 ${pillar.baseColor} ${pillar.hoverClasses}`}
                       >
                         <div className="text-[10px] font-bold uppercase tracking-wider">
-                          {isBn ? pillar.titleBn : pillar.titleEn}
+                          {selectText({
+                            en: pillar.titleEn,
+                            bn: pillar.titleBn,
+                            ur: pillar.titleUr,
+                          })}
                         </div>
                         <div className="text-base font-extrabold text-slate-900 dark:text-white">
                           {pillar.weight}
                         </div>
                         <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                          {isBn ? pillar.subBn : pillar.subEn}
+                          {selectText({
+                            en: pillar.subEn,
+                            bn: pillar.subBn,
+                            ur: pillar.subUr,
+                          })}
                         </div>
                       </div>
                     ))}
@@ -635,13 +690,21 @@ export default function Leaderboard() {
                         className={`w-[170px] sm:w-[195px] shrink-0 text-center rounded-xl border p-2.5 transition-all duration-300 ease-out cursor-default hover:-translate-y-1 ${pillar.baseColor} ${pillar.hoverClasses}`}
                       >
                         <div className="text-[10px] font-bold uppercase tracking-wider">
-                          {isBn ? pillar.titleBn : pillar.titleEn}
+                          {selectText({
+                            en: pillar.titleEn,
+                            bn: pillar.titleBn,
+                            ur: pillar.titleUr,
+                          })}
                         </div>
                         <div className="text-base font-extrabold text-slate-900 dark:text-white">
                           {pillar.weight}
                         </div>
                         <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                          {isBn ? pillar.subBn : pillar.subEn}
+                          {selectText({
+                            en: pillar.subEn,
+                            bn: pillar.subBn,
+                            ur: pillar.subUr,
+                          })}
                         </div>
                       </div>
                     ))}
@@ -658,18 +721,28 @@ export default function Leaderboard() {
         <section className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
           <div className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-black text-slate-700 dark:border-slate-800 dark:bg-[#070e1b] dark:text-slate-300 shadow-sm">
             <Trophy size={14} className="text-amber-500" />
-            <span>{isBn ? "সর্বকালের র‍্যাঙ্কিং (All-Time Leaderboard)" : "All-Time Global Rankings"}</span>
+            <span>
+              {selectText({
+                en: "All-Time Global Rankings",
+                bn: "সর্বকালের র‍্যাঙ্কিং (All-Time Leaderboard)",
+                ur: "ہمہ وقتی عالمی درجہ بندی (All-Time)",
+              })}
+            </span>
           </div>
 
           {/* Search Box */}
           <div className="relative sm:w-72">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={16} className={`absolute ${isRTL ? "right-3.5" : "left-3.5"} top-1/2 -translate-y-1/2 text-slate-400`} />
             <input
               type="text"
-              placeholder={isBn ? "ট্রেডার খুঁজুন..." : "Search trader name or pair..."}
+              placeholder={selectText({
+                en: "Search trader name or pair...",
+                bn: "ট্রেডার খুঁজুন...",
+                ur: "ٹریڈر کا نام یا پیئر تلاش کریں...",
+              })}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-white py-2 pl-9 pr-4 text-xs font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-500 dark:border-slate-800 dark:bg-[#070e1b] dark:text-white dark:focus:border-sky-500"
+              className={`w-full rounded-2xl border border-slate-200 bg-white py-2 ${isRTL ? "pr-9 pl-4" : "pl-9 pr-4"} text-xs font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-500 dark:border-slate-800 dark:bg-[#070e1b] dark:text-white dark:focus:border-sky-500`}
             />
           </div>
         </section>
@@ -679,7 +752,11 @@ export default function Leaderboard() {
           <div className="flex flex-col items-center justify-center py-20 space-y-4">
             <div className="size-10 border-4 border-sky-500/20 border-t-sky-500 rounded-full animate-spin" />
             <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
-              {isBn ? "রিয়েল ট্রেডার ডেটা লোড হচ্ছে..." : "Loading real trader rankings..."}
+              {selectText({
+                en: "Loading real trader rankings...",
+                bn: "রিয়েল ট্রেডার ডেটা লোড হচ্ছে...",
+                ur: "حقیقی ٹریڈرز کا ڈیٹا لوڈ ہو رہا ہے...",
+              })}
             </p>
           </div>
         )}
@@ -689,10 +766,18 @@ export default function Leaderboard() {
           <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-6 text-center space-y-3">
             <AlertCircle size={32} className="mx-auto text-rose-500" />
             <p className="text-sm font-bold text-rose-400">
-              {isBn ? "লিডারবোর্ড ডেটা লোড করা যায়নি।" : "Failed to load leaderboard data."}
+              {selectText({
+                en: "Failed to load leaderboard data.",
+                bn: "লিডারবোর্ড ডেটা লোড করা যায়নি।",
+                ur: "لیڈر بورڈ ڈیٹا لوڈ کرنے میں ناکامی۔",
+              })}
             </p>
             <Button size="sm" onClick={() => refetch()} variant="outline">
-              {isBn ? "পুনরায় চেষ্টা করুন" : "Retry"}
+              {selectText({
+                en: "Retry",
+                bn: "পুনরায় চেষ্টা করুন",
+                ur: "دوبارہ کوشش کریں",
+              })}
             </Button>
           </div>
         )}
@@ -702,16 +787,26 @@ export default function Leaderboard() {
           <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center dark:border-slate-800 dark:bg-[#070e1b]/80 space-y-4 shadow-sm">
             <Trophy size={48} className="mx-auto text-slate-400 dark:text-slate-600" />
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-              {isBn ? "এখনো কোনো লিডারবোর্ড তথ্য উপলব্ধ নেই।" : "No leaderboard data available yet."}
+              {selectText({
+                en: "No leaderboard data available yet.",
+                bn: "এখনো কোনো লিডারবোর্ড তথ্য উপলব্ধ নেই।",
+                ur: "ابھی کوئی لیڈر بورڈ ڈیٹا دستیاب نہیں ہے۔",
+              })}
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
-              {isBn
-                ? "ভেরিফায়েড ট্রেডার পারফরম্যান্স রেকর্ড হওয়ার সাথে সাথেই এখানে শীর্ষ ট্রেডারদের তালিকা প্রদর্শিত হবে। আপনার জার্নালে ট্রেড এন্ট্রি করুন এবং লিডারবোর্ডে যুক্ত হন।"
-                : "Eligible registered traders with verified performance will appear here. Log trades in your Trading Journal and maintain daily routines to qualify."}
+              {selectText({
+                en: "Eligible registered traders with verified performance will appear here. Log trades in your Trading Journal and maintain daily routines to qualify.",
+                bn: "ভেরিফায়েড ট্রেডার পারফরম্যান্স রেকর্ড হওয়ার সাথে সাথেই এখানে শীর্ষ ট্রেডারদের তালিকা প্রদর্শিত হবে। আপনার জার্নালে ট্রেড এন্ট্রি করুন এবং লিডারবোর্ডে যুক্ত হন।",
+                ur: "تصدیق شدہ کارکردگی کے حامل ٹریڈرز یہاں ظاہر ہوں گے۔ اپنے Trading Journal میں ٹریڈز درج کریں اور لیڈر بورڈ میں شامل ہونے کے لیے روزانہ کی روٹین برقرار رکھیں۔",
+              })}
             </p>
             <Link href="/dashboard">
               <Button size="sm" className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs rounded-xl mt-2">
-                {isBn ? "ট্রেডিং জার্নালে যান" : "Go to Trading Journal"}
+                {selectText({
+                  en: "Go to Trading Journal",
+                  bn: "ট্রেডিং জার্নালে যান",
+                  ur: "Trading Journal پر جائیں",
+                })}
               </Button>
             </Link>
           </div>

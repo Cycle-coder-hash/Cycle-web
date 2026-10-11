@@ -1,5 +1,6 @@
 import { Check, ChevronRight } from "lucide-react";
 import type { DashboardRoadmapStage } from "@/data/roadmapStages";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export type DashboardRoadmapFilter = "all" | "completed" | "todo";
 
@@ -19,7 +20,7 @@ export interface DashboardRoadmapTabProps {
 }
 
 export function DashboardRoadmapTab({
-  isBn,
+  isBn: _isBn,
   roadmapFilter,
   onSetRoadmapFilter,
   dashboardStages,
@@ -27,17 +28,32 @@ export function DashboardRoadmapTab({
   onSelectRoadmapStage,
   onToggleStageProgress,
 }: DashboardRoadmapTabProps) {
+  const { language, isRTL, selectText } = useLanguage();
+  const isBn = language === "bn";
+  const isUr = language === "ur";
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div
+      className={`space-y-6 animate-in fade-in duration-300 ${
+        isBn ? "font-bangla" : isUr ? "font-urdu" : ""
+      }`}
+      dir={isRTL ? "rtl" : "ltr"}
+    >
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h2 className="text-2xl font-extrabold tracking-tight">
-            {isBn ? "১২-স্টেজ ট্রেডিং রিয়েলিটি রোডম্যাপ" : "12-Stage Institutional Roadmap"}
+            {selectText({
+              en: "12-Stage Institutional Roadmap",
+              bn: "১২-স্টেজ ট্রেডিং রিয়েলিটি রোডম্যাপ",
+              ur: "12-مرحلہ ادارہ جاتی روڈ میپ",
+            })}
           </h2>
           <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            {isBn
-              ? "প্রতিটি স্টেজ ওপেন করে প্রাতিষ্ঠানিক রুলস পড়ুন এবং সম্পন্ন করার পর টিক দিন।"
-              : "Master institutional concepts step-by-step. Click any stage to study rules & log notes."}
+            {selectText({
+              en: "Master institutional concepts step-by-step. Click any stage to study rules & log notes.",
+              bn: "প্রতিটি স্টেজ ওপেন করে প্রাতিষ্ঠানিক রুলস পড়ুন এবং সম্পন্ন করার পর টিক দিন।",
+              ur: "ادارہ جاتی تصورات پر مرحلہ وار عبور حاصل کریں۔ قواعد کا مطالعہ کرنے اور نوٹس درج کرنے کے لیے کسی بھی مرحلے پر کلک کریں۔",
+            })}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -45,19 +61,17 @@ export function DashboardRoadmapTab({
             <button
               key={f}
               onClick={() => onSetRoadmapFilter(f)}
-              className={`rounded-xl px-3 py-1.5 text-xs font-bold capitalize transition ${
+              className={`rounded-xl px-3 py-1.5 text-xs font-bold capitalize transition cursor-pointer ${
                 roadmapFilter === f
                   ? "bg-[#081833] text-white dark:bg-sky-500 dark:text-slate-950"
                   : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
               }`}
             >
-              {isBn
-                ? f === "all"
-                  ? "সবগুলো"
-                  : f === "completed"
-                  ? "সম্পন্ন"
-                  : "বাকি আছে"
-                : f}
+              {f === "all"
+                ? selectText({ en: "All", bn: "সবগুলো", ur: "تمام" })
+                : f === "completed"
+                ? selectText({ en: "Completed", bn: "সম্পন্ন", ur: "مکمل" })
+                : selectText({ en: "To-Do", bn: "বাকি আছে", ur: "باقی" })}
             </button>
           ))}
         </div>
@@ -95,6 +109,8 @@ export function DashboardRoadmapTab({
                     >
                       {isBn
                         ? `স্টেজ ${String(stg.stageNumber).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[+d])}`
+                        : isUr
+                        ? `مرحلہ ${String(stg.stageNumber).padStart(2, "0")}`
                         : `Stage ${String(stg.stageNumber).padStart(2, "0")}`}
                     </span>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-[#0284c7] dark:text-sky-400">
@@ -112,8 +128,8 @@ export function DashboardRoadmapTab({
 
                 <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-800">
                   <span className="text-xs font-bold text-[#0284c7] dark:text-sky-400 flex items-center gap-1">
-                    <span>{isBn ? "বিস্তারিত দেখুন" : "View Rules & Notes"}</span>
-                    <ChevronRight size={13} />
+                    <span>{selectText({ en: "View Rules & Notes", bn: "বিস্তারিত দেখুন", ur: "قواعد و نوٹس دیکھیں" })}</span>
+                    <ChevronRight size={13} className={isRTL ? "rotate-180" : ""} />
                   </span>
 
                   <button
@@ -121,12 +137,16 @@ export function DashboardRoadmapTab({
                       e.stopPropagation();
                       onToggleStageProgress({ lessonId: stg.stageNumber, completed: !isDone });
                     }}
-                    className={`rounded-full p-1.5 transition ${
+                    className={`rounded-full p-1.5 transition cursor-pointer ${
                       isDone
                         ? "bg-emerald-500 text-white"
                         : "bg-slate-100 text-slate-400 hover:bg-slate-200 dark:bg-slate-800"
                     }`}
-                    title={isDone ? "Mark as uncompleted" : "Mark as completed"}
+                    title={
+                      isDone
+                        ? selectText({ en: "Mark as uncompleted", bn: "অসম্পন্ন হিসেবে চিহ্নিত করুন", ur: "نامکمل کے طور پر نشان زد کریں" })
+                        : selectText({ en: "Mark as completed", bn: "সম্পন্ন হিসেবে চিহ্নিত করুন", ur: "مکمل کے طور پر نشان زد کریں" })
+                    }
                   >
                     <Check size={14} />
                   </button>
