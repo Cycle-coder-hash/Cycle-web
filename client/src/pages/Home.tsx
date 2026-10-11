@@ -306,68 +306,102 @@ export default function Home() {
       {/* HEADER / NAVIGATION BAR */}
       {/* ========================================================================= */}
       <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-200/80 bg-white/85 text-slate-900 backdrop-blur-xl transition-colors dark:border-slate-800/80 dark:bg-[#070e1b]/85 dark:text-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3 lg:px-8">
-          <Link href="/" className="flex items-center gap-3">
-            <BrandLogo size={42} className="shrink-0" />
-            <HeaderBrandWordmark className="text-xs sm:text-sm" />
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-3 sm:px-5 py-2.5 sm:py-3 lg:px-8">
+          <Link href="/" className="flex items-center gap-2 sm:gap-3 min-w-0 shrink">
+            <BrandLogo size={36} className="shrink-0 sm:hidden" />
+            <BrandLogo size={42} className="shrink-0 hidden sm:inline-flex" />
+            <HeaderBrandWordmark className="text-[11px] sm:text-xs md:text-sm truncate" />
           </Link>
 
           <TopNavLinks isBn={isBn} copy={copy} />
 
-          <div className="flex items-center gap-2.5">
-            {/* Dark / Light Theme Toggle */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            {/* Dark / Light Theme Toggle (Visible on md+ screens; also available in mobile dropdown) */}
             <button
               onClick={toggleTheme}
               aria-label="Toggle Dark/Light Mode"
-              className="flex size-9 items-center justify-center rounded-full border border-slate-300/80 bg-slate-100 text-slate-700 transition hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-yellow-400 dark:hover:bg-slate-700"
+              className="hidden md:flex size-9 items-center justify-center rounded-full border border-slate-300/80 bg-slate-100 text-slate-700 transition hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-yellow-400 dark:hover:bg-slate-700"
               title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
               {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
             </button>
 
-            {/* Language Switcher */}
-            <LanguageSelector />
+            {/* Language Switcher - compact variant on mobile screens, default on desktop */}
+            <div className="hidden sm:block">
+              <LanguageSelector />
+            </div>
+            <div className="sm:hidden">
+              <LanguageSelector variant="compact" />
+            </div>
 
+            {/* Login / Dashboard Auth CTA - Always fully visible, never clipped */}
             {user ? (
-              <Link href="/dashboard">
+              <Link href="/dashboard" className="shrink-0">
                 <Button
                   size="sm"
-                  className="bg-[#091e3a] text-white hover:bg-[#0c284e] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 font-bold"
+                  className="bg-[#091e3a] text-white hover:bg-[#0c284e] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 font-bold text-xs sm:text-sm px-2.5 sm:px-3 h-8 sm:h-9"
                 >
                   {copy.dashboard}
                 </Button>
               </Link>
             ) : (
-              <Link href="/login">
+              <Link href="/login" className="shrink-0">
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-slate-300 bg-transparent text-slate-800 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 font-semibold"
+                  className="border-slate-300 bg-transparent text-slate-800 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 font-semibold text-xs sm:text-sm px-2.5 sm:px-3 h-8 sm:h-9"
                 >
                   {copy.signIn}
                 </Button>
               </Link>
             )}
 
+            {/* Mobile Hamburger Toggle Button */}
             <button
-              className="ml-1 text-slate-700 dark:text-slate-300 md:hidden"
+              className="flex size-8 sm:size-9 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors md:hidden"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="Toggle navigation"
             >
-              {menuOpen ? <X size={22} /> : <Menu size={22} />}
+              {menuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
         </div>
 
         {/* Mobile Navigation Dropdown */}
         {menuOpen && (
-          <div className="border-t border-slate-200 bg-white px-5 py-4 shadow-lg dark:border-slate-800 dark:bg-[#070e1b] md:hidden">
+          <div className="border-t border-slate-200 bg-white/95 px-4 sm:px-5 py-4 shadow-lg backdrop-blur-xl dark:border-slate-800 dark:bg-[#070e1b]/95 md:hidden animate-in fade-in duration-150">
             <TopNavLinks
               isBn={isBn}
               copy={copy}
               mobile
               onItemClick={() => setMenuOpen(false)}
             />
+
+            {/* Mobile Secondary Controls Bar */}
+            <div className="mt-4 pt-3.5 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between gap-3">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                {theme === "dark" ? "Dark Theme" : "Light Theme"}
+              </span>
+
+              <button
+                type="button"
+                onClick={toggleTheme}
+                aria-label="Toggle Dark/Light Mode"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-300/80 bg-slate-100 text-xs font-bold text-slate-700 transition hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-yellow-400 dark:hover:bg-slate-700"
+              >
+                {theme === "dark" ? (
+                  <>
+                    <Sun size={15} />
+                    <span>Light Mode</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon size={15} />
+                    <span>Dark Mode</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         )}
       </header>

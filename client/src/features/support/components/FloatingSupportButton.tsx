@@ -9,13 +9,25 @@ export function FloatingSupportButton() {
     return null;
   }
 
+  // On the Dashboard, mobile users access Support via the More bottom navigation menu.
+  // Hide on mobile screens (<1024px) when on dashboard routes to prevent overlapping the "More" button,
+  // while preserving the button on desktop dashboard (lg:flex) and all public website pages.
+  const isDashboard =
+    location === "/dashboard" ||
+    location.startsWith("/dashboard/") ||
+    location === "/notebook" ||
+    location === "/discipline" ||
+    location === "/calculator";
+
   return (
     <aside aria-label="Direct Support Chat Quick Access">
       <Link
         href="/support"
         aria-label="Direct Support Chat"
         title="Direct Support Chat"
-        className="group fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-40 flex items-center justify-center gap-2 rounded-full bg-[#081833] text-white shadow-lg shadow-sky-950/30 hover:shadow-xl hover:shadow-sky-500/20 hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 dark:shadow-sky-500/25 hover:scale-105 active:scale-95 transition-all duration-300 p-3 sm:px-4 sm:py-2.5 backdrop-blur-sm border border-sky-400/30 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2"
+        className={`group fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-40 items-center justify-center gap-2 rounded-full bg-[#081833] text-white shadow-lg shadow-sky-950/30 hover:shadow-xl hover:shadow-sky-500/20 hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 dark:shadow-sky-500/25 hover:scale-105 active:scale-95 transition-all duration-300 p-3 sm:px-4 sm:py-2.5 backdrop-blur-sm border border-sky-400/30 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-2 ${
+          isDashboard ? "hidden lg:flex" : "flex"
+        }`}
       >
         <div className="relative flex items-center justify-center">
           <MessageSquare className="size-6 sm:size-5 shrink-0 transition-transform duration-300 group-hover:scale-110" />
