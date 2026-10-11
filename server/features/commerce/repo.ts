@@ -25,6 +25,86 @@ export interface PaymentGatewayDetail {
   instructions?: string;
 }
 
+export interface CoursePricingItem {
+  priceBdt: string;
+  priceUsd: string;
+  originalPriceBdt?: string;
+}
+
+export interface SubscriptionPricingItem {
+  priceBdt: string;
+  priceUsd: string;
+  billingPeriod?: string;
+}
+
+export interface PricingConfig {
+  courses: {
+    freeEbook: CoursePricingItem;
+    basicToAdvance: CoursePricingItem;
+    proBlueprint: CoursePricingItem;
+  };
+  subscriptions: {
+    freeTrial: SubscriptionPricingItem;
+    pro: SubscriptionPricingItem;
+    premium: SubscriptionPricingItem;
+  };
+}
+
+export const DEFAULT_PRICING_CONFIG: PricingConfig = {
+  courses: {
+    freeEbook: { priceBdt: "0", priceUsd: "0" },
+    basicToAdvance: { priceBdt: "2499", priceUsd: "20" },
+    proBlueprint: { priceBdt: "4999", priceUsd: "40", originalPriceBdt: "5550" },
+  },
+  subscriptions: {
+    freeTrial: { priceBdt: "0", priceUsd: "0", billingPeriod: "30 days" },
+    pro: { priceBdt: "599", priceUsd: "5", billingPeriod: "month" },
+    premium: { priceBdt: "999", priceUsd: "10", billingPeriod: "month" },
+  },
+};
+
+export async function getPricingConfig(): Promise<PricingConfig> {
+  try {
+    const raw = await getSetting("pricing_config");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        courses: {
+          freeEbook: { ...DEFAULT_PRICING_CONFIG.courses.freeEbook, ...(parsed?.courses?.freeEbook || {}) },
+          basicToAdvance: { ...DEFAULT_PRICING_CONFIG.courses.basicToAdvance, ...(parsed?.courses?.basicToAdvance || {}) },
+          proBlueprint: { ...DEFAULT_PRICING_CONFIG.courses.proBlueprint, ...(parsed?.courses?.proBlueprint || {}) },
+        },
+        subscriptions: {
+          freeTrial: { ...DEFAULT_PRICING_CONFIG.subscriptions.freeTrial, ...(parsed?.subscriptions?.freeTrial || {}) },
+          pro: { ...DEFAULT_PRICING_CONFIG.subscriptions.pro, ...(parsed?.subscriptions?.pro || {}) },
+          premium: { ...DEFAULT_PRICING_CONFIG.subscriptions.premium, ...(parsed?.subscriptions?.premium || {}) },
+        },
+      };
+    }
+  } catch (err) {
+    console.warn("[getPricingConfig error]:", err);
+  }
+  return DEFAULT_PRICING_CONFIG;
+}
+
+export async function updatePricingConfig(config: Partial<PricingConfig>): Promise<PricingConfig> {
+  const current = await getPricingConfig();
+  const updated: PricingConfig = {
+    courses: {
+      freeEbook: { ...current.courses.freeEbook, ...(config.courses?.freeEbook || {}) },
+      basicToAdvance: { ...current.courses.basicToAdvance, ...(config.courses?.basicToAdvance || {}) },
+      proBlueprint: { ...current.courses.proBlueprint, ...(config.courses?.proBlueprint || {}) },
+    },
+    subscriptions: {
+      freeTrial: { ...current.subscriptions.freeTrial, ...(config.subscriptions?.freeTrial || {}) },
+      pro: { ...current.subscriptions.pro, ...(config.subscriptions?.pro || {}) },
+      premium: { ...current.subscriptions.premium, ...(config.subscriptions?.premium || {}) },
+    },
+  };
+  await setSetting("pricing_config", JSON.stringify(updated));
+  return updated;
+}
+
 export interface PaymentGatewaysConfig {
   bkash: PaymentGatewayDetail;
   nagad: PaymentGatewayDetail;
@@ -33,6 +113,7 @@ export interface PaymentGatewaysConfig {
   isAnnouncementEnabled?: boolean;
   studentTelegramUrl?: string;
   studentTelegramDescription?: string;
+  pricing?: PricingConfig;
 }
 
 export const DEFAULT_PAYMENT_CONFIG: PaymentGatewaysConfig = {
@@ -58,6 +139,7 @@ export const DEFAULT_PAYMENT_CONFIG: PaymentGatewaysConfig = {
   isAnnouncementEnabled: false,
   studentTelegramUrl: "https://t.me/cycleofchart",
   studentTelegramDescription: "Official Cycle of Chart VIP Student Telegram Community",
+  pricing: DEFAULT_PRICING_CONFIG,
 };
 
 export const inMemoryOrders: any[] = [];
@@ -66,6 +148,7 @@ let orderAutoId = 1;
 let entitlementAutoId = 1;
 
 export async function getPaymentGateways(): Promise<PaymentGatewaysConfig> {
+  const pricing = await getPricingConfig();
   try {
     const raw = await getSetting("payment_gateways_config");
     if (raw) {
@@ -78,6 +161,7 @@ export async function getPaymentGateways(): Promise<PaymentGatewaysConfig> {
         isAnnouncementEnabled: parsed.isAnnouncementEnabled !== undefined ? parsed.isAnnouncementEnabled : DEFAULT_PAYMENT_CONFIG.isAnnouncementEnabled,
         studentTelegramUrl: parsed.studentTelegramUrl || (await getSetting("student_telegram_url")) || DEFAULT_PAYMENT_CONFIG.studentTelegramUrl,
         studentTelegramDescription: parsed.studentTelegramDescription || DEFAULT_PAYMENT_CONFIG.studentTelegramDescription,
+        pricing,
       };
     }
     // Also check legacy individual settings if present
@@ -95,15 +179,19 @@ export async function getPaymentGateways(): Promise<PaymentGatewaysConfig> {
         isAnnouncementEnabled: false,
         studentTelegramUrl: legacyTelegram || DEFAULT_PAYMENT_CONFIG.studentTelegramUrl,
         studentTelegramDescription: DEFAULT_PAYMENT_CONFIG.studentTelegramDescription,
+        pricing,
       };
     }
   } catch (err) {
     console.warn("[getPaymentGateways error]:", err);
   }
-  return DEFAULT_PAYMENT_CONFIG;
+  return { ...DEFAULT_PAYMENT_CONFIG, pricing };
 }
 
 export async function updatePaymentGateways(config: Partial<PaymentGatewaysConfig>): Promise<PaymentGatewaysConfig> {
+  if (config.pricing) {
+    await updatePricingConfig(config.pricing);
+  }
   const current = await getPaymentGateways();
   const updated: PaymentGatewaysConfig = {
     ...current,
@@ -113,6 +201,7 @@ export async function updatePaymentGateways(config: Partial<PaymentGatewaysConfi
     rocket: { ...current.rocket, ...(config.rocket || {}) },
     studentTelegramUrl: config.studentTelegramUrl !== undefined ? config.studentTelegramUrl : current.studentTelegramUrl,
     studentTelegramDescription: config.studentTelegramDescription !== undefined ? config.studentTelegramDescription : current.studentTelegramDescription,
+    pricing: await getPricingConfig(),
   };
   await setSetting("payment_gateways_config", JSON.stringify(updated));
   // Sync legacy individual keys for full backward compatibility
@@ -141,23 +230,80 @@ export async function listProducts() {
 }
 
 export async function listBundles() {
+  const pricing = await getPricingConfig();
   const db = await getDb();
   if (db) {
     try {
       const rows = await db.select().from(bundles).where(eq(bundles.isPublished, true));
-      return rows.map((b: any) =>
-        (b.id === 2 || b.slug === "course-ebook") && (b.price === "1999.00" || b.price === "1999" || !b.price)
-          ? { ...b, price: "2499" }
-          : b
-      );
+      if (rows && rows.length > 0) {
+        return rows.map((b: any) => {
+          if (b.id === 1 || b.slug === "pdf-package") {
+            return {
+              ...b,
+              price: pricing.courses.freeEbook.priceBdt,
+              priceUsd: pricing.courses.freeEbook.priceUsd,
+            };
+          }
+          if (b.id === 2 || b.slug === "course-ebook") {
+            return {
+              ...b,
+              price: pricing.courses.basicToAdvance.priceBdt,
+              priceUsd: pricing.courses.basicToAdvance.priceUsd,
+            };
+          }
+          if (b.id === 4 || b.slug === "pro-blueprint") {
+            return {
+              ...b,
+              price: pricing.courses.proBlueprint.priceBdt,
+              priceUsd: pricing.courses.proBlueprint.priceUsd,
+              originalPrice: pricing.courses.proBlueprint.originalPriceBdt || "5550",
+            };
+          }
+          return b;
+        });
+      }
     } catch (err) {
       console.warn("[listBundles error]:", err);
     }
   }
   return [
-    { id: 1, slug: "pdf-package", titleEn: "Free eBook Package", titleBn: "Free eBook Package", price: "00", currency: "BDT", includesPdfPackage: true, includesEbook: false, includesCourse: false },
-    { id: 2, slug: "course-ebook", titleEn: "CYCLE OF CHART BASIC TO ADVANCE COURSE", titleBn: "CYCLE OF CHART BASIC TO ADVANCE COURSE", price: "2499", currency: "BDT", includesPdfPackage: false, includesEbook: true, includesCourse: true },
-    { id: 4, slug: "pro-blueprint", titleEn: "CYCLE OF CHART \u2014 PROFESSIONAL TRADING BLUEPRINT", titleBn: "CYCLE OF CHART \u2014 PROFESSIONAL TRADING BLUEPRINT", originalPrice: "5550", price: "3999", currency: "BDT", includesPdfPackage: true, includesEbook: true, includesCourse: true },
+    {
+      id: 1,
+      slug: "pdf-package",
+      titleEn: "Free eBook Package",
+      titleBn: "Free eBook Package",
+      price: pricing.courses.freeEbook.priceBdt,
+      priceUsd: pricing.courses.freeEbook.priceUsd,
+      currency: "BDT",
+      includesPdfPackage: true,
+      includesEbook: false,
+      includesCourse: false,
+    },
+    {
+      id: 2,
+      slug: "course-ebook",
+      titleEn: "CYCLE OF CHART BASIC TO ADVANCE COURSE",
+      titleBn: "CYCLE OF CHART BASIC TO ADVANCE COURSE",
+      price: pricing.courses.basicToAdvance.priceBdt,
+      priceUsd: pricing.courses.basicToAdvance.priceUsd,
+      currency: "BDT",
+      includesPdfPackage: false,
+      includesEbook: true,
+      includesCourse: true,
+    },
+    {
+      id: 4,
+      slug: "pro-blueprint",
+      titleEn: "CYCLE OF CHART \u2014 PROFESSIONAL TRADING BLUEPRINT",
+      titleBn: "CYCLE OF CHART \u2014 PROFESSIONAL TRADING BLUEPRINT",
+      originalPrice: pricing.courses.proBlueprint.originalPriceBdt || "5550",
+      price: pricing.courses.proBlueprint.priceBdt,
+      priceUsd: pricing.courses.proBlueprint.priceUsd,
+      currency: "BDT",
+      includesPdfPackage: true,
+      includesEbook: true,
+      includesCourse: true,
+    },
   ];
 }
 

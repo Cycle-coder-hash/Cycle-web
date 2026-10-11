@@ -3,25 +3,18 @@ import { Link } from "wouter";
 import {
   AlertCircle,
   ArrowLeft,
-  ArrowRight,
   BookMarked,
   BookOpen,
   Calendar,
   Camera,
   Check,
-  CheckCircle2,
   ChevronRight,
-  Circle,
   ClipboardCheck,
   Clock,
-  Globe,
   Download,
   Edit2,
   ExternalLink,
-  Eye,
   FileCheck2,
-  FileText,
-  Flame,
   GraduationCap,
   LayoutDashboard,
   Layers,
@@ -34,13 +27,10 @@ import {
   NotebookPen,
   Play,
   PlayCircle,
-  Plus,
-  Printer,
   Receipt,
   RotateCcw,
   Search,
   Share2,
-  ShieldCheck,
   Sparkles,
   Sun,
   Trash2,
@@ -51,8 +41,6 @@ import {
   Calculator,
   PanelLeftClose,
   PanelLeftOpen,
-  Crown,
-  Menu,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -76,41 +64,14 @@ import { PositionSizeCalculator } from "@/components/calculator/PositionSizeCalc
 import { uploadImage } from "@/lib/mediaUpload";
 import { CourseTelegramModal } from "@/components/CourseTelegramModal";
 import { NewUserOnboardingModal } from "@/components/NewUserOnboardingModal";
-import { SupportChat } from "@/components/SupportChat";
-
-// Daily Discipline Rules
-const DAILY_DISCIPLINE_RULES = [
-  {
-    id: "news_check",
-    textEn: "Checked high-impact news calendar (Forex Factory) before session open",
-    textBn: "সেশন শুরুর আগে হাই-ইমপ্যাক্ট নিউজ ক্যালেন্ডার (Forex Factory) চেক করেছি",
-  },
-  {
-    id: "bias_marked",
-    textEn: "Identified Daily Bias & mapped key Liquidity pools (BSL/SSL) on HTF",
-    textBn: "হায়ার টাইমফ্রেমে ডেইলি বায়াস ও মূল লিকুইডিটি পুল (BSL/SSL) মার্ক করেছি",
-  },
-  {
-    id: "risk_limit",
-    textEn: "Strictly limited risk to 1% max per trade — no revenge or overleveraging",
-    textBn: "প্রতি ট্রেডে সর্বোচ্চ ১% রিস্ক রুলস মেনে চলেছি — কোনো অতিরিক্ত লট নেই",
-  },
-  {
-    id: "killzone_only",
-    textEn: "Only executed setups during active Killzones (London 08:00-10:00 / NY 13:00-15:00)",
-    textBn: "শুধুমাত্র অ্যালগরিদমিক কিলজোনের ভেতরেই ট্রেড এক্সিকিউট করেছি",
-  },
-  {
-    id: "rr_validation",
-    textEn: "Validated minimum 1:3 Risk-to-Reward ratio before placing order",
-    textBn: "অর্ডার বসানোর আগে ন্যূনতম ১:৩ রিস্ক-টু-রিওয়ার্ড নিশ্চিত করেছি",
-  },
-  {
-    id: "journal_logged",
-    textEn: "Documented trade setup, emotional state & lesson in trading journal",
-    textBn: "ট্রেড নেওয়ার পর মানসিক অবস্থা ও লজিক বিস্তারিত জার্নালে লিখেছি",
-  },
-];
+import { DashboardOverviewTab } from "./dashboard/DashboardOverviewTab";
+import { DashboardRoadmapTab } from "./dashboard/DashboardRoadmapTab";
+import { DashboardLibraryTab } from "./dashboard/DashboardLibraryTab";
+import { DashboardOrdersTab } from "./dashboard/DashboardOrdersTab";
+import { DashboardSupportTab } from "./dashboard/DashboardSupportTab";
+import { DashboardMobileNav } from "./dashboard/DashboardMobileNav";
+import { DashboardRoadmapStageModal } from "./dashboard/DashboardRoadmapStageModal";
+import { DashboardReceiptModal, type DashboardInvoiceOrder } from "./dashboard/DashboardReceiptModal";
 
 export default function Dashboard() {
   const { user, loading, logout } = useAuth();
@@ -352,7 +313,7 @@ export default function Dashboard() {
   const [ticketMessage, setTicketMessage] = useState("");
 
   // Invoice Modal
-  const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState<any | null>(null);
+  const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState<DashboardInvoiceOrder | null>(null);
 
   // Queries
   const { data: progress, refetch: refetchProgress } = trpc.customer.progress.useQuery(undefined, { enabled: !!user });
@@ -1377,826 +1338,51 @@ export default function Dashboard() {
           {/* TAB 1: OVERVIEW */}
           {/* ========================================================================= */}
           {tab === "overview" && (
-            <div className="space-y-8 animate-in fade-in duration-300">
-              {/* Subscription Status & Usage Widget */}
-              {subUsage && (
-                <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm dark:border-slate-800/80 dark:bg-[#0b162a]">
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-5 border-b border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-3.5">
-                      <div
-                        className={`size-12 rounded-2xl flex items-center justify-center shrink-0 shadow-md ${
-                          subUsage.plan === "premium"
-                            ? "bg-gradient-to-tr from-amber-400 to-yellow-500 text-black shadow-amber-500/20"
-                            : subUsage.plan === "pro"
-                            ? "bg-gradient-to-tr from-sky-500 to-indigo-600 text-white shadow-sky-500/20"
-                            : subUsage.plan === "free_trial"
-                            ? "bg-gradient-to-tr from-cyan-500 to-blue-500 text-white shadow-cyan-500/20"
-                            : "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                        }`}
-                      >
-                        {subUsage.plan === "premium" ? (
-                          <Crown size={24} />
-                        ) : subUsage.plan === "pro" ? (
-                          <Sparkles size={22} />
-                        ) : subUsage.plan === "free_trial" ? (
-                          <Clock size={22} />
-                        ) : (
-                          <ShieldCheck size={22} />
-                        )}
-                      </div>
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          {/* Plan Badge */}
-                          <span
-                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black tracking-wider uppercase border ${
-                              subUsage.plan === "free_trial"
-                                ? "bg-cyan-500/15 text-cyan-400 border-cyan-500/30"
-                                : subUsage.plan === "free_after_trial"
-                                ? "bg-slate-500/15 text-slate-400 border-slate-500/30"
-                                : subUsage.plan === "pro"
-                                ? "bg-sky-500/20 text-sky-300 border-sky-500/40 shadow-sm shadow-sky-500/20"
-                                : "bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm shadow-amber-500/25"
-                            }`}
-                          >
-                            <span className="size-2 rounded-full bg-current animate-pulse" />
-                            {subUsage.plan === "free_trial" && `FREE TRIAL · ${subUsage.daysLeft} DAYS LEFT`}
-                            {subUsage.plan === "free_after_trial" && "FREE PLAN · 5 JOURNAL / 30 DAYS"}
-                            {subUsage.plan === "pro" && `PRO · ${subUsage.daysLeft} DAYS LEFT`}
-                            {subUsage.plan === "premium" && `PREMIUM · ${subUsage.daysLeft} DAYS LEFT`}
-                          </span>
-
-                          {subUsage.isLeaderboardEligible && (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                              ✓ LEADERBOARD ACTIVE
-                            </span>
-                          )}
-                        </div>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                          {subUsage.plan === "free_trial" &&
-                            "30-day Free Trial is strictly anchored to your account registration. Upgrading adds +5 Bonus Days!"}
-                          {subUsage.plan === "free_after_trial" &&
-                            "Permanent Free tier: 5 trades and 5 discipline days per rolling 30-day cycle."}
-                          {subUsage.plan === "pro" &&
-                            "Pro Plan Active. Dedicated 5 books, 30 videos/mo, workout routine & community chat enabled."}
-                          {subUsage.plan === "premium" &&
-                            "Premium Institutional Plan Active. Unlimited scale, 1-on-1 mentor support & direct owner chat enabled."}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Upgrade CTAs */}
-                    <div className="flex items-center gap-2.5 shrink-0">
-                      {subUsage.plan !== "premium" && (
-                        <Link href="/checkout?plan=premium">
-                          <Button
-                            size="sm"
-                            className="bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black font-black text-xs h-9 shadow-md shadow-amber-500/20 gap-1.5"
-                          >
-                            <Crown size={14} />
-                            {subUsage.plan === "pro" ? "Upgrade to Premium (৳999)" : "Get Premium (৳999)"}
-                          </Button>
-                        </Link>
-                      )}
-                      {(subUsage.plan === "free_trial" || subUsage.plan === "free_after_trial") && (
-                        <Link href="/checkout?plan=pro">
-                          <Button
-                            size="sm"
-                            className="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-xs h-9 shadow-md shadow-sky-500/20"
-                          >
-                            Get Pro (৳599)
-                          </Button>
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Quota Counters Grid */}
-                  <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-                    {/* Journal Entries */}
-                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Journal Trades</div>
-                      <div className="mt-1 text-sm font-extrabold text-slate-900 dark:text-white">
-                        {subUsage.journalEntriesLimit === "unlimited"
-                          ? "Unlimited"
-                          : `${subUsage.journalEntriesCount} / ${subUsage.journalEntriesLimit}`}
-                      </div>
-                    </div>
-
-                    {/* Journal Books */}
-                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Journal Books</div>
-                      <div className="mt-1 text-sm font-extrabold text-slate-900 dark:text-white">
-                        {subUsage.journalBooksLimit === "unlimited"
-                          ? "Unlimited"
-                          : `${subUsage.journalBooksCount} / ${subUsage.journalBooksLimit}`}
-                      </div>
-                    </div>
-
-                    {/* Saved Videos */}
-                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Saved Videos</div>
-                      <div className="mt-1 text-sm font-extrabold text-slate-900 dark:text-white">
-                        {subUsage.journalVideosLimit === "unlimited"
-                          ? "Unlimited"
-                          : subUsage.journalVideosLimit === 0
-                          ? "Locked"
-                          : `${subUsage.journalVideosCount} / ${subUsage.journalVideosLimit}`}
-                      </div>
-                    </div>
-
-                    {/* Notebook Pages */}
-                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Notebook Pages</div>
-                      <div className="mt-1 text-sm font-extrabold text-slate-900 dark:text-white">
-                        {subUsage.notebookPagesLimit === "unlimited"
-                          ? "Unlimited"
-                          : subUsage.notebookPagesLimit === 0
-                          ? "Templates"
-                          : `${subUsage.notebookPagesCount} / ${subUsage.notebookPagesLimit}`}
-                      </div>
-                    </div>
-
-                    {/* Discipline Days */}
-                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Discipline Days</div>
-                      <div className="mt-1 text-sm font-extrabold text-slate-900 dark:text-white">
-                        {subUsage.disciplineDaysLimit === "unlimited"
-                          ? "Unlimited"
-                          : `${subUsage.disciplineDaysCount} / ${subUsage.disciplineDaysLimit}`}
-                      </div>
-                    </div>
-
-                    {/* Workout Routine */}
-                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Workout Routine</div>
-                      <div
-                        className={`mt-1 text-sm font-extrabold ${
-                          subUsage.isWorkoutLocked ? "text-slate-400 dark:text-slate-500" : "text-emerald-500"
-                        }`}
-                      >
-                        {subUsage.isWorkoutLocked ? "Locked" : "Active"}
-                      </div>
-                    </div>
-
-                    {/* Community Chat */}
-                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Community Chat</div>
-                      <div
-                        className={`mt-1 text-sm font-extrabold ${
-                          subUsage.isCommunityLocked ? "text-slate-400 dark:text-slate-500" : "text-emerald-500"
-                        }`}
-                      >
-                        {subUsage.isCommunityLocked ? "Locked" : "Active"}
-                      </div>
-                    </div>
-
-                    {/* Mentor Support */}
-                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Mentor Support</div>
-                      <div
-                        className={`mt-1 text-sm font-extrabold ${
-                          subUsage.isMentorSupportLocked ? "text-slate-400 dark:text-slate-500" : "text-amber-500 font-black"
-                        }`}
-                      >
-                        {subUsage.isMentorSupportLocked ? "Locked" : "Active"}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Verified Student VIP Telegram Banner */}
-              {hasApprovedPurchase && (
-                <div className="relative overflow-hidden rounded-3xl border border-sky-500/40 bg-gradient-to-r from-[#081f3d] via-[#09172c] to-[#071324] p-5 sm:p-7 shadow-xl shadow-sky-950/40 backdrop-blur-sm">
-                  <div className="absolute top-0 right-0 w-80 h-40 bg-sky-500/10 blur-3xl pointer-events-none" />
-                  <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
-                    <div className="flex items-start gap-4">
-                      <div className="flex size-12 sm:size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/30">
-                        <Send size={24} className="translate-x-0.5 -translate-y-0.5" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 border border-emerald-500/30">
-                            ✓ {isBn ? "এনরোলমেন্ট অ্যাপ্রুভড" : "Enrollment Approved"}
-                          </span>
-                          <span className="text-[11px] font-bold text-sky-400">
-                            {isBn ? "প্রাতিষ্ঠানিক ভিআইপি এক্সেস" : "VIP Student Community"}
-                          </span>
-                        </div>
-                        <h3 className="text-base sm:text-lg font-black text-white tracking-tight">
-                          {isBn
-                            ? "লাইভ ক্লাস লিংক ও রেকর্ডেড ড্রাইভের জন্য অফিশিয়াল টেলিগ্রাম গ্রুপে যুক্ত থাকুন"
-                            : "Access Live Classes, Video Lectures & Daily Trade Breakdown on Telegram"}
-                        </h3>
-                        <p className="mt-1 text-xs text-slate-300 max-w-2xl leading-relaxed">
-                          {isBn
-                            ? "আপনার পেমেন্ট ভেরিফাই হয়েছে। সমস্ত লাইভ জুম সেশনের লিংক, শিডিউল ও প্রাইভেট সাপোর্ট টেলিগ্রাম চ্যানেলে প্রদান করা হয়।"
-                            : "Your payment verification has been cleared. All live class streaming links, PDF updates, and private mentor Q&A take place inside our official Telegram room."}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2.5 shrink-0 w-full sm:w-auto">
-                      <Button
-                        onClick={() => window.open(telegramUrl, "_blank")}
-                        className="flex-1 sm:flex-none h-11 px-5 rounded-xl bg-gradient-to-r from-sky-400 to-blue-500 hover:from-sky-300 hover:to-blue-400 text-slate-950 font-black text-xs shadow-lg shadow-sky-500/20 gap-1.5"
-                      >
-                        <Send size={15} />
-                        <span>{isBn ? "টেলিগ্রামে প্রবেশ করুন" : "Open VIP Telegram"}</span>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => window.dispatchEvent(new CustomEvent("open-telegram-modal"))}
-                        className="h-11 px-4 rounded-xl border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-200 font-bold text-xs"
-                      >
-                        <span>{isBn ? "নির্দেশিকা" : "Instructions"}</span>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Financial Market Time Zone Information Widget (Read-Only Source of Truth) */}
-              <div className="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white/95 p-5 sm:p-6 shadow-sm dark:border-slate-800/90 dark:bg-gradient-to-r dark:from-[#0a1628] dark:via-[#091424] dark:to-[#07101e] backdrop-blur-sm transition-all">
-                {/* Background decorative glow */}
-                <div className="absolute -top-12 -right-12 size-48 rounded-full bg-sky-500/10 blur-3xl pointer-events-none" />
-
-                <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-                  {/* Left: Timezone details */}
-                  <div className="flex items-start sm:items-center gap-3.5 sm:gap-4 min-w-0">
-                    <div className="flex size-12 sm:size-14 shrink-0 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-500 dark:bg-sky-500/15 border border-sky-500/20 shadow-xs">
-                      <Clock size={24} className="text-sky-500" />
-                    </div>
-
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className="text-[11px] font-black uppercase tracking-wider text-sky-600 dark:text-sky-400">
-                          {isBn ? "ফিনান্সিয়াল মার্কেট টাইমজোন" : "Financial Market Time Zone"}
-                        </span>
-                        <span className="inline-flex items-center gap-1 rounded-full bg-sky-500/10 px-2.5 py-0.5 text-[10px] font-bold text-sky-700 dark:text-sky-300 border border-sky-500/20">
-                          <Globe size={10} />
-                          <span>{currentTimezone.market}</span>
-                        </span>
-                        <span className="inline-flex items-center rounded-md bg-slate-100 dark:bg-slate-800/80 px-2 py-0.5 text-[10px] font-mono font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                          UTC {currentTimezone.offset}
-                        </span>
-                      </div>
-
-                      <div className="flex items-baseline gap-2 flex-wrap">
-                        <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                          {currentTimezone.city}
-                        </h2>
-                        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">
-                          · {currentTimezone.label}
-                        </span>
-                      </div>
-
-                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                        {isBn
-                          ? "ট্রেড লগিং, মার্কেট সেশন এবং দৈনিক ডিসিপ্লিন রিসেটের সক্রিয় রেফারেন্স টাইমজোন।"
-                          : "Active reference timezone for trade journaling, market session timing, and daily resets."}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Right: Live Digital Clock & Settings Link */}
-                  <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between sm:justify-start lg:justify-center gap-3 shrink-0 pt-2 lg:pt-0 border-t border-slate-100 dark:border-slate-800/70 lg:border-t-0">
-                    <div className="flex items-center gap-3">
-                      <div className="rounded-2xl border border-sky-500/30 bg-sky-500/5 dark:bg-sky-500/10 px-4 py-2 text-left sm:text-right">
-                        <div className="flex items-center gap-2 justify-start sm:justify-end">
-                          <span className="relative flex size-2">
-                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                            <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
-                          </span>
-                          <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                            {liveMarketTime.date || "..."}
-                          </span>
-                        </div>
-                        <div className="text-xl sm:text-2xl font-black font-mono tracking-widest text-slate-900 dark:text-sky-400 mt-0.5">
-                          {liveMarketTime.time || "--:--:-- --"}
-                        </div>
-                      </div>
-                    </div>
-
-                    <Link
-                      href="/settings?tab=region"
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-sky-600 dark:text-slate-400 dark:hover:text-sky-400 hover:underline transition-colors cursor-pointer"
-                      title={isBn ? "টাইমজোন পরিবর্তন করতে সেটিংস → ভাষা ও অঞ্চলে যান" : "Change time zone in Settings → Language & Region"}
-                    >
-                      <SettingsIcon size={12} className="text-sky-500" />
-                      <span>{isBn ? "সেটিংস থেকে পরিবর্তন করুন" : "Manage in Settings"}</span>
-                      <ChevronRight size={12} />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-
-              {/* Top Banner KPI Grid */}
-              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2.5 sm:gap-4">
-                {/* 1. Total Documented Trades */}
-                <div className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                  <div className="flex items-center justify-between text-slate-400">
-                    <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider">{isBn ? "মোট ট্রেড জার্নাল" : "Journal Entries"}</span>
-                    <NotebookPen size={16} className="text-[#0284c7] dark:text-sky-400 sm:w-[18px] sm:h-[18px]" />
-                  </div>
-                  <div className="mt-2.5 sm:mt-4 flex items-baseline gap-1.5 sm:gap-2">
-                    <span className="text-xl sm:text-3xl font-black">{journalStats.total}</span>
-                    <span className="text-xs sm:text-sm font-bold text-slate-400">{isBn ? "টি ট্রেড" : "Trades"}</span>
-                  </div>
-                  <div className="mt-2 sm:mt-3 text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">
-                    {journalStats.wins} {isBn ? "উইন" : "Wins"} · {journalStats.losses} {isBn ? "লস" : "Losses"}
-                  </div>
-                </div>
-
-                {/* 2. Win Rate */}
-                <div className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                  <div className="flex items-center justify-between text-slate-400">
-                    <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider">{isBn ? "ট্রেড উইনরেট" : "Trade Win Rate"}</span>
-                    <Flame size={16} className="text-amber-500 sm:w-[18px] sm:h-[18px]" />
-                  </div>
-                  <div className="mt-2.5 sm:mt-4 flex items-baseline gap-1.5 sm:gap-2">
-                    <span className="text-xl sm:text-3xl font-black">{journalStats.winRate}%</span>
-                    <span className="text-[10px] sm:text-xs font-bold text-emerald-600 dark:text-emerald-400">({journalStats.wins}W / {journalStats.losses}L)</span>
-                  </div>
-                  <div className="mt-2 text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate">
-                    {journalStats.total} {isBn ? "টি ট্রেড" : "documented logs"}
-                  </div>
-                </div>
-
-                {/* 3. Journal Logs */}
-                <div className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                  <div className="flex items-center justify-between text-slate-400">
-                    <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider">{isBn ? "আনলকড রিসোর্স" : "My Resources"}</span>
-                    <BookOpen size={16} className="text-purple-500 sm:w-[18px] sm:h-[18px]" />
-                  </div>
-                  <div className="mt-2.5 sm:mt-4 text-xl sm:text-3xl font-black">{entitlements?.length || 0}</div>
-                  <div className="mt-2 text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400 truncate">
-                    {isBn ? "সক্রিয় PDF ও কোর্স" : "Active entitlements"}
-                  </div>
-                </div>
-
-                {/* 4. Today's Discipline */}
-                <button
-                  onClick={() => setTab("discipline")}
-                  className="rounded-2xl sm:rounded-3xl bg-[#081833] p-3.5 sm:p-6 text-white shadow-xl shadow-[#081833]/15 dark:bg-slate-800 text-left transition-all hover:ring-2 hover:ring-[#38bdf8]/50 cursor-pointer"
-                >
-                  <div className="flex items-center justify-between text-slate-400">
-                    <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider text-[#38bdf8]">{isBn ? "আজকের রুটিন" : "Today's Discipline"}</span>
-                    <ClipboardCheck size={16} className="text-[#38bdf8] sm:w-[18px] sm:h-[18px]" />
-                  </div>
-                  <div className="mt-2.5 sm:mt-4 flex items-baseline gap-1.5 sm:gap-2">
-                    <span className="text-xl sm:text-3xl font-black">{discipline?.filter((d: any) => d.completed).length || 0}</span>
-                    <span className="text-xs sm:text-sm font-bold text-slate-400">/ 6 {isBn ? "রুলস" : "Rules"}</span>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between text-[11px] sm:text-xs font-medium text-slate-300">
-                    <span className="truncate">{isBn ? "ডিসিপ্লিনই শক্তি" : "Process over emotion"}</span>
-                    <ChevronRight size={14} className="text-[#38bdf8] shrink-0" />
-                  </div>
-                </button>
-
-                {/* 5. Your Global Rank */}
-                <Link href="/leaderboard" className="col-span-2 sm:col-span-1">
-                  <div className="rounded-2xl sm:rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-white to-slate-50 p-3.5 sm:p-6 shadow-xs dark:border-amber-500/30 dark:from-[#141d2e] dark:via-[#0c1527] dark:to-[#070e1b] transition-all hover:ring-2 hover:ring-amber-500/50 cursor-pointer h-full flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between text-slate-400">
-                        <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                          {isBn ? "আপনার গ্লোবাল র‍্যাঙ্ক" : "YOUR GLOBAL RANK"}
-                        </span>
-                        <Trophy size={16} className="text-amber-500 sm:w-[18px] sm:h-[18px]" />
-                      </div>
-                      <div className="mt-2.5 sm:mt-4 flex items-baseline gap-2">
-                        <span className="text-xl sm:text-3xl font-black text-slate-900 dark:text-white">
-                          {myRankData?.isRanked && myRankData.rank ? `#${myRankData.rank}` : "Unranked"}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="mt-2 sm:mt-3 flex items-center justify-between text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">
-                      <span className="truncate">
-                        {myRankData?.isRanked && myRankData.overallScore !== null
-                          ? `${isBn ? "স্কোর" : "Overall Score"}: ${myRankData.overallScore} / 100`
-                          : (isBn ? "র‌্যাঙ্ক পেতে ট্রেড লগ করুন" : "Log trades to qualify")}
-                      </span>
-                      <ChevronRight size={14} className="text-amber-500 shrink-0" />
-                    </div>
-                  </div>
-                </Link>
-              </div>
-
-              {/* Recent Order Status Alert Banner */}
-              {orders && orders.length > 0 && (
-                <div className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-start sm:items-center gap-3.5">
-                      <div className={`p-3 rounded-2xl shrink-0 ${
-                        orders[0].orderStatus === "approved"
-                          ? "bg-emerald-500/10 text-emerald-500"
-                          : orders[0].orderStatus === "rejected"
-                          ? "bg-rose-500/10 text-rose-500"
-                          : "bg-amber-500/10 text-amber-500"
-                      }`}>
-                        <Receipt size={22} />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
-                            {isBn ? "সর্বশেষ অর্ডার" : "Latest Order"} #{orders[0].id}
-                          </span>
-                          <span className="rounded-lg bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800/60 px-2 py-0.5 text-[11px] font-extrabold text-sky-700 dark:text-sky-300">
-                            {orders[0].bundleId === 4 ? "Bundle 4 · Trading Blueprint" : orders[0].bundleId === 2 ? "Bundle 2 · Course + eBook" : orders[0].bundleId === 1 ? "Free eBook Package" : `Bundle #${orders[0].bundleId}`}
-                          </span>
-                          <span
-                            className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase ${
-                              orders[0].orderStatus === "approved"
-                                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
-                                : orders[0].orderStatus === "rejected"
-                                ? "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400"
-                                : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400 animate-pulse"
-                            }`}
-                          >
-                            {orders[0].orderStatus === "approved" ? (isBn ? "অনুমোদিত" : "Approved") : orders[0].orderStatus === "rejected" ? (isBn ? "বাতিল" : "Rejected") : (isBn ? "যাচাই প্রক্রিয়াধীন (১৫-৩০ মিনিট)" : "Pending Review (15–30 mins)")}
-                          </span>
-                        </div>
-                        <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                          {orders[0].paymentMethod?.toUpperCase()} · TrxID: <code className="font-mono font-bold text-slate-700 dark:text-slate-200">{orders[0].transactionId}</code> · ৳{orders[0].amount} BDT
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => setTab("orders")}
-                      className="text-xs font-extrabold text-sky-600 hover:text-sky-500 dark:text-sky-400 shrink-0 flex items-center gap-1 cursor-pointer"
-                    >
-                      <span>{isBn ? "সব অর্ডার দেখুন" : "View All Orders"}</span>
-                      <ChevronRight size={14} />
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Learning Resource Banner CTA */}
-              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#081833] via-[#0f2c59] to-[#0a1e3d] p-7 sm:p-9 text-white shadow-2xl">
-                <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
-                  <div>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-extrabold uppercase tracking-widest text-[#38bdf8]">
-                      <Sparkles size={13} /> {isBn ? "প্রাতিষ্ঠানিক রিসোর্স" : "INSTITUTIONAL EDGE"}
-                    </span>
-                    <h2 className="mt-4 text-2xl sm:text-3xl font-extrabold tracking-tight">
-                      {isBn ? "প্রাতিষ্ঠানিক চিট-শীট ও হাই-RR ট্রেডিং মডেল" : "Institutional Cheat-Sheets & High-RR Models"}
-                    </h2>
-                    <p className="mt-2 max-w-xl text-xs sm:text-sm text-slate-300 leading-relaxed">
-                      {isBn
-                        ? "ক্যান্ডেল রেঞ্জ থিওরি (CRT), লিকুইডিটি সুইপ এবং প্রাতিষ্ঠানিক রিস্ক ম্যানেজমেন্ট গাইড অনুশীলন করে আপনার এজ তৈরি করুন।"
-                        : "Master candle range theory (CRT), liquidity sweeps, and strict risk management through curated institutional guides."}
-                    </p>
-                  </div>
-
-                  <Button
-                    onClick={() => setTab("library")}
-                    size="lg"
-                    className="shrink-0 gap-2 rounded-2xl bg-[#38bdf8] font-black text-slate-950 hover:bg-[#7dd3fc] shadow-lg shadow-sky-500/20"
-                  >
-                    <span>{isBn ? "লাইব্রেরি ওপেন করুন" : "Open Study Library"}</span>
-                    <ArrowRight size={16} />
-                  </Button>
-                </div>
-              </div>
-
-              {/* Two Column Section: Quick Recent Journal & Discipline */}
-              <div className="grid gap-6 lg:grid-cols-2">
-                {/* Recent Journal Entries */}
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-base font-extrabold">{isBn ? "সাম্প্রতিক ট্রেড জার্নাল" : "Recent Trade Logs"}</h3>
-                    <Button variant="ghost" size="sm" onClick={() => setTab("journal")} className="text-xs font-bold text-[#0284c7] dark:text-sky-400">
-                      {isBn ? "সব দেখুন" : "View all"} →
-                    </Button>
-                  </div>
-
-                  <div className="mt-4 space-y-3">
-                    {localTrades?.length ? (
-                      localTrades.slice(0, 3).map((item) => (
-                        <div key={item.id} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-800/40">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span className="font-extrabold text-sm text-slate-900 dark:text-white">{item.pair} ({item.direction})</span>
-                              <span className="text-[10px] font-mono font-bold text-cyan-500">#{item.tradeNumber}</span>
-                            </div>
-                            <span
-                              className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase ${
-                                item.pnl > 0.001
-                                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400"
-                                  : item.pnl < -0.001
-                                  ? "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400"
-                                  : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
-                              }`}
-                            >
-                              {item.pnl > 0.001 ? `+$${item.pnl.toFixed(2)}` : item.pnl < -0.001 ? `-$${Math.abs(item.pnl).toFixed(2)}` : "BE $0"}
-                            </span>
-                          </div>
-                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{item.note || item.learning || "Trade recorded in Institutional Journal"}</p>
-                          <div className="mt-2 flex items-center gap-2 text-[10px] font-mono text-slate-400">
-                            <span>{item.timeframe}</span>
-                            <span>•</span>
-                            <span>RR {item.riskReward}</span>
-                            <span>•</span>
-                            <span>Rank {item.tradeRank}</span>
-                            <span>•</span>
-                            <span>{item.date}</span>
-                          </div>
-                        </div>
-                      ))
-                    ) : journal?.length ? (
-                      journal.slice(0, 3).map((item: any) => (
-                        <div key={item.id} className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-800/40">
-                          <div className="flex items-center justify-between">
-                            <span className="font-extrabold text-sm">{item.title}</span>
-                            <span
-                              className={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase ${
-                                item.result?.toLowerCase() === "win"
-                                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400"
-                                  : item.result?.toLowerCase() === "loss"
-                                  ? "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400"
-                                  : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
-                              }`}
-                            >
-                              {item.result || "Logged"}
-                            </span>
-                          </div>
-                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{item.content}</p>
-                          <div className="mt-2 text-[10px] font-mono text-slate-400">{item.setup || "General Setup"} • {new Date(item.createdAt).toLocaleDateString()}</div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-xs text-slate-500 dark:border-slate-800">
-                        {isBn ? "এখনো কোনো ট্রেড জার্নাল এন্ট্রি যোগ করা হয়নি।" : "No trade logs recorded yet. Build the habit of journaling every setup."}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Daily Discipline Checklist */}
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-base font-extrabold">{isBn ? "ডেইলি ট্রেডার চেকলিস্ট" : "Daily Discipline Checklist"}</h3>
-                      <span className="text-xs font-mono font-bold text-slate-400">{today}</span>
-                    </div>
-                    <button
-                      onClick={() => setTab("discipline")}
-                      className="inline-flex items-center gap-1 text-xs font-extrabold text-sky-500 hover:text-sky-600 transition-colors"
-                    >
-                      <span>{isBn ? "সম্পূর্ণ সিস্টেম" : "Full System"}</span>
-                      <ChevronRight size={14} />
-                    </button>
-                  </div>
-
-                  <div className="mt-4 space-y-2.5">
-                    {DAILY_DISCIPLINE_RULES.slice(0, 4).map((rule) => {
-                      const isChecked = discipline?.some((d: any) => d.label === rule.id && d.completed);
-                      return (
-                        <button
-                          key={rule.id}
-                          onClick={() => toggleDisciplineMutation.mutate({ label: rule.id, date: today, completed: !isChecked })}
-                          className={`flex w-full items-start gap-3 rounded-2xl border p-3.5 text-left transition-all ${
-                            isChecked
-                              ? "border-emerald-200 bg-emerald-50/50 text-emerald-950 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-200"
-                              : "border-slate-100 bg-slate-50/50 hover:border-slate-200 dark:border-slate-800 dark:bg-slate-800/40"
-                          }`}
-                        >
-                          <div className="mt-0.5">
-                            {isChecked ? <CheckCircle2 size={16} className="text-emerald-500" /> : <Circle size={16} className="text-slate-300 dark:text-slate-600" />}
-                          </div>
-                          <span className={`text-xs font-medium leading-relaxed ${isChecked ? "line-through opacity-80" : ""}`}>
-                            {isBn ? rule.textBn : rule.textEn}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <DashboardOverviewTab
+              isBn={isBn}
+              today={today}
+              subUsage={subUsage}
+              hasApprovedPurchase={hasApprovedPurchase}
+              telegramUrl={telegramUrl}
+              currentTimezone={currentTimezone}
+              liveMarketTime={liveMarketTime}
+              journalStats={journalStats}
+              entitlements={entitlements}
+              discipline={discipline}
+              myRankData={myRankData}
+              orders={orders}
+              localTrades={localTrades}
+              journal={journal}
+              onSelectTab={(nextTab) => setTab(nextTab)}
+              onToggleDisciplineRule={(payload) => toggleDisciplineMutation.mutate(payload)}
+            />
           )}
 
           {/* ========================================================================= */}
           {/* TAB 2: 12-STAGE ROADMAP TRACKER */}
           {/* ========================================================================= */}
           {tab === "roadmap" && (
-            <div className="space-y-6 animate-in fade-in duration-300">
-              <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                <div>
-                  <h2 className="text-2xl font-extrabold tracking-tight">
-                    {isBn ? "১২-স্টেজ ট্রেডিং রিয়েলিটি রোডম্যাপ" : "12-Stage Institutional Roadmap"}
-                  </h2>
-                  <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                    {isBn
-                      ? "প্রতিটি স্টেজ ওপেন করে প্রাতিষ্ঠানিক রুলস পড়ুন এবং সম্পন্ন করার পর টিক দিন।"
-                      : "Master institutional concepts step-by-step. Click any stage to study rules & log notes."}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {(["all", "completed", "todo"] as const).map((f) => (
-                    <button
-                      key={f}
-                      onClick={() => setRoadmapFilter(f)}
-                      className={`rounded-xl px-3 py-1.5 text-xs font-bold capitalize transition ${
-                        roadmapFilter === f
-                          ? "bg-[#081833] text-white dark:bg-sky-500 dark:text-slate-950"
-                          : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-                      }`}
-                    >
-                      {isBn
-                        ? f === "all"
-                          ? "সবগুলো"
-                          : f === "completed"
-                          ? "সম্পন্ন"
-                          : "বাকি আছে"
-                        : f}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 12 Stages Cards Grid */}
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {dashboardStages
-                  .filter((stg) => {
-                    const isDone = progress?.some((p: any) => p.lessonId === stg.stageNumber && p.completed);
-                    if (roadmapFilter === "completed") return isDone;
-                    if (roadmapFilter === "todo") return !isDone;
-                    return true;
-                  })
-                  .map((stg) => {
-                    const isDone = progress?.some((p: any) => p.lessonId === stg.stageNumber && p.completed);
-                    return (
-                      <div
-                        key={stg.stageNumber}
-                        onClick={() => setSelectedRoadmapStage(stg)}
-                        className={`group relative flex cursor-pointer flex-col justify-between rounded-3xl border p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl ${
-                          isDone
-                            ? "border-emerald-300 bg-emerald-50/40 dark:border-emerald-900/50 dark:bg-emerald-950/20"
-                            : "border-slate-200 bg-white hover:border-[#0284c7]/50 dark:border-slate-800 dark:bg-slate-900"
-                        }`}
-                      >
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <span
-                              className={`font-mono text-xs font-bold px-2 py-0.5 rounded-lg ${
-                                isDone
-                                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
-                                  : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-                              }`}
-                            >
-                              {isBn
-                                ? `স্টেজ ${String(stg.stageNumber).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[+d])}`
-                                : `Stage ${String(stg.stageNumber).padStart(2, "0")}`}
-                            </span>
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#0284c7] dark:text-sky-400">
-                              {stg.category}
-                            </span>
-                          </div>
-
-                          <h3 className="mt-4 text-base font-extrabold group-hover:text-[#0284c7] dark:group-hover:text-sky-400 transition-colors">
-                            {stg.title}
-                          </h3>
-                          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                            {stg.summary}
-                          </p>
-                        </div>
-
-                        <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-800">
-                          <span className="text-xs font-bold text-[#0284c7] dark:text-sky-400 flex items-center gap-1">
-                            <span>{isBn ? "বিস্তারিত দেখুন" : "View Rules & Notes"}</span>
-                            <ChevronRight size={13} />
-                          </span>
-
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleProgressMutation.mutate({ lessonId: stg.stageNumber, completed: !isDone });
-                            }}
-                            className={`rounded-full p-1.5 transition ${
-                              isDone
-                                ? "bg-emerald-500 text-white"
-                                : "bg-slate-100 text-slate-400 hover:bg-slate-200 dark:bg-slate-800"
-                            }`}
-                            title={isDone ? "Mark as uncompleted" : "Mark as completed"}
-                          >
-                            <Check size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-              </div>
-            </div>
+            <DashboardRoadmapTab
+              isBn={isBn}
+              roadmapFilter={roadmapFilter}
+              onSetRoadmapFilter={(filter) => setRoadmapFilter(filter)}
+              dashboardStages={dashboardStages}
+              progress={progress}
+              onSelectRoadmapStage={(stage) => setSelectedRoadmapStage(stage)}
+              onToggleStageProgress={(payload) => toggleProgressMutation.mutate(payload)}
+            />
           )}
 
           {/* TAB 3: MY LIBRARY & RESOURCES */}
           {/* ========================================================================= */}
           {tab === "library" && (
-            <div className="space-y-8 animate-in fade-in duration-300">
-              <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                <div>
-                  <h2 className="text-2xl font-extrabold tracking-tight">{isBn ? "আমার লাইব্রেরি ও প্রাতিষ্ঠানিক রিসোর্স" : "Institutional PDF Library & Course"}</h2>
-                  <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                    {isBn ? "অনলাইনে প্রিভিউ দেখুন অথবা সম্পূর্ণ চিট-শীট ফাইলটি সরাসরি ডাউনলোড করুন।" : "Preview interactive cheat-sheets in browser or download printable study files."}
-                  </p>
-                </div>
-
-                <Link href="/checkout">
-                  <Button size="sm" className="gap-1.5 bg-[#081833] text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 font-bold">
-                    <Plus size={15} /> {isBn ? "নতুন রিসোর্স আনলক করুন" : "Browse Store Bundles"}
-                  </Button>
-                </Link>
-              </div>
-
-              {/* Loading Skeletons */}
-              {isLoadingLibrary && (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="h-56 rounded-3xl border border-slate-200 bg-slate-50/70 p-6 animate-pulse dark:border-slate-800 dark:bg-slate-900/50 flex flex-col justify-between">
-                      <div className="space-y-3">
-                        <div className="h-4 w-24 bg-slate-200 dark:bg-slate-800 rounded-full" />
-                        <div className="h-6 w-3/4 bg-slate-200 dark:bg-slate-800 rounded-lg" />
-                        <div className="h-4 w-full bg-slate-200 dark:bg-slate-800 rounded-lg" />
-                      </div>
-                      <div className="h-8 w-full bg-slate-200 dark:bg-slate-800 rounded-xl" />
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Empty State */}
-              {!isLoadingLibrary && (!libraryPdfs || libraryPdfs.length === 0) && (
-                <div className="rounded-3xl border border-slate-200 bg-white p-10 sm:p-14 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900 flex flex-col items-center justify-center">
-                  <div className="size-16 rounded-2xl bg-sky-50 dark:bg-sky-950/50 flex items-center justify-center text-[#0284c7] dark:text-sky-400 mb-4 border border-sky-100 dark:border-sky-900/50">
-                    <FileText size={32} />
-                  </div>
-                  <h3 className="text-lg font-black text-slate-900 dark:text-white">
-                    {isBn ? "আপনার লাইব্রেরিতে কোনো PDF নেই" : "No PDFs in your library yet."}
-                  </h3>
-                  <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md">
-                    {isBn
-                      ? "আমাদের প্রাতিষ্ঠানিক স্ট্র্যাটেজি গাইড, চিট-শীট ও সম্পূর্ণ ট্রেডিং কোর্স আনলক করতে স্টোর বান্ডেলগুলো দেখুন।"
-                      : "Explore our institutional blueprints, high-resolution cheat-sheets, and comprehensive trading courses to unlock them here."}
-                  </p>
-                  <Link href="/checkout">
-                    <Button className="mt-6 gap-2 bg-[#081833] text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 font-bold px-6 py-2.5 rounded-2xl shadow-md">
-                      <Plus size={16} /> {isBn ? "স্টোর বান্ডেল দেখুন" : "Browse Store Bundles"}
-                    </Button>
-                  </Link>
-                </div>
-              )}
-
-              {/* Resource Cards Grid */}
-              {!isLoadingLibrary && libraryPdfs && libraryPdfs.length > 0 && (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {libraryPdfs.map((pdf: any) => {
-                    const title = isBn && pdf.titleBn ? pdf.titleBn : (pdf.titleEn || pdf.title);
-                    const subtitle = isBn && pdf.subtitleBn ? pdf.subtitleBn : (pdf.subtitleEn || pdf.subtitle || "");
-                    const isFree = pdf.isFree === true || Number(pdf.price) === 0 || !pdf.price;
-
-                    return (
-                      <div key={pdf.id} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between">
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <span className="rounded-full bg-emerald-100 px-3 py-0.5 text-[10px] font-black uppercase text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400">
-                              {pdf.category || (isFree ? "FREE PDF" : "INSTITUTIONAL PDF")}
-                            </span>
-                            <FileText size={18} className="text-[#0284c7] dark:text-sky-400" />
-                          </div>
-                          <h3 className="mt-4 text-base font-extrabold">{title}</h3>
-                          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{subtitle}</p>
-                          <div className="mt-3 text-[11px] font-mono text-slate-400">
-                            {pdf.pages || 15} Pages · {pdf.fileSize || "High Resolution Reference"}
-                          </div>
-                        </div>
-
-                        <div className="mt-6 flex gap-2 border-t border-slate-100 pt-4 dark:border-slate-800">
-                          <Button
-                            size="sm"
-                            onClick={() => setPreviewPdfModal(pdf)}
-                            variant="outline"
-                            className="w-1/2 text-xs font-bold border-slate-300 dark:border-slate-700"
-                          >
-                            <Eye size={13} className="mr-1" />
-                            <span>{isBn ? "প্রিভিউ" : "Preview"}</span>
-                          </Button>
-
-                          <Button
-                            size="sm"
-                            onClick={() => handleDownloadResource(pdf)}
-                            className="w-1/2 gap-1 bg-[#081833] text-xs font-bold text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950"
-                          >
-                            <Download size={13} />
-                            <span>{isBn ? "ডাউনলোড" : "Download"}</span>
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+            <DashboardLibraryTab
+              isBn={isBn}
+              isLoadingLibrary={isLoadingLibrary}
+              libraryPdfs={libraryPdfs}
+              onPreviewPdf={(pdf) => setPreviewPdfModal(pdf)}
+              onDownloadResource={(pdf) => handleDownloadResource(pdf)}
+            />
           )}
 
           {/* ========================================================================= */}
@@ -2231,605 +1417,67 @@ export default function Dashboard() {
           {/* TAB 6: ORDERS & PAYMENT HISTORY */}
           {/* ========================================================================= */}
           {tab === "orders" && (
-            <div className="space-y-6 animate-in fade-in duration-300">
-              <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                <div>
-                  <h2 className="text-2xl font-extrabold tracking-tight">{isBn ? "পেমেন্ট ও অর্ডার হিস্ট্রি" : "Orders & Manual Verification History"}</h2>
-                  <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                    {isBn ? "আপনার বিকাশ, নগদ ও রকেট অর্ডারের ভেরিফিকেশন স্ট্যাটাস ও ইনভয়েস।" : "Track your manual payment verification statuses and generate official receipts."}
-                  </p>
-                </div>
-
-                <Link href="/checkout">
-                  <Button size="sm" className="bg-[#081833] text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 font-bold">
-                    <Plus size={15} className="mr-1" /> {isBn ? "নতুন অর্ডার করুন" : "New Order"}
-                  </Button>
-                </Link>
-              </div>
-
-              <div className="space-y-3">
-                {orders?.length ? (
-                  orders.map((o: any) => (
-                    <div key={o.id} className="flex flex-col sm:flex-row sm:items-center justify-between rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 gap-4">
-                      <div>
-                        <div className="flex items-center gap-2.5 flex-wrap">
-                          <span className="font-extrabold text-base">Order #{o.id}</span>
-                          <span className="rounded-lg bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800/60 px-2 py-0.5 text-[11px] font-extrabold text-sky-700 dark:text-sky-300">
-                            {o.bundleId === 4 ? "Bundle 4 · Trading Blueprint" : o.bundleId === 2 ? "Bundle 2 · Course + eBook" : o.bundleId === 1 ? "Free eBook Package" : `Bundle #${o.bundleId}`}
-                          </span>
-                          <span className="font-mono text-xs text-slate-400">TxID: {o.transactionId}</span>
-                        </div>
-                        <div className="mt-2 text-xs text-slate-500 flex items-center gap-3 flex-wrap">
-                          <span>{isBn ? "পদ্ধতি:" : "Method:"} <b className="uppercase text-slate-700 dark:text-slate-300">{o.paymentMethod}</b></span>
-                          <span>•</span>
-                          <span>{isBn ? "তারিখ:" : "Date:"} {new Date(o.createdAt).toLocaleDateString()}</span>
-                          {o.orderStatus === "pending" && (
-                            <>
-                              <span>•</span>
-                              <span className="text-amber-600 dark:text-amber-400 font-medium">
-                                {isBn ? "১৫-৩০ মিনিটের মধ্যে অ্যাপ্রুভ হবে" : "Approval usually within 15–30 mins"}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between sm:justify-end gap-4">
-                        <div className="text-right">
-                          <div className="text-lg font-black">৳{o.amount}</div>
-                          <div className="text-[10px] text-slate-400">BDT</div>
-                        </div>
-
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-black uppercase ${
-                            o.orderStatus === "approved"
-                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
-                              : o.orderStatus === "rejected"
-                              ? "bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-400"
-                              : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400"
-                          }`}
-                        >
-                          {o.orderStatus === "approved" ? (isBn ? "অনুমোদিত" : "Approved") : o.orderStatus === "rejected" ? (isBn ? "বাতিল" : "Rejected") : (isBn ? "যাচাই প্রক্রিয়াধীন" : "Pending Review")}
-                        </span>
-
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setSelectedInvoiceOrder(o)}
-                          className="gap-1 text-xs font-bold border-slate-300 dark:border-slate-700"
-                        >
-                          <Printer size={13} />
-                          <span>Receipt</span>
-                        </Button>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-3xl border border-dashed border-slate-200 p-12 text-center text-slate-500 dark:border-slate-800">
-                    <Receipt size={36} className="mx-auto text-slate-400 mb-3" />
-                    <h3 className="font-bold text-base">{isBn ? "এখনো কোনো অর্ডার নেই" : "No orders found"}</h3>
-                  </div>
-                )}
-              </div>
-            </div>
+            <DashboardOrdersTab
+              isBn={isBn}
+              orders={orders}
+              onSelectInvoiceOrder={(order) => setSelectedInvoiceOrder(order)}
+            />
           )}
 
           {/* ========================================================================= */}
           {/* TAB 7: DIRECT SUPPORT CHAT */}
           {/* ========================================================================= */}
           {tab === "support" && (
-            <div className="space-y-6 animate-in fade-in duration-300">
-              <SupportChat inline />
-            </div>
+            <DashboardSupportTab />
           )}
         </main>
       </div>
 
       {/* ========================================================================= */}
-      {/* MOBILE FIXED BOTTOM NAVIGATION BAR */}
+      {/* MOBILE FIXED BOTTOM NAVIGATION BAR & DRAWER */}
       {/* ========================================================================= */}
-      <nav
-        aria-label="Mobile Bottom Navigation"
-        className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-[#070e1b]/95 backdrop-blur-xl border-t border-slate-800/90 shadow-2xl safe-bottom"
-      >
-        <div className="flex items-center justify-around px-1.5 py-1.5">
-          {/* 1. Overview */}
-          <button
-            type="button"
-            onClick={() => {
-              setTab("overview");
-              setIsMobileMoreOpen(false);
-            }}
-            className={`flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl transition-all cursor-pointer min-h-[44px] ${
-              tab === "overview" && !isMobileMoreOpen
-                ? "text-sky-400 font-extrabold"
-                : "text-slate-400 hover:text-slate-200 font-medium"
-            }`}
-          >
-            <LayoutDashboard size={19} className={tab === "overview" && !isMobileMoreOpen ? "text-sky-400 scale-105" : "text-slate-400"} />
-            <span className="text-[10px] mt-0.5 tracking-tight truncate max-w-[62px]">
-              {isBn ? "ওভারভিউ" : "Overview"}
-            </span>
-          </button>
-
-          {/* 2. Trade Journal */}
-          <button
-            type="button"
-            onClick={() => {
-              setTab("journal");
-              setIsMobileMoreOpen(false);
-            }}
-            className={`flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl transition-all cursor-pointer min-h-[44px] relative ${
-              tab === "journal" && !isMobileMoreOpen
-                ? "text-sky-400 font-extrabold"
-                : "text-slate-400 hover:text-slate-200 font-medium"
-            }`}
-          >
-            <NotebookPen size={19} className={tab === "journal" && !isMobileMoreOpen ? "text-sky-400 scale-105" : "text-slate-400"} />
-            <span className="text-[10px] mt-0.5 tracking-tight truncate max-w-[62px]">
-              {isBn ? "জার্নাল" : "Journal"}
-            </span>
-            {Boolean(localTrades?.length || journal?.length) && (
-              <span className="absolute top-1 right-2.5 size-2 rounded-full bg-sky-500 ring-2 ring-[#070e1b]" />
-            )}
-          </button>
-
-          {/* 3. Daily Routine */}
-          <button
-            type="button"
-            onClick={() => {
-              setTab("discipline");
-              setIsMobileMoreOpen(false);
-            }}
-            className={`flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl transition-all cursor-pointer min-h-[44px] ${
-              tab === "discipline" && !isMobileMoreOpen
-                ? "text-sky-400 font-extrabold"
-                : "text-slate-400 hover:text-slate-200 font-medium"
-            }`}
-          >
-            <ClipboardCheck size={19} className={tab === "discipline" && !isMobileMoreOpen ? "text-sky-400 scale-105" : "text-slate-400"} />
-            <span className="text-[10px] mt-0.5 tracking-tight truncate max-w-[62px]">
-              {isBn ? "রুটিন" : "Routine"}
-            </span>
-          </button>
-
-          {/* 4. Global Leaderboard */}
-          <Link
-            href="/leaderboard"
-            onClick={() => setIsMobileMoreOpen(false)}
-            className="flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl transition-all cursor-pointer min-h-[44px] text-amber-400/90 hover:text-amber-300 font-medium"
-          >
-            <Trophy size={19} className="text-amber-400" />
-            <span className="text-[10px] mt-0.5 tracking-tight truncate max-w-[62px]">
-              {isBn ? "র‍্যাঙ্ক" : "Rank"}
-            </span>
-          </Link>
-
-          {/* 5. More Sections Drawer Trigger */}
-          <button
-            type="button"
-            onClick={() => setIsMobileMoreOpen((prev) => !prev)}
-            className={`flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl transition-all cursor-pointer min-h-[44px] ${
-              isMobileMoreOpen || (!["overview", "journal", "discipline"].includes(tab))
-                ? "text-sky-400 font-extrabold"
-                : "text-slate-400 hover:text-slate-200 font-medium"
-            }`}
-          >
-            <Menu size={19} className={isMobileMoreOpen ? "text-sky-400 rotate-90 transition-transform" : "text-slate-400 transition-transform"} />
-            <span className="text-[10px] mt-0.5 tracking-tight truncate max-w-[62px]">
-              {isBn ? "মেনু" : "More"}
-            </span>
-          </button>
-        </div>
-      </nav>
-
-      {/* ========================================================================= */}
-      {/* MOBILE "MORE" BOTTOM DRAWER */}
-      {/* ========================================================================= */}
-      {isMobileMoreOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          {/* Backdrop */}
-          <div
-            onClick={() => setIsMobileMoreOpen(false)}
-            className="absolute inset-0 bg-black/70 backdrop-blur-xs transition-opacity animate-in fade-in"
-          />
-
-          {/* Bottom Sheet */}
-          <div className="absolute inset-x-0 bottom-0 rounded-t-3xl border-t border-slate-800 bg-[#0b162a] p-5 shadow-2xl space-y-4 animate-in slide-in-from-bottom duration-200 max-h-[85vh] overflow-y-auto pb-8 safe-bottom">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <BrandLogo size={24} />
-                <span className="text-xs font-black uppercase tracking-wider text-slate-300">
-                  {isBn ? "সকল সেকশন ও টুলস" : "All Sections & Tools"}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsMobileMoreOpen(false)}
-                className="p-1.5 rounded-xl bg-slate-800 text-slate-400 hover:text-white cursor-pointer"
-                aria-label="Close drawer"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2.5">
-              {/* 12-Stage Roadmap */}
-              <button
-                type="button"
-                onClick={() => {
-                  setTab("roadmap");
-                  setIsMobileMoreOpen(false);
-                }}
-                className={`flex items-center gap-3 p-3 rounded-2xl border text-left text-xs font-bold transition-all cursor-pointer ${
-                  tab === "roadmap"
-                    ? "border-sky-500/50 bg-sky-500/15 text-sky-400"
-                    : "border-slate-800/80 bg-slate-900/70 text-slate-300 hover:bg-slate-800"
-                }`}
-              >
-                <div className="size-9 rounded-xl bg-sky-500/10 flex items-center justify-center shrink-0 text-sky-400">
-                  <Layers size={18} />
-                </div>
-                <div className="min-w-0">
-                  <div className="truncate font-extrabold">{isBn ? "১২-স্টেজ রোডম্যাপ" : "Roadmap"}</div>
-                  <div className="text-[10px] text-slate-400 font-normal">{completedStagesCount}/12 completed</div>
-                </div>
-              </button>
-
-              {/* My Library */}
-              <button
-                type="button"
-                onClick={() => {
-                  setTab("library");
-                  setIsMobileMoreOpen(false);
-                }}
-                className={`flex items-center gap-3 p-3 rounded-2xl border text-left text-xs font-bold transition-all cursor-pointer ${
-                  tab === "library"
-                    ? "border-sky-500/50 bg-sky-500/15 text-sky-400"
-                    : "border-slate-800/80 bg-slate-900/70 text-slate-300 hover:bg-slate-800"
-                }`}
-              >
-                <div className="size-9 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0 text-purple-400">
-                  <BookOpen size={18} />
-                </div>
-                <div className="min-w-0">
-                  <div className="truncate font-extrabold">{isBn ? "আমার লাইব্রেরি" : "My Library"}</div>
-                  <div className="text-[10px] text-slate-400 font-normal">{entitlements?.length || 0} active</div>
-                </div>
-              </button>
-
-              {/* Private Trader Notebook */}
-              <button
-                type="button"
-                onClick={() => {
-                  setTab("notebook");
-                  setIsMobileMoreOpen(false);
-                }}
-                className={`flex items-center gap-3 p-3 rounded-2xl border text-left text-xs font-bold transition-all cursor-pointer ${
-                  tab === "notebook"
-                    ? "border-sky-500/50 bg-sky-500/15 text-sky-400"
-                    : "border-slate-800/80 bg-slate-900/70 text-slate-300 hover:bg-slate-800"
-                }`}
-              >
-                <div className="size-9 rounded-xl bg-cyan-500/10 flex items-center justify-center shrink-0 text-cyan-400">
-                  <BookMarked size={18} />
-                </div>
-                <div className="min-w-0">
-                  <div className="truncate font-extrabold">{isBn ? "প্রাইভেট ট্রেডার নোটবুক" : "Private Trader Notebook"}</div>
-                  <div className="text-[10px] text-slate-400 font-normal">{isBn ? "নোট ও প্লেবুক ভল্ট" : "Strategy Vault"}</div>
-                </div>
-              </button>
-
-              {/* Position Calculator */}
-              <button
-                type="button"
-                onClick={() => {
-                  setTab("calculator");
-                  setIsMobileMoreOpen(false);
-                }}
-                className={`flex items-center gap-3 p-3 rounded-2xl border text-left text-xs font-bold transition-all cursor-pointer ${
-                  tab === "calculator"
-                    ? "border-sky-500/50 bg-sky-500/15 text-sky-400"
-                    : "border-slate-800/80 bg-slate-900/70 text-slate-300 hover:bg-slate-800"
-                }`}
-              >
-                <div className="size-9 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0 text-emerald-400">
-                  <Calculator size={18} />
-                </div>
-                <div className="min-w-0">
-                  <div className="truncate font-extrabold">{isBn ? "ক্যালকুলেটর" : "Calculator"}</div>
-                  <div className="text-[10px] text-slate-400 font-normal">Risk & Sizing</div>
-                </div>
-              </button>
-
-              {/* Payment History / Orders */}
-              <button
-                type="button"
-                onClick={() => {
-                  setTab("orders");
-                  setIsMobileMoreOpen(false);
-                }}
-                className={`flex items-center gap-3 p-3 rounded-2xl border text-left text-xs font-bold transition-all cursor-pointer ${
-                  tab === "orders"
-                    ? "border-sky-500/50 bg-sky-500/15 text-sky-400"
-                    : "border-slate-800/80 bg-slate-900/70 text-slate-300 hover:bg-slate-800"
-                }`}
-              >
-                <div className="size-9 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0 text-amber-400">
-                  <Receipt size={18} />
-                </div>
-                <div className="min-w-0">
-                  <div className="truncate font-extrabold">{isBn ? "পেমেন্ট হিস্ট্রি" : "Orders"}</div>
-                  <div className="text-[10px] text-slate-400 font-normal">{orders?.length || 0} orders</div>
-                </div>
-              </button>
-
-              {/* Support Chat */}
-              <button
-                type="button"
-                onClick={() => {
-                  setTab("support");
-                  setIsMobileMoreOpen(false);
-                }}
-                className={`flex items-center gap-3 p-3 rounded-2xl border text-left text-xs font-bold transition-all cursor-pointer ${
-                  tab === "support"
-                    ? "border-sky-500/50 bg-sky-500/15 text-sky-400"
-                    : "border-slate-800/80 bg-slate-900/70 text-slate-300 hover:bg-slate-800"
-                }`}
-              >
-                <div className="size-9 rounded-xl bg-sky-500/10 flex items-center justify-center shrink-0 text-sky-400">
-                  <MessageSquare size={18} />
-                </div>
-                <div className="min-w-0">
-                  <div className="truncate font-extrabold">{isBn ? "সাপোর্ট চ্যাট" : "Support"}</div>
-                  <div className="text-[10px] text-slate-400 font-normal">
-                    {unreadSupportCount > 0 ? `${unreadSupportCount} unread` : "Helpdesk"}
-                  </div>
-                </div>
-              </button>
-
-              {/* VIP Telegram */}
-              {hasApprovedPurchase && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMobileMoreOpen(false);
-                    window.dispatchEvent(new CustomEvent("open-telegram-modal"));
-                  }}
-                  className="flex items-center gap-3 p-3 rounded-2xl border border-sky-500/30 bg-sky-500/10 text-left text-xs font-bold text-sky-400 hover:bg-sky-500/20 transition-all cursor-pointer"
-                >
-                  <div className="size-9 rounded-xl bg-sky-500/20 flex items-center justify-center shrink-0 text-sky-300">
-                    <Send size={18} />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="truncate font-extrabold">{isBn ? "টেলিগ্রাম ভিআইপি" : "Telegram VIP"}</div>
-                    <div className="text-[10px] text-sky-400/70 font-normal">Community</div>
-                  </div>
-                </button>
-              )}
-
-              {/* Store Browse */}
-              <Link
-                href="/#store"
-                onClick={() => setIsMobileMoreOpen(false)}
-                className="flex items-center gap-3 p-3 rounded-2xl border border-slate-800/80 bg-slate-900/70 text-left text-xs font-bold text-slate-300 hover:bg-slate-800 transition-all"
-              >
-                <div className="size-9 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0 text-amber-400">
-                  <Sparkles size={18} />
-                </div>
-                <div className="min-w-0">
-                  <div className="truncate font-extrabold">{isBn ? "ব্রাউজ স্টোর" : "Browse Store"}</div>
-                  <div className="text-[10px] text-slate-400 font-normal">Books & Packages</div>
-                </div>
-              </Link>
-
-              {/* Settings */}
-              <Link
-                href="/settings"
-                onClick={() => setIsMobileMoreOpen(false)}
-                className="flex items-center gap-3 p-3 rounded-2xl border border-slate-800/80 bg-slate-900/70 text-left text-xs font-bold text-slate-300 hover:bg-slate-800 transition-all"
-              >
-                <div className="size-9 rounded-xl bg-slate-800 flex items-center justify-center shrink-0 text-slate-300">
-                  <SettingsIcon size={18} />
-                </div>
-                <div className="min-w-0">
-                  <div className="truncate font-extrabold">{isBn ? "অ্যাকাউন্ট সেটিংস" : "Settings"}</div>
-                  <div className="text-[10px] text-slate-400 font-normal">Security & Pass</div>
-                </div>
-              </Link>
-            </div>
-
-            {/* Quick Actions Footer inside Drawer */}
-            <div className="flex items-center justify-between pt-3 border-t border-slate-800/80">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={toggleTheme}
-                  className="flex size-9 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/80 text-yellow-400 cursor-pointer"
-                  title="Toggle theme"
-                >
-                  {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
-                </button>
-                <LanguageSelector />
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setIsMobileMoreOpen(false);
-                  handleLogout();
-                }}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-rose-900/40 bg-rose-950/20 text-xs font-bold text-rose-400 hover:bg-rose-950/40 cursor-pointer"
-              >
-                <LogOut size={14} />
-                <span>{isBn ? "লগআউট" : "Sign Out"}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DashboardMobileNav
+        tab={tab}
+        onSelectTab={(nextTab) => setTab(nextTab)}
+        isBn={isBn}
+        isMobileMoreOpen={isMobileMoreOpen}
+        onToggleDrawer={() => setIsMobileMoreOpen((prev) => !prev)}
+        onCloseDrawer={() => setIsMobileMoreOpen(false)}
+        hasJournalActivity={Boolean(localTrades?.length || journal?.length)}
+        completedStagesCount={completedStagesCount}
+        entitlementsCount={entitlements?.length || 0}
+        ordersCount={orders?.length || 0}
+        unreadSupportCount={unreadSupportCount}
+        hasApprovedPurchase={hasApprovedPurchase}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onLogout={handleLogout}
+        onOpenTelegramModal={() => window.dispatchEvent(new CustomEvent("open-telegram-modal"))}
+      />
 
       {/* ========================================================================= */}
       {/* 12-STAGE ROADMAP DEEP DIVE MODAL */}
       {/* ========================================================================= */}
-      {selectedRoadmapStage && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in"
-          onClick={() => setSelectedRoadmapStage(null)}
-        >
-          <div
-            className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-2xl dark:border-slate-800 dark:bg-slate-900"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-start justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-lg bg-[#0284c7]/10 text-[#0284c7] dark:bg-sky-500/10 dark:text-sky-400">
-                    {isBn
-                      ? `স্টেজ ${String(selectedRoadmapStage.stageNumber).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[+d])}`
-                      : `STAGE ${String(selectedRoadmapStage.stageNumber).padStart(2, "0")}`}
-                  </span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    {selectedRoadmapStage.category}
-                  </span>
-                </div>
-                <h3 className="mt-2 text-xl font-extrabold text-slate-900 dark:text-white">
-                  {selectedRoadmapStage.title}
-                </h3>
-              </div>
-              <button
-                onClick={() => setSelectedRoadmapStage(null)}
-                className="rounded-full p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* Content Body */}
-            <div className="mt-6 space-y-5 text-sm">
-              {/* Summary / Overview */}
-              <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/50">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-[#0284c7] dark:text-sky-400 mb-2">
-                  {isBn ? "ওভারভিউ ও মূল লক্ষ্য" : "Stage Overview & Objective"}
-                </h4>
-                <p className="whitespace-pre-line text-xs sm:text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-                  {selectedRoadmapStage.summary}
-                </p>
-              </div>
-
-              {/* Core Topics & Rules */}
-              {selectedRoadmapStage.keyPoints && selectedRoadmapStage.keyPoints.length > 0 && (
-                <div>
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-1.5">
-                    <CheckCircle2 size={15} className="text-[#0284c7] dark:text-sky-400" />
-                    <span>{isBn ? "মূল বিষয়সমূহ ও প্রাতিষ্ঠানিক রুলস" : "Core Topics & Institutional Rules"}</span>
-                  </h4>
-                  <div className="space-y-2.5">
-                    {selectedRoadmapStage.keyPoints.map((pt, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-start gap-2.5 rounded-xl border border-slate-100 bg-white p-3 text-xs sm:text-sm text-slate-700 dark:border-slate-800/80 dark:bg-slate-950/40 dark:text-slate-300"
-                      >
-                        <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-sky-100 font-mono text-[10px] font-bold text-sky-800 dark:bg-sky-950 dark:text-sky-400 mt-0.5">
-                          {idx + 1}
-                        </span>
-                        <span className="leading-relaxed">{pt}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Practical Exercise (if present) */}
-              {selectedRoadmapStage.exercise && (
-                <div className="rounded-2xl border border-sky-200/60 bg-sky-50/50 p-4 dark:border-sky-900/40 dark:bg-sky-950/20">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-sky-700 dark:text-sky-400 mb-1.5 flex items-center gap-1.5">
-                    <Sparkles size={14} />
-                    <span>{isBn ? "প্র্যাকটিক্যাল এক্সারসাইজ / অ্যাসাইনমেন্ট" : "Practical Exercise & Chart Task"}</span>
-                  </h4>
-                  <p className="text-xs sm:text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-                    {selectedRoadmapStage.exercise}
-                  </p>
-                </div>
-              )}
-
-              {/* Institutional Edge (if present) */}
-              {selectedRoadmapStage.edge && (
-                <div className="rounded-2xl border border-emerald-200/60 bg-emerald-50/50 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/20">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-1.5">
-                    {isBn ? "প্রাতিষ্ঠানিক ট্রেডারদের দৃষ্টিভঙ্গি (Edge)" : "Institutional Edge"}
-                  </h4>
-                  <p className="text-xs sm:text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-                    {selectedRoadmapStage.edge}
-                  </p>
-                </div>
-              )}
-
-              {/* Personal Study Notes */}
-              <div className="border-t border-slate-100 pt-5 dark:border-slate-800">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
-                  {isBn ? "আপনার স্টাডি নোট ও ব্যক্তিগত রিমাইন্ডার" : "Your Personal Study Notes"}
-                </label>
-                <textarea
-                  rows={3}
-                  value={stageNotes[selectedRoadmapStage.stageNumber] || ""}
-                  onChange={(e) => handleSaveStageNote(selectedRoadmapStage.stageNumber, e.target.value)}
-                  placeholder={
-                    isBn
-                      ? "এই স্টেজ থেকে আপনার ব্যক্তিগত পর্যবেক্ষণ ও গুরুত্বপূর্ণ রুলস লিখে রাখুন..."
-                      : "Jot down your key takeaways, chart observations, or rules for this stage..."
-                  }
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-3.5 text-xs sm:text-sm outline-none focus:border-[#0284c7] dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-                />
-              </div>
-
-              {/* Bottom Actions: Progress Completion Toggle */}
-              {(() => {
-                const isCompleted = progress?.some(
-                  (p: any) => p.lessonId === selectedRoadmapStage.stageNumber && p.completed
-                );
-                return (
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
-                    <Button
-                      onClick={() => {
-                        toggleProgressMutation.mutate({
-                          lessonId: selectedRoadmapStage.stageNumber,
-                          completed: !isCompleted,
-                        });
-                      }}
-                      className={`w-full sm:w-auto gap-2 font-bold ${
-                        isCompleted
-                          ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                          : "bg-[#081833] hover:bg-[#0c244b] text-white dark:bg-sky-500 dark:text-slate-950"
-                      }`}
-                    >
-                      <Check size={16} />
-                      <span>
-                        {isCompleted
-                          ? isBn
-                            ? "সম্পন্ন হয়েছে (আনচেক করতে ক্লিক করুন)"
-                            : "Completed (Click to uncheck)"
-                          : isBn
-                          ? "স্টেজ সম্পন্ন হিসেবে মার্ক করুন"
-                          : "Mark Stage as Completed"}
-                      </span>
-                    </Button>
-
-                    <Button
-                      variant="outline"
-                      onClick={() => setSelectedRoadmapStage(null)}
-                      className="w-full sm:w-auto font-bold"
-                    >
-                      {isBn ? "বন্ধ করুন" : "Close"}
-                    </Button>
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-        </div>
-      )}
+      <DashboardRoadmapStageModal
+        stage={selectedRoadmapStage}
+        isBn={isBn}
+        stageNote={selectedRoadmapStage ? stageNotes[selectedRoadmapStage.stageNumber] || "" : ""}
+        isCompleted={Boolean(
+          selectedRoadmapStage &&
+            progress?.some(
+              (p: { lessonId?: number | null; completed?: boolean | null }) =>
+                p.lessonId === selectedRoadmapStage.stageNumber && Boolean(p.completed)
+            )
+        )}
+        onClose={() => setSelectedRoadmapStage(null)}
+        onSaveStageNote={handleSaveStageNote}
+        onToggleProgress={(stageNumber, completed) => {
+          toggleProgressMutation.mutate({
+            lessonId: stageNumber,
+            completed,
+          });
+        }}
+      />
 
       {/* PDF PREVIEW MODAL */}
       {/* ========================================================================= */}
@@ -2994,65 +1642,10 @@ export default function Dashboard() {
       {/* ========================================================================= */}
       {/* PRINTABLE INVOICE / RECEIPT MODAL */}
       {/* ========================================================================= */}
-      {selectedInvoiceOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in" onClick={() => setSelectedInvoiceOrder(null)}>
-          <div className="relative w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-2xl dark:border-slate-800 dark:bg-slate-900" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
-              <div className="flex items-center gap-2">
-                <BrandLogo size={28} />
-                <span className="text-xs font-black tracking-widest uppercase">OFFICIAL RECEIPT</span>
-              </div>
-              <button onClick={() => setSelectedInvoiceOrder(null)} className="p-1 text-slate-400 hover:text-slate-600">
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="mt-5 space-y-4 text-xs">
-              <div className="flex justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
-                <div>
-                  <div className="text-[10px] text-slate-400 uppercase">Invoice Number</div>
-                  <div className="font-mono font-bold text-sm">#INV-COC-{selectedInvoiceOrder.id}</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-[10px] text-slate-400 uppercase">Date</div>
-                  <div className="font-bold">{new Date(selectedInvoiceOrder.createdAt).toLocaleDateString()}</div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Customer ID:</span>
-                  <span className="font-bold">Student #{selectedInvoiceOrder.customerId}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Payment Gateway:</span>
-                  <span className="font-bold uppercase">{selectedInvoiceOrder.paymentMethod}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Transaction ID:</span>
-                  <span className="font-mono font-bold">{selectedInvoiceOrder.transactionId}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Verification Status:</span>
-                  <span className="font-extrabold uppercase text-emerald-600 dark:text-emerald-400">
-                    {selectedInvoiceOrder.orderStatus}
-                  </span>
-                </div>
-              </div>
-
-              <div className="rounded-2xl bg-slate-50 p-4 dark:bg-slate-800/50 flex justify-between items-center border border-slate-100 dark:border-slate-800">
-                <span className="font-bold">Total Paid:</span>
-                <span className="text-xl font-black text-[#081833] dark:text-white">৳{selectedInvoiceOrder.amount} BDT</span>
-              </div>
-
-              <Button onClick={() => window.print()} className="w-full gap-2 bg-[#081833] text-xs font-bold text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950">
-                <Printer size={14} />
-                <span>Print Official Invoice</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DashboardReceiptModal
+        order={selectedInvoiceOrder}
+        onClose={() => setSelectedInvoiceOrder(null)}
+      />
 
       {/* ========================================================================= */}
       {/* OPEN SUPPORT TICKET MODAL */}

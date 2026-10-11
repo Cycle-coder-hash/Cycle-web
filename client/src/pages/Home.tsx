@@ -75,10 +75,26 @@ export default function Home() {
   const [isFreeEbookModalOpen, setIsFreeEbookModalOpen] = useState(false);
   const { data: bundles } = trpc.public.bundles.useQuery();
   const { data: products } = trpc.public.products.useQuery();
+  const { data: paymentSettings } = trpc.public.paymentSettings.useQuery();
   const { data: ownerProfile } = trpc.public.ownerProfile.useQuery(undefined, {
     staleTime: 1000 * 30,
     refetchOnWindowFocus: true,
   });
+
+  const formatBdt = (val: string | number | undefined, bn: boolean, fallback = "0") => {
+    const raw = val !== undefined && val !== null && String(val).trim() !== "" ? String(val) : fallback;
+    const num = parseInt(raw.replace(/\D/g, "") || "0", 10);
+    if (num === 0) return bn ? "০" : "0";
+    const formatted = num.toLocaleString("en-US");
+    return bn ? formatted.replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[+d]) : formatted;
+  };
+
+  const formatUsd = (val: string | number | undefined, bn: boolean, fallback = "0") => {
+    const raw = val !== undefined && val !== null && String(val).trim() !== "" ? String(val) : fallback;
+    const num = parseInt(raw.replace(/\D/g, "") || "0", 10);
+    const formatted = num === 0 ? "0" : num.toLocaleString("en-US");
+    return bn ? formatted.replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[+d]) : formatted;
+  };
 
   const storeBundles = useMemo(() => {
     return STORE_BUNDLES_STATIC.map((base) => {
@@ -87,9 +103,11 @@ export default function Home() {
         ? {
             ...base,
             price:
-              apiItem.price && apiItem.price !== "1999.00" && apiItem.price !== "1999"
+              apiItem.price && apiItem.price !== "1999.00" && apiItem.price !== "1999" && apiItem.price !== "3999"
                 ? apiItem.price
                 : base.price,
+            priceUsd: apiItem.priceUsd || base.priceUsd,
+            originalPrice: apiItem.originalPrice || base.originalPrice,
             titleEn: apiItem.titleEn || base.titleEn,
             titleBn: apiItem.titleBn || base.titleBn,
           }
@@ -569,14 +587,17 @@ export default function Home() {
                     <div className="mt-8 border-t border-slate-100 pt-5 dark:border-slate-800">
                       <div className="flex items-baseline justify-between mb-4">
                         <div>
-                          <div className="flex items-baseline flex-wrap gap-2.5">
+                          <div className="flex items-baseline flex-wrap gap-2 sm:gap-2.5">
                             {item.originalPrice && (
                               <span className="text-base sm:text-lg font-bold line-through text-slate-400 dark:text-slate-500">
-                                ৳{isBn ? String(item.originalPrice).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[+d]) : item.originalPrice}
+                                ৳{formatBdt(item.originalPrice, isBn, "5550")}
                               </span>
                             )}
                             <span className="text-3xl sm:text-4xl font-black tracking-tight">
-                              ৳{isBn ? String(item.price).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[+d]) : item.price}
+                              ৳{formatBdt(item.price, isBn, item.id === 1 ? "0" : item.id === 2 ? "2499" : "4999")}
+                            </span>
+                            <span className="text-xl sm:text-2xl font-bold text-slate-500 dark:text-slate-400">
+                              / ${formatUsd(item.priceUsd, isBn, item.id === 1 ? "0" : item.id === 2 ? "20" : "40")}
                             </span>
                           </div>
                         </div>
@@ -611,6 +632,7 @@ export default function Home() {
           isBn={isBn}
           selectedPlanModal={selectedPlanModal}
           setSelectedPlanModal={setSelectedPlanModal}
+          pricing={paymentSettings?.pricing}
         />
 
         {/* ========================================================================= */}

@@ -9,6 +9,7 @@ export interface StoreBundleStaticItem {
   descriptionBn: string;
   originalPrice?: string;
   price: string;
+  priceUsd?: string;
   badgeEn: string;
   badgeBn: string;
   topRibbonEn?: string;
@@ -87,7 +88,8 @@ export const STORE_BUNDLES_STATIC: StoreBundleStaticItem[] = [
     titleBn: "Free eBook Package",
     descriptionEn: "Select from 15 structured learning PDFs with complete chart breakdowns.",
     descriptionBn: "১৫টি স্ট্রাকচার্ড চার্ট ব্রেকডাউন ও প্রাইস অ্যাকশন PDF থেকে সিলেক্ট করুন।",
-    price: "00",
+    price: "0",
+    priceUsd: "0",
     badgeEn: "STARTER",
     badgeBn: "স্টার্টার",
     featuresEn: [
@@ -112,6 +114,7 @@ export const STORE_BUNDLES_STATIC: StoreBundleStaticItem[] = [
     descriptionEn: "A complete structured learning path with an included comprehensive eBook.",
     descriptionBn: "একটি সম্পূর্ণ ভিডিও কোর্স সাথে সম্পূর্ণ ফ্রি প্রফেশনাল গাইড eBook।",
     price: "2499",
+    priceUsd: "20",
     badgeEn: "CORE PATH",
     badgeBn: "কোর পাথ",
     topRibbonEn: "★ MOST POPULAR",
@@ -138,7 +141,8 @@ export const STORE_BUNDLES_STATIC: StoreBundleStaticItem[] = [
     descriptionEn: "",
     descriptionBn: "",
     originalPrice: "5550",
-    price: "3999",
+    price: "4999",
+    priceUsd: "40",
     badgeEn: "PROFESSIONAL",
     badgeBn: "প্রফেশনাল",
     featuresEn: [

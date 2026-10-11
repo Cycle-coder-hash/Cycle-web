@@ -72,20 +72,21 @@ export default function Checkout() {
   });
 
   const baseBundles = [
-    { id: 101, titleEn: "CYCLE OF CHART — PRO PLAN (MONTHLY)", descriptionEn: "Unlimited trades · 5 books · 30 videos · Workout · Community", price: "599" },
-    { id: 102, titleEn: "CYCLE OF CHART — PREMIUM PLAN (MONTHLY)", descriptionEn: "Unlimited institutional access · Mentor support · Owner chat · Leaderboard", price: "999" },
-    { id: 1, titleEn: "Free eBook Package", descriptionEn: "15 PDFs · fixed package price", price: "00" },
-    { id: 2, titleEn: "CYCLE OF CHART BASIC TO ADVANCE COURSE", descriptionEn: "Structured course · eBook included", price: "2499" },
-    { id: 4, titleEn: "CYCLE OF CHART — PROFESSIONAL TRADING BLUEPRINT", descriptionEn: "Complete A–Z Trading Blueprint", originalPrice: "5550", price: "3999" },
+    { id: 101, titleEn: "CYCLE OF CHART — PRO PLAN (MONTHLY)", descriptionEn: "Unlimited trades · 5 books · 30 videos · Workout · Community", price: "599", priceUsd: "5" },
+    { id: 102, titleEn: "CYCLE OF CHART — PREMIUM PLAN (MONTHLY)", descriptionEn: "Unlimited institutional access · Mentor support · Owner chat · Leaderboard", price: "999", priceUsd: "10" },
+    { id: 1, titleEn: "Free eBook Package", descriptionEn: "15 PDFs · fixed package price", price: "00", priceUsd: "0" },
+    { id: 2, titleEn: "CYCLE OF CHART BASIC TO ADVANCE COURSE", descriptionEn: "Structured course · eBook included", price: "2499", priceUsd: "20" },
+    { id: 4, titleEn: "CYCLE OF CHART — PROFESSIONAL TRADING BLUEPRINT", descriptionEn: "Complete A–Z Trading Blueprint", originalPrice: "5550", price: "4999", priceUsd: "40" },
   ];
   const bundlesList = baseBundles.map((b) => {
     const match = bundles?.find((apiB: any) => apiB.id === b.id);
-    const resolvedPrice = match?.price && match.price !== "1999.00" && match.price !== "1999" ? match.price : b.price;
-    return match ? { ...b, ...match, price: resolvedPrice } : b;
+    const resolvedPrice = match?.price && match.price !== "1999.00" && match.price !== "1999" && match.price !== "3999" ? match.price : b.price;
+    const resolvedPriceUsd = match?.priceUsd || b.priceUsd;
+    return match ? { ...b, ...match, price: resolvedPrice, priceUsd: resolvedPriceUsd } : b;
   });
 
   const chosen = bundlesList.find((b: any) => b.id === selected);
-  const price = chosen?.price || (selected === 1 ? "00" : selected === 101 ? "599" : selected === 102 ? "999" : selected === 2 ? "2499" : "3999");
+  const price = chosen?.price || (selected === 1 ? "00" : selected === 101 ? "599" : selected === 102 ? "999" : selected === 2 ? "2499" : "4999");
   const isFree = Number(price) === 0 || price === "00" || price === "0" || selected === 1;
   const isAlreadyClaimed = Boolean(
     isFree && entitlements?.some((e: any) => e.bundleId === selected || e.scope === `bundle:${selected}`)
@@ -301,7 +302,14 @@ export default function Checkout() {
                     <div className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">{b.titleEn}</div>
                     <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{b.descriptionEn}</div>
                   </div>
-                  <div className="text-base sm:text-lg font-black text-[#0284c7] dark:text-[#38bdf8]">৳{b.price}</div>
+                  <div className="text-base sm:text-lg font-black text-[#0284c7] dark:text-[#38bdf8] shrink-0 text-right">
+                    <span>৳{b.price}</span>
+                    {b.priceUsd && (
+                      <span className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400 ml-1">
+                        / ${b.priceUsd}
+                      </span>
+                    )}
+                  </div>
                 </button>
               ))}
             </div>
@@ -686,8 +694,19 @@ export default function Checkout() {
                   {isFree ? "100% Free · Instant Activation" : "BDT · Manual Verification"}
                 </div>
               </div>
-              <div className="text-2xl sm:text-3xl font-black text-[#38bdf8] shrink-0">
-                {isFree ? "FREE" : `৳${price}`}
+              <div className="text-2xl sm:text-3xl font-black text-[#38bdf8] shrink-0 text-right">
+                {isFree ? (
+                  "FREE"
+                ) : (
+                  <div>
+                    <span>৳{price}</span>
+                    {chosen?.priceUsd && (
+                      <span className="text-base sm:text-lg font-bold text-slate-300 ml-1.5">
+                        / ${chosen.priceUsd}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 

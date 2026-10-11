@@ -15,6 +15,8 @@ import {
   Eye,
   EyeOff,
   Send,
+  DollarSign,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -27,6 +29,44 @@ export interface GatewayConfigState {
   instructions?: string;
 }
 
+export interface CoursePricingState {
+  priceBdt: string;
+  priceUsd: string;
+  originalPriceBdt?: string;
+}
+
+export interface SubscriptionPricingState {
+  priceBdt: string;
+  priceUsd: string;
+  billingPeriod?: string;
+}
+
+export interface PricingFormState {
+  courses: {
+    freeEbook: CoursePricingState;
+    basicToAdvance: CoursePricingState;
+    proBlueprint: CoursePricingState;
+  };
+  subscriptions: {
+    freeTrial: SubscriptionPricingState;
+    pro: SubscriptionPricingState;
+    premium: SubscriptionPricingState;
+  };
+}
+
+export const DEFAULT_PRICING_FORM: PricingFormState = {
+  courses: {
+    freeEbook: { priceBdt: "0", priceUsd: "0" },
+    basicToAdvance: { priceBdt: "2499", priceUsd: "20" },
+    proBlueprint: { priceBdt: "4999", priceUsd: "40", originalPriceBdt: "5550" },
+  },
+  subscriptions: {
+    freeTrial: { priceBdt: "0", priceUsd: "0", billingPeriod: "30 days" },
+    pro: { priceBdt: "599", priceUsd: "5", billingPeriod: "month" },
+    premium: { priceBdt: "999", priceUsd: "10", billingPeriod: "month" },
+  },
+};
+
 export interface PaymentSettingsFormState {
   bkash: GatewayConfigState;
   nagad: GatewayConfigState;
@@ -35,6 +75,7 @@ export interface PaymentSettingsFormState {
   isAnnouncementEnabled: boolean;
   studentTelegramUrl?: string;
   studentTelegramDescription?: string;
+  pricing?: PricingFormState;
 }
 
 interface SettingsTabProps {
@@ -62,6 +103,52 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 2000);
+  };
+
+  const updateCoursePricing = (
+    courseKey: "freeEbook" | "basicToAdvance" | "proBlueprint",
+    field: "priceBdt" | "priceUsd" | "originalPriceBdt",
+    value: string
+  ) => {
+    setPaymentConfig((prev) => {
+      const currentPricing = prev.pricing || DEFAULT_PRICING_FORM;
+      return {
+        ...prev,
+        pricing: {
+          ...currentPricing,
+          courses: {
+            ...currentPricing.courses,
+            [courseKey]: {
+              ...currentPricing.courses[courseKey],
+              [field]: value,
+            },
+          },
+        },
+      };
+    });
+  };
+
+  const updateSubscriptionPricing = (
+    subKey: "freeTrial" | "pro" | "premium",
+    field: "priceBdt" | "priceUsd" | "billingPeriod",
+    value: string
+  ) => {
+    setPaymentConfig((prev) => {
+      const currentPricing = prev.pricing || DEFAULT_PRICING_FORM;
+      return {
+        ...prev,
+        pricing: {
+          ...currentPricing,
+          subscriptions: {
+            ...currentPricing.subscriptions,
+            [subKey]: {
+              ...currentPricing.subscriptions[subKey],
+              [field]: value,
+            },
+          },
+        },
+      };
+    });
   };
 
   const gatewaysList: Array<{
@@ -464,6 +551,317 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             </div>
           </div>
 
+          {/* Course Packages & Subscription Plans Pricing Control (BDT & USD) */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-6">
+            {/* Card Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-amber-500 to-emerald-600 text-white shadow-md shadow-amber-500/20">
+                  <DollarSign size={22} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base font-black text-slate-900 dark:text-white">
+                      Course & Subscription Pricing (BDT & USD)
+                    </h3>
+                    <span className="rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
+                      Dual Currency
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                    Set official BDT (৳) and USD ($) prices. Dynamically updates Course Packages, Subscriptions, Checkout, and Modals.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Part 1: Course Packages */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <BookOpen size={16} className="text-sky-500" />
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Store Course Packages
+                </h4>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                {/* 1. Free eBook Package */}
+                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-950/40 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="font-bold text-xs text-slate-800 dark:text-slate-200">
+                      Free eBook Package
+                    </div>
+                    <span className="rounded-md bg-slate-200/80 px-2 py-0.5 text-[11px] font-mono font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                      Live Card: ৳{paymentConfig.pricing?.courses?.freeEbook?.priceBdt ?? "0"} / ${paymentConfig.pricing?.courses?.freeEbook?.priceUsd ?? "0"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                        BDT Price (৳)
+                      </label>
+                      <input
+                        type="text"
+                        value={paymentConfig.pricing?.courses?.freeEbook?.priceBdt ?? "0"}
+                        onChange={(e) => updateCoursePricing("freeEbook", "priceBdt", e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-mono text-xs font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                        USD Price ($)
+                      </label>
+                      <input
+                        type="text"
+                        value={paymentConfig.pricing?.courses?.freeEbook?.priceUsd ?? "0"}
+                        onChange={(e) => updateCoursePricing("freeEbook", "priceUsd", e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-mono text-xs font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Basic to Advance Course */}
+                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-950/40 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="font-bold text-xs text-slate-800 dark:text-slate-200">
+                      CYCLE OF CHART BASIC TO ADVANCE COURSE
+                    </div>
+                    <span className="rounded-md bg-sky-500/15 px-2 py-0.5 text-[11px] font-mono font-bold text-sky-700 dark:text-sky-300">
+                      Live Card: ৳{paymentConfig.pricing?.courses?.basicToAdvance?.priceBdt ?? "2499"} / ${paymentConfig.pricing?.courses?.basicToAdvance?.priceUsd ?? "20"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                        BDT Price (৳)
+                      </label>
+                      <input
+                        type="text"
+                        value={paymentConfig.pricing?.courses?.basicToAdvance?.priceBdt ?? "2499"}
+                        onChange={(e) => updateCoursePricing("basicToAdvance", "priceBdt", e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-mono text-xs font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                        USD Price ($)
+                      </label>
+                      <input
+                        type="text"
+                        value={paymentConfig.pricing?.courses?.basicToAdvance?.priceUsd ?? "20"}
+                        onChange={(e) => updateCoursePricing("basicToAdvance", "priceUsd", e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-mono text-xs font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Professional Trading Blueprint */}
+                <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 dark:border-amber-500/20 dark:bg-amber-950/15 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="font-bold text-xs text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                      <span>CYCLE OF CHART — PROFESSIONAL TRADING BLUEPRINT</span>
+                      <span className="text-[10px] bg-amber-500/20 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-black">POPULAR</span>
+                    </div>
+                    <span className="rounded-md bg-amber-500/20 px-2 py-0.5 text-[11px] font-mono font-bold text-amber-700 dark:text-amber-300">
+                      Live Card: ৳{paymentConfig.pricing?.courses?.proBlueprint?.priceBdt ?? "4999"} / ${paymentConfig.pricing?.courses?.proBlueprint?.priceUsd ?? "40"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                        Selling BDT (৳) *
+                      </label>
+                      <input
+                        type="text"
+                        value={paymentConfig.pricing?.courses?.proBlueprint?.priceBdt ?? "4999"}
+                        onChange={(e) => updateCoursePricing("proBlueprint", "priceBdt", e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-mono text-xs font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                        Selling USD ($) *
+                      </label>
+                      <input
+                        type="text"
+                        value={paymentConfig.pricing?.courses?.proBlueprint?.priceUsd ?? "40"}
+                        onChange={(e) => updateCoursePricing("proBlueprint", "priceUsd", e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-mono text-xs font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                        Original Strikethrough BDT (৳)
+                      </label>
+                      <input
+                        type="text"
+                        value={paymentConfig.pricing?.courses?.proBlueprint?.originalPriceBdt ?? "5550"}
+                        onChange={(e) => updateCoursePricing("proBlueprint", "originalPriceBdt", e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-mono text-xs font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Part 2: Subscription Plans */}
+            <div className="space-y-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <CreditCard size={16} className="text-emerald-500" />
+                <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Subscription Pricing Plans
+                </h4>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                {/* 1. Free Trial */}
+                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-950/40 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="font-bold text-xs text-slate-800 dark:text-slate-200">
+                      Free Trial (30 Days)
+                    </div>
+                    <span className="rounded-md bg-slate-200/80 px-2 py-0.5 text-[11px] font-mono font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                      Live Card: ৳{paymentConfig.pricing?.subscriptions?.freeTrial?.priceBdt ?? "0"} / ${paymentConfig.pricing?.subscriptions?.freeTrial?.priceUsd ?? "0"} / {paymentConfig.pricing?.subscriptions?.freeTrial?.billingPeriod ?? "30 days"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                        BDT Price (৳)
+                      </label>
+                      <input
+                        type="text"
+                        value={paymentConfig.pricing?.subscriptions?.freeTrial?.priceBdt ?? "0"}
+                        onChange={(e) => updateSubscriptionPricing("freeTrial", "priceBdt", e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-mono text-xs font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                        USD Price ($)
+                      </label>
+                      <input
+                        type="text"
+                        value={paymentConfig.pricing?.subscriptions?.freeTrial?.priceUsd ?? "0"}
+                        onChange={(e) => updateSubscriptionPricing("freeTrial", "priceUsd", e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-mono text-xs font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                        Duration / Period
+                      </label>
+                      <input
+                        type="text"
+                        value={paymentConfig.pricing?.subscriptions?.freeTrial?.billingPeriod ?? "30 days"}
+                        onChange={(e) => updateSubscriptionPricing("freeTrial", "billingPeriod", e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-mono text-xs font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Pro Plan */}
+                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-950/40 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="font-bold text-xs text-slate-800 dark:text-slate-200">
+                      Pro Plan (Monthly)
+                    </div>
+                    <span className="rounded-md bg-sky-500/15 px-2 py-0.5 text-[11px] font-mono font-bold text-sky-700 dark:text-sky-300">
+                      Live Card: ৳{paymentConfig.pricing?.subscriptions?.pro?.priceBdt ?? "599"} / ${paymentConfig.pricing?.subscriptions?.pro?.priceUsd ?? "5"} per {paymentConfig.pricing?.subscriptions?.pro?.billingPeriod ?? "month"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                        BDT Price (৳)
+                      </label>
+                      <input
+                        type="text"
+                        value={paymentConfig.pricing?.subscriptions?.pro?.priceBdt ?? "599"}
+                        onChange={(e) => updateSubscriptionPricing("pro", "priceBdt", e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-mono text-xs font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                        USD Price ($)
+                      </label>
+                      <input
+                        type="text"
+                        value={paymentConfig.pricing?.subscriptions?.pro?.priceUsd ?? "5"}
+                        onChange={(e) => updateSubscriptionPricing("pro", "priceUsd", e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-mono text-xs font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                        Billing Period
+                      </label>
+                      <input
+                        type="text"
+                        value={paymentConfig.pricing?.subscriptions?.pro?.billingPeriod ?? "month"}
+                        onChange={(e) => updateSubscriptionPricing("pro", "billingPeriod", e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-mono text-xs font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Premium Plan */}
+                <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 dark:border-emerald-500/20 dark:bg-emerald-950/15 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="font-bold text-xs text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                      <span>Premium Plan (Monthly)</span>
+                      <span className="text-[10px] bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded font-black">ALL ACCESS</span>
+                    </div>
+                    <span className="rounded-md bg-emerald-500/20 px-2 py-0.5 text-[11px] font-mono font-bold text-emerald-700 dark:text-emerald-300">
+                      Live Card: ৳{paymentConfig.pricing?.subscriptions?.premium?.priceBdt ?? "999"} / ${paymentConfig.pricing?.subscriptions?.premium?.priceUsd ?? "10"} per {paymentConfig.pricing?.subscriptions?.premium?.billingPeriod ?? "month"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                        BDT Price (৳)
+                      </label>
+                      <input
+                        type="text"
+                        value={paymentConfig.pricing?.subscriptions?.premium?.priceBdt ?? "999"}
+                        onChange={(e) => updateSubscriptionPricing("premium", "priceBdt", e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-mono text-xs font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                        USD Price ($)
+                      </label>
+                      <input
+                        type="text"
+                        value={paymentConfig.pricing?.subscriptions?.premium?.priceUsd ?? "10"}
+                        onChange={(e) => updateSubscriptionPricing("premium", "priceUsd", e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-mono text-xs font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                        Billing Period
+                      </label>
+                      <input
+                        type="text"
+                        value={paymentConfig.pricing?.subscriptions?.premium?.billingPeriod ?? "month"}
+                        onChange={(e) => updateSubscriptionPricing("premium", "billingPeriod", e.target.value)}
+                        className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-mono text-xs font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Save Button */}
           <div className="pt-2">
             <Button
@@ -485,6 +883,44 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             <span className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               Live Checkout Page Preview
             </span>
+          </div>
+
+          {/* Live Pricing Summary Preview Card */}
+          <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-lg dark:border-slate-800 dark:bg-[#081325] space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 text-xs">
+              <span className="font-extrabold text-[#0284c7] uppercase tracking-wider">
+                Live Active Pricing
+              </span>
+              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                BDT & USD Live
+              </span>
+            </div>
+            <div className="space-y-1.5 text-xs">
+              <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800/60">
+                <span className="text-slate-600 dark:text-slate-400 text-[11px]">Free eBook</span>
+                <span className="font-bold font-mono">৳{paymentConfig.pricing?.courses?.freeEbook?.priceBdt ?? "0"} / ${paymentConfig.pricing?.courses?.freeEbook?.priceUsd ?? "0"}</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800/60">
+                <span className="text-slate-600 dark:text-slate-400 text-[11px]">Basic Course</span>
+                <span className="font-bold font-mono text-sky-600 dark:text-sky-400">৳{paymentConfig.pricing?.courses?.basicToAdvance?.priceBdt ?? "2499"} / ${paymentConfig.pricing?.courses?.basicToAdvance?.priceUsd ?? "20"}</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800/60">
+                <span className="text-slate-600 dark:text-slate-400 text-[11px]">Pro Blueprint</span>
+                <span className="font-bold font-mono text-amber-600 dark:text-amber-400">৳{paymentConfig.pricing?.courses?.proBlueprint?.priceBdt ?? "4999"} / ${paymentConfig.pricing?.courses?.proBlueprint?.priceUsd ?? "40"}</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800/60">
+                <span className="text-slate-600 dark:text-slate-400 text-[11px]">Free Trial</span>
+                <span className="font-bold font-mono">৳{paymentConfig.pricing?.subscriptions?.freeTrial?.priceBdt ?? "0"} / ${paymentConfig.pricing?.subscriptions?.freeTrial?.priceUsd ?? "0"}</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800/60">
+                <span className="text-slate-600 dark:text-slate-400 text-[11px]">Pro Plan</span>
+                <span className="font-bold font-mono text-sky-600 dark:text-sky-400">৳{paymentConfig.pricing?.subscriptions?.pro?.priceBdt ?? "599"} / ${paymentConfig.pricing?.subscriptions?.pro?.priceUsd ?? "5"}/mo</span>
+              </div>
+              <div className="flex justify-between items-center py-1">
+                <span className="text-slate-600 dark:text-slate-400 text-[11px]">Premium Plan</span>
+                <span className="font-bold font-mono text-emerald-600 dark:text-emerald-400">৳{paymentConfig.pricing?.subscriptions?.premium?.priceBdt ?? "999"} / ${paymentConfig.pricing?.subscriptions?.premium?.priceUsd ?? "10"}/mo</span>
+              </div>
+            </div>
           </div>
 
           {/* Preview Container Styled Exactly Like Checkout Page */}

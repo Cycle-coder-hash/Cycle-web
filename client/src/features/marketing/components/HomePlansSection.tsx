@@ -5,17 +5,49 @@ import { Button } from "@/components/ui/button";
 
 export type HomePlanModalType = "free" | "pro" | "premium" | null;
 
+export interface SubscriptionPricingSummary {
+  freeTrial?: { priceBdt?: string; priceUsd?: string };
+  pro?: { priceBdt?: string; priceUsd?: string };
+  premium?: { priceBdt?: string; priceUsd?: string };
+}
+
 export interface HomePlansSectionProps {
   isBn: boolean;
   selectedPlanModal: HomePlanModalType;
   setSelectedPlanModal: React.Dispatch<React.SetStateAction<HomePlanModalType>>;
+  pricing?: {
+    subscriptions?: SubscriptionPricingSummary;
+  };
 }
 
 export function HomePlansSection({
   isBn,
   selectedPlanModal,
   setSelectedPlanModal,
+  pricing,
 }: HomePlansSectionProps) {
+  const formatBdt = (val: string | number | undefined, bn: boolean, fallback: string) => {
+    const raw = val !== undefined && val !== null && String(val).trim() !== "" ? String(val) : fallback;
+    const num = parseInt(raw.replace(/\D/g, "") || "0", 10);
+    if (num === 0) return bn ? "০" : "0";
+    const formatted = num.toLocaleString("en-US");
+    return bn ? formatted.replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[+d]) : formatted;
+  };
+
+  const formatUsd = (val: string | number | undefined, bn: boolean, fallback: string) => {
+    const raw = val !== undefined && val !== null && String(val).trim() !== "" ? String(val) : fallback;
+    const num = parseInt(raw.replace(/\D/g, "") || "0", 10);
+    const formatted = num === 0 ? "0" : num.toLocaleString("en-US");
+    return bn ? formatted.replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[+d]) : formatted;
+  };
+
+  const freeTrialBdt = pricing?.subscriptions?.freeTrial?.priceBdt ?? "0";
+  const freeTrialUsd = pricing?.subscriptions?.freeTrial?.priceUsd ?? "0";
+  const proBdt = pricing?.subscriptions?.pro?.priceBdt ?? "599";
+  const proUsd = pricing?.subscriptions?.pro?.priceUsd ?? "5";
+  const premiumBdt = pricing?.subscriptions?.premium?.priceBdt ?? "999";
+  const premiumUsd = pricing?.subscriptions?.premium?.priceUsd ?? "10";
+
   return (
     <>
       {/* ========================================================================= */}
@@ -51,9 +83,16 @@ export function HomePlansSection({
                     30 DAYS FULL TRIAL
                   </span>
                 </div>
-                <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-4xl font-black text-slate-900 dark:text-white">৳0</span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">/ 30 days</span>
+                <div className="mt-4 flex items-baseline flex-wrap gap-1.5">
+                  <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
+                    ৳{formatBdt(freeTrialBdt, isBn, "0")}
+                  </span>
+                  <span className="text-xl sm:text-2xl font-bold text-slate-500 dark:text-slate-400">
+                    / ${formatUsd(freeTrialUsd, isBn, "0")}
+                  </span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 font-medium ml-1">
+                    {isBn ? "/ ৩০ দিন" : "/ 30 days"}
+                  </span>
                 </div>
                 <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   {isBn
@@ -124,9 +163,16 @@ export function HomePlansSection({
                     +5 BONUS DAYS IN TRIAL
                   </span>
                 </div>
-                <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-4xl font-black text-slate-900 dark:text-white">৳599</span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">/ month</span>
+                <div className="mt-4 flex items-baseline flex-wrap gap-1.5">
+                  <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
+                    ৳{formatBdt(proBdt, isBn, "599")}
+                  </span>
+                  <span className="text-xl sm:text-2xl font-bold text-sky-600 dark:text-sky-400">
+                    / ${formatUsd(proUsd, isBn, "5")}
+                  </span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 font-medium ml-1">
+                    {isBn ? "প্রতি মাস" : "per month"}
+                  </span>
                 </div>
                 <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   {isBn
@@ -174,7 +220,9 @@ export function HomePlansSection({
               <div className="mt-8 space-y-2.5">
                 <Link href="/checkout?plan=pro" className="block w-full">
                   <Button className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-xs h-10 shadow-lg shadow-sky-500/25">
-                    {isBn ? "প্রো কিনুন — ৳৫৯৯/মাস" : "Get Pro — ৳599/month"}
+                    {isBn
+                      ? `প্রো কিনুন — ৳${formatBdt(proBdt, true, "599")} / $${formatUsd(proUsd, true, "5")} প্রতি মাস`
+                      : `Get Pro — ৳${formatBdt(proBdt, false, "599")} / $${formatUsd(proUsd, false, "5")} per month`}
                   </Button>
                 </Link>
                 <Button
@@ -199,9 +247,16 @@ export function HomePlansSection({
                     INSTITUTIONAL
                   </span>
                 </div>
-                <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-4xl font-black text-slate-900 dark:text-white">৳999</span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">/ month</span>
+                <div className="mt-4 flex items-baseline flex-wrap gap-1.5">
+                  <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
+                    ৳{formatBdt(premiumBdt, isBn, "999")}
+                  </span>
+                  <span className="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400">
+                    / ${formatUsd(premiumUsd, isBn, "10")}
+                  </span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400 font-medium ml-1">
+                    {isBn ? "প্রতি মাস" : "per month"}
+                  </span>
                 </div>
                 <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   {isBn
@@ -253,7 +308,9 @@ export function HomePlansSection({
               <div className="mt-8 space-y-2.5">
                 <Link href="/checkout?plan=premium" className="block w-full">
                   <Button className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black font-bold text-xs h-10 shadow-lg shadow-amber-500/25">
-                    {isBn ? "প্রিমিয়াম কিনুন — ৳৯৯৯/মাস" : "Get Premium — ৳999/month"}
+                    {isBn
+                      ? `প্রিমিয়াম কিনুন — ৳${formatBdt(premiumBdt, true, "999")} / $${formatUsd(premiumUsd, true, "10")} প্রতি মাস`
+                      : `Get Premium — ৳${formatBdt(premiumBdt, false, "999")} / $${formatUsd(premiumUsd, false, "10")} per month`}
                   </Button>
                 </Link>
                 <Button
@@ -309,8 +366,8 @@ export function HomePlansSection({
               <div>
                 <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
                   {selectedPlanModal === "free" && "30-Day Free Trial & Permanent Free Tier"}
-                  {selectedPlanModal === "pro" && "Pro Trader Plan — ৳599 / month"}
-                  {selectedPlanModal === "premium" && "Premium Institutional Plan — ৳999 / month"}
+                  {selectedPlanModal === "pro" && `Pro Trader Plan — ৳${formatBdt(proBdt, false, "599")} / $${formatUsd(proUsd, false, "5")} per month`}
+                  {selectedPlanModal === "premium" && `Premium Institutional Plan — ৳${formatBdt(premiumBdt, false, "999")} / $${formatUsd(premiumUsd, false, "10")} per month`}
                 </h3>
                 <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                   {selectedPlanModal === "free" &&
@@ -328,9 +385,9 @@ export function HomePlansSection({
                   <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
                     <tr>
                       <th className="p-3">Feature</th>
-                      <th className="p-3 text-center">Free Trial</th>
-                      <th className="p-3 text-center">Pro (৳599)</th>
-                      <th className="p-3 text-center">Premium (৳999)</th>
+                      <th className="p-3 text-center">Free Trial (৳0 / $0)</th>
+                      <th className="p-3 text-center">Pro (৳{formatBdt(proBdt, false, "599")} / ${formatUsd(proUsd, false, "5")})</th>
+                      <th className="p-3 text-center">Premium (৳{formatBdt(premiumBdt, false, "999")} / ${formatUsd(premiumUsd, false, "10")})</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
@@ -419,14 +476,14 @@ export function HomePlansSection({
               {selectedPlanModal === "pro" && (
                 <Link href="/checkout?plan=pro" className="w-full sm:w-auto">
                   <Button className="w-full sm:w-auto bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold text-xs">
-                    Proceed to Checkout (৳599/mo)
+                    Proceed to Checkout (৳{formatBdt(proBdt, false, "599")} / ${formatUsd(proUsd, false, "5")} / mo)
                   </Button>
                 </Link>
               )}
               {selectedPlanModal === "premium" && (
                 <Link href="/checkout?plan=premium" className="w-full sm:w-auto">
                   <Button className="w-full sm:w-auto bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-bold text-xs">
-                    Proceed to Checkout (৳999/mo)
+                    Proceed to Checkout (৳{formatBdt(premiumBdt, false, "999")} / ${formatUsd(premiumUsd, false, "10")} / mo)
                   </Button>
                 </Link>
               )}

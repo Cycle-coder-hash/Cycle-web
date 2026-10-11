@@ -79,6 +79,8 @@ export default function AdminPage() {
   const [ownerFormInitialized, setOwnerFormInitialized] = useState(false);
   const [ownerPreviewLang, setOwnerPreviewLang] = useState<"en" | "bn">("en");
 
+  const utils = trpc.useUtils();
+
   // Live Queries (Zero auth restriction - Admin panel is open directly)
   const { data: stats, refetch: refetchStats, isFetching: isFetchingStats } = trpc.admin.stats.useQuery();
   const { data: orders, refetch: refetchOrders, isFetching: isFetchingOrders } = trpc.admin.orders.useQuery();
@@ -244,7 +246,9 @@ export default function AdminPage() {
   const updatePaymentSettingsMutation = trpc.admin.updatePaymentSettings.useMutation({
     onSuccess: () => {
       refetchPaymentSettings();
-      setActionSuccess("Payment gateways & checkout settings saved successfully!");
+      utils.public.paymentSettings.invalidate();
+      utils.public.bundles.invalidate();
+      setActionSuccess("Payment gateways, pricing & checkout settings saved successfully!");
       setTimeout(() => setActionSuccess(null), 4000);
     },
     onError: (err: any) => {

@@ -1,5 +1,5 @@
 import type { OwnerFormData } from "../tabs/OwnerProfileTab";
-import type { PaymentSettingsFormState } from "../tabs/SettingsTab";
+import { type PaymentSettingsFormState, DEFAULT_PRICING_FORM } from "../tabs/SettingsTab";
 import type { EbookFormData } from "../modals/EbookModal";
 
 export function createInitialPaymentSettingsForm(): PaymentSettingsFormState {
@@ -29,36 +29,81 @@ export function createInitialPaymentSettingsForm(): PaymentSettingsFormState {
     isAnnouncementEnabled: false,
     studentTelegramUrl: "https://t.me/cycleofchart",
     studentTelegramDescription: "Official Cycle of Chart VIP Student Telegram Community",
+    pricing: DEFAULT_PRICING_FORM,
   };
 }
 
 export function mapPaymentSettingsToForm(paymentSettingsData: any): PaymentSettingsFormState {
+  const p = paymentSettingsData?.pricing || paymentSettingsData?.gateways?.pricing;
   return {
     bkash: {
-      number: paymentSettingsData.bkash?.number || "01961079326",
-      accountType: (paymentSettingsData.bkash?.accountType as any) || "Personal",
-      isEnabled: paymentSettingsData.bkash?.isEnabled !== false,
-      instructions: paymentSettingsData.bkash?.instructions || "",
+      number:
+        typeof paymentSettingsData?.bkash === "string"
+          ? paymentSettingsData.bkash
+          : paymentSettingsData?.bkash?.number || "01961079326",
+      accountType: (paymentSettingsData?.bkash?.accountType as any) || "Personal",
+      isEnabled: paymentSettingsData?.bkash?.isEnabled !== false,
+      instructions: paymentSettingsData?.bkash?.instructions || "",
     },
     nagad: {
-      number: paymentSettingsData.nagad?.number || "01961079326",
-      accountType: (paymentSettingsData.nagad?.accountType as any) || "Personal",
-      isEnabled: paymentSettingsData.nagad?.isEnabled !== false,
-      instructions: paymentSettingsData.nagad?.instructions || "",
+      number:
+        typeof paymentSettingsData?.nagad === "string"
+          ? paymentSettingsData.nagad
+          : paymentSettingsData?.nagad?.number || "01961079326",
+      accountType: (paymentSettingsData?.nagad?.accountType as any) || "Personal",
+      isEnabled: paymentSettingsData?.nagad?.isEnabled !== false,
+      instructions: paymentSettingsData?.nagad?.instructions || "",
     },
     rocket: {
-      number: paymentSettingsData.rocket?.number || "01961079326",
-      accountType: (paymentSettingsData.rocket?.accountType as any) || "Personal",
-      isEnabled: paymentSettingsData.rocket?.isEnabled !== false,
-      instructions: paymentSettingsData.rocket?.instructions || "",
+      number:
+        typeof paymentSettingsData?.rocket === "string"
+          ? paymentSettingsData.rocket
+          : paymentSettingsData?.rocket?.number || "01961079326",
+      accountType: (paymentSettingsData?.rocket?.accountType as any) || "Personal",
+      isEnabled: paymentSettingsData?.rocket?.isEnabled !== false,
+      instructions: paymentSettingsData?.rocket?.instructions || "",
     },
-    announcement: paymentSettingsData.announcement || "",
-    isAnnouncementEnabled: !!paymentSettingsData.isAnnouncementEnabled,
+    announcement: paymentSettingsData?.announcement || "",
+    isAnnouncementEnabled: !!paymentSettingsData?.isAnnouncementEnabled,
     studentTelegramUrl:
       (paymentSettingsData as any)?.studentTelegramUrl || "https://t.me/cycleofchart",
     studentTelegramDescription:
       (paymentSettingsData as any)?.studentTelegramDescription ||
       "Official Cycle of Chart VIP Student Telegram Community",
+    pricing: {
+      courses: {
+        freeEbook: {
+          priceBdt: p?.courses?.freeEbook?.priceBdt ?? "0",
+          priceUsd: p?.courses?.freeEbook?.priceUsd ?? "0",
+        },
+        basicToAdvance: {
+          priceBdt: p?.courses?.basicToAdvance?.priceBdt ?? "2499",
+          priceUsd: p?.courses?.basicToAdvance?.priceUsd ?? "20",
+        },
+        proBlueprint: {
+          priceBdt: p?.courses?.proBlueprint?.priceBdt ?? "4999",
+          priceUsd: p?.courses?.proBlueprint?.priceUsd ?? "40",
+          originalPriceBdt: p?.courses?.proBlueprint?.originalPriceBdt ?? "5550",
+        },
+      },
+      subscriptions: {
+        freeTrial: {
+          priceBdt: p?.subscriptions?.freeTrial?.priceBdt ?? "0",
+          priceUsd: p?.subscriptions?.freeTrial?.priceUsd ?? "0",
+          billingPeriod: p?.subscriptions?.freeTrial?.billingPeriod ?? "30 days",
+        },
+        pro: {
+          priceBdt: p?.subscriptions?.pro?.priceBdt ?? "599",
+          priceUsd: p?.subscriptions?.pro?.priceUsd ?? "5",
+          billingPeriod: p?.subscriptions?.pro?.billingPeriod ?? "month",
+        },
+        premium: {
+          priceBdt: p?.subscriptions?.premium?.priceBdt ?? "999",
+          priceUsd: p?.subscriptions?.premium?.priceUsd ?? "10",
+          billingPeriod: p?.subscriptions?.premium?.billingPeriod ?? "month",
+        },
+      },
+    },
   };
 }
 

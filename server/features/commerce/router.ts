@@ -44,6 +44,7 @@ export const commercePublicProcedures = {
       studentTelegramUrl: gateways.studentTelegramUrl || "https://t.me/cycleofchart",
       studentTelegramDescription: gateways.studentTelegramDescription || "Official Cycle of Chart VIP Student Telegram Community",
       gateways,
+      pricing: gateways.pricing,
     };
   }),
 };
@@ -328,6 +329,38 @@ export const commerceAdminProcedures = {
         isAnnouncementEnabled: z.boolean().optional(),
         studentTelegramUrl: z.string().optional(),
         studentTelegramDescription: z.string().optional(),
+        pricing: z
+          .object({
+            courses: z
+              .object({
+                freeEbook: z.object({ priceBdt: z.string(), priceUsd: z.string() }).partial().optional(),
+                basicToAdvance: z.object({ priceBdt: z.string(), priceUsd: z.string() }).partial().optional(),
+                proBlueprint: z
+                  .object({ priceBdt: z.string(), priceUsd: z.string(), originalPriceBdt: z.string().optional() })
+                  .partial()
+                  .optional(),
+              })
+              .partial()
+              .optional(),
+            subscriptions: z
+              .object({
+                freeTrial: z
+                  .object({ priceBdt: z.string(), priceUsd: z.string(), billingPeriod: z.string().optional() })
+                  .partial()
+                  .optional(),
+                pro: z
+                  .object({ priceBdt: z.string(), priceUsd: z.string(), billingPeriod: z.string().optional() })
+                  .partial()
+                  .optional(),
+                premium: z
+                  .object({ priceBdt: z.string(), priceUsd: z.string(), billingPeriod: z.string().optional() })
+                  .partial()
+                  .optional(),
+              })
+              .partial()
+              .optional(),
+          })
+          .optional(),
       })
     )
     .mutation(async ({ input }) => {

@@ -218,8 +218,10 @@ export function UpgradeModal({
                       Most Popular
                     </span>
                   </div>
-                  <div className="text-2xl font-black text-white">
-                    ৳599<span className="text-xs text-gray-400 font-normal"> / month</span>
+                  <div className="text-2xl font-black text-white flex items-baseline gap-1.5 flex-wrap">
+                    <span>৳599</span>
+                    <span className="text-lg font-bold text-cyan-400">/ $5</span>
+                    <span className="text-xs text-gray-400 font-normal"> / month</span>
                   </div>
                   <ul className="mt-3 space-y-1.5 text-xs text-gray-300">
                     {info.proBenefits.map((b, i) => (
@@ -237,7 +239,7 @@ export function UpgradeModal({
                     window.location.href = "/checkout?plan=pro";
                   }}
                 >
-                  Get Pro — ৳599/mo
+                  Get Pro — ৳599 / $5/mo
                 </Button>
               </div>
             )}
@@ -258,8 +260,10 @@ export function UpgradeModal({
                     Unlimited Institutional
                   </span>
                 </div>
-                <div className="text-2xl font-black text-white">
-                  ৳999<span className="text-xs text-gray-400 font-normal"> / month</span>
+                <div className="text-2xl font-black text-white flex items-baseline gap-1.5 flex-wrap">
+                  <span>৳999</span>
+                  <span className="text-lg font-bold text-amber-400">/ $10</span>
+                  <span className="text-xs text-gray-400 font-normal"> / month</span>
                 </div>
                 <ul className="mt-3 space-y-1.5 text-xs text-gray-300">
                   {info.premiumBenefits.map((b, i) => (
@@ -277,7 +281,7 @@ export function UpgradeModal({
                   window.location.href = "/checkout?plan=premium";
                 }}
               >
-                Get Premium — ৳999/mo
+                Get Premium — ৳999 / $10/mo
               </Button>
             </div>
           </div>
