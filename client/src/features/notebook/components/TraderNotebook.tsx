@@ -600,6 +600,17 @@ export function TraderNotebook({ user, isBn = false, subUsage: propSubUsage }: T
               onDeletePage={triggerDeletePage}
               onCreateSubPage={(parentId) => handleCreatePage(parentId)}
               onSelectPage={handleSelectPage}
+              canUploadVideo={
+                !subUsage ||
+                subUsage.notebookVideosLimit === "unlimited" ||
+                (typeof subUsage.notebookVideosLimit === "number" &&
+                  subUsage.notebookVideosLimit > 0 &&
+                  subUsage.notebookVideosCount < subUsage.notebookVideosLimit)
+              }
+              onRequestUpgrade={(feature) => {
+                setUpgradeFeature(feature);
+                setIsUpgradeModalOpen(true);
+              }}
             />
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center rounded-3xl border border-dashed border-slate-200/80 bg-white/30 p-12 text-center dark:border-slate-800/80 dark:bg-slate-900/20">

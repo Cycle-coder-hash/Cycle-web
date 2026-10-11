@@ -565,6 +565,17 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
         nextTradeNumber={nextNum}
         journalBookId={selectedBookId === "all" ? (books[0]?.id || "book_default") : selectedBookId}
         isBn={isBn}
+        canUploadVideo={
+          !subUsage ||
+          subUsage.journalVideosLimit === "unlimited" ||
+          (typeof subUsage.journalVideosLimit === "number" &&
+            subUsage.journalVideosLimit > 0 &&
+            subUsage.journalVideosCount < subUsage.journalVideosLimit)
+        }
+        onRequestUpgrade={(feature) => {
+          setUpgradeFeature(feature);
+          setIsUpgradeModalOpen(true);
+        }}
       />
 
       {/* 2. Journal Book Modal (Create / Edit) */}

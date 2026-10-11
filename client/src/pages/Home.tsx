@@ -307,10 +307,9 @@ export default function Home() {
       {/* ========================================================================= */}
       <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-200/80 bg-white/85 text-slate-900 backdrop-blur-xl transition-colors dark:border-slate-800/80 dark:bg-[#070e1b]/85 dark:text-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-3 sm:px-5 py-2.5 sm:py-3 lg:px-8">
-          <Link href="/" className="flex items-center gap-2 sm:gap-3 min-w-0 shrink">
-            <BrandLogo size={36} className="shrink-0 sm:hidden" />
-            <BrandLogo size={42} className="shrink-0 hidden sm:inline-flex" />
-            <HeaderBrandWordmark className="text-[11px] sm:text-xs md:text-sm truncate" />
+          <Link href="/" className="flex items-center gap-1.5 sm:gap-2.5 min-w-0 shrink">
+            <BrandLogo size={36} className="shrink-0 sm:size-[42px]" />
+            <HeaderBrandWordmark className="text-[10px] min-[360px]:text-[11px] sm:text-xs md:text-sm font-extrabold shrink-0" />
           </Link>
 
           <TopNavLinks isBn={isBn} copy={copy} />

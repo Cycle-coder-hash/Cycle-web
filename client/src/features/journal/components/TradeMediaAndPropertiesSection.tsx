@@ -14,7 +14,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { CustomProperty } from "@/types/journal";
-import { uploadImage, uploadVideo, parseVideoUrl } from "@/lib/mediaUpload";
+import { uploadImage, uploadVideo, deleteSavedVideo, parseVideoUrl } from "@/lib/mediaUpload";
 
 export interface TradeMediaAndPropertiesSectionProps {
   screenshots: string[];
@@ -28,6 +28,8 @@ export interface TradeMediaAndPropertiesSectionProps {
   customProperties: CustomProperty[];
   setCustomProperties: React.Dispatch<React.SetStateAction<CustomProperty[]>>;
   isBn?: boolean;
+  canUploadVideo?: boolean;
+  onRequestUpgrade?: (feature: "journal_videos" | "notebook_videos") => void;
 }
 
 export function TradeMediaAndPropertiesSection({
@@ -42,6 +44,8 @@ export function TradeMediaAndPropertiesSection({
   customProperties,
   setCustomProperties,
   isBn = false,
+  canUploadVideo = true,
+  onRequestUpgrade,
 }: TradeMediaAndPropertiesSectionProps) {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
@@ -109,13 +113,27 @@ export function TradeMediaAndPropertiesSection({
       setIsUploadingVideo(true);
       const toastId = toast.loading(isBn ? "ফ্রি ক্লাউডে ভিডিও আপলোড হচ্ছে..." : "Uploading video to free cloud CDN...");
       try {
-        const cloudUrl = await uploadVideo(file);
+        const cloudUrl = await uploadVideo(file, file.name, "journal");
         setVideoUrl(cloudUrl);
         setVideoDurationSeconds(Math.round(duration));
         toast.success(isBn ? "ভিডিও সফলভাবে ক্লাউডে সেভ হয়েছে!" : "Video uploaded to cloud CDN!", { id: toastId });
       } catch (err: any) {
         console.error("[Video upload error]:", err);
-        setVideoError(err.message || "Failed to upload video");
+        const errMsg = err?.message || "";
+        const isUpgradeRequired =
+          errMsg.includes("Pro and Premium") ||
+          errMsg.includes("Upgrade to unlock") ||
+          errMsg.includes("Upgrade to Premium") ||
+          errMsg.includes("limit") ||
+          errMsg.includes("restricted on your plan");
+
+        if (isUpgradeRequired && onRequestUpgrade) {
+          toast.dismiss(toastId);
+          onRequestUpgrade("journal_videos");
+          return;
+        }
+
+        setVideoError(errMsg || "Failed to upload video");
         toast.error(isBn ? "ভিডিও আপলোড ব্যর্থ হয়েছে।" : "Failed to upload video.", { id: toastId });
       } finally {
         setIsUploadingVideo(false);
@@ -141,6 +159,9 @@ export function TradeMediaAndPropertiesSection({
   };
 
   const handleRemoveVideo = () => {
+    if (videoUrl && videoUrl.startsWith("http")) {
+      deleteSavedVideo(videoUrl);
+    }
     setVideoUrl(undefined);
     setVideoDurationSeconds(undefined);
     setVideoError(null);
@@ -340,7 +361,16 @@ export function TradeMediaAndPropertiesSection({
           ) : (
             <div className="space-y-2.5">
               {/* Option A: Direct Video Upload to Free CDN */}
-              <label className={`flex items-center justify-between px-4 py-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-white/40 dark:bg-slate-900/40 hover:border-purple-400 cursor-pointer transition ${isUploadingVideo ? "opacity-50 pointer-events-none" : ""}`}>
+              <label
+                onClick={(e) => {
+                  if (!canUploadVideo && onRequestUpgrade) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onRequestUpgrade("journal_videos");
+                  }
+                }}
+                className={`flex items-center justify-between px-4 py-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-white/40 dark:bg-slate-900/40 hover:border-purple-400 cursor-pointer transition ${isUploadingVideo ? "opacity-50 pointer-events-none" : ""}`}
+              >
                 <div className="flex items-center gap-2.5">
                   {isUploadingVideo ? (
                     <Loader2 size={16} className="animate-spin text-purple-400" />
@@ -363,7 +393,15 @@ export function TradeMediaAndPropertiesSection({
                   type="file"
                   accept="video/*"
                   disabled={isUploadingVideo}
-                  onChange={handleVideoUpload}
+                  onChange={(e) => {
+                    if (!canUploadVideo && onRequestUpgrade) {
+                      e.preventDefault();
+                      onRequestUpgrade("journal_videos");
+                      e.target.value = "";
+                      return;
+                    }
+                    handleVideoUpload(e);
+                  }}
                   className="hidden"
                 />
               </label>

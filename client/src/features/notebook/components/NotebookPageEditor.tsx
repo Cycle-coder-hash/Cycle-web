@@ -30,6 +30,8 @@ interface NotebookPageEditorProps {
   onDeletePage: (pageId: string) => void;
   onCreateSubPage: (parentPageId: string) => void;
   onSelectPage: (pageId: string) => void;
+  canUploadVideo?: boolean;
+  onRequestUpgrade?: (feature: "notebook_videos" | "journal_videos") => void;
 }
 
 const COMMON_EMOJIS = ["📝", "🎯", "🧠", "📊", "⚡", "💧", "🏛️", "📈", "📉", "✨", "🧘", "🛡️", "🔥", "💎", "🚀", "💡"];
@@ -45,6 +47,8 @@ export function NotebookPageEditor({
   onDeletePage,
   onCreateSubPage,
   onSelectPage,
+  canUploadVideo = true,
+  onRequestUpgrade,
 }: NotebookPageEditorProps) {
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -300,6 +304,8 @@ export function NotebookPageEditor({
                   onMoveUp={handleMoveUp}
                   onMoveDown={handleMoveDown}
                   onOpenLightbox={(url) => setLightboxImg(url)}
+                  canUploadVideo={canUploadVideo}
+                  onRequestUpgrade={onRequestUpgrade}
                 />
               ))}
 

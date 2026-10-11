@@ -7,7 +7,7 @@ interface HeaderBrandWordmarkProps {
 export function HeaderBrandWordmark({ className = "" }: HeaderBrandWordmarkProps) {
   return (
     <span
-      className={`header-brand-wordmark relative inline-block select-none font-extrabold tracking-[0.2em] leading-tight ${className}`}
+      className={`header-brand-wordmark relative inline-block select-none font-extrabold tracking-[0.12em] sm:tracking-[0.2em] leading-tight ${className}`}
     >
       {/* Base State: Outline-only text with transparent fill */}
       <span className="header-brand-base">CYCLE OF CHART</span>

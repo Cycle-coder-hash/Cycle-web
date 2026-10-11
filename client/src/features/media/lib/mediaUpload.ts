@@ -19,6 +19,52 @@ export function fileToBase64(file: File | Blob): Promise<string> {
 }
 
 /**
+ * Retrieve authorization headers from stored user session token
+ */
+export function getAuthHeaders(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    let token = localStorage.getItem("cycle_session_token");
+    if (!token) {
+      const hash = window.location.hash;
+      if (hash.includes("access_token=")) {
+        const params = new URLSearchParams(hash.replace(/^#/, ""));
+        token = params.get("access_token");
+        if (token) {
+          try {
+            localStorage.setItem("cycle_session_token", token);
+          } catch {}
+        }
+      }
+    }
+    if (!token) {
+      const supaSession =
+        localStorage.getItem("cycle_supabase_session") ||
+        localStorage.getItem("sb-pxrcaqmjmsvldhiyuacx-auth-token");
+      if (supaSession) {
+        try {
+          const parsed = JSON.parse(supaSession);
+          token = parsed.access_token || parsed?.currentSession?.access_token;
+        } catch {}
+      }
+    }
+    if (token) {
+      return { Authorization: `Bearer ${token}` };
+    }
+    const raw = sessionStorage.getItem("manus-cookie");
+    if (raw) {
+      const prefix = "cycle_of_chart_session=";
+      const pair = raw.split(";").find((s) => s.trim().startsWith(prefix));
+      const cToken = pair?.trim().slice(prefix.length) || raw;
+      if (cToken) {
+        return { Authorization: `Bearer ${cToken}` };
+      }
+    }
+  } catch {}
+  return {};
+}
+
+/**
  * Upload an image to ImgBB (or Free CDN fallback).
  * Returns permanent direct image URL (e.g. https://i.ibb.co/... or https://files.catbox.moe/...).
  */
@@ -68,7 +114,11 @@ export async function uploadImage(fileOrBase64: File | Blob | string, customFile
     // 2. Server proxy upload (proxies to ImgBB or free permanent Catbox CDN)
     const serverRes = await fetch("/api/upload/image", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
+      credentials: "include",
       body: JSON.stringify({
         base64: base64String,
         filename,
@@ -117,7 +167,11 @@ export async function uploadVideo(
 
     const serverRes = await fetch("/api/upload/video", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
+      credentials: "include",
       body: JSON.stringify({
         base64: base64String,
         filename,
@@ -149,7 +203,11 @@ export async function deleteSavedVideo(videoUrl: string): Promise<boolean> {
   try {
     const res = await fetch("/api/upload/video/delete", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
+      credentials: "include",
       body: JSON.stringify({ videoUrl }),
     });
     return res.ok;
@@ -183,7 +241,11 @@ export async function uploadFile(fileOrBase64: File | Blob | string, customFilen
 
     const serverRes = await fetch("/api/upload/file", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
+      credentials: "include",
       body: JSON.stringify({
         base64: base64String,
         filename,

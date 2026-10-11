@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TradeEntry, CustomProperty } from "@/types/journal";
 import { calculatePips, calculateEstimatedPnl, calculateRiskReward } from "@/lib/journalCalculations";
+import { deleteSavedVideo } from "@/lib/mediaUpload";
 import { TradeMediaAndPropertiesSection } from "./TradeMediaAndPropertiesSection";
 
 interface TradeModalProps {
@@ -15,6 +16,8 @@ interface TradeModalProps {
   journalBookId: string;
   isBn?: boolean;
   defaultDate?: string;
+  canUploadVideo?: boolean;
+  onRequestUpgrade?: (feature: "journal_videos" | "notebook_videos") => void;
 }
 
 const COMMON_PAIRS = [
@@ -47,6 +50,8 @@ export function TradeModal({
   journalBookId,
   isBn = false,
   defaultDate,
+  canUploadVideo = true,
+  onRequestUpgrade,
 }: TradeModalProps) {
   if (!isOpen) return null;
 
@@ -331,6 +336,16 @@ export function TradeModal({
     onClose();
   };
 
+  const handleCloseOrCancel = () => {
+    // If user uploaded a new video during this session but cancels/closes without saving,
+    // clean up the orphaned uploaded video record so it doesn't consume quota.
+    const initialVideo = initialTrade?.videoUrl || (initialTrade?.mediaType === "video" ? initialTrade.mediaUrl : undefined);
+    if (videoUrl && videoUrl !== initialVideo && videoUrl.startsWith("http")) {
+      deleteSavedVideo(videoUrl);
+    }
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/75 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200">
       <div className="relative w-full max-w-4xl rounded-3xl border border-slate-200 bg-white p-5 sm:p-8 shadow-2xl dark:border-slate-800 dark:bg-slate-900 my-auto text-slate-900 dark:text-white max-h-[92vh] overflow-y-auto">
@@ -351,7 +366,7 @@ export function TradeModal({
           </div>
 
           <button
-            onClick={onClose}
+            onClick={handleCloseOrCancel}
             className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
           >
             <X size={20} />
@@ -688,6 +703,8 @@ export function TradeModal({
             customProperties={customProperties}
             setCustomProperties={setCustomProperties}
             isBn={isBn}
+            canUploadVideo={canUploadVideo}
+            onRequestUpgrade={onRequestUpgrade}
           />
 
           {/* Footer Save Actions */}
@@ -695,7 +712,7 @@ export function TradeModal({
             <Button
               type="button"
               variant="outline"
-              onClick={onClose}
+              onClick={handleCloseOrCancel}
               className="rounded-xl font-bold text-xs"
             >
               Cancel

@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { ContentBlock } from "@/types/notebook";
 import { validateVideoDuration } from "@/lib/notebookStorage";
-import { uploadImage, uploadVideo, uploadFile, parseVideoUrl } from "@/lib/mediaUpload";
+import { uploadImage, uploadVideo, deleteSavedVideo, uploadFile, parseVideoUrl } from "@/lib/mediaUpload";
 import { toast } from "sonner";
 
 export interface NotebookMediaBlockProps {
@@ -27,6 +27,8 @@ export interface NotebookMediaBlockProps {
   onUpdateContent: (content: string) => void;
   onUpdateMeta: (partialMeta: Partial<NonNullable<ContentBlock["meta"]>>) => void;
   onOpenLightbox?: (imgUrl: string) => void;
+  canUploadVideo?: boolean;
+  onRequestUpgrade?: (feature: "notebook_videos" | "journal_videos") => void;
 }
 
 export function NotebookMediaBlock({
@@ -36,6 +38,8 @@ export function NotebookMediaBlock({
   onUpdateContent,
   onUpdateMeta,
   onOpenLightbox,
+  canUploadVideo = true,
+  onRequestUpgrade,
 }: NotebookMediaBlockProps) {
   const [videoError, setVideoError] = useState<string | null>(null);
   const [isValidatingVideo, setIsValidatingVideo] = useState(false);
@@ -93,7 +97,11 @@ export function NotebookMediaBlock({
       setIsUploadingVideo(true);
       const toastId = toast.loading(isBn ? "ফ্রি ক্লাউডে ভিডিও আপলোড হচ্ছে..." : "Uploading video to free cloud CDN...");
       try {
+        const previousVideoUrl = block.type === "video" && block.content && block.content.startsWith("http") ? block.content : null;
         const cdnUrl = await uploadVideo(file, file.name, "notebook");
+        if (previousVideoUrl && previousVideoUrl !== cdnUrl) {
+          deleteSavedVideo(previousVideoUrl);
+        }
         onUpdate({
           ...block,
           content: cdnUrl,
@@ -108,7 +116,21 @@ export function NotebookMediaBlock({
         });
         toast.success(isBn ? "ভিডিও সফলভাবে ক্লাউডে সেভ হয়েছে!" : "Video uploaded to cloud CDN!", { id: toastId });
       } catch (uploadErr: any) {
-        toast.error(uploadErr.message || (isBn ? "ভিডিও আপলোড ব্যর্থ হয়েছে।" : "Failed to upload video."), { id: toastId });
+        const errMsg = uploadErr?.message || "";
+        const isUpgradeRequired =
+          errMsg.includes("Pro and Premium") ||
+          errMsg.includes("Upgrade to unlock") ||
+          errMsg.includes("Upgrade to Premium") ||
+          errMsg.includes("limit") ||
+          errMsg.includes("restricted on your plan");
+
+        if (isUpgradeRequired && onRequestUpgrade) {
+          toast.dismiss(toastId);
+          onRequestUpgrade("notebook_videos");
+          return;
+        }
+
+        toast.error(errMsg || (isBn ? "ভিডিও আপলোড ব্যর্থ হয়েছে।" : "Failed to upload video."), { id: toastId });
       } finally {
         setIsUploadingVideo(false);
       }
@@ -364,8 +386,14 @@ export function NotebookMediaBlock({
                 />
                 <button
                   type="button"
-                  onClick={() => videoInputRef.current?.click()}
-                  className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800"
+                  onClick={() => {
+                    if (!canUploadVideo && onRequestUpgrade) {
+                      onRequestUpgrade("notebook_videos");
+                      return;
+                    }
+                    videoInputRef.current?.click();
+                  }}
+                  className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
                 >
                   {isBn ? "পরিবর্তন" : "Replace"}
                 </button>
@@ -374,7 +402,15 @@ export function NotebookMediaBlock({
           ) : (
             <div className="space-y-3">
               <div
-                onClick={() => !isUploadingVideo && videoInputRef.current?.click()}
+                onClick={() => {
+                  if (!canUploadVideo && onRequestUpgrade) {
+                    onRequestUpgrade("notebook_videos");
+                    return;
+                  }
+                  if (!isUploadingVideo) {
+                    videoInputRef.current?.click();
+                  }
+                }}
                 className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-300/80 p-6 text-center cursor-pointer transition-colors hover:border-cyan-500/80 hover:bg-cyan-500/[0.02] dark:border-slate-800 ${
                   isUploadingVideo ? "opacity-50 pointer-events-none" : ""
                 }`}

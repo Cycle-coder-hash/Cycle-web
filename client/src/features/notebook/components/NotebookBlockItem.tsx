@@ -21,6 +21,8 @@ interface NotebookBlockItemProps {
   onMoveUp: (index: number) => void;
   onMoveDown: (index: number) => void;
   onOpenLightbox?: (imgUrl: string) => void;
+  canUploadVideo?: boolean;
+  onRequestUpgrade?: (feature: "notebook_videos" | "journal_videos") => void;
 }
 
 export function NotebookBlockItem({
@@ -33,6 +35,8 @@ export function NotebookBlockItem({
   onMoveUp,
   onMoveDown,
   onOpenLightbox,
+  canUploadVideo = true,
+  onRequestUpgrade,
 }: NotebookBlockItemProps) {
   // Update helper
   const updateContent = (content: string) => {
@@ -226,6 +230,8 @@ export function NotebookBlockItem({
           onUpdateContent={updateContent}
           onUpdateMeta={updateMeta}
           onOpenLightbox={onOpenLightbox}
+          canUploadVideo={canUploadVideo}
+          onRequestUpgrade={onRequestUpgrade}
         />
       </div>
     </div>
