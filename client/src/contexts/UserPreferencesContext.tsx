@@ -12,6 +12,7 @@ export interface CurrencyConfig {
 export const SUPPORTED_CURRENCIES: CurrencyConfig[] = [
   { code: "BDT", symbol: "৳", name: "Bangladeshi Taka", flag: "🇧🇩" },
   { code: "USD", symbol: "$", name: "US Dollar", flag: "🇺🇸" },
+  { code: "PKR", symbol: "₨", name: "Pakistani Rupee", flag: "🇵🇰" },
   { code: "EUR", symbol: "€", name: "Euro", flag: "🇪🇺" },
   { code: "GBP", symbol: "£", name: "British Pound", flag: "🇬🇧" },
   { code: "AED", symbol: "AED", name: "UAE Dirham", flag: "🇦🇪" },
@@ -29,6 +30,7 @@ export interface TimezoneOption {
 
 export const SUPPORTED_TIMEZONES: TimezoneOption[] = [
   { value: "Asia/Dhaka", label: "Dhaka (BST, UTC+6)", city: "Dhaka", offset: "+06:00", market: "Local Market" },
+  { value: "Asia/Karachi", label: "Karachi / Pakistan (PKT, UTC+5)", city: "Karachi", offset: "+05:00", market: "PSX / Pakistan" },
   { value: "UTC", label: "UTC (London Winter, UTC+0)", city: "London/UTC", offset: "+00:00", market: "Forex Benchmark" },
   { value: "America/New_York", label: "New York (EST/EDT, UTC-5)", city: "New York", offset: "-05:00", market: "NYSE / Wall Street" },
   { value: "Europe/London", label: "London (GMT/BST, UTC+0/1)", city: "London", offset: "+00:00", market: "LSE / London Session" },
@@ -169,7 +171,7 @@ export function UserPreferencesProvider({ children }: { children: React.ReactNod
       const decimals =
         customDecimals !== undefined
           ? customDecimals
-          : currentCurrency.code === "BDT" || currentCurrency.code === "INR"
+          : currentCurrency.code === "BDT" || currentCurrency.code === "INR" || currentCurrency.code === "PKR"
           ? 0
           : 2;
       const formatted = new Intl.NumberFormat(undefined, {
