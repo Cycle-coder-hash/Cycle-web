@@ -35,6 +35,16 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   if (!isUnauthorized) return;
 
+  const pathname = window.location.pathname;
+  const isProtectedRoute =
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/settings");
+
+  // Only redirect if current path strictly requires an authenticated session.
+  // Public pages (Home, Leaderboard, Support, etc.) must not force-redirect on background auth failure.
+  if (!isProtectedRoute) return;
+
   startLogin();
 };
 

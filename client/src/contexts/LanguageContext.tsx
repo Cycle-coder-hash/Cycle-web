@@ -158,7 +158,14 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       setCurrentOptionId(targetId);
       const opt = getOptionById(targetId);
       if (user) {
-        updatePreferencesMutation.mutate({ language: opt.langCode });
+        updatePreferencesMutation.mutate(
+          { language: opt.langCode },
+          {
+            onError: (err) => {
+              console.warn("[LanguageSync] Preference sync ignored:", err);
+            },
+          }
+        );
       }
     },
     [user, updatePreferencesMutation]
@@ -170,7 +177,14 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       const opt = getOptionByLanguage(normalized);
       setCurrentOptionId(opt.id);
       if (user) {
-        updatePreferencesMutation.mutate({ language: opt.langCode });
+        updatePreferencesMutation.mutate(
+          { language: opt.langCode },
+          {
+            onError: (err) => {
+              console.warn("[LanguageSync] Preference sync ignored:", err);
+            },
+          }
+        );
       }
     },
     [user, updatePreferencesMutation]

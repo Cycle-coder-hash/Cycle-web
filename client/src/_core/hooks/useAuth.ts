@@ -84,6 +84,24 @@ export function useAuth(options?: UseAuthOptions) {
   }, [logoutMutation, utils]);
 
   const state = useMemo(() => {
+    const isUnauthorized =
+      meQuery.error instanceof TRPCClientError &&
+      (meQuery.error.message === "UNAUTHORIZED" || meQuery.error.data?.code === "UNAUTHORIZED");
+
+    if (isUnauthorized) {
+      try {
+        localStorage.removeItem("cycle_session_token");
+        localStorage.removeItem("manus-runtime-user-info");
+        sessionStorage.removeItem("manus-cookie");
+      } catch {}
+      return {
+        user: null,
+        loading: false,
+        error: meQuery.error,
+        isAuthenticated: false,
+      };
+    }
+
     if (meQuery.data) {
       localStorage.setItem("manus-runtime-user-info", JSON.stringify(meQuery.data));
     }

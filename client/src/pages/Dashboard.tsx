@@ -183,17 +183,11 @@ export default function Dashboard() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const path = window.location.pathname;
-    if (
-      (path === "/notebook" && tab === "notebook") ||
-      (path === "/discipline" && tab === "discipline") ||
-      (path === "/calculator" && tab === "calculator")
-    ) {
+    // Preserve dedicated subroute URLs so they are not overwritten to /dashboard
+    if (path === "/notebook" || path === "/discipline" || path === "/calculator") {
       return;
     }
     const url = new URL(window.location.href);
-    if (path === "/notebook" || path === "/discipline" || path === "/calculator") {
-      url.pathname = "/dashboard";
-    }
     if (tab === "overview") {
       url.searchParams.delete("tab");
     } else {
