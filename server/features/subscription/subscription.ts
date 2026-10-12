@@ -99,6 +99,15 @@ export async function getRawUserSubscription(userId: number): Promise<{
   if (!subRecord) {
     subRecord = inMemorySubscriptions.get(userId);
   }
+  if (!subRecord && process.env.NODE_ENV !== "test") {
+    try {
+      const raw = await getSetting(`user_subscription_${userId}`);
+      if (raw) {
+        subRecord = JSON.parse(raw);
+        inMemorySubscriptions.set(userId, subRecord);
+      }
+    } catch {}
+  }
   const now = new Date();
   const subEndsAt = subRecord?.subscriptionEndsAt ? new Date(subRecord.subscriptionEndsAt) : null;
   const isPaidActive =
@@ -149,6 +158,16 @@ export async function getUserSubscription(userId: number): Promise<UserSubscript
 
   if (!subRecord) {
     subRecord = inMemorySubscriptions.get(userId);
+  }
+
+  if (!subRecord && process.env.NODE_ENV !== "test") {
+    try {
+      const raw = await getSetting(`user_subscription_${userId}`);
+      if (raw) {
+        subRecord = JSON.parse(raw);
+        inMemorySubscriptions.set(userId, subRecord);
+      }
+    } catch {}
   }
 
   // If no record exists yet, initialize based on user's account creation timestamp
@@ -365,6 +384,12 @@ async function updateSubscriptionRecord(userId: number, updates: Partial<Subscri
   const merged = { ...existing, ...updates, updatedAt: new Date() };
   inMemorySubscriptions.set(userId, merged);
 
+  if (process.env.NODE_ENV !== "test") {
+    try {
+      await setSetting(`user_subscription_${userId}`, JSON.stringify(merged));
+    } catch {}
+  }
+
   const db = await getDb();
   if (db) {
     try {
@@ -458,6 +483,13 @@ export async function recordSavedVideo(userId: number, videoUrl: string, source:
     createdAt: now,
   });
 
+  if (process.env.NODE_ENV !== "test") {
+    try {
+      const userVids = inMemorySavedVideos.filter((v) => v.userId === userId);
+      await setSetting(`saved_videos_${userId}`, JSON.stringify(userVids));
+    } catch {}
+  }
+
   const db = await getDb();
   if (db) {
     try {
@@ -478,6 +510,13 @@ export async function recordSavedVideo(userId: number, videoUrl: string, source:
 export async function removeSavedVideo(userId: number, videoUrl: string): Promise<boolean> {
   const idx = inMemorySavedVideos.findIndex((v) => v.userId === userId && v.videoUrl === videoUrl);
   if (idx !== -1) inMemorySavedVideos.splice(idx, 1);
+
+  if (process.env.NODE_ENV !== "test") {
+    try {
+      const userVids = inMemorySavedVideos.filter((v) => v.userId === userId);
+      await setSetting(`saved_videos_${userId}`, JSON.stringify(userVids));
+    } catch {}
+  }
 
   const db = await getDb();
   if (db) {
@@ -539,6 +578,24 @@ export async function getActiveSavedVideosCount(userId: number, source: "journal
         .from(savedVideos)
         .where(and(eq(savedVideos.userId, userId), eq(savedVideos.source, source)));
       return rows.length;
+    } catch {}
+  }
+  if (process.env.NODE_ENV !== "test" && !inMemorySavedVideos.some((v) => v.userId === userId)) {
+    try {
+      const raw = await getSetting(`saved_videos_${userId}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          for (const item of parsed) {
+            if (!inMemorySavedVideos.some((v) => v.userId === userId && v.videoUrl === item.videoUrl)) {
+              inMemorySavedVideos.push({
+                ...item,
+                createdAt: item.createdAt ? new Date(item.createdAt) : new Date(),
+              });
+            }
+          }
+        }
+      }
     } catch {}
   }
   return inMemorySavedVideos.filter((v) => v.userId === userId && v.source === source).length;

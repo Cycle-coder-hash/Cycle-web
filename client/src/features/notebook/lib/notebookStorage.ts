@@ -531,17 +531,43 @@ export function debouncedSaveNotebookData(
  */
 export function validateVideoDuration(file: File): Promise<number> {
   return new Promise((resolve, reject) => {
-    if (!file.type.startsWith("video/")) {
+    const isVideoMime = file.type && file.type.startsWith("video/");
+    const isVideoExt = /\.(mp4|webm|mov|mkv|ogg|ogv|m4v|avi)$/i.test(file.name || "");
+    if (!isVideoMime && !isVideoExt) {
       reject(new Error("Selected file is not a valid video."));
       return;
     }
+
     const video = document.createElement("video");
     video.preload = "metadata";
     const objectUrl = URL.createObjectURL(file);
+    let settled = false;
+
+    const cleanup = () => {
+      try {
+        URL.revokeObjectURL(objectUrl);
+      } catch {}
+    };
+
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      resolve(0);
+    }, 2500);
 
     video.onloadedmetadata = () => {
-      URL.revokeObjectURL(objectUrl);
-      const duration = Math.round(video.duration);
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      cleanup();
+      const rawDuration = video.duration;
+      if (!Number.isFinite(rawDuration) || rawDuration < 0) {
+        // WebM recordings from MediaRecorder often report Infinity duration in metadata
+        resolve(0);
+        return;
+      }
+      const duration = Math.round(rawDuration);
       if (duration > 600) {
         reject(
           new Error(
@@ -554,10 +580,15 @@ export function validateVideoDuration(file: File): Promise<number> {
     };
 
     video.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error("Could not read video metadata. Please ensure the format is valid (MP4, WEBM)."));
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      cleanup();
+      // Do not block upload if local browser codec cannot parse metadata header
+      resolve(0);
     };
 
     video.src = objectUrl;
   });
 }
+

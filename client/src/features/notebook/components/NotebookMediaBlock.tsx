@@ -97,7 +97,7 @@ export function NotebookMediaBlock({
       setIsUploadingVideo(true);
       const toastId = toast.loading(isBn ? "ফ্রি ক্লাউডে ভিডিও আপলোড হচ্ছে..." : "Uploading video to free cloud CDN...");
       try {
-        const previousVideoUrl = block.type === "video" && block.content && block.content.startsWith("http") ? block.content : null;
+        const previousVideoUrl = block.type === "video" && block.content && (block.content.startsWith("http") || block.content.startsWith("/api/")) ? block.content : null;
         const cdnUrl = await uploadVideo(file, file.name, "notebook");
         if (previousVideoUrl && previousVideoUrl !== cdnUrl) {
           deleteSavedVideo(previousVideoUrl);
@@ -116,21 +116,9 @@ export function NotebookMediaBlock({
         });
         toast.success(isBn ? "ভিডিও সফলভাবে ক্লাউডে সেভ হয়েছে!" : "Video uploaded to cloud CDN!", { id: toastId });
       } catch (uploadErr: any) {
-        const errMsg = uploadErr?.message || "";
-        const isUpgradeRequired =
-          errMsg.includes("Pro and Premium") ||
-          errMsg.includes("Upgrade to unlock") ||
-          errMsg.includes("Upgrade to Premium") ||
-          errMsg.includes("limit") ||
-          errMsg.includes("restricted on your plan");
-
-        if (isUpgradeRequired && onRequestUpgrade) {
-          toast.dismiss(toastId);
-          onRequestUpgrade("notebook_videos");
-          return;
-        }
-
-        toast.error(errMsg || (isBn ? "ভিডিও আপলোড ব্যর্থ হয়েছে।" : "Failed to upload video."), { id: toastId });
+        const errMsg = uploadErr?.message || (isBn ? "ভিডিও আপলোড ব্যর্থ হয়েছে।" : "Failed to upload video.");
+        setVideoError(errMsg);
+        toast.error(errMsg, { id: toastId });
       } finally {
         setIsUploadingVideo(false);
       }
@@ -364,17 +352,17 @@ export function NotebookMediaBlock({
                   }
                   return (
                     <video
-                      src={block.content}
+                      src={parsed.embedUrl || block.content}
                       controls
                       className="max-h-[420px] w-full object-contain"
                     />
                   );
                 })()}
-                {block.meta?.videoDuration && (
+                {block.meta?.videoDuration ? (
                   <div className="absolute top-2 left-2 rounded-md bg-black/80 px-2 py-0.5 text-[10px] font-mono font-bold text-cyan-400 backdrop-blur-xs">
                     {formatDuration(block.meta.videoDuration)} / Max 10m
                   </div>
-                )}
+                ) : null}
               </div>
               <div className="flex items-center justify-between gap-2">
                 <input
@@ -387,10 +375,6 @@ export function NotebookMediaBlock({
                 <button
                   type="button"
                   onClick={() => {
-                    if (!canUploadVideo && onRequestUpgrade) {
-                      onRequestUpgrade("notebook_videos");
-                      return;
-                    }
                     videoInputRef.current?.click();
                   }}
                   className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
@@ -403,10 +387,6 @@ export function NotebookMediaBlock({
             <div className="space-y-3">
               <div
                 onClick={() => {
-                  if (!canUploadVideo && onRequestUpgrade) {
-                    onRequestUpgrade("notebook_videos");
-                    return;
-                  }
                   if (!isUploadingVideo) {
                     videoInputRef.current?.click();
                   }

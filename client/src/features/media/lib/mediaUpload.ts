@@ -19,10 +19,11 @@ export function fileToBase64(file: File | Blob): Promise<string> {
 }
 
 /**
- * Retrieve authorization headers from stored user session token
+ * Retrieve authorization headers from stored user session token and cached user profile
  */
 export function getAuthHeaders(): Record<string, string> {
   if (typeof window === "undefined") return {};
+  const headers: Record<string, string> = {};
   try {
     let token = localStorage.getItem("cycle_session_token");
     if (!token) {
@@ -48,20 +49,34 @@ export function getAuthHeaders(): Record<string, string> {
         } catch {}
       }
     }
-    if (token) {
-      return { Authorization: `Bearer ${token}` };
-    }
-    const raw = sessionStorage.getItem("manus-cookie");
-    if (raw) {
-      const prefix = "cycle_of_chart_session=";
-      const pair = raw.split(";").find((s) => s.trim().startsWith(prefix));
-      const cToken = pair?.trim().slice(prefix.length) || raw;
-      if (cToken) {
-        return { Authorization: `Bearer ${cToken}` };
+    if (!token) {
+      const raw = sessionStorage.getItem("manus-cookie");
+      if (raw) {
+        const prefix = "cycle_of_chart_session=";
+        const pair = raw.split(";").find((s) => s.trim().startsWith(prefix));
+        const cToken = pair?.trim().slice(prefix.length) || raw;
+        if (cToken) {
+          token = cToken;
+        }
       }
     }
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const cachedUser = localStorage.getItem("manus-runtime-user-info");
+    if (cachedUser) {
+      try {
+        const bytes = new TextEncoder().encode(cachedUser);
+        let binary = "";
+        for (let i = 0; i < bytes.length; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        headers["x-cycle-user"] = btoa(binary);
+      } catch {}
+    }
   } catch {}
-  return {};
+  return headers;
 }
 
 /**
@@ -91,7 +106,9 @@ export async function uploadImage(fileOrBase64: File | Blob | string, customFile
     // 1. If ImgBB API key is available, try direct client-side upload to ImgBB
     if (apiKey) {
       try {
-        const cleanBase64 = base64String.replace(/^data:image\/[a-zA-Z0-9+.-]+;base64,/, "");
+        const cleanBase64 = base64String.includes(";base64,")
+          ? base64String.split(";base64,").pop()!
+          : base64String.replace(/^data:[^,]+,/, "");
         const fd = new FormData();
         fd.append("key", apiKey);
         fd.append("image", cleanBase64);
@@ -145,7 +162,7 @@ export async function uploadImage(fileOrBase64: File | Blob | string, customFile
 
 /**
  * Upload a video to Free CDN (Catbox, up to 200MB, permanent streaming MP4).
- * Returns permanent direct video URL (e.g. https://files.catbox.moe/xxxx.mp4).
+ * Sends raw binary first to avoid 33% Base64 payload inflation, with JSON fallback.
  */
 export async function uploadVideo(
   fileOrBase64: File | Blob | string,
@@ -153,23 +170,50 @@ export async function uploadVideo(
   source: "journal" | "notebook" = "journal"
 ): Promise<string> {
   try {
-    let base64String = "";
     let filename = customFilename || "video.mp4";
+    const authHeaders = getAuthHeaders();
 
-    if (typeof fileOrBase64 === "string") {
-      base64String = fileOrBase64;
-    } else {
+    if (typeof fileOrBase64 !== "string") {
       if ("name" in fileOrBase64 && fileOrBase64.name) {
         filename = fileOrBase64.name;
       }
-      base64String = await fileToBase64(fileOrBase64);
+      const rawMime =
+        fileOrBase64.type && fileOrBase64.type.startsWith("video/")
+          ? fileOrBase64.type.split(";")[0]
+          : "application/octet-stream";
+
+      const binaryRes = await fetch("/api/upload/video", {
+        method: "POST",
+        headers: {
+          "Content-Type": rawMime,
+          "x-file-name": encodeURIComponent(filename),
+          "x-upload-source": source,
+          ...authHeaders,
+        },
+        credentials: "include",
+        body: fileOrBase64,
+      });
+
+      if (binaryRes.ok) {
+        const result = await binaryRes.json();
+        if (result.url) {
+          return result.url;
+        }
+      } else if (binaryRes.status === 401 || binaryRes.status === 403) {
+        const errJson = await binaryRes.json().catch(() => ({}));
+        throw new Error(errJson.error || `Video upload failed with status ${binaryRes.status}`);
+      }
     }
+
+    // Fallback or string input: send JSON base64 payload
+    const base64String =
+      typeof fileOrBase64 === "string" ? fileOrBase64 : await fileToBase64(fileOrBase64);
 
     const serverRes = await fetch("/api/upload/video", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...getAuthHeaders(),
+        ...authHeaders,
       },
       credentials: "include",
       body: JSON.stringify({
@@ -342,10 +386,12 @@ export function parseVideoUrl(rawUrl: string): VideoEmbedInfo {
   }
 
   // 4. Default: Direct streaming video (MP4, WebM, Catbox, etc.)
+  const isCatboxCdn = url.includes("catbox.moe/");
   return {
     type: "direct",
     isIframe: false,
-    embedUrl: url,
+    embedUrl: isCatboxCdn ? `/api/upload/stream?url=${encodeURIComponent(url)}` : url,
     rawUrl: url,
   };
 }
+

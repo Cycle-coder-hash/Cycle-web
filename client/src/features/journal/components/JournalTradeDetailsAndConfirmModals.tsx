@@ -320,7 +320,7 @@ export function JournalTradeDetailsAndConfirmModals({
                           }
                           return (
                             <video
-                              src={viewVideo}
+                              src={parsed.embedUrl || viewVideo}
                               controls
                               className="w-full max-h-80 rounded-xl bg-black shadow-md object-contain"
                             />

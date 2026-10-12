@@ -91,19 +91,29 @@ export function TradeMediaAndPropertiesSection({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("video/")) {
-      alert("Please upload a valid video file (MP4, WEBM, MOV).");
+    const isVideoMime = file.type && file.type.startsWith("video/");
+    const isVideoExt = /\.(mp4|webm|mov|mkv|ogg|ogv|m4v|avi)$/i.test(file.name || "");
+    if (!isVideoMime && !isVideoExt) {
+      setVideoError("Please upload a valid video file (MP4, WEBM, MOV).");
+      e.target.value = "";
       return;
     }
 
     const video = document.createElement("video");
     video.preload = "metadata";
-    video.onloadedmetadata = async () => {
-      window.URL.revokeObjectURL(video.src);
-      const duration = video.duration;
-      if (duration > 60) {
+    const objectUrl = URL.createObjectURL(file);
+    let settled = false;
+
+    const cleanup = () => {
+      try {
+        window.URL.revokeObjectURL(objectUrl);
+      } catch {}
+    };
+
+    const runUpload = async (durationSec: number) => {
+      if (durationSec > 60) {
         setVideoError(
-          `Video rejected: Duration is ${Math.round(duration)} seconds. Maximum allowed video length is 1 minute (60 seconds).`
+          `Video rejected: Duration is ${Math.round(durationSec)} seconds. Maximum allowed video length is 1 minute (60 seconds).`
         );
         setVideoUrl(undefined);
         setVideoDurationSeconds(undefined);
@@ -113,33 +123,50 @@ export function TradeMediaAndPropertiesSection({
       setIsUploadingVideo(true);
       const toastId = toast.loading(isBn ? "ফ্রি ক্লাউডে ভিডিও আপলোড হচ্ছে..." : "Uploading video to free cloud CDN...");
       try {
+        const previousUrl = videoUrl && (videoUrl.startsWith("http") || videoUrl.startsWith("/api/")) ? videoUrl : null;
         const cloudUrl = await uploadVideo(file, file.name, "journal");
+        if (previousUrl && previousUrl !== cloudUrl) {
+          deleteSavedVideo(previousUrl);
+        }
         setVideoUrl(cloudUrl);
-        setVideoDurationSeconds(Math.round(duration));
+        setVideoDurationSeconds(durationSec > 0 ? Math.round(durationSec) : undefined);
         toast.success(isBn ? "ভিডিও সফলভাবে ক্লাউডে সেভ হয়েছে!" : "Video uploaded to cloud CDN!", { id: toastId });
       } catch (err: any) {
         console.error("[Video upload error]:", err);
-        const errMsg = err?.message || "";
-        const isUpgradeRequired =
-          errMsg.includes("Pro and Premium") ||
-          errMsg.includes("Upgrade to unlock") ||
-          errMsg.includes("Upgrade to Premium") ||
-          errMsg.includes("limit") ||
-          errMsg.includes("restricted on your plan");
-
-        if (isUpgradeRequired && onRequestUpgrade) {
-          toast.dismiss(toastId);
-          onRequestUpgrade("journal_videos");
-          return;
-        }
-
-        setVideoError(errMsg || "Failed to upload video");
-        toast.error(isBn ? "ভিডিও আপলোড ব্যর্থ হয়েছে।" : "Failed to upload video.", { id: toastId });
+        const errMsg = err?.message || (isBn ? "ভিডিও আপলোড ব্যর্থ হয়েছে।" : "Failed to upload video.");
+        setVideoError(errMsg);
+        toast.error(errMsg, { id: toastId });
       } finally {
         setIsUploadingVideo(false);
       }
     };
-    video.src = URL.createObjectURL(file);
+
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      void runUpload(0);
+    }, 2500);
+
+    video.onloadedmetadata = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      cleanup();
+      const rawDuration = video.duration;
+      const safeDuration = Number.isFinite(rawDuration) && rawDuration > 0 ? rawDuration : 0;
+      void runUpload(safeDuration);
+    };
+
+    video.onerror = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      cleanup();
+      void runUpload(0);
+    };
+
+    video.src = objectUrl;
     e.target.value = "";
   };
 
@@ -159,7 +186,7 @@ export function TradeMediaAndPropertiesSection({
   };
 
   const handleRemoveVideo = () => {
-    if (videoUrl && videoUrl.startsWith("http")) {
+    if (videoUrl && (videoUrl.startsWith("http") || videoUrl.startsWith("/api/"))) {
       deleteSavedVideo(videoUrl);
     }
     setVideoUrl(undefined);
@@ -343,7 +370,7 @@ export function TradeMediaAndPropertiesSection({
                 }
                 return (
                   <video
-                    src={videoUrl}
+                    src={parsed.embedUrl || videoUrl}
                     controls
                     className="max-h-72 w-full object-contain"
                   />
@@ -362,13 +389,6 @@ export function TradeMediaAndPropertiesSection({
             <div className="space-y-2.5">
               {/* Option A: Direct Video Upload to Free CDN */}
               <label
-                onClick={(e) => {
-                  if (!canUploadVideo && onRequestUpgrade) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onRequestUpgrade("journal_videos");
-                  }
-                }}
                 className={`flex items-center justify-between px-4 py-3 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-white/40 dark:bg-slate-900/40 hover:border-purple-400 cursor-pointer transition ${isUploadingVideo ? "opacity-50 pointer-events-none" : ""}`}
               >
                 <div className="flex items-center gap-2.5">
@@ -393,15 +413,7 @@ export function TradeMediaAndPropertiesSection({
                   type="file"
                   accept="video/*"
                   disabled={isUploadingVideo}
-                  onChange={(e) => {
-                    if (!canUploadVideo && onRequestUpgrade) {
-                      e.preventDefault();
-                      onRequestUpgrade("journal_videos");
-                      e.target.value = "";
-                      return;
-                    }
-                    handleVideoUpload(e);
-                  }}
+                  onChange={handleVideoUpload}
                   className="hidden"
                 />
               </label>
