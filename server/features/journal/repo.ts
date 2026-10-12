@@ -7,7 +7,7 @@ import { getDb } from "../../infra/db/client";
 import { getSetting, setSetting } from "../../infra/db/settings";
 import { supabaseServer } from "../../infra/db/supabase";
 import { deriveNumericIdFromOpenId } from "@shared/const";
-import { getUserById, getUserByOpenId, inMemoryUsers } from "../../db";
+import { getUserById, getUserByOpenId, inMemoryUsers } from "../auth";
 
 export interface UserJournalConfig {
   startingBalance: number;

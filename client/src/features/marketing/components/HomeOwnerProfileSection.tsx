@@ -136,7 +136,7 @@ export function HomeOwnerProfileSection({
   return (
     <section
       id="owner-profile"
-      className="relative py-16 sm:py-24 text-slate-900 dark:text-white border-t border-slate-200/70 dark:border-[var(--border-subtle)] bg-slate-50/50 dark:bg-transparent overflow-hidden"
+      className="relative py-16 sm:py-24 text-slate-900 dark:text-white border-t border-slate-200/70 dark:border-slate-800/80 bg-slate-50/50 dark:bg-[#070e1b] overflow-hidden"
     >
       {/* Subtle atmospheric ambient glow */}
       <div className="absolute top-1/2 left-1/4 -translate-y-1/2 -translate-x-1/2 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none dark:hidden" />
@@ -145,7 +145,7 @@ export function HomeOwnerProfileSection({
       <div className="relative mx-auto max-w-7xl px-5 lg:px-8 z-10">
         {/* Section Header */}
         <div className="mb-10 sm:mb-12 text-center max-w-3xl mx-auto">
-          <p className="text-xs font-extrabold uppercase tracking-[.2em] text-[#0284c7] dark:text-[var(--glow-soft)]">
+          <p className="text-xs font-extrabold uppercase tracking-[.2em] text-[#0284c7] dark:text-[#38bdf8]">
             {copy.ownerEyebrow}
           </p>
           <h2 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
@@ -158,7 +158,7 @@ export function HomeOwnerProfileSection({
 
         {/* Profile Card */}
         {ownerProfile && (
-          <div className="relative rounded-3xl border border-slate-200/90 bg-white/85 p-6 sm:p-10 lg:p-12 backdrop-blur-md shadow-xl dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] dark:shadow-2xl dark:shadow-[#1B2F5E]/30 transition-all">
+          <div className="relative rounded-3xl border border-slate-200/90 bg-white/85 p-6 sm:p-10 lg:p-12 backdrop-blur-md shadow-xl dark:border-slate-800/90 dark:bg-[#0b162a]/80 dark:shadow-2xl dark:shadow-sky-950/30 transition-all">
             <AnimatedRgbBorder />
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 xl:gap-10 items-center relative z-10">
               {/* Left Column: Profile 1 */}

@@ -41,7 +41,7 @@ interface UpgradeModalProps {
   feature?: UpgradeFeatureType;
   customTitle?: string;
   customDescription?: string;
-  currentPlan?: "free_trial" | "free_after_trial" | "pro" | "premium";
+  currentPlan?: "unclaimed" | "free_trial" | "free_after_trial" | "pro" | "premium";
 }
 
 const FEATURE_INFO: Record<

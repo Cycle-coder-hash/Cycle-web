@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { UpgradeModal, UpgradeFeatureType } from "@/components/subscription/UpgradeModal";
+import { ClaimFreePlanModal } from "@/components/subscription/ClaimFreePlanModal";
 
 interface TraderNotebookProps {
   user?: any;
@@ -57,6 +58,23 @@ export function TraderNotebook({ user, isBn = false, subUsage: propSubUsage }: T
 
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState<UpgradeFeatureType>("notebook_pages");
+  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
+  const [pendingNotebookAction, setPendingNotebookAction] = useState<
+    | { type: "create_template"; name: string; description?: string }
+    | { type: "rename_template"; templateId: string; newName: string }
+    | { type: "create_page"; parentPageId?: string | null }
+    | { type: "rename_page"; pageId: string; newTitle: string }
+    | { type: "update_page"; updatedPage: NotebookPage }
+    | null
+  >(null);
+  const preClaimUserDataRef = React.useRef<NotebookUserData | null>(null);
+
+  const isUnclaimed = Boolean(
+    user &&
+      subUsage &&
+      (subUsage.plan === "unclaimed" || (subUsage as any).trialStatus === "unclaimed") &&
+      !(subUsage as any).isPaidActive
+  );
 
   const [userData, setUserData] = useState<NotebookUserData | null>(null);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
@@ -121,14 +139,13 @@ export function TraderNotebook({ user, isBn = false, subUsage: propSubUsage }: T
     };
   }, [userId]);
 
-  // Non-destructive bidirectional sync between local cache & remote cloud vault
+  // Non-destructive bidirectional sync between local cache & remote cloud vault (never auto-write while unclaimed)
   useEffect(() => {
-    if (!user || remoteNotebookQuery.isLoading || !remoteNotebookQuery.isSuccess) return;
+    if (!user || !subUsage || isUnclaimed || remoteNotebookQuery.isLoading || !remoteNotebookQuery.isSuccess) return;
     if (hasSyncedRemoteRef.current) return;
 
     const remoteData = remoteNotebookQuery.data;
     if (!remoteData || typeof remoteData !== "object") {
-      // Remote is empty: rescue local notebook to server vault if local has templates
       if (userData && Array.isArray(userData.templates) && userData.templates.length > 0) {
         console.log("[TraderNotebook] Rescuing local notebook to server vault...");
         saveNotebookMutation.mutate({ data: userData });
@@ -205,18 +222,18 @@ export function TraderNotebook({ user, isBn = false, subUsage: propSubUsage }: T
     saveUserNotebookData(userId, mergedData);
     saveNotebookMutation.mutate({ data: mergedData });
     hasSyncedRemoteRef.current = true;
-  }, [user, remoteNotebookQuery.isLoading, remoteNotebookQuery.isSuccess, remoteNotebookQuery.data, userData, userId, activeTemplateId, activePageId]);
+  }, [user, subUsage, isUnclaimed, remoteNotebookQuery.isLoading, remoteNotebookQuery.isSuccess, remoteNotebookQuery.data, userData, userId, activeTemplateId, activePageId]);
 
   // Save changes helper with local debounce + debounced server sync
   const persistChanges = useCallback(
-    (nextData: NotebookUserData) => {
+    (nextData: NotebookUserData, skipServerIfUnclaimed = false) => {
       setUserData(nextData);
       setIsSaving(true);
       debouncedSaveNotebookData(userId, nextData, 400).then(() => {
         setIsSaving(false);
       });
 
-      if (user) {
+      if (user && !skipServerIfUnclaimed) {
         if (serverSaveTimerRef.current) {
           clearTimeout(serverSaveTimerRef.current);
         }
@@ -228,7 +245,7 @@ export function TraderNotebook({ user, isBn = false, subUsage: propSubUsage }: T
     [userId, user, saveNotebookMutation]
   );
 
-  // Switch Template
+  // Switch Template (read-only navigation does not require claiming)
   const handleSelectTemplate = (templateId: string) => {
     if (!userData) return;
     setActiveTemplateId(templateId);
@@ -236,15 +253,18 @@ export function TraderNotebook({ user, isBn = false, subUsage: propSubUsage }: T
     const firstPage = pagesInTmpl[0] || null;
     setActivePageId(firstPage ? firstPage.id : null);
 
-    persistChanges({
-      ...userData,
-      activeTemplateId: templateId,
-      activePageId: firstPage ? firstPage.id : null,
-    });
+    persistChanges(
+      {
+        ...userData,
+        activeTemplateId: templateId,
+        activePageId: firstPage ? firstPage.id : null,
+      },
+      isUnclaimed
+    );
   };
 
   // Create Template
-  const handleCreateTemplate = (name: string, description?: string) => {
+  const executeCreateTemplate = (name: string, description?: string) => {
     if (!userData) return;
     const newTemplateId = `tmpl_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     const newTemplate: NotebookTemplate = {
@@ -258,7 +278,6 @@ export function TraderNotebook({ user, isBn = false, subUsage: propSubUsage }: T
       updatedAt: new Date().toISOString(),
     };
 
-    // Also create initial welcome page
     const newPageId = `page_${Date.now()}_init`;
     const initialPage: NotebookPage = {
       id: newPageId,
@@ -302,8 +321,18 @@ export function TraderNotebook({ user, isBn = false, subUsage: propSubUsage }: T
     persistChanges(nextData);
   };
 
+  const handleCreateTemplate = (name: string, description?: string) => {
+    if (!userData) return;
+    if (isUnclaimed) {
+      setPendingNotebookAction({ type: "create_template", name, description });
+      setIsClaimModalOpen(true);
+      return;
+    }
+    executeCreateTemplate(name, description);
+  };
+
   // Rename Template
-  const handleRenameTemplate = (templateId: string, newName: string) => {
+  const executeRenameTemplate = (templateId: string, newName: string) => {
     if (!userData) return;
     const nextTemplates = userData.templates.map((t) =>
       t.id === templateId ? { ...t, name: newName, updatedAt: new Date().toISOString() } : t
@@ -312,6 +341,16 @@ export function TraderNotebook({ user, isBn = false, subUsage: propSubUsage }: T
       ...userData,
       templates: nextTemplates,
     });
+  };
+
+  const handleRenameTemplate = (templateId: string, newName: string) => {
+    if (!userData) return;
+    if (isUnclaimed) {
+      setPendingNotebookAction({ type: "rename_template", templateId, newName });
+      setIsClaimModalOpen(true);
+      return;
+    }
+    executeRenameTemplate(templateId, newName);
   };
 
   // Trigger Delete Template Dialog
@@ -340,32 +379,38 @@ export function TraderNotebook({ user, isBn = false, subUsage: propSubUsage }: T
     setActiveTemplateId(nextActiveTmpl);
     setActivePageId(nextActivePage);
 
-    persistChanges({
-      ...userData,
-      templates: remainingTemplates,
-      pages: remainingPages,
-      activeTemplateId: nextActiveTmpl,
-      activePageId: nextActivePage,
-    });
+    persistChanges(
+      {
+        ...userData,
+        templates: remainingTemplates,
+        pages: remainingPages,
+        activeTemplateId: nextActiveTmpl,
+        activePageId: nextActivePage,
+      },
+      isUnclaimed
+    );
 
     setDeleteTarget((prev) => ({ ...prev, isOpen: false }));
   };
 
-  // Select Page
+  // Select Page (read-only navigation does not require claiming)
   const handleSelectPage = (pageId: string) => {
     if (!userData) return;
     setActivePageId(pageId);
-    persistChanges({
-      ...userData,
-      activePageId: pageId,
-    });
+    persistChanges(
+      {
+        ...userData,
+        activePageId: pageId,
+      },
+      isUnclaimed
+    );
   };
 
   // Create Page (Top-level or Sub-page)
-  const handleCreatePage = (parentPageId?: string | null) => {
+  const executeCreatePage = (parentPageId?: string | null, bypassLimitCheck = false) => {
     if (!userData || !activeTemplateId) return;
 
-    if (subUsage) {
+    if (subUsage && !bypassLimitCheck) {
       if (
         subUsage.notebookPagesLimit === 0 ||
         (subUsage.notebookPagesLimit !== "unlimited" &&
@@ -416,8 +461,18 @@ export function TraderNotebook({ user, isBn = false, subUsage: propSubUsage }: T
     createNotebookPageMutation.mutate({ pageId: newPageId });
   };
 
+  const handleCreatePage = (parentPageId?: string | null) => {
+    if (!userData || !activeTemplateId) return;
+    if (isUnclaimed) {
+      setPendingNotebookAction({ type: "create_page", parentPageId });
+      setIsClaimModalOpen(true);
+      return;
+    }
+    executeCreatePage(parentPageId);
+  };
+
   // Rename Page
-  const handleRenamePage = (pageId: string, newTitle: string) => {
+  const executeRenamePage = (pageId: string, newTitle: string) => {
     if (!userData) return;
     const nextPages = userData.pages.map((p) =>
       p.id === pageId ? { ...p, title: newTitle, updatedAt: new Date().toISOString() } : p
@@ -426,6 +481,16 @@ export function TraderNotebook({ user, isBn = false, subUsage: propSubUsage }: T
       ...userData,
       pages: nextPages,
     });
+  };
+
+  const handleRenamePage = (pageId: string, newTitle: string) => {
+    if (!userData) return;
+    if (isUnclaimed) {
+      setPendingNotebookAction({ type: "rename_page", pageId, newTitle });
+      setIsClaimModalOpen(true);
+      return;
+    }
+    executeRenamePage(pageId, newTitle);
   };
 
   // Trigger Delete Page Dialog
@@ -445,10 +510,8 @@ export function TraderNotebook({ user, isBn = false, subUsage: propSubUsage }: T
     if (!userData) return;
     const pageId = deleteTarget.id;
 
-    // Remove the target page and any child subpages
     const nextPages = userData.pages.filter((p) => p.id !== pageId && p.parentPageId !== pageId);
 
-    // Pick next active page in current template
     let nextActivePage = activePageId;
     if (activePageId === pageId || !nextPages.some((p) => p.id === activePageId)) {
       const tmplPages = nextPages.filter((p) => p.notebookId === activeTemplateId);
@@ -456,24 +519,66 @@ export function TraderNotebook({ user, isBn = false, subUsage: propSubUsage }: T
     }
 
     setActivePageId(nextActivePage);
-    persistChanges({
-      ...userData,
-      pages: nextPages,
-      activePageId: nextActivePage,
-    });
+    persistChanges(
+      {
+        ...userData,
+        pages: nextPages,
+        activePageId: nextActivePage,
+      },
+      isUnclaimed
+    );
 
     setDeleteTarget((prev) => ({ ...prev, isOpen: false }));
     deleteNotebookPageMutation.mutate({ pageId });
   };
 
   // Update Page Content
-  const handleUpdatePage = (updatedPage: NotebookPage) => {
+  const executeUpdatePage = (updatedPage: NotebookPage) => {
     if (!userData) return;
     const nextPages = userData.pages.map((p) => (p.id === updatedPage.id ? updatedPage : p));
     persistChanges({
       ...userData,
       pages: nextPages,
     });
+  };
+
+  const handleUpdatePage = (updatedPage: NotebookPage) => {
+    if (!userData) return;
+    if (isUnclaimed) {
+      if (!preClaimUserDataRef.current) {
+        preClaimUserDataRef.current = JSON.parse(JSON.stringify(userData));
+      }
+      // Keep typed content visible in editor while prompting user to claim Free Plan
+      const nextPages = userData.pages.map((p) => (p.id === updatedPage.id ? updatedPage : p));
+      setUserData({
+        ...userData,
+        pages: nextPages,
+      });
+      setPendingNotebookAction({ type: "update_page", updatedPage });
+      if (!isClaimModalOpen) {
+        setIsClaimModalOpen(true);
+      }
+      return;
+    }
+    executeUpdatePage(updatedPage);
+  };
+
+  const handleClaimSuccess = () => {
+    const action = pendingNotebookAction;
+    setPendingNotebookAction(null);
+    preClaimUserDataRef.current = null;
+    if (!action) return;
+    if (action.type === "create_template") {
+      executeCreateTemplate(action.name, action.description);
+    } else if (action.type === "rename_template") {
+      executeRenameTemplate(action.templateId, action.newName);
+    } else if (action.type === "create_page") {
+      executeCreatePage(action.parentPageId, true);
+    } else if (action.type === "rename_page") {
+      executeRenamePage(action.pageId, action.newTitle);
+    } else if (action.type === "update_page") {
+      executeUpdatePage(action.updatedPage);
+    }
   };
 
   // Active Template & Page objects
@@ -676,6 +781,21 @@ export function TraderNotebook({ user, isBn = false, subUsage: propSubUsage }: T
         onClose={() => setIsUpgradeModalOpen(false)}
         feature={upgradeFeature}
         currentPlan={subUsage?.plan}
+      />
+
+      {/* Explicit 20-Day Free Trial Claim Modal */}
+      <ClaimFreePlanModal
+        isOpen={isClaimModalOpen}
+        onClose={() => {
+          setIsClaimModalOpen(false);
+          setPendingNotebookAction(null);
+          if (preClaimUserDataRef.current) {
+            setUserData(preClaimUserDataRef.current);
+            preClaimUserDataRef.current = null;
+          }
+        }}
+        onClaimSuccess={handleClaimSuccess}
+        source="notebook"
       />
     </div>
   );

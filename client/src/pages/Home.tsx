@@ -300,14 +300,14 @@ export default function Home() {
 
   return (
     <div
-      className={`min-h-screen bg-[#f8fafc] text-[#09111f] selection:bg-[var(--accent-primary)] selection:text-[#09111f] dark:bg-transparent dark:text-[var(--text-primary)] transition-colors duration-300 ${
+      className={`min-h-screen bg-[#f8fafc] text-[#09111f] selection:bg-[#38bdf8] selection:text-[#09111f] dark:bg-transparent dark:text-slate-100 transition-colors duration-300 ${
         language === "bn" ? "font-bangla" : language === "ur" ? "font-urdu" : ""
       }`}
     >
       {/* ========================================================================= */}
       {/* HEADER / NAVIGATION BAR */}
       {/* ========================================================================= */}
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-200/80 bg-white/85 text-slate-900 backdrop-blur-xl transition-colors dark:border-[var(--border-subtle)] dark:bg-[var(--bg-base)]/80 dark:text-[var(--text-primary)]">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-200/80 bg-white/85 text-slate-900 backdrop-blur-xl transition-colors dark:border-slate-800/80 dark:bg-[#070e1b]/85 dark:text-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-3 sm:px-5 py-2.5 sm:py-3 lg:px-8">
           <Link href="/" className="flex items-center gap-1.5 sm:gap-2.5 min-w-0 shrink">
             <BrandLogo size={36} className="shrink-0 sm:size-[42px]" />
@@ -321,7 +321,7 @@ export default function Home() {
             <button
               onClick={toggleTheme}
               aria-label="Toggle Dark/Light Mode"
-              className="hidden md:flex size-9 items-center justify-center rounded-full border border-slate-300/80 bg-slate-100 text-slate-700 transition hover:bg-slate-200 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] dark:text-yellow-400 dark:hover:bg-white/10"
+              className="hidden md:flex size-9 items-center justify-center rounded-full border border-slate-300/80 bg-slate-100 text-slate-700 transition hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-yellow-400 dark:hover:bg-slate-700"
               title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
               {theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}
@@ -340,7 +340,7 @@ export default function Home() {
               <Link href="/dashboard" className="shrink-0">
                 <Button
                   size="sm"
-                  className="bg-[#091e3a] text-white hover:bg-[#0c284e] dark:btn-primary-glow font-bold text-xs sm:text-sm px-2.5 sm:px-3 h-8 sm:h-9"
+                  className="bg-[#091e3a] text-white hover:bg-[#0c284e] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 font-bold text-xs sm:text-sm px-2.5 sm:px-3 h-8 sm:h-9"
                 >
                   {copy.dashboard}
                 </Button>
@@ -349,16 +349,16 @@ export default function Home() {
               <Link href="/login" className="shrink-0">
                 <Button
                   size="sm"
-                  className="bg-[#091e3a] text-white hover:bg-[#0c284e] dark:btn-primary-glow font-bold text-xs sm:text-sm px-2.5 sm:px-3.5 h-8 sm:h-9"
+                  className="bg-[#091e3a] text-white hover:bg-[#0c284e] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 font-bold text-xs sm:text-sm px-3 sm:px-3.5 h-8 sm:h-9 shadow-sm shadow-sky-500/20"
                 >
-                  Go Process
+                  {copy.signIn}
                 </Button>
               </Link>
             )}
 
             {/* Mobile Hamburger Toggle Button */}
             <button
-              className="flex size-8 sm:size-9 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10 transition-colors md:hidden"
+              className="flex size-8 sm:size-9 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors md:hidden"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="Toggle navigation"
             >
@@ -369,7 +369,7 @@ export default function Home() {
 
         {/* Mobile Navigation Dropdown */}
         {menuOpen && (
-          <div className="border-t border-slate-200 bg-white/95 px-4 sm:px-5 py-4 shadow-lg backdrop-blur-xl dark:border-[var(--border-subtle)] dark:bg-[var(--bg-base)]/95 md:hidden animate-in fade-in duration-150">
+          <div className="border-t border-slate-200 bg-white/95 px-4 sm:px-5 py-4 shadow-lg backdrop-blur-xl dark:border-slate-800 dark:bg-[#070e1b]/95 md:hidden animate-in fade-in duration-150">
             <TopNavLinks
               isBn={isBn}
               copy={copy}
@@ -378,7 +378,7 @@ export default function Home() {
             />
 
             {/* Mobile Secondary Controls Bar */}
-            <div className="mt-4 pt-3.5 border-t border-slate-200/80 dark:border-[var(--border-subtle)] flex items-center justify-between gap-3">
+            <div className="mt-4 pt-3.5 border-t border-slate-200/80 dark:border-slate-800/80 flex items-center justify-between gap-3">
               <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                 {theme === "dark" ? "Dark Theme" : "Light Theme"}
               </span>
@@ -387,7 +387,7 @@ export default function Home() {
                 type="button"
                 onClick={toggleTheme}
                 aria-label="Toggle Dark/Light Mode"
-                className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-300/80 bg-slate-100 text-xs font-bold text-slate-700 transition hover:bg-slate-200 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] dark:text-yellow-400 dark:hover:bg-white/10"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-300/80 bg-slate-100 text-xs font-bold text-slate-700 transition hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-yellow-400 dark:hover:bg-slate-700"
               >
                 {theme === "dark" ? (
                   <>
@@ -418,33 +418,23 @@ export default function Home() {
 
           <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 lg:grid-cols-[1.08fr_0.92fr] lg:gap-8 lg:px-8">
             <div className="z-10 flex flex-col justify-center">
-              <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-sky-200 bg-white/80 px-3.5 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#0284c7] shadow-sm backdrop-blur-md dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] dark:text-[var(--glow-soft)]">
+              <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-sky-200 bg-white/80 px-3.5 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#0284c7] shadow-sm backdrop-blur-md dark:border-sky-500/30 dark:bg-slate-900/80 dark:text-sky-400">
                 <span className="relative flex size-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#0284c7] opacity-75 dark:bg-[var(--accent-highlight)]" />
-                  <span className="relative inline-flex size-2 rounded-full bg-[#0284c7] dark:bg-[var(--accent-highlight)]" />
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#0284c7] opacity-75 dark:bg-sky-400" />
+                  <span className="relative inline-flex size-2 rounded-full bg-[#0284c7] dark:bg-sky-400" />
                 </span>
                 {copy.heroEyebrow}
               </div>
 
-              <h1 className="max-w-xl whitespace-pre-line text-3xl font-extrabold leading-[1.12] tracking-[-0.03em] text-[#071a36] dark:text-[var(--text-primary)] sm:text-5xl lg:text-[4.2rem]">
-                {copy.heroTitle.includes("\n") ? (
-                  <>
-                    <span>{copy.heroTitle.split("\n")[0]}</span>
-                    {"\n"}
-                    <span className="headline-gradient-accent">
-                      {copy.heroTitle.split("\n").slice(1).join("\n")}
-                    </span>
-                  </>
-                ) : (
-                  <span className="headline-gradient-accent">{copy.heroTitle}</span>
-                )}
+              <h1 className="max-w-xl whitespace-pre-line text-3xl font-extrabold leading-[1.12] tracking-[-0.03em] text-[#071a36] dark:text-white sm:text-5xl lg:text-[4.2rem]">
+                {copy.heroTitle}
               </h1>
 
               <p
                 className={`mt-6 max-w-lg leading-relaxed whitespace-pre-line ${
                   isBn
                     ? "text-base sm:text-lg text-slate-600 dark:text-slate-300"
-                    : "text-xl sm:text-2xl font-bold text-[#0284c7] dark:text-[var(--glow-soft)] headline-gradient-accent"
+                    : "text-xl sm:text-2xl font-bold text-[#0284c7] dark:text-sky-400"
                 }`}
               >
                 {copy.heroSubtitle}
@@ -458,9 +448,9 @@ export default function Home() {
                 <a href="#roadmap" className="w-full sm:w-auto">
                   <Button
                     size="lg"
-                    className="w-full sm:w-auto h-12 rounded-xl bg-[#081833] px-7 text-base font-bold text-white shadow-lg shadow-[#081833]/25 transition hover:bg-[#0c244b] hover:shadow-xl active:scale-[0.98] dark:btn-primary-glow"
+                    className="w-full sm:w-auto h-12 rounded-xl bg-[#081833] px-7 text-base font-bold text-white shadow-lg shadow-[#081833]/25 transition hover:bg-[#0c244b] hover:shadow-xl active:scale-[0.98] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 dark:shadow-sky-500/20"
                   >
-                    <Compass size={18} className="mr-2 dark:text-[var(--accent-highlight)]" />
+                    <Compass size={18} className="mr-2" />
                     {copy.primaryCta}
                   </Button>
                 </a>
@@ -469,25 +459,25 @@ export default function Home() {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="w-full sm:w-auto h-12 rounded-xl border border-slate-300 bg-white/80 px-7 text-base font-bold text-slate-800 shadow-sm backdrop-blur-md transition hover:bg-slate-100 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] dark:text-[var(--text-primary)] dark:hover:bg-white/10 active:scale-[0.98]"
+                    className="w-full sm:w-auto h-12 rounded-xl border border-slate-300 bg-white/80 px-7 text-base font-bold text-slate-800 shadow-sm backdrop-blur-md transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100 dark:hover:bg-slate-700 active:scale-[0.98]"
                   >
-                    <ShoppingBag size={18} className="mr-2 text-[#0284c7] dark:text-[var(--glow-soft)]" />
+                    <ShoppingBag size={18} className="mr-2 text-[#0284c7] dark:text-sky-400" />
                     {copy.secondaryCta}
                   </Button>
                 </a>
               </div>
 
-              <div className="mt-10 flex flex-wrap items-center gap-6 border-t border-slate-200/80 pt-6 text-xs font-bold text-slate-500 dark:border-[var(--border-subtle)] dark:text-slate-300">
+              <div className="mt-10 flex flex-wrap items-center gap-6 border-t border-slate-200/80 pt-6 text-xs font-bold text-slate-500 dark:border-slate-800 dark:text-slate-400">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck size={16} className="text-[#0284c7] dark:text-[var(--glow-soft)]" />
+                  <ShieldCheck size={16} className="text-[#0284c7] dark:text-sky-400" />
                   <span>{copy.trust1}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Zap size={16} className="text-[#0284c7] dark:text-[var(--glow-soft)]" />
+                  <Zap size={16} className="text-[#0284c7] dark:text-sky-400" />
                   <span>{copy.trust2}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Layers size={16} className="text-[#0284c7] dark:text-[var(--glow-soft)]" />
+                  <Layers size={16} className="text-[#0284c7] dark:text-sky-400" />
                   <span>{copy.trust3}</span>
                 </div>
               </div>
@@ -498,7 +488,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="relative mx-auto mt-16 max-w-7xl border-t border-slate-200/80 px-5 pt-8 dark:border-[var(--border-subtle)] lg:px-8">
+          <div className="relative mx-auto mt-16 max-w-7xl border-t border-slate-200/80 px-5 pt-8 dark:border-slate-800 lg:px-8">
             <NewsHeadlineStats isBn={isBn} />
           </div>
         </section>
@@ -522,13 +512,13 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* STORE & PRODUCTS SECTION */}
         {/* ========================================================================= */}
-        <section id="store" className="content-auto bg-[#f8fafc] py-16 sm:py-24 dark:bg-transparent transition-colors">
+        <section id="store" className="content-auto bg-[#f8fafc] py-16 sm:py-24 dark:bg-[#070e1b] transition-colors">
 
           <div className="mx-auto max-w-7xl px-5 lg:px-8">
             <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
               <div>
                 <p className="eyebrow">{copy.storeEyebrow}</p>
-                <h2 className="mt-4 text-4xl font-extrabold tracking-[-.03em] text-slate-900 dark:text-[var(--text-primary)] whitespace-pre-line leading-tight">
+                <h2 className="mt-4 text-4xl font-extrabold tracking-[-.03em] text-slate-900 dark:text-white whitespace-pre-line leading-tight">
                   {copy.storeTitle}
                 </h2>
               </div>
@@ -573,15 +563,15 @@ export default function Home() {
                   >
                     <div
                       onClick={handleCardClick}
-                      className={`group relative flex flex-col justify-between rounded-3xl p-7 transition-all duration-300 ease-out cursor-pointer hover:-translate-y-3 hover:scale-[1.03] active:scale-[0.99] h-full backdrop-blur-md ${
+                      className={`group relative flex flex-col justify-between rounded-3xl p-7 transition-all duration-300 ease-out cursor-pointer hover:-translate-y-3 hover:scale-[1.03] active:scale-[0.99] h-full ${
                         isPopular
-                          ? "bg-[#0d1a2d] text-white border-2 border-[var(--accent-primary)] shadow-2xl shadow-sky-500/20 dark:bg-[var(--bg-navy-mid)]/45 dark:border-[var(--accent-primary)] dark:shadow-[0_8px_36px_-4px_rgba(92,156,235,0.3)] lg:-translate-y-2 hover:border-sky-300"
-                          : "border border-slate-200 bg-white text-slate-900 shadow-lg shadow-slate-200/50 hover:border-sky-400/80 hover:shadow-2xl hover:shadow-sky-500/10 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] dark:text-[var(--text-primary)] dark:shadow-none dark:hover:border-[var(--accent-primary)]/60"
+                          ? "bg-[#0d1a2d] text-white border-2 border-[#38bdf8] shadow-2xl shadow-sky-500/20 dark:bg-slate-800 dark:border-sky-400 dark:shadow-sky-950/60 lg:-translate-y-2 hover:border-sky-300"
+                          : "border border-slate-200 bg-white text-slate-900 shadow-lg shadow-slate-200/50 hover:border-sky-400/80 hover:shadow-2xl hover:shadow-sky-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:shadow-none dark:hover:border-sky-500/50"
                       }`}
                     >
                     {/* Top Popular Glow Ribbon */}
                     {isPopular && (
-                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-highlight)] px-4 py-1 text-[11px] font-black uppercase tracking-wider text-slate-950 shadow-md">
+                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 px-4 py-1 text-[11px] font-black uppercase tracking-wider text-slate-950 shadow-md">
                         {topRibbonText}
                       </div>
                     )}
@@ -593,8 +583,8 @@ export default function Home() {
                           <span
                             className={`rounded-full px-3 py-1 text-[10px] font-extrabold uppercase tracking-[.16em] ${
                               isPopular
-                                ? "bg-white/15 text-[var(--glow-soft)] border border-[var(--border-subtle)]"
-                                : "bg-[#eef3f6] text-slate-600 dark:bg-[var(--surface)] dark:text-slate-300 dark:border dark:border-[var(--border-subtle)]"
+                                ? "bg-white/15 text-[#38bdf8]"
+                                : "bg-[#eef3f6] text-slate-600 dark:bg-slate-800 dark:text-slate-400"
                             }`}
                           >
                             {selectText({ en: item.badgeEn || "PACKAGE", bn: item.badgeBn || "প্যাকেজ", ur: item.badgeUr || "پیکج" })}
@@ -605,7 +595,7 @@ export default function Home() {
                         <Sparkles
                           size={18}
                           className={`transition-transform duration-300 group-hover:rotate-12 group-hover:scale-125 ${
-                            isPopular ? "text-[var(--glow-soft)]" : "text-slate-400 group-hover:text-[var(--accent-primary)]"
+                            isPopular ? "text-[#38bdf8]" : "text-slate-400 group-hover:text-sky-500"
                           }`}
                         />
                       </div>
@@ -619,7 +609,7 @@ export default function Home() {
                       {Boolean(selectText({ en: item.descriptionEn, bn: item.descriptionBn, ur: item.descriptionUr })) && (
                         <p
                           className={`mt-2.5 text-xs sm:text-sm leading-relaxed ${
-                            isPopular ? "text-slate-300" : "text-slate-500 dark:text-slate-300"
+                            isPopular ? "text-slate-300" : "text-slate-500 dark:text-slate-400"
                           }`}
                         >
                           {selectText({ en: item.descriptionEn, bn: item.descriptionBn, ur: item.descriptionUr })}
@@ -627,18 +617,18 @@ export default function Home() {
                       )}
 
                       {/* Included Features Checklist */}
-                      <div className="mt-6 space-y-2.5 border-t border-dashed border-slate-200/60 pt-5 dark:border-[var(--border-subtle)]">
+                      <div className="mt-6 space-y-2.5 border-t border-dashed border-slate-200/60 pt-5 dark:border-slate-700/60">
                         {features.map((feat: string, fIdx: number) => (
                           <div key={fIdx} className="flex items-start gap-2 text-xs sm:text-sm">
                             <CheckCircle2
                               size={15}
                               className={`mt-0.5 shrink-0 ${
-                                isPopular ? "text-[var(--accent-highlight)]" : "text-emerald-500 dark:text-[var(--accent-highlight)]"
+                                isPopular ? "text-[#38bdf8]" : "text-emerald-500 dark:text-emerald-400"
                               }`}
                             />
                             <span
                               className={`leading-tight font-medium ${
-                                isPopular ? "text-slate-200" : "text-slate-700 dark:text-slate-200"
+                                isPopular ? "text-slate-200" : "text-slate-700 dark:text-slate-300"
                               }`}
                             >
                               {feat}
@@ -649,7 +639,7 @@ export default function Home() {
                     </div>
 
                     {/* Pricing & CTA Button */}
-                    <div className="mt-8 border-t border-slate-100 pt-5 dark:border-[var(--border-subtle)]">
+                    <div className="mt-8 border-t border-slate-100 pt-5 dark:border-slate-800">
                       <div className="flex items-baseline justify-between mb-4">
                         <div>
                           <div className="flex items-baseline flex-wrap gap-2 sm:gap-2.5">
@@ -675,8 +665,8 @@ export default function Home() {
                           size="lg"
                           className={`group/btn w-full gap-2 rounded-2xl font-extrabold text-sm shadow-md transition-all duration-200 active:scale-[0.98] ${
                             isPopular
-                              ? "btn-primary-glow"
-                              : "bg-[#0d1a2d] text-white hover:bg-[#17365b] dark:btn-primary-glow"
+                              ? "bg-[#38bdf8] text-slate-950 hover:bg-[#7dd3fc] hover:shadow-lg hover:shadow-sky-500/25"
+                              : "bg-[#0d1a2d] text-white hover:bg-[#17365b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400"
                           }`}
                         >
                           <span>{copy.viewBundle}</span>
@@ -705,10 +695,10 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* CALL TO ACTION BOTTOM BANNER */}
         {/* ========================================================================= */}
-        <section className="bg-gradient-to-r from-[#071a36] via-[#0d2a52] to-[#0a1e3d] py-20 text-white dark:bg-transparent dark:from-transparent dark:via-[var(--bg-navy-mid)]/35 dark:to-transparent dark:border-t dark:border-[var(--border-subtle)]">
+        <section className="bg-gradient-to-r from-[#071a36] via-[#0d2a52] to-[#0a1e3d] py-20 text-white dark:bg-[#070e1b] dark:from-[#070e1b] dark:via-[#070e1b] dark:to-[#070e1b]">
           <div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 px-5 sm:flex-row sm:items-center lg:px-8">
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-[.2em] text-[var(--glow-soft)]">
+              <p className="text-xs font-extrabold uppercase tracking-[.2em] text-[#38bdf8]">
                 {copy.ctaEyebrow}
               </p>
               <h2 className="mt-4 max-w-2xl text-4xl font-extrabold leading-tight tracking-[-.03em] sm:text-5xl whitespace-pre-line">
@@ -716,7 +706,7 @@ export default function Home() {
               </h2>
             </div>
             <a href="#roadmap">
-              <Button size="lg" className="w-fit btn-primary-glow font-bold">
+              <Button size="lg" className="w-fit bg-[#38bdf8] font-bold text-[#08111f] hover:bg-[#7dd3fc]">
                 {copy.ctaButton} <ArrowRight size={17} className="ml-1" />
               </Button>
             </a>
@@ -728,17 +718,17 @@ export default function Home() {
         {/* ========================================================================= */}
         <section
           id="trading-platforms"
-          className="relative py-14 sm:py-16 text-slate-900 dark:text-[var(--text-primary)] border-t border-slate-200/70 dark:border-[var(--border-subtle)] bg-slate-100/50 dark:bg-transparent"
+          className="relative py-14 sm:py-16 text-slate-900 dark:text-white border-t border-slate-200/70 dark:border-slate-800/80 bg-slate-100/50 dark:bg-[#070e1b]"
         >
           <div className="mx-auto max-w-7xl px-5 lg:px-8">
             <div className="mb-8">
-              <p className="text-xs font-extrabold uppercase tracking-[.2em] text-[#0284c7] dark:text-[var(--glow-soft)]">
+              <p className="text-xs font-extrabold uppercase tracking-[.2em] text-[#0284c7] dark:text-[#38bdf8]">
                 {copy.platformsEyebrow}
               </p>
-              <h2 className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-[var(--text-primary)]">
+              <h2 className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                 {copy.platformsTitle}
               </h2>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-300 max-w-2xl">
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
                 {copy.platformsDesc}
               </p>
             </div>
@@ -750,31 +740,31 @@ export default function Home() {
                   href={platform.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white/85 p-5 backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-sky-500/50 hover:shadow-lg hover:shadow-sky-500/10 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] dark:hover:border-[var(--accent-primary)]/60 dark:hover:bg-white/[0.08]"
+                  className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white/85 p-5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-sky-500/50 hover:shadow-lg hover:shadow-sky-500/10 dark:border-slate-800/90 dark:bg-slate-900/60 dark:hover:border-sky-400/50 dark:hover:bg-slate-900/90"
                 >
                   <div>
                     <div className="flex items-center justify-between">
                       <div className="flex h-12 w-12 items-center justify-center rounded-xl shadow-md transition-transform duration-300 group-hover:scale-105">
                         {platform.icon}
                       </div>
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition-colors group-hover:bg-sky-500/10 group-hover:text-sky-600 dark:bg-[var(--surface)] dark:border dark:border-[var(--border-subtle)] dark:text-slate-400 dark:group-hover:text-[var(--glow-soft)]">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition-colors group-hover:bg-sky-500/10 group-hover:text-sky-600 dark:bg-slate-800/80 dark:text-slate-500 dark:group-hover:text-sky-400">
                         <ExternalLink className="h-4 w-4" />
                       </span>
                     </div>
 
-                    <h3 className="mt-4 text-base sm:text-lg font-bold text-slate-900 transition-colors group-hover:text-sky-600 dark:text-[var(--text-primary)] dark:group-hover:text-[var(--glow-soft)]">
+                    <h3 className="mt-4 text-base sm:text-lg font-bold text-slate-900 transition-colors group-hover:text-sky-600 dark:text-white dark:group-hover:text-sky-400">
                       {platform.name}
                     </h3>
-                    <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-300">
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
                       {selectText({ en: platform.descEn, bn: platform.descBn, ur: platform.descUr })}
                     </p>
                   </div>
 
-                  <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4 text-xs dark:border-[var(--border-subtle)]">
+                  <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4 text-xs dark:border-slate-800/80">
                     <span className="font-medium text-slate-500 dark:text-slate-400">
                       {platform.devices}
                     </span>
-                    <span className="inline-flex items-center font-semibold text-sky-600 transition-transform group-hover:translate-x-0.5 dark:text-[var(--glow-soft)]">
+                    <span className="inline-flex items-center font-semibold text-sky-600 transition-transform group-hover:translate-x-0.5 dark:text-sky-400">
                       {copy.platformsDownload}
                       <ChevronRight className="ml-0.5 h-3.5 w-3.5" />
                     </span>
@@ -795,16 +785,16 @@ export default function Home() {
       {/* ========================================================================= */}
       {/* FOOTER */}
       {/* ========================================================================= */}
-      <footer className="bg-[#08111f] py-10 text-white dark:bg-[var(--bg-base)]/80 backdrop-blur-md border-t border-slate-800/60 dark:border-[var(--border-subtle)]">
+      <footer className="bg-[#08111f] py-10 text-white dark:bg-[#070e1b] border-t border-slate-800/60">
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-6 px-5 text-sm text-slate-400 sm:flex-row lg:px-8">
           <div className="flex items-center gap-4">
             <BrandLogo size={50} />
             <div>
               <div className="font-extrabold tracking-[.2em] text-white">CYCLE OF CHART</div>
-              <div className="mt-1 text-xs text-slate-300">{copy.footerDesc}</div>
+              <div className="mt-1 text-xs">{copy.footerDesc}</div>
             </div>
           </div>
-          <div className="max-w-md text-left text-xs leading-relaxed text-slate-300 sm:text-right">
+          <div className="max-w-md text-left text-xs leading-relaxed text-slate-400 sm:text-right">
             {copy.footerLegal}
           </div>
         </div>

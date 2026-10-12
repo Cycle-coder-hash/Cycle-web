@@ -14,7 +14,13 @@ import {
   getUserNotebook,
   saveUserNotebook,
 } from "./repo";
-import { canCreateTradeEntry } from "../subscription";
+import {
+  canCreateTradeEntry,
+  canCreateJournalBook,
+  canSaveNotebookContent,
+  getUserSubscription,
+  UNCLAIMED_TRIAL_REASON,
+} from "../subscription";
 
 export const journalCustomerProcedures = {
   journal: protectedProcedure.query(({ ctx }) => listJournal(ctx.user.id)),
@@ -28,6 +34,23 @@ export const journalCustomerProcedures = {
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (sub.plan === "unclaimed") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: UNCLAIMED_TRIAL_REASON,
+        });
+      }
+      const existingBooks = await getUserJournalBooks(ctx.user.id, ctx.user.openId);
+      if (input.books.length > existingBooks.length && input.books.length > 1) {
+        const check = await canCreateJournalBook(ctx.user.id, existingBooks.length || 1);
+        if (!check.allowed) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: check.reason || "Journal book limit reached.",
+          });
+        }
+      }
       return await saveUserJournalBooks(ctx.user.id, input.books, ctx.user.openId);
     }),
   deleteJournalBook: protectedProcedure
@@ -49,6 +72,13 @@ export const journalCustomerProcedures = {
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const sub = await getUserSubscription(ctx.user.id);
+      if (sub.plan === "unclaimed") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: UNCLAIMED_TRIAL_REASON,
+        });
+      }
       const existingTrades = await getUserTrades(ctx.user.id, ctx.user.openId);
       if (input.trades.length > existingTrades.length) {
         const check = await canCreateTradeEntry(ctx.user.id);
@@ -90,6 +120,13 @@ export const journalCustomerProcedures = {
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const check = await canSaveNotebookContent(ctx.user.id);
+      if (!check.allowed) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: check.reason || "Notebook access requires an active Free Trial or paid plan.",
+        });
+      }
       return await saveUserNotebook(ctx.user.id, input.data, ctx.user.openId);
     }),
   createJournal: protectedProcedure
@@ -102,6 +139,13 @@ export const journalCustomerProcedures = {
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const check = await canCreateTradeEntry(ctx.user.id);
+      if (!check.allowed) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: check.reason || "Journal limit reached.",
+        });
+      }
       const res = await createJournalEntry(ctx.user.id, input);
       return { success: true, entry: res };
     }),

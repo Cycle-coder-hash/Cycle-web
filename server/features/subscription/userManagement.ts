@@ -275,7 +275,7 @@ export async function getUserAccessStates(userId: number): Promise<{
 
   // 6. Effective Plan resolution
   // If both Pro and Premium are ON, Premium features take precedence for overlaps
-  let effectivePlan: SubscriptionPlan = "free_after_trial";
+  let effectivePlan: SubscriptionPlan = "unclaimed";
   if (effectivePremiumActive) {
     effectivePlan = "premium";
   } else if (effectiveProActive) {
@@ -283,7 +283,7 @@ export async function getUserAccessStates(userId: number): Promise<{
   } else if (sub.isTrialActive) {
     effectivePlan = "free_trial";
   } else {
-    effectivePlan = "free_after_trial";
+    effectivePlan = sub.plan;
   }
 
   return {

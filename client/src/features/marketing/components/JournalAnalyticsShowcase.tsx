@@ -217,7 +217,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
     <section
       ref={sectionRef}
       id="journal-analytics"
-      className="relative overflow-hidden py-16 sm:py-20 lg:py-28 text-slate-900 dark:text-white border-t border-slate-200/80 dark:border-[var(--border-subtle)] bg-slate-50/50 dark:bg-transparent transition-colors"
+      className="relative overflow-hidden py-16 sm:py-20 lg:py-28 text-slate-900 dark:text-white border-t border-slate-200/80 dark:border-slate-800/80 bg-slate-50/50 dark:bg-[#070e1b] transition-colors"
     >
       {/* Subtle Ambient Glow Behind Showcase */}
       <div className="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 size-[650px] rounded-full bg-cyan-500/10 blur-[150px] dark:hidden ambient-blur-blob" />
@@ -229,7 +229,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           }`}
         >
-          <div className="inline-flex items-center gap-2 rounded-full border border-sky-500/30 bg-sky-500/10 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] backdrop-blur-md px-3.5 py-1 text-xs font-bold text-sky-600 dark:text-[var(--glow-soft)] mb-4 shadow-xs">
+          <div className="inline-flex items-center gap-2 rounded-full border border-sky-500/30 bg-sky-500/10 px-3.5 py-1 text-xs font-bold text-sky-600 dark:text-sky-400 mb-4 shadow-xs">
             <Sparkles className="h-3.5 w-3.5" />
             <span>
               {selectText({
@@ -257,8 +257,8 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
           </p>
 
           <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-            <span className="flex items-center gap-1.5 rounded-lg bg-slate-200/60 dark:bg-[var(--surface)] dark:border dark:border-[var(--border-subtle)] px-2.5 py-1">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 dark:bg-[var(--accent-highlight)] animate-pulse" />
+            <span className="flex items-center gap-1.5 rounded-lg bg-slate-200/60 dark:bg-slate-800/80 px-2.5 py-1">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               {selectText({
                 en: "Live Interactive Preview",
                 bn: "লাইভ ইন্টারেক্টিভ প্রিভিউ",
@@ -277,6 +277,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
         </div>
 
         {/* Dashboard Frame / Preview Container */}
+        {/* Dashboard Frame / Preview Container */}
         <div
           className={`relative mx-auto transition-all duration-800 ease-out ${
             isVisible ? "opacity-100 scale-100" : "opacity-0 scale-[0.98]"
@@ -294,7 +295,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
               style={{
                 transformStyle: isPointerFine ? "preserve-3d" : "flat",
               }}
-              className="relative rounded-3xl border border-slate-200/90 bg-white/95 p-4 sm:p-6 lg:p-8 shadow-2xl shadow-slate-900/10 backdrop-blur-xl dark:border-[var(--border-subtle)] dark:bg-[var(--bg-base)]/80 dark:shadow-[#1B2F5E]/30 transition-[background-color,border-color] duration-200 will-change-transform"
+              className="relative rounded-3xl border border-slate-200/90 bg-white/95 p-4 sm:p-6 lg:p-8 shadow-2xl shadow-slate-900/10 backdrop-blur-xl dark:border-slate-800 dark:bg-[#071120]/90 dark:shadow-sky-950/30 transition-[background-color,border-color] duration-200 will-change-transform"
             >
               {/* Dynamic Specular / Ambient Sheen tracking mouse position */}
               {isPointerFine && (
@@ -304,7 +305,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
                   className="pointer-events-none absolute -inset-px rounded-3xl opacity-0 transition-opacity duration-300 z-30"
                   style={{
                     background:
-                      "radial-gradient(750px circle at 50% 50%, rgba(92, 156, 235, 0.14), transparent 65%)",
+                      "radial-gradient(750px circle at 50% 50%, rgba(56, 189, 248, 0.12), transparent 65%)",
                   }}
                 />
               )}
@@ -312,7 +313,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
               {/* Top Window Chrome / Terminal Bar */}
               <div
                 style={{ transform: isPointerFine ? "translateZ(8px)" : undefined }}
-                className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-[var(--border-subtle)] mb-6"
+                className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800/80 mb-6"
               >
             <div className="flex items-center gap-2">
               <span className="h-3 w-3 rounded-full bg-rose-500/80 inline-block" />
@@ -324,7 +325,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 rounded-md bg-cyan-500/10 px-2 py-0.5 text-[10px] font-bold text-cyan-500 dark:text-[var(--glow-soft)]">
+              <span className="inline-flex items-center gap-1 rounded-md bg-cyan-500/10 px-2 py-0.5 text-[10px] font-bold text-cyan-500 dark:text-cyan-400">
                 <ShieldCheck className="h-3 w-3" />
                 {selectText({
                   en: "Institutional Audit Grade",
@@ -341,7 +342,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
             className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6"
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-[var(--accent-primary)] to-[var(--bg-glow)] text-white shadow-lg shadow-[#5C9CEB]/25 shrink-0">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 shrink-0">
                 <BookOpen className="h-5 w-5" />
               </div>
               <div>
@@ -366,7 +367,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 rounded-xl border-slate-300 dark:border-[var(--border-subtle)] bg-white dark:bg-[var(--surface)] text-xs font-bold gap-1 text-slate-700 dark:text-slate-300 cursor-default"
+                className="h-8 rounded-xl border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold gap-1 text-slate-700 dark:text-slate-300 cursor-default"
               >
                 <Plus className="h-3.5 w-3.5" />
                 {selectText({
@@ -377,7 +378,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
               </Button>
               <Button
                 size="sm"
-                className="h-8 rounded-xl btn-primary-glow text-white text-xs font-black gap-1.5 px-3 cursor-default"
+                className="h-8 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-black gap-1.5 shadow-md shadow-cyan-500/20 px-3 cursor-default"
               >
                 <Plus className="h-3.5 w-3.5" />
                 {selectText({
@@ -399,8 +400,8 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
               onClick={() => setSelectedBookId("all")}
               className={`flex shrink-0 items-center gap-2 rounded-2xl border px-3.5 py-2 text-xs font-bold transition-all duration-200 ${
                 selectedBookId === "all"
-                  ? "border-[var(--glow-soft)]/60 bg-[#1B2F5E] text-white shadow-md shadow-[#5C9CEB]/15 dark:bg-[var(--accent-primary)] dark:text-slate-950"
-                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] dark:text-slate-400"
+                  ? "border-cyan-500/60 bg-[#081833] text-white shadow-md shadow-cyan-500/10 dark:bg-cyan-500 dark:text-slate-950"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"
               }`}
             >
               <Layers className="h-4 w-4" />
@@ -421,8 +422,8 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
                 onClick={() => setSelectedBookId(tab.id)}
                 className={`flex shrink-0 items-center gap-2 rounded-2xl border px-3.5 py-2 text-xs font-bold transition-all duration-200 ${
                   selectedBookId === tab.id
-                    ? "border-[var(--glow-soft)]/60 bg-[#1B2F5E] text-white shadow-md shadow-[#5C9CEB]/15 dark:bg-[var(--accent-primary)] dark:text-slate-950"
-                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] dark:text-slate-400"
+                    ? "border-cyan-500/60 bg-[#081833] text-white shadow-md shadow-cyan-500/10 dark:bg-cyan-500 dark:text-slate-950"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"
                 }`}
               >
                 <BookOpen className="h-4 w-4 text-cyan-400" />
@@ -440,7 +441,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
           {/* Active Book Info Bar */}
           <div
             style={{ transform: isPointerFine ? "translateZ(8px)" : undefined }}
-            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-slate-100/60 p-3.5 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] mb-6"
+            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-slate-200/80 bg-slate-100/60 p-3.5 dark:border-slate-800/80 dark:bg-slate-900/50 mb-6"
           >
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-500">
@@ -462,7 +463,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
             </div>
 
             <div className="flex items-center gap-2 self-end sm:self-center">
-              <span className="inline-flex items-center gap-1 rounded-xl border border-slate-300 dark:border-[var(--border-subtle)] bg-white dark:bg-[var(--surface)] px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
+              <span className="inline-flex items-center gap-1 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
                 <Calendar className="h-3.5 w-3.5 text-cyan-500" />
                 {selectText({
                   en: "Calendar View",
@@ -470,7 +471,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
                   ur: "کیلنڈر ویو",
                 })}
               </span>
-              <span className="inline-flex items-center gap-1 rounded-xl border border-slate-300 dark:border-[var(--border-subtle)] bg-white dark:bg-[var(--surface)] px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
+              <span className="inline-flex items-center gap-1 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-2.5 py-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
                 <Edit className="h-3.5 w-3.5 text-slate-400" />
                 {selectText({
                   en: "Edit Book",
@@ -487,7 +488,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
             className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 mb-6"
           >
             {/* Card 1: Account Capital */}
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-5 shadow-xs dark:border-[var(--border-subtle)] dark:bg-[var(--surface)]">
+            <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900/80">
               <div className="flex items-center justify-between text-slate-400">
                 <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   {selectText({
@@ -514,7 +515,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
                 </div>
               </div>
               <div className="mt-2.5 sm:mt-3 flex items-center gap-1.5 text-xs font-bold">
-                <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/10 px-1.5 py-0.5 text-[10px] sm:text-[11px] font-black text-emerald-600 dark:text-[var(--accent-highlight)]">
+                <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/10 px-1.5 py-0.5 text-[10px] sm:text-[11px] font-black text-emerald-500">
                   <TrendingUp className="h-3 w-3" />
                   +{book.netGrowth}%
                 </span>
@@ -523,7 +524,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
             </div>
 
             {/* Card 2: Total Net P&L */}
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-5 shadow-xs dark:border-[var(--border-subtle)] dark:bg-[var(--surface)]">
+            <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900/80">
               <div className="flex items-center justify-between text-slate-400">
                 <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   {selectText({
@@ -532,14 +533,14 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
                     ur: "کل نیٹ P&L",
                   })}
                 </span>
-                <Percent className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-500 dark:text-[var(--accent-highlight)]" />
+                <Percent className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-500" />
               </div>
               <div className="mt-2 sm:mt-2.5">
-                <div className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-emerald-600 dark:text-[var(--accent-highlight)]">
+                <div className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-emerald-500">
                   +${book.totalPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </div>
                 <div className="mt-1 flex flex-wrap items-center gap-1.5 sm:gap-2.5 text-[10px] sm:text-xs font-bold">
-                  <span className="text-emerald-600 dark:text-[var(--accent-highlight)]">+${book.totalProfit.toLocaleString()}</span>
+                  <span className="text-emerald-500">+${book.totalProfit.toLocaleString()}</span>
                   <span className="text-rose-500">-${book.totalLoss.toLocaleString()}</span>
                 </div>
               </div>
@@ -550,7 +551,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
             </div>
 
             {/* Card 3: Win Rate & Factor */}
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-5 shadow-xs dark:border-[var(--border-subtle)] dark:bg-[var(--surface)]">
+            <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900/80">
               <div className="flex items-center justify-between text-slate-400">
                 <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   {selectText({
@@ -570,7 +571,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
                 </span>
               </div>
               <div className="mt-2.5 sm:mt-3 flex flex-wrap items-center gap-1 text-[10px] sm:text-[11px] font-bold">
-                <span className="rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-emerald-600 dark:text-[var(--accent-highlight)] font-mono">
+                <span className="rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-emerald-500 font-mono">
                   {book.winningTrades}W
                 </span>
                 <span className="rounded-md bg-rose-500/10 px-1.5 py-0.5 text-rose-500 font-mono">
@@ -585,14 +586,14 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
               </div>
               <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-[var(--accent-highlight)] to-[var(--accent-primary)] transition-all duration-500"
+                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-400 transition-all duration-500"
                   style={{ width: `${book.winRate}%` }}
                 />
               </div>
             </div>
 
             {/* Card 4: Rule Discipline Adherence */}
-            <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-5 shadow-xs dark:border-[var(--border-subtle)] dark:bg-[var(--surface)]">
+            <div className="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900/80">
               <div className="flex items-center justify-between text-slate-400">
                 <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   {selectText({
@@ -634,9 +635,9 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
           {/* Strategy Rules & Discipline Card */}
           <div
             style={{ transform: isPointerFine ? "translateZ(12px)" : undefined }}
-            className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] mb-6"
+            className="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900/70 mb-6"
           >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5 dark:border-[var(--border-subtle)]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
                 <ShieldCheck className="h-5 w-5 text-cyan-500" />
                 <div>
@@ -662,7 +663,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
               {book.rules.map((rule, idx) => (
                 <div
                   key={idx}
-                  className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3.5 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)]"
+                  className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-800/40"
                 >
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-lg bg-cyan-500/15 text-xs font-black text-cyan-500 dark:text-cyan-400">
                     {idx + 1}
@@ -678,16 +679,16 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
           {/* Performance Analytics & Growth Curve Chart Card */}
           <div
             style={{ transform: isPointerFine ? "translateZ(10px)" : undefined }}
-            className="rounded-3xl border border-[var(--border-subtle)] bg-gradient-to-b from-[#1B2F5E]/40 via-[#0D1118]/90 to-[#0D1118]/95 p-5 sm:p-6 shadow-[0_12px_40px_-15px_rgba(13,17,24,0.85),0_0_25px_-5px_rgba(92,156,235,0.12)] relative overflow-hidden backdrop-blur-xl group/analytics-card transition-all duration-300 hover:border-[var(--glow-soft)]/35"
+            className="rounded-3xl border border-cyan-500/20 bg-gradient-to-b from-[#0a1529]/95 via-[#070e1e]/95 to-[#040814]/95 p-5 sm:p-6 shadow-[0_12px_40px_-15px_rgba(2,6,23,0.85),0_0_25px_-5px_rgba(6,182,212,0.1)] relative overflow-hidden backdrop-blur-xl group/analytics-card transition-all duration-300 hover:border-cyan-500/35"
           >
             {/* Ambient Highlights */}
             <div className="pointer-events-none absolute -top-24 -right-24 size-80 rounded-full bg-cyan-500/10 blur-3xl" />
             <div className="pointer-events-none absolute -bottom-24 -left-24 size-80 rounded-full bg-blue-600/10 blur-3xl" />
             <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400/30 to-transparent" />
 
-            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border-subtle)] pb-5">
+            <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
               <div className="flex items-center gap-3.5">
-                <div className="relative flex size-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500/20 via-blue-500/10 to-indigo-500/20 border border-cyan-500/35 text-cyan-400 shadow-[0_0_20px_rgba(92,156,235,0.25)] shrink-0">
+                <div className="relative flex size-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500/20 via-blue-500/10 to-indigo-500/20 border border-cyan-500/35 text-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.25)] shrink-0">
                   <BarChart3 className="size-5 text-cyan-400" />
                   <span className="absolute inset-0 rounded-2xl bg-cyan-400/20 blur-sm -z-10" />
                 </div>
@@ -702,7 +703,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
                       })}
                     </h4>
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/25 px-2.5 py-0.5 text-[10px] font-bold text-cyan-400 tracking-wider uppercase">
-                      <span className="size-1.5 rounded-full bg-[var(--accent-highlight)] animate-pulse" />
+                      <span className="size-1.5 rounded-full bg-cyan-400 animate-pulse" />
                       Live Trajectory
                     </span>
                   </div>
@@ -717,7 +718,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
               </div>
 
               {/* Chart Mode Interactive Tabs */}
-              <div className="inline-flex items-center p-1 rounded-2xl bg-[var(--bg-base)]/90 border border-[var(--border-subtle)] shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] backdrop-blur-md self-start sm:self-center">
+              <div className="inline-flex items-center p-1 rounded-2xl bg-[#030712]/90 border border-slate-800/90 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] backdrop-blur-md self-start sm:self-center">
                 {SHOWCASE_CHART_TABS.map((tab) => {
                   const isActive = chartMode === tab.id;
                   return (
@@ -727,7 +728,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
                       onClick={() => setChartMode(tab.id)}
                       className={`relative rounded-xl px-2.5 sm:px-3.5 py-2 sm:py-1.5 min-h-[38px] text-[11px] sm:text-xs font-bold transition-all duration-200 select-none ${
                         isActive
-                          ? "bg-gradient-to-r from-[var(--accent-primary)] to-[var(--bg-glow)] text-white font-black shadow-[0_0_16px_rgba(92,156,235,0.4)] scale-[1.02]"
+                          ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-black shadow-[0_0_16px_rgba(6,182,212,0.4)] scale-[1.02]"
                           : "text-slate-400 hover:text-white hover:bg-slate-800/50"
                       }`}
                     >
@@ -743,7 +744,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
             </div>
 
             {/* Recharts Area Chart */}
-            <div className="relative z-10 mt-6 rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-base)]/85 p-3 sm:p-4 backdrop-blur-sm overflow-hidden shadow-inner">
+            <div className="relative z-10 mt-6 rounded-2xl border border-slate-800/80 bg-[#040814]/85 p-3 sm:p-4 backdrop-blur-sm overflow-hidden shadow-inner">
               <div className="h-64 sm:h-72 w-full">
                 {chartMode === "period" ? (
                   <ResponsiveContainer width="100%" height="100%">
@@ -753,8 +754,8 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
                     >
                       <defs>
                         <linearGradient id="showcaseBarGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#5C9CEB" stopOpacity={0.95} />
-                          <stop offset="100%" stopColor="#3F6FD1" stopOpacity={0.75} />
+                          <stop offset="0%" stopColor="#06b6d4" stopOpacity={0.95} />
+                          <stop offset="100%" stopColor="#0284c7" stopOpacity={0.75} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.45} vertical={false} />
@@ -795,9 +796,9 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
                     >
                       <defs>
                         <linearGradient id="showcaseBalanceGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#5C9CEB" stopOpacity={0.35} />
-                          <stop offset="60%" stopColor="#3F6FD1" stopOpacity={0.08} />
-                          <stop offset="100%" stopColor="#3F6FD1" stopOpacity={0.0} />
+                          <stop offset="0%" stopColor="#06b6d4" stopOpacity={0.35} />
+                          <stop offset="60%" stopColor="#0284c7" stopOpacity={0.08} />
+                          <stop offset="100%" stopColor="#0284c7" stopOpacity={0.0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.45} vertical={false} />
@@ -838,12 +839,12 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
                       <Area
                         type="monotone"
                         dataKey={chartMode === "growth" ? "growth" : "balance"}
-                        stroke="#5C9CEB"
+                        stroke="#06b6d4"
                         strokeWidth={3}
                         fillOpacity={1}
                         fill="url(#showcaseBalanceGrad)"
-                        dot={{ r: 3, fill: "#0D1118", stroke: "#5C9CEB", strokeWidth: 2 }}
-                        activeDot={{ r: 6, fill: "#5C9CEB", stroke: "#ffffff", strokeWidth: 2 }}
+                        dot={{ r: 3, fill: "#040814", stroke: "#06b6d4", strokeWidth: 2 }}
+                        activeDot={{ r: 6, fill: "#06b6d4", stroke: "#ffffff", strokeWidth: 2 }}
                       />
                     </AreaChart>
                   </ResponsiveContainer>

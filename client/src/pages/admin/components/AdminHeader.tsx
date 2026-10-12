@@ -11,7 +11,7 @@ interface AdminHeaderProps {
 
 export const AdminHeader: React.FC<AdminHeaderProps> = ({ onRefreshAll, isRefreshing }) => {
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-md dark:border-[var(--border-subtle)] dark:bg-[#0D1118]/85 transition-colors">
+    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-md dark:border-slate-800 dark:bg-[#070e1b]/95 transition-colors">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3.5 lg:px-8">
         <div className="flex items-center gap-3">
           <Link href="/" className="shrink-0">
@@ -22,8 +22,8 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ onRefreshAll, isRefres
               <span className="text-xs font-black tracking-widest text-[#0a192f] dark:text-white uppercase">
                 Cycle of Chart
               </span>
-              <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-extrabold uppercase text-emerald-600 dark:text-[var(--accent-highlight)] border border-emerald-500/30 flex items-center gap-1">
-                <span className="size-1.5 rounded-full bg-[var(--accent-highlight)] animate-pulse"></span>
+              <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-extrabold uppercase text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                 MASTER ADMIN ACCESS
               </span>
             </div>

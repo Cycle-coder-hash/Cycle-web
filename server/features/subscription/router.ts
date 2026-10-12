@@ -4,12 +4,14 @@ import { TRPCError } from "@trpc/server";
 import {
   getUserSubscription,
   getUserUsage,
+  claimFreeTrialPlan,
   activateSubscription,
   setAccountStatus,
   canCreateJournalBook,
   canCreateTradeEntry,
   canSaveVideo,
   canCreateNotebookPage,
+  canSaveNotebookContent,
   canAccessWorkout,
   canLogDiscipline,
   canAccessCommunity,
@@ -35,6 +37,10 @@ export const subscriptionRouter = router({
     return await getUserUsage(ctx.user.id);
   }),
 
+  claimFreePlan: protectedProcedure.mutation(async ({ ctx }) => {
+    return await claimFreeTrialPlan(ctx.user.id);
+  }),
+
   checkAccess: protectedProcedure
     .input(
       z.object({
@@ -44,6 +50,7 @@ export const subscriptionRouter = router({
           "video_journal",
           "video_notebook",
           "notebook_page",
+          "notebook_content",
           "workout",
           "discipline",
           "community",
@@ -67,6 +74,8 @@ export const subscriptionRouter = router({
           return await canSaveVideo(ctx.user.id, "notebook");
         case "notebook_page":
           return await canCreateNotebookPage(ctx.user.id);
+        case "notebook_content":
+          return await canSaveNotebookContent(ctx.user.id);
         case "workout":
           return await canAccessWorkout(ctx.user.id);
         case "discipline":

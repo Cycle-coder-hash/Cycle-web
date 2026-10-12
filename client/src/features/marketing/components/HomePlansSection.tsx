@@ -1,9 +1,12 @@
-import React from "react";
-import { Link } from "wouter";
-import { CheckCircle2, Crown, LockKeyhole, Sparkles, X } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Link, useLocation } from "wouter";
+import { CheckCircle2, Clock, Crown, LockKeyhole, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useUserPreferences } from "@/contexts/UserPreferencesContext";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { trpc } from "@/lib/trpc";
+import { ClaimFreePlanModal } from "@/components/subscription/ClaimFreePlanModal";
 
 export type HomePlanModalType = "free" | "pro" | "premium" | null;
 
@@ -28,9 +31,50 @@ export function HomePlansSection({
   setSelectedPlanModal,
   pricing,
 }: HomePlansSectionProps) {
+  const [, setLocation] = useLocation();
+  const { user } = useAuth();
   const { language, selectText } = useLanguage();
   const { formatPrice, currency } = useUserPreferences();
   const isBn = language === "bn";
+
+  const { data: subUsage } = trpc.subscription.getMyUsage.useQuery(undefined, {
+    enabled: !!user,
+  });
+  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
+
+  // If user returned from login/signup after clicking "Claim Free Plan" on Store, open the claim confirmation modal without auto-claiming on login alone
+  useEffect(() => {
+    if (!user || !subUsage) return;
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const hasQueryFlag = params.get("claimFreePlan") === "1";
+      const hasSessionFlag = sessionStorage.getItem("cycle_pending_claim_free_plan") === "1";
+      if (hasQueryFlag || hasSessionFlag) {
+        sessionStorage.removeItem("cycle_pending_claim_free_plan");
+        if (hasQueryFlag) {
+          params.delete("claimFreePlan");
+          const qs = params.toString();
+          const nextUrl = `${window.location.pathname}${qs ? `?${qs}` : ""}${window.location.hash}`;
+          window.history.replaceState(null, "", nextUrl);
+        }
+        if (subUsage.plan === "unclaimed" || (subUsage as any).trialStatus === "unclaimed") {
+          setIsClaimModalOpen(true);
+        }
+      }
+    } catch {}
+  }, [user, subUsage]);
+
+  const handleClaimFreePlanClick = () => {
+    if (!user) {
+      try {
+        sessionStorage.setItem("cycle_pending_claim_free_plan", "1");
+        sessionStorage.setItem("cycle_auth_redirect", "/?claimFreePlan=1#plans");
+      } catch {}
+      setLocation("/login?redirect=" + encodeURIComponent("/?claimFreePlan=1#plans"));
+      return;
+    }
+    setIsClaimModalOpen(true);
+  };
 
   const formatBdt = (val: string | number | undefined, bn: boolean, fallback: string) => {
     const raw = val !== undefined && val !== null && String(val).trim() !== "" ? String(val) : fallback;
@@ -54,21 +98,26 @@ export function HomePlansSection({
   const premiumBdt = pricing?.subscriptions?.premium?.priceBdt ?? "999";
   const premiumUsd = pricing?.subscriptions?.premium?.priceUsd ?? "10";
 
+  const isTrialUnclaimed = !user || !subUsage || subUsage.plan === "unclaimed" || (subUsage as any).trialStatus === "unclaimed";
+  const isTrialActive = Boolean(user && subUsage && subUsage.plan === "free_trial");
+  const isTrialExpired = Boolean(user && subUsage && subUsage.plan === "free_after_trial");
+  const isPaidActive = Boolean(user && subUsage && (subUsage.plan === "pro" || subUsage.plan === "premium"));
+
   return (
     <>
       {/* ========================================================================= */}
       {/* PLANS FOR EVERY TRADER */}
       {/* ========================================================================= */}
-      <section id="plans" className="content-auto bg-[#f8fafc] dark:bg-transparent py-16 sm:py-24 border-t border-slate-200/60 dark:border-[var(--border-subtle)] transition-colors">
+      <section id="plans" className="content-auto bg-[#f8fafc] dark:bg-slate-900/40 py-16 sm:py-24 border-t border-slate-200/60 dark:border-slate-800/80 transition-colors">
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-[#0284c7]/10 text-[#0284c7] dark:bg-[var(--surface)] dark:text-[var(--glow-soft)] border border-sky-500/30 dark:border-[var(--border-subtle)] backdrop-blur-md">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-[#0284c7]/10 text-[#0284c7] dark:bg-sky-500/20 dark:text-sky-400 border border-sky-500/30">
               <Sparkles size={14} />
               <span className="uppercase tracking-widest">
                 {selectText({ en: "Plans For Every Trader", bn: "ট্রেডার অ্যাক্সেস প্ল্যান", ur: "ہر ٹریڈر کے لیے منصوبے" })}
               </span>
             </div>
-            <h2 className="mt-4 text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-[var(--text-primary)]">
+            <h2 className="mt-4 text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
               {selectText({
                 en: "Transparent Trader Access. No Hidden Deductions.",
                 bn: "স্বচ্ছ মাসিক অ্যাক্সেস। কোনো লুকানো চার্জ নেই।",
@@ -77,9 +126,9 @@ export function HomePlansSection({
             </h2>
             <p className="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
               {selectText({
-                en: "Start with an anchored 30-day Free Trial or upgrade to Pro or Premium for unlimited trade logging, dedicated journal books, video uploads, daily workout routines, and direct institutional mentorship.",
-                bn: "বিনামূল্যে ৩০ দিনের ট্রায়াল দিয়ে শুরু করুন অথবা সম্পূর্ণ আনলিমিটেড ট্রেড, একাধিক জার্নাল বুক, ভিডিও সেভিং এবং ১-অন-১ প্রাতিষ্ঠানিক মেন্টরশিপের জন্য প্রো বা প্রিমিয়ামে আপগ্রেড করুন।",
-                ur: "مفت 30 دن کی آزمائش سے شروع کریں یا لامحدود ٹریڈز، متعدد جرنلز، ویڈیو اپ لوڈز، روزانہ ورزش کے معمولات اور 1-آن-1 رہنمائی کے لیے پرو یا پریمیم میں اپ گریڈ کریں۔",
+                en: "Claim your 20-day Free Trial whenever you are ready, or upgrade to Pro or Premium for unlimited trade logging, dedicated journal books, video uploads, daily workout routines, and direct institutional mentorship.",
+                bn: "আপনার সুবিধামতো ২০ দিনের ফ্রি ট্রায়াল ক্লেইম করে শুরু করুন অথবা সম্পূর্ণ আনলিমিটেড ট্রেড, একাধিক জার্নাল বুক, ভিডিও সেভিং এবং ১-অন-১ প্রাতিষ্ঠানিক মেন্টরশিপের জন্য প্রো বা প্রিমিয়ামে আপগ্রেড করুন।",
+                ur: "جب چاہیں اپنا 20 دن کا مفت ٹرائل کلیم کریں یا لامحدود ٹریڈز، متعدد جرنلز، ویڈیو اپ لوڈز، روزانہ ورزش کے معمولات اور 1-آن-1 رہنمائی کے لیے پرو یا پریمیم میں اپ گریڈ کریں۔",
               })}
             </p>
           </div>
@@ -87,59 +136,59 @@ export function HomePlansSection({
           {/* Pricing Cards Grid */}
           <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8 items-stretch max-w-7xl mx-auto">
             {/* CARD 1: FREE TRIAL */}
-            <div className="relative flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-7 shadow-sm backdrop-blur-md transition hover:shadow-lg dark:border-[var(--border-subtle)] dark:bg-[var(--surface)]">
+            <div className="relative flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-7 shadow-sm transition hover:shadow-lg dark:border-slate-800 dark:bg-[#0b162a]">
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-                    {selectText({ en: "Free Trial", bn: "ফ্রি ট্রায়াল", ur: "مفت آزمائش" })}
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                    {selectText({ en: "Free Plan", bn: "ফ্রি প্ল্যান", ur: "مفت پلان" })}
                   </span>
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-700 dark:bg-[var(--surface)] dark:text-slate-200 dark:border dark:border-[var(--border-subtle)]">
-                    {selectText({ en: "30 DAYS FULL TRIAL", bn: "৩০ দিন পূর্ণ ট্রায়াল", ur: "30 دن کی مکمل آزمائش" })}
+                  <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-[11px] font-bold text-cyan-700 dark:text-cyan-300 border border-cyan-500/30">
+                    {selectText({ en: "20-DAY FREE TRIAL", bn: "২০ দিনের ফ্রি ট্রায়াল", ur: "20 دن کا مفت ٹرائل" })}
                   </span>
                 </div>
                 <div className="mt-4 flex items-baseline flex-wrap gap-1.5">
-                  <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-[var(--text-primary)]">
+                  <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
                     {formatPrice({ bdt: freeTrialBdt, usd: freeTrialUsd, fallback: "0" })}
                   </span>
                   <span className="text-xs text-slate-500 dark:text-slate-400 font-medium ml-1">
-                    {selectText({ en: "/ 30 days", bn: "/ ৩০ দিন", ur: "/ 30 دن" })}
+                    {selectText({ en: "/ 20 days", bn: "/ ২০ দিন", ur: "/ 20 دن" })}
                   </span>
                 </div>
-                <p className="mt-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   {selectText({
-                    en: "Strictly anchored to your account creation date. After 30 days, converts to Free 5 trades & 5 discipline days per month.",
-                    bn: "অ্যাকাউন্ট তৈরির সাথে সাথে স্বয়ংক্রিয়ভাবে সক্রিয় হয়। ৩০ দিন পর প্রতি মাসে ৫টি ট্রেড ও ৫টি ডিসিপ্লিন দিনে সীমাবদ্ধ থাকবে।",
-                    ur: "اکاؤنٹ بننے کی تاریخ سے منسلک۔ 30 دن بعد، اکاؤنٹ مستقل طور پر ماہانہ 5 ٹریڈز اور 5 ڈسپلن دنوں تک محدود رہے گا۔",
+                    en: "Starts only when you click Claim Free Plan. Your 20-day countdown begins at the exact moment of confirmation.",
+                    bn: "শুধুমাত্র ‘Claim Free Plan’-এ ক্লিক করে নিশ্চিত করলেই আপনার ২০ দিনের ট্রায়াল শুরু হবে।",
+                    ur: "صرف اس وقت شروع ہوتا ہے جب آپ Claim Free Plan پر کلک کرتے ہیں۔ 20 دن کا کاؤنٹ ڈاؤن تصدیق کے وقت سے شروع ہوتا ہے۔",
                   })}
                 </p>
 
-                <div className="mt-6 border-t border-slate-200/80 pt-5 dark:border-[var(--border-subtle)]">
+                <div className="mt-6 border-t border-slate-200/80 pt-5 dark:border-slate-800/80">
                   <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
                     {selectText({ en: "Included Features", bn: "সুবিধাসমূহ", ur: "شامل خصوصیات" })}
                   </div>
                   <ul className="space-y-2.5 text-xs text-slate-700 dark:text-slate-300">
                     <li className="flex items-center gap-2.5">
-                      <CheckCircle2 size={16} className="text-emerald-500 dark:text-[var(--accent-highlight)] shrink-0" />
+                      <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
                       <span>
-                        <strong className="text-slate-900 dark:text-[var(--text-primary)]">
+                        <strong className="text-slate-900 dark:text-white">
                           {selectText({ en: "1 Journal Book", bn: "১টি জার্নাল বুক", ur: "1 جرنل بک" })}
                         </strong>{" "}
                         {selectText({ en: "max", bn: "সর্বোচ্চ", ur: "تک" })}
                       </span>
                     </li>
                     <li className="flex items-center gap-2.5">
-                      <CheckCircle2 size={16} className="text-emerald-500 dark:text-[var(--accent-highlight)] shrink-0" />
+                      <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
                       <span>
-                        <strong className="text-slate-900 dark:text-[var(--text-primary)]">
+                        <strong className="text-slate-900 dark:text-white">
                           {selectText({ en: "Unlimited Trades", bn: "আনলিমিটেড ট্রেড", ur: "لامحدود ٹریڈز" })}
                         </strong>{" "}
-                        {selectText({ en: "during 30 days", bn: "৩০ দিনের মধ্যে", ur: "30 دنوں میں" })}
+                        {selectText({ en: "during 20 days", bn: "২০ দিনের মধ্যে", ur: "20 دنوں میں" })}
                       </span>
                     </li>
                     <li className="flex items-center gap-2.5">
-                      <CheckCircle2 size={16} className="text-emerald-500 dark:text-[var(--accent-highlight)] shrink-0" />
+                      <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
                       <span>
-                        {selectText({ en: "Standard Journal Analytics", bn: "স্ট্যান্ডার্ড জার্নাল অ্যানালিটিক্স", ur: "معیاری جرنل اینالیٹکس" })}
+                        {selectText({ en: "Private Trader Notebook & Journal Analytics", bn: "প্রাইভেট নোটবুক ও জার্নাল অ্যানালিটিক্স", ur: "پرائیویٹ نوٹ بک اور جرنل اینالیٹکس" })}
                       </span>
                     </li>
                     <li className="flex items-center gap-2.5 text-slate-400 dark:text-slate-500">
@@ -159,45 +208,93 @@ export function HomePlansSection({
               </div>
 
               <div className="mt-8 space-y-2.5">
+                {isTrialUnclaimed && (
+                  <Button
+                    type="button"
+                    onClick={handleClaimFreePlanClick}
+                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs h-10 shadow-lg shadow-cyan-500/25"
+                  >
+                    <Sparkles size={14} className="mr-1.5" />
+                    Claim Free Plan
+                  </Button>
+                )}
+                {isTrialActive && (
+                  <Link href="/dashboard" className="block w-full">
+                    <Button
+                      type="button"
+                      className="w-full bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 font-black text-xs h-10"
+                    >
+                      <Clock size={14} className="mr-1.5" />
+                      {selectText({
+                        en: `Free Trial Active · ${subUsage?.daysLeft ?? 20} Days Left`,
+                        bn: `ফ্রি ট্রায়াল সক্রিয় · ${subUsage?.daysLeft ?? 20} দিন বাকি`,
+                        ur: `مفت ٹرائل فعال · ${subUsage?.daysLeft ?? 20} دن باقی`,
+                      })}
+                    </Button>
+                  </Link>
+                )}
+                {isTrialExpired && (
+                  <div className="space-y-2">
+                    <div className="w-full rounded-xl border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-center text-[11px] font-bold text-rose-300">
+                      {selectText({
+                        en: "20-Day Free Trial Expired · Upgrade to Unlock Full Access",
+                        bn: "২০ দিনের ফ্রি ট্রায়াল শেষ · পূর্ণ অ্যাক্সেসের জন্য আপগ্রেড করুন",
+                        ur: "20 دن کا مفت ٹرائل ختم ہو گیا · مکمل رسائی کے لیے اپ گریڈ کریں",
+                      })}
+                    </div>
+                    <Link href="/checkout?plan=pro" className="block w-full">
+                      <Button className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-xs h-10">
+                        {selectText({ en: "Upgrade to Pro", bn: "প্রো-তে আপগ্রেড করুন", ur: "پرو میں اپ گریڈ کریں" })}
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+                {isPaidActive && (
+                  <Link href="/dashboard" className="block w-full">
+                    <Button
+                      type="button"
+                      className="w-full bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-black text-xs h-10"
+                    >
+                      <CheckCircle2 size={14} className="mr-1.5" />
+                      {selectText({
+                        en: `${subUsage?.plan?.toUpperCase()} Plan Active`,
+                        bn: `${subUsage?.plan?.toUpperCase()} প্ল্যান সক্রিয়`,
+                        ur: `${subUsage?.plan?.toUpperCase()} پلان فعال ہے`,
+                      })}
+                    </Button>
+                  </Link>
+                )}
                 <Button
                   variant="outline"
-                  className="w-full text-xs font-bold border-slate-200 text-slate-800 hover:bg-slate-100 hover:text-slate-900 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] dark:text-slate-200 dark:hover:bg-white/10"
+                  className="w-full text-xs font-bold border-slate-200 text-slate-800 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                   onClick={() => setSelectedPlanModal("free")}
                 >
                   {selectText({ en: "View Details", bn: "বিস্তারিত দেখুন", ur: "تفصیلات دیکھیں" })}
                 </Button>
-                <Link href="/dashboard" className="block w-full">
-                  <Button
-                    variant="ghost"
-                    className="w-full text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-white/10"
-                  >
-                    {selectText({ en: "Go to Dashboard", bn: "ড্যাশবোর্ডে যান", ur: "ڈیش بورڈ پر جائیں" })}
-                  </Button>
-                </Link>
               </div>
             </div>
 
             {/* CARD 2: PRO PLAN (MOST POPULAR) */}
-            <div className="relative flex flex-col justify-between rounded-3xl border-2 border-[var(--accent-primary)] bg-white p-7 shadow-xl shadow-sky-500/10 backdrop-blur-md dark:border-[var(--accent-primary)] dark:bg-[var(--bg-navy-mid)]/45 ring-2 ring-[var(--accent-primary)]/20">
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-[var(--accent-primary)] to-[var(--bg-glow)] px-4 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-md">
+            <div className="relative flex flex-col justify-between rounded-3xl border-2 border-sky-500 bg-white p-7 shadow-xl shadow-sky-500/10 dark:border-sky-500 dark:bg-[#0c182e] ring-2 ring-sky-500/20">
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-md">
                 {selectText({ en: "★ MOST POPULAR ★", bn: "★ সবচেয়ে জনপ্রিয় ★", ur: "★ سب سے مقبول ★" })}
               </div>
 
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-[var(--glow-soft)]">
+                  <span className="text-xs font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">
                     {selectText({ en: "Pro Plan", bn: "প্রো প্ল্যান", ur: "پرو پلان" })}
                   </span>
-                  <span className="rounded-full bg-sky-500/10 px-3 py-1 text-[11px] font-bold text-sky-700 dark:text-[var(--accent-highlight)] border border-sky-500/25 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)]">
+                  <span className="rounded-full bg-sky-500/10 px-3 py-1 text-[11px] font-bold text-sky-700 dark:text-sky-300 border border-sky-500/25 dark:border-sky-500/20">
                     {selectText({ en: "+5 BONUS DAYS IN TRIAL", bn: "+৫ বোনাস দিন ট্রায়ালে", ur: "آزمائش میں +5 اضافی دن" })}
                   </span>
                 </div>
                 <div className="mt-4 flex items-baseline flex-wrap gap-1.5">
-                  <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-[var(--text-primary)]">
+                  <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
                     {formatPrice({ bdt: proBdt, usd: proUsd, fallback: "599" })}
                   </span>
                   {currency !== "USD" && proUsd && (
-                    <span className="text-xl sm:text-2xl font-bold text-sky-600 dark:text-[var(--glow-soft)]">
+                    <span className="text-xl sm:text-2xl font-bold text-sky-600 dark:text-sky-400">
                       / ${formatUsd(proUsd, isBn, "5")}
                     </span>
                   )}
@@ -205,7 +302,7 @@ export function HomePlansSection({
                     {selectText({ en: "per month", bn: "প্রতি মাস", ur: "فی مہینہ" })}
                   </span>
                 </div>
-                <p className="mt-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   {selectText({
                     en: "Manual monthly renewal. Upgrading during trial adds +5 Bonus Days (35 days total first period).",
                     bn: "ম্যানুয়াল মাসিক নবায়ন। ট্রায়াল চলাকালে নিলে পাবেন অতিরিক্ত ৫ বোনাস দিন (মোট ৩৫ দিন)।",
@@ -213,38 +310,38 @@ export function HomePlansSection({
                   })}
                 </p>
 
-                <div className="mt-6 border-t border-slate-200/80 pt-5 dark:border-[var(--border-subtle)]">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-sky-600 dark:text-[var(--glow-soft)] mb-3">
+                <div className="mt-6 border-t border-slate-200/80 pt-5 dark:border-slate-800/80">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-sky-600 dark:text-sky-500 mb-3">
                     {selectText({ en: "Pro Features", bn: "প্রো সুবিধাসমূহ", ur: "پرو خصوصیات" })}
                   </div>
                   <ul className="space-y-2.5 text-xs text-slate-700 dark:text-slate-300">
-                    <li className="flex items-center gap-2.5 font-semibold text-slate-900 dark:text-[var(--text-primary)]">
-                      <CheckCircle2 size={16} className="text-[var(--accent-primary)] shrink-0" />
+                    <li className="flex items-center gap-2.5 font-semibold text-slate-900 dark:text-white">
+                      <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
                       <span><strong>{selectText({ en: "Up to 5 Dedicated Journal Books", bn: "সর্বোচ্চ ৫টি ডেডিকেটেড জার্নাল বুক", ur: "5 تک مخصوص جرনল بکس" })}</strong></span>
                     </li>
-                    <li className="flex items-center gap-2.5 font-semibold text-slate-900 dark:text-[var(--text-primary)]">
-                      <CheckCircle2 size={16} className="text-[var(--accent-primary)] shrink-0" />
+                    <li className="flex items-center gap-2.5 font-semibold text-slate-900 dark:text-white">
+                      <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
                       <span><strong>{selectText({ en: "Unlimited Trade Entries", bn: "আনলিমিটেড ট্রেড এন্ট্রি", ur: "لامحدود ٹریڈ اندراجات" })}</strong></span>
                     </li>
                     <li className="flex items-center gap-2.5">
-                      <CheckCircle2 size={16} className="text-[var(--accent-primary)] shrink-0" />
-                      <span><strong className="text-slate-900 dark:text-[var(--text-primary)]">{selectText({ en: "30 Trade Videos / mo", bn: "প্রতি মাসে ৩০টি ট্রেড ভিডিও", ur: "ماہانہ 30 ٹریڈ ویڈیوز" })}</strong> {selectText({ en: "(restored on delete)", bn: "(ডিলিট করলে রিস্টোর হয়)", ur: "(ڈیلیٹ پر کوٹہ بحال)" })}</span>
+                      <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
+                      <span><strong className="text-slate-900 dark:text-white">{selectText({ en: "30 Trade Videos / mo", bn: "প্রতি মাসে ৩০টি ট্রেড ভিডিও", ur: "ماہانہ 30 ٹریڈ ویڈیوز" })}</strong> {selectText({ en: "(restored on delete)", bn: "(ডিলিট করলে রিস্টোর হয়)", ur: "(ڈیلیٹ پر کوٹہ بحال)" })}</span>
                     </li>
                     <li className="flex items-center gap-2.5">
-                      <CheckCircle2 size={16} className="text-[var(--accent-primary)] shrink-0" />
-                      <span><strong className="text-slate-900 dark:text-[var(--text-primary)]">{selectText({ en: "10 Notebook Pages & 5 Videos / mo", bn: "১০টি নোটবুক পেজ এবং ৫টি ভিডিও / মাস", ur: "10 نوٹ بک صفحات اور 5 ویڈیوز / ماہ" })}</strong></span>
+                      <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
+                      <span><strong className="text-slate-900 dark:text-white">{selectText({ en: "10 Notebook Pages & 5 Videos / mo", bn: "১০টি নোটবুক পেজ এবং ৫টি ভিডিও / মাস", ur: "10 نوٹ بک صفحات اور 5 ویڈیوز / ماہ" })}</strong></span>
                     </li>
                     <li className="flex items-center gap-2.5">
-                      <CheckCircle2 size={16} className="text-[var(--accent-primary)] shrink-0" />
-                      <span><strong className="text-slate-900 dark:text-[var(--text-primary)]">{selectText({ en: "Full Workout Routine Access", bn: "সম্পূর্ণ ওয়ার্কআউট রুটিন এক্সেস", ur: "ورزش کے معمولات تک رسائی" })}</strong></span>
+                      <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
+                      <span><strong className="text-slate-900 dark:text-white">{selectText({ en: "Full Workout Routine Access", bn: "সম্পূর্ণ ওয়ার্কআউট রুটিন এক্সেস", ur: "ورزش کے معمولات تک رسائی" })}</strong></span>
                     </li>
                     <li className="flex items-center gap-2.5">
-                      <CheckCircle2 size={16} className="text-[var(--accent-primary)] shrink-0" />
-                      <span><strong className="text-slate-900 dark:text-[var(--text-primary)]">{selectText({ en: "Full Community Chat Access", bn: "সম্পূর্ণ কমিউনিটি চ্যাট এক্সেস", ur: "کمیونٹی چیٹ تک رسائی" })}</strong></span>
+                      <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
+                      <span><strong className="text-slate-900 dark:text-white">{selectText({ en: "Full Community Chat Access", bn: "সম্পূর্ণ কমিউনিটি চ্যাট এক্সেস", ur: "کمیونٹی چیٹ تک رسائی" })}</strong></span>
                     </li>
                     <li className="flex items-center gap-2.5">
-                      <CheckCircle2 size={16} className="text-[var(--accent-primary)] shrink-0" />
-                      <span><strong className="text-slate-900 dark:text-[var(--text-primary)]">{selectText({ en: "Global Leaderboard Eligible", bn: "গ্লোবাল লিডারবোর্ডের জন্য যোগ্য", ur: "عالمی لیڈر بورڈ کے اہل" })}</strong> ({selectText({ en: "verified", bn: "ভেরিফায়েড", ur: "تصدیق شدہ" })})</span>
+                      <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
+                      <span><strong className="text-slate-900 dark:text-white">{selectText({ en: "Global Leaderboard Eligible", bn: "গ্লোবাল লিডারবোর্ডের জন্য যোগ্য", ur: "عالمی لیڈر بورڈ کے اہل" })}</strong> ({selectText({ en: "verified", bn: "ভেরিফায়েড", ur: "تصدیق شدہ" })})</span>
                     </li>
                   </ul>
                 </div>
@@ -252,7 +349,7 @@ export function HomePlansSection({
 
               <div className="mt-8 space-y-2.5">
                 <Link href="/checkout?plan=pro" className="block w-full">
-                  <Button className="w-full btn-primary-glow font-bold text-xs h-10">
+                  <Button className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-xs h-10 shadow-lg shadow-sky-500/25">
                     {selectText({
                       en: `Get Pro — ${formatPrice({ bdt: proBdt, usd: proUsd, fallback: "599" })}${currency !== "USD" ? ` / $${formatUsd(proUsd, false, "5")}` : ""} per month`,
                       bn: `প্রো কিনুন — ${formatPrice({ bdt: proBdt, usd: proUsd, fallback: "599" })}${currency !== "USD" ? ` / $${formatUsd(proUsd, true, "5")}` : ""} প্রতি মাস`,
@@ -262,7 +359,7 @@ export function HomePlansSection({
                 </Link>
                 <Button
                   variant="outline"
-                  className="w-full text-xs font-bold border-sky-500/40 dark:border-[var(--border-subtle)] text-sky-700 dark:text-[var(--glow-soft)] hover:bg-sky-500/10 hover:text-sky-800 dark:hover:text-white"
+                  className="w-full text-xs font-bold border-sky-500/40 dark:border-sky-500/30 text-sky-700 dark:text-sky-300 hover:bg-sky-500/10 hover:text-sky-800 dark:hover:text-sky-200"
                   onClick={() => setSelectedPlanModal("pro")}
                 >
                   {selectText({ en: "View Details", bn: "বিস্তারিত দেখুন", ur: "تفصیلات دیکھیں" })}
@@ -271,7 +368,7 @@ export function HomePlansSection({
             </div>
 
             {/* CARD 3: PREMIUM PLAN */}
-            <div className="relative flex flex-col justify-between rounded-3xl border border-amber-500/50 bg-white bg-gradient-to-b from-amber-500/[0.06] via-amber-500/[0.02] to-transparent p-7 shadow-sm backdrop-blur-md transition hover:shadow-lg dark:border-amber-500/40 dark:bg-[var(--surface)] dark:from-amber-500/[0.06] dark:via-transparent dark:to-transparent">
+            <div className="relative flex flex-col justify-between rounded-3xl border border-amber-500/50 bg-white bg-gradient-to-b from-amber-500/[0.06] via-amber-500/[0.02] to-transparent p-7 shadow-sm transition hover:shadow-lg dark:border-amber-500/40 dark:bg-[#0c1524] dark:from-amber-500/[0.04] dark:via-transparent dark:to-transparent">
               <div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500 flex items-center gap-1.5">
@@ -407,7 +504,7 @@ export function HomePlansSection({
               <div>
                 <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
                   {selectedPlanModal === "free" &&
-                    selectText({ en: "30-Day Free Trial & Permanent Free Tier", bn: "৩০ দিনের ফ্রি ট্রায়াল ও পার্মানেন্ট ফ্রি টিয়ার", ur: "30 دن کی مفت آزمائش اور مستقل مفت درجہ" })}
+                    selectText({ en: "20-Day Claimed Free Trial & Permanent Free Tier", bn: "২০ দিনের ক্লেইমকৃত ফ্রি ট্রায়াল ও পার্মানেন্ট ফ্রি টিয়ার", ur: "20 دن کی کلیم کردہ مفت آزمائش اور مستقل مفت درجہ" })}
                   {selectedPlanModal === "pro" &&
                     selectText({
                       en: `Pro Trader Plan — ${formatPrice({ bdt: proBdt, usd: proUsd, fallback: "599" })}${currency !== "USD" ? ` / $${formatUsd(proUsd, false, "5")}` : ""} per month`,
@@ -424,9 +521,9 @@ export function HomePlansSection({
                 <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                   {selectedPlanModal === "free" &&
                     selectText({
-                      en: "Every new account automatically receives a 30-day Free Trial anchored to the exact moment of registration. During this period, you have 1 Journal Book with unlimited trade entries. After 30 days expire, your account permanently enters Free-After-Trial mode (max 5 trade entries and 5 discipline days per rolling 30-day cycle).",
-                      bn: "প্রতিটি নতুন অ্যাকাউন্ট তৈরির সাথে সাথে স্বয়ংক্রিয়ভাবে ৩০ দিনের পূর্ণ ফ্রি ট্রায়াল শুরু হয়। এই সময়কালে ১টি জার্নাল বুকে আনলিমিটেড ট্রেড এন্ট্রি পাওয়া যায়। ৩০ দিন পর অ্যাকাউন্টটি স্থায়ীভাবে ফ্রি-আফটার-ট্রায়াল মোডে চলে যায় (প্রতি ৩০ দিনে সর্বোচ্চ ৫টি ট্রেড ও ৫টি ডিসিপ্লিন দিন)।",
-                      ur: "ہر نیا اکاؤنٹ رجسٹریشن کے وقت سے 30 دن کی مفت آزمائش حاصل کرتا ہے۔ اس دوران 1 جرنل بک میں لامحدود ٹریڈز درج کی جا سکتی ہیں۔ 30 دن بعد، اکاؤنٹ مستقل طور پر فری موڈ میں چلا جاتا ہے (ماہانہ زیادہ سے زیادہ 5 ٹریڈز اور 5 ڈسپلن دن)۔",
+                      en: "Your 20-day Free Trial starts only when you explicitly click “Claim Free Plan.” During this 20-day period, you have 1 Journal Book with unlimited trade entries and full Private Trader Notebook access. After 20 days expire, your account enters Free-After-Trial mode (max 5 trade entries and 5 discipline days per rolling 30-day cycle).",
+                      bn: "আপনার ২০ দিনের ফ্রি ট্রায়াল শুধুমাত্র তখনই শুরু হয় যখন আপনি “Claim Free Plan”-এ ক্লিক করেন। এই ২০ দিনে ১টি জার্নাল বুকে আনলিমিটেড ট্রেড এন্ট্রি ও প্রাইভেট ট্রেডার নোটবুক অ্যাক্সেস পাবেন। ২০ দিন পর অ্যাকাউন্টটি ফ্রি-আফটার-ট্রায়াল মোডে চলে যায় (প্রতি ৩০ দিনে সর্বোচ্চ ৫টি ট্রেড ও ৫টি ডিসিপ্লিন দিন)।",
+                      ur: "آپ کی 20 دن کی مفت آزمائش صرف اس وقت شروع ہوتی ہے جب آپ “Claim Free Plan” پر کلک کرتے ہیں۔ اس دوران 1 جرنل بک میں لامحدود ٹریڈز اور نوٹ بک رسائی ملتی ہے۔ 20 دن بعد اکاؤنٹ فری موڈ میں چلا جاتا ہے (ماہانہ زیادہ سے زیادہ 5 ٹریڈز اور 5 ڈسپلن دن)۔",
                     })}
                   {selectedPlanModal === "pro" &&
                     selectText({
@@ -463,7 +560,7 @@ export function HomePlansSection({
                     </tr>
                     <tr>
                       <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">{selectText({ en: "Log New Trade", bn: "ট্রেড লগ এন্ট্রি", ur: "ٹریڈ لاگ اندراج" })}</td>
-                      <td className="p-3 text-center text-slate-600 dark:text-slate-400">{selectText({ en: "Unlimited (Trial) / 5 (Post)", bn: "আনলিমিটেড (ট্রায়াল) / ৫ (পরে)", ur: "لامحدود (آزمائش) / 5 (بعد میں)" })}</td>
+                      <td className="p-3 text-center text-slate-600 dark:text-slate-400">{selectText({ en: "Unlimited (20d Trial) / 5 (Post)", bn: "আনলিমিটেড (২০ দিন ট্রায়াল) / ৫ (পরে)", ur: "لامحدود (20 دن آزمائش) / 5 (بعد میں)" })}</td>
                       <td className="p-3 text-center font-bold text-sky-600 dark:text-sky-400">{selectText({ en: "Unlimited", bn: "আনলিমিটেড", ur: "لامحدود" })}</td>
                       <td className="p-3 text-center font-bold text-amber-500">{selectText({ en: "Unlimited", bn: "আনলিমিটেড", ur: "لامحدود" })}</td>
                     </tr>
@@ -521,9 +618,9 @@ export function HomePlansSection({
                 </div>
                 <p className="leading-relaxed">
                   • <strong>{selectText({ en: "Trial Bonus:", bn: "ট্রায়াল বোনাস:", ur: "آزمائشی بونس:" })}</strong> {selectText({
-                    en: "Purchasing Pro or Premium during your 30-day Free Trial immediately adds 5 Bonus Days (35 days total for that first month).",
-                    bn: "৩০ দিনের ফ্রি ট্রায়াল চলাকালে প্রো বা প্রিমিয়াম কিনলে সাথে সাথে ৫টি বোনাস দিন যোগ হবে (প্রথম মাসে মোট ৩৫ দিন)।",
-                    ur: "30 دن کی مفت آزمائش کے دوران پرو یا پریمیم خریدنے پر فوری 5 اضافی بونس دن ملیں گے (پہلے مہینے میں کل 35 دن)۔",
+                    en: "Purchasing Pro or Premium during your 20-day Free Trial immediately adds 5 Bonus Days (35 days total for that first month).",
+                    bn: "২০ দিনের ফ্রি ট্রায়াল চলাকালে প্রো বা প্রিমিয়াম কিনলে সাথে সাথে ৫টি বোনাস দিন যোগ হবে (প্রথম মাসে মোট ৩৫ দিন)।",
+                    ur: "20 دن کی مفت آزمائش کے دوران پرو یا پریمیم خریدنے پر فوری 5 اضافی بونس دن ملیں گے (پہلے مہینے میں کل 35 دن)۔",
                   })}
                 </p>
                 <p className="leading-relaxed">
@@ -545,6 +642,21 @@ export function HomePlansSection({
               >
                 {selectText({ en: "Close", bn: "বন্ধ করুন", ur: "بند کریں" })}
               </Button>
+              {selectedPlanModal === "free" && isTrialUnclaimed && (
+                <Button
+                  onClick={() => {
+                    setSelectedPlanModal(null);
+                    handleClaimFreePlanClick();
+                  }}
+                  className="w-full sm:w-auto bg-gradient-to-r from-cyan-500 to-sky-600 text-white font-bold text-xs"
+                >
+                  {selectText({
+                    en: "Claim Free Plan",
+                    bn: "ফ্রি প্ল্যান ক্লেইম করুন",
+                    ur: "مفت پلان کلیم کریں",
+                  })}
+                </Button>
+              )}
               {selectedPlanModal === "pro" && (
                 <Link href="/checkout?plan=pro" className="w-full sm:w-auto">
                   <Button className="w-full sm:w-auto bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold text-xs">
@@ -571,6 +683,13 @@ export function HomePlansSection({
           </div>
         </div>
       )}
+
+      {/* Shared Claim Free Plan Modal */}
+      <ClaimFreePlanModal
+        isOpen={isClaimModalOpen}
+        onClose={() => setIsClaimModalOpen(false)}
+        source="store"
+      />
     </>
   );
 }

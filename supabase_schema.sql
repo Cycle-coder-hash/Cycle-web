@@ -381,6 +381,28 @@ CREATE TABLE IF NOT EXISTS "userNotebooks" (
 
 CREATE INDEX IF NOT EXISTS idx_user_notebooks_user ON "userNotebooks"("userId");
 
+-- 16. SUBSCRIPTIONS (EXPLICITLY CLAIMED 20-DAY FREE TRIAL & PAID PLANS)
+CREATE TABLE IF NOT EXISTS subscriptions (
+    id SERIAL PRIMARY KEY,
+    "userId" INT REFERENCES users(id) ON DELETE CASCADE NOT NULL UNIQUE,
+    plan VARCHAR(32) DEFAULT 'unclaimed' NOT NULL, -- 'unclaimed', 'free_trial', 'free_after_trial', 'pro', 'premium'
+    status VARCHAR(32) DEFAULT 'active' NOT NULL, -- 'active', 'expired', 'suspended'
+    "trialClaimedAt" TIMESTAMP WITH TIME ZONE,
+    "trialStartsAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+    "trialEndsAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+    "subscriptionStartsAt" TIMESTAMP WITH TIME ZONE,
+    "subscriptionEndsAt" TIMESTAMP WITH TIME ZONE,
+    "pausedProDaysRemaining" INT DEFAULT 0 NOT NULL,
+    "pausedPremiumDaysRemaining" INT DEFAULT 0 NOT NULL,
+    "freeCycleStartsAt" TIMESTAMP WITH TIME ZONE,
+    "freeCycleEndsAt" TIMESTAMP WITH TIME ZONE,
+    "createdAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    "updatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS "trialClaimedAt" TIMESTAMP WITH TIME ZONE;
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions("userId");
+
 -- ==============================================================================
 -- SEED INITIAL BUNDLES & PAYMENT NUMBERS
 -- ==============================================================================

@@ -332,8 +332,9 @@ export const traderTrades = mysqlTable("traderTrades", {
 export const subscriptions = mysqlTable("subscriptions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull().unique(),
-  plan: mysqlEnum("plan", ["free_trial", "free_after_trial", "pro", "premium"]).default("free_trial").notNull(),
+  plan: mysqlEnum("plan", ["unclaimed", "free_trial", "free_after_trial", "pro", "premium"]).default("unclaimed").notNull(),
   status: mysqlEnum("status", ["active", "expired", "suspended"]).default("active").notNull(),
+  trialClaimedAt: timestamp("trialClaimedAt"),
   trialStartsAt: timestamp("trialStartsAt").notNull(),
   trialEndsAt: timestamp("trialEndsAt").notNull(),
   subscriptionStartsAt: timestamp("subscriptionStartsAt"),

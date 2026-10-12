@@ -1,3 +1,4 @@
+import { TRPCError } from "@trpc/server";
 import { eq, and, desc, sql } from "drizzle-orm";
 import {
   users,
@@ -9,19 +10,28 @@ import {
   Subscription,
   User,
 } from "../../../drizzle/schema";
-import { getDb, getSetting, setSetting, getUserById } from "../../db";
+import { getDb } from "../../infra/db/client";
+import { getSetting, setSetting } from "../../infra/db/settings";
+import { getUserById } from "../auth";
 
-export type SubscriptionPlan = "free_trial" | "free_after_trial" | "pro" | "premium";
+export const FREE_TRIAL_DURATION_DAYS = 20;
+export const FREE_TRIAL_DURATION_MS = FREE_TRIAL_DURATION_DAYS * 86400000;
+
+export type SubscriptionPlan = "unclaimed" | "free_trial" | "free_after_trial" | "pro" | "premium";
+export type TrialStatus = "unclaimed" | "active" | "expired";
 export type SubscriptionStatus = "active" | "expired" | "suspended";
 export type AccountStatus = "active" | "suspended" | "banned";
 
 export interface UserSubscription {
   userId: number;
   plan: SubscriptionPlan;
+  trialStatus: TrialStatus;
   status: SubscriptionStatus;
   accountStatus: AccountStatus;
-  trialStartsAt: Date;
-  trialEndsAt: Date;
+  trialClaimedAt: Date | null;
+  isTrialClaimed: boolean;
+  trialStartsAt: Date | null;
+  trialEndsAt: Date | null;
   daysLeftInTrial: number;
   isTrialActive: boolean;
   subscriptionStartsAt?: Date | null;
@@ -38,9 +48,17 @@ export interface UserSubscription {
 
 export interface UserUsage {
   plan: SubscriptionPlan;
+  trialStatus: TrialStatus;
+  trialDurationDays: number;
   status: SubscriptionStatus;
   accountStatus: AccountStatus;
   daysLeft: number;
+  trialClaimedAt: Date | null;
+  isTrialClaimed: boolean;
+  isTrialActive: boolean;
+  isPaidActive: boolean;
+  trialStartsAt: Date | null;
+  trialEndsAt: Date | null;
   hasCourseAccess: boolean;
   // Journal
   journalEntriesCount: number;
@@ -66,39 +84,63 @@ export interface UserUsage {
   isLeaderboardEligible: boolean;
 }
 
+export interface ClaimFreePlanResult {
+  success: boolean;
+  alreadyClaimed: boolean;
+  subscription: UserSubscription;
+  usage: UserUsage;
+}
+
 // In-memory fallback stores for local development / test isolation
 const inMemorySubscriptions: Map<number, any> = new Map();
 const inMemoryAccountStatuses: Map<number, AccountStatus> = new Map();
 const inMemorySavedVideos: Array<{ id: number; userId: number; videoUrl: string; source: "journal" | "notebook"; createdAt: Date }> = [];
 const inMemoryNotebookPages: Array<{ id: number; userId: number; pageId: string; createdAt: Date }> = [];
+const inFlightClaims: Map<number, Promise<ClaimFreePlanResult>> = new Map();
 let autoVideoId = 1;
 let autoPageId = 1;
 
-/**
- * Retrieve the raw database-backed subscription record for a user,
- * without applying manual admin grants or admin override blocks.
- * Used to preserve and inspect authentic automatic subscriptions.
- */
-export async function getRawUserSubscription(userId: number): Promise<{
-  plan: SubscriptionPlan;
-  status: SubscriptionStatus;
-  isPaidActive: boolean;
-  subscriptionStartsAt: Date | null;
-  subscriptionEndsAt: Date | null;
-}> {
-  let subRecord: any = null;
+export function resetInMemorySubscriptionStateForTests(userId?: number): void {
+  if (typeof userId === "number") {
+    inMemorySubscriptions.delete(userId);
+    inMemoryAccountStatuses.delete(userId);
+    inFlightClaims.delete(userId);
+    for (let i = inMemorySavedVideos.length - 1; i >= 0; i--) {
+      if (inMemorySavedVideos[i].userId === userId) inMemorySavedVideos.splice(i, 1);
+    }
+    for (let i = inMemoryNotebookPages.length - 1; i >= 0; i--) {
+      if (inMemoryNotebookPages[i].userId === userId) inMemoryNotebookPages.splice(i, 1);
+    }
+  } else {
+    inMemorySubscriptions.clear();
+    inMemoryAccountStatuses.clear();
+    inFlightClaims.clear();
+    inMemorySavedVideos.length = 0;
+    inMemoryNotebookPages.length = 0;
+  }
+}
+
+async function loadSubscriptionRecord(userId: number): Promise<any | null> {
+  let subRecord: any = inMemorySubscriptions.get(userId) || null;
   const db = await getDb();
+
   if (db) {
     try {
       const rows = await db.select().from(subscriptions).where(eq(subscriptions.userId, userId)).limit(1);
       if (rows.length > 0) {
-        subRecord = rows[0];
+        const dbRow = rows[0] as any;
+        // Preserve in-memory trialClaimedAt if DB column was not yet migrated on remote instance
+        if (subRecord?.trialClaimedAt && !dbRow.trialClaimedAt) {
+          dbRow.trialClaimedAt = subRecord.trialClaimedAt;
+        }
+        subRecord = dbRow;
+        inMemorySubscriptions.set(userId, subRecord);
       }
-    } catch {}
+    } catch (err) {
+      console.warn("[loadSubscriptionRecord db query warning]:", err);
+    }
   }
-  if (!subRecord) {
-    subRecord = inMemorySubscriptions.get(userId);
-  }
+
   if (!subRecord && process.env.NODE_ENV !== "test") {
     try {
       const raw = await getSetting(`user_subscription_${userId}`);
@@ -107,16 +149,57 @@ export async function getRawUserSubscription(userId: number): Promise<{
         inMemorySubscriptions.set(userId, subRecord);
       }
     } catch {}
+  } else if (subRecord && !subRecord.trialClaimedAt && process.env.NODE_ENV !== "test") {
+    try {
+      const raw = await getSetting(`user_subscription_${userId}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.trialClaimedAt) {
+          subRecord = { ...subRecord, ...parsed };
+          inMemorySubscriptions.set(userId, subRecord);
+        }
+      }
+    } catch {}
   }
-  const now = new Date();
+
+  return subRecord;
+}
+
+/**
+ * Retrieve the raw database-backed subscription record for a user,
+ * without applying manual admin grants or admin override blocks.
+ * Used to preserve and inspect authentic automatic subscriptions.
+ */
+export async function getRawUserSubscription(userId: number, nowOverride?: Date): Promise<{
+  plan: SubscriptionPlan;
+  status: SubscriptionStatus;
+  isPaidActive: boolean;
+  subscriptionStartsAt: Date | null;
+  subscriptionEndsAt: Date | null;
+}> {
+  const subRecord = await loadSubscriptionRecord(userId);
+  const now = nowOverride ? new Date(nowOverride.getTime()) : new Date();
   const subEndsAt = subRecord?.subscriptionEndsAt ? new Date(subRecord.subscriptionEndsAt) : null;
   const isPaidActive =
     (subRecord?.plan === "pro" || subRecord?.plan === "premium") &&
     subEndsAt != null &&
     subEndsAt.getTime() > now.getTime();
 
+  const trialClaimedAt = subRecord?.trialClaimedAt ? new Date(subRecord.trialClaimedAt) : null;
+  let fallbackPlan: SubscriptionPlan = "unclaimed";
+  if (isPaidActive) {
+    fallbackPlan = subRecord.plan as SubscriptionPlan;
+  } else if (trialClaimedAt) {
+    const trialEnds = subRecord?.trialEndsAt
+      ? new Date(subRecord.trialEndsAt)
+      : new Date(trialClaimedAt.getTime() + FREE_TRIAL_DURATION_MS);
+    fallbackPlan = now.getTime() < trialEnds.getTime() ? "free_trial" : "free_after_trial";
+  } else if (subEndsAt && subEndsAt.getTime() <= now.getTime()) {
+    fallbackPlan = "free_after_trial";
+  }
+
   return {
-    plan: (subRecord?.plan as SubscriptionPlan) || "free_trial",
+    plan: fallbackPlan,
     status: (subRecord?.status as SubscriptionStatus) || "active",
     isPaidActive,
     subscriptionStartsAt: subRecord?.subscriptionStartsAt ? new Date(subRecord.subscriptionStartsAt) : null,
@@ -125,103 +208,44 @@ export async function getRawUserSubscription(userId: number): Promise<{
 }
 
 /**
- * Get or initialize a user's subscription record.
- * The 30-day Free Trial is strictly anchored to the user's account creation date (createdAt in DB).
+ * Get a user's subscription state without ever auto-starting a trial.
+ * The 20-day Free Trial starts ONLY when explicitly claimed via `claimFreeTrialPlan`.
  */
-export async function getUserSubscription(userId: number): Promise<UserSubscription> {
+export async function getUserSubscription(userId: number, nowOverride?: Date): Promise<UserSubscription> {
   const user = await getUserById(userId);
-  const now = new Date();
-  const userCreatedAt = user?.createdAt ? new Date(user.createdAt) : now;
-
-  // Account creation timestamp strictly anchors the 30-day trial
-  const trialStartsAt = new Date(userCreatedAt.getTime());
-  const trialEndsAt = new Date(trialStartsAt.getTime() + 30 * 86400000);
+  const now = nowOverride ? new Date(nowOverride.getTime()) : new Date();
 
   // Account status (Active by default)
   const userAccountStatus: AccountStatus =
-    (user as any)?.accountStatus || inMemoryAccountStatuses.get(userId) || "active";
+    inMemoryAccountStatuses.get(userId) || (user as any)?.accountStatus || (user as any)?.status || "active";
 
-  let subRecord: any = null;
-  const db = await getDb();
+  const subRecord = await loadSubscriptionRecord(userId);
 
-  if (db) {
-    try {
-      const rows = await db.select().from(subscriptions).where(eq(subscriptions.userId, userId)).limit(1);
-      if (rows.length > 0) {
-        subRecord = rows[0];
-        inMemorySubscriptions.set(userId, subRecord);
-      }
-    } catch (err) {
-      console.warn("[getUserSubscription db query warning]:", err);
-    }
-  }
+  const trialClaimedAt: Date | null = subRecord?.trialClaimedAt ? new Date(subRecord.trialClaimedAt) : null;
+  const isTrialClaimed = trialClaimedAt !== null;
 
-  if (!subRecord) {
-    subRecord = inMemorySubscriptions.get(userId);
-  }
+  const trialStartsAt: Date | null = isTrialClaimed
+    ? new Date(trialClaimedAt!.getTime())
+    : null;
+  const trialEndsAt: Date | null = isTrialClaimed
+    ? subRecord?.trialEndsAt
+      ? new Date(subRecord.trialEndsAt)
+      : new Date(trialStartsAt!.getTime() + FREE_TRIAL_DURATION_MS)
+    : null;
 
-  if (!subRecord && process.env.NODE_ENV !== "test") {
-    try {
-      const raw = await getSetting(`user_subscription_${userId}`);
-      if (raw) {
-        subRecord = JSON.parse(raw);
-        inMemorySubscriptions.set(userId, subRecord);
-      }
-    } catch {}
-  }
-
-  // If no record exists yet, initialize based on user's account creation timestamp
-  if (!subRecord) {
-    const isStillTrial = now.getTime() < trialEndsAt.getTime();
-    subRecord = {
-      userId,
-      plan: isStillTrial ? "free_trial" : "free_after_trial",
-      status: "active",
-      trialStartsAt,
-      trialEndsAt,
-      subscriptionStartsAt: null,
-      subscriptionEndsAt: null,
-      pausedProDaysRemaining: 0,
-      pausedPremiumDaysRemaining: 0,
-      freeCycleStartsAt: isStillTrial ? null : trialEndsAt,
-      freeCycleEndsAt: isStillTrial ? null : new Date(trialEndsAt.getTime() + 30 * 86400000),
-      createdAt: now,
-      updatedAt: now,
-    };
-    inMemorySubscriptions.set(userId, subRecord);
-
-    if (db) {
-      try {
-        await db.insert(subscriptions).values({
-          userId,
-          plan: subRecord.plan,
-          status: subRecord.status,
-          trialStartsAt: subRecord.trialStartsAt,
-          trialEndsAt: subRecord.trialEndsAt,
-          subscriptionStartsAt: subRecord.subscriptionStartsAt,
-          subscriptionEndsAt: subRecord.subscriptionEndsAt,
-          pausedProDaysRemaining: subRecord.pausedProDaysRemaining,
-          pausedPremiumDaysRemaining: subRecord.pausedPremiumDaysRemaining,
-          freeCycleStartsAt: subRecord.freeCycleStartsAt,
-          freeCycleEndsAt: subRecord.freeCycleEndsAt,
-        });
-      } catch (err) {
-        // Table might not exist yet or conflict; memory fallback handles it
-      }
-    }
-  }
-
-  // Evaluate active plan status & transitions dynamically
-  let effectivePlan: SubscriptionPlan = subRecord.plan;
-  let effectiveStatus: SubscriptionStatus = subRecord.status;
-  let subStartsAt: Date | null = subRecord.subscriptionStartsAt ? new Date(subRecord.subscriptionStartsAt) : null;
-  let subEndsAt: Date | null = subRecord.subscriptionEndsAt ? new Date(subRecord.subscriptionEndsAt) : null;
-  let pausedProDays = Number(subRecord.pausedProDaysRemaining) || 0;
-  let pausedPremiumDays = Number(subRecord.pausedPremiumDaysRemaining) || 0;
+  let effectivePlan: SubscriptionPlan = isTrialClaimed
+    ? ((subRecord?.plan as SubscriptionPlan) || "free_trial")
+    : (subRecord?.plan === "pro" || subRecord?.plan === "premium")
+    ? (subRecord.plan as SubscriptionPlan)
+    : "unclaimed";
+  let effectiveStatus: SubscriptionStatus = (subRecord?.status as SubscriptionStatus) || "active";
+  let subStartsAt: Date | null = subRecord?.subscriptionStartsAt ? new Date(subRecord.subscriptionStartsAt) : null;
+  let subEndsAt: Date | null = subRecord?.subscriptionEndsAt ? new Date(subRecord.subscriptionEndsAt) : null;
+  let pausedProDays = Number(subRecord?.pausedProDaysRemaining) || 0;
+  let pausedPremiumDays = Number(subRecord?.pausedPremiumDaysRemaining) || 0;
 
   // 1. Check if paid subscription is expired
   if (subEndsAt && subEndsAt.getTime() <= now.getTime()) {
-    // If user was on Premium and had paused Pro days preserved, seamlessly resume Pro!
     if (effectivePlan === "premium" && pausedProDays > 0) {
       effectivePlan = "pro";
       effectiveStatus = "active";
@@ -249,9 +273,8 @@ export async function getUserSubscription(userId: number): Promise<UserSubscript
         pausedPremiumDaysRemaining: 0,
       });
     } else {
-      // Paid plan has expired without preserved days -> Moves permanently to free-after-trial
       effectivePlan = "free_after_trial";
-      effectiveStatus = "active"; // Free-after-trial state is active
+      effectiveStatus = "active";
       await updateSubscriptionRecord(userId, {
         plan: "free_after_trial",
         status: "active",
@@ -259,26 +282,48 @@ export async function getUserSubscription(userId: number): Promise<UserSubscript
     }
   }
 
-  // 2. Check if Free Trial is expired and no paid plan active
-  if (effectivePlan === "free_trial" && now.getTime() >= trialEndsAt.getTime()) {
-    effectivePlan = "free_after_trial";
-    effectiveStatus = "active";
-    await updateSubscriptionRecord(userId, {
-      plan: "free_after_trial",
-      status: "active",
-    });
+  // 2. Evaluate claimed Free Trial status & expiration (20 days from trialClaimedAt)
+  if (effectivePlan !== "pro" && effectivePlan !== "premium") {
+    if (isTrialClaimed && trialEndsAt) {
+      if (now.getTime() >= trialEndsAt.getTime()) {
+        if (effectivePlan !== "free_after_trial") {
+          effectivePlan = "free_after_trial";
+          effectiveStatus = "active";
+          await updateSubscriptionRecord(userId, {
+            plan: "free_after_trial",
+            status: "active",
+          });
+        }
+      } else {
+        effectivePlan = "free_trial";
+      }
+    } else if (subEndsAt && subEndsAt.getTime() <= now.getTime()) {
+      effectivePlan = "free_after_trial";
+    } else {
+      effectivePlan = "unclaimed";
+    }
   }
 
-  const isTrialActive = effectivePlan === "free_trial" && now.getTime() < trialEndsAt.getTime();
-  const isPaidActive = (effectivePlan === "pro" || effectivePlan === "premium") && subEndsAt != null && subEndsAt.getTime() > now.getTime();
+  const isTrialActive =
+    isTrialClaimed &&
+    effectivePlan === "free_trial" &&
+    trialEndsAt !== null &&
+    now.getTime() < trialEndsAt.getTime();
 
-  const daysLeftInTrial = isTrialActive
-    ? Math.max(0, Math.ceil((trialEndsAt.getTime() - now.getTime()) / 86400000))
-    : 0;
+  const isPaidActive =
+    (effectivePlan === "pro" || effectivePlan === "premium") &&
+    subEndsAt != null &&
+    subEndsAt.getTime() > now.getTime();
 
-  const daysLeftInSubscription = isPaidActive && subEndsAt
-    ? Math.max(0, Math.ceil((subEndsAt.getTime() - now.getTime()) / 86400000))
-    : 0;
+  const daysLeftInTrial =
+    isTrialActive && trialEndsAt
+      ? Math.max(0, Math.ceil((trialEndsAt.getTime() - now.getTime()) / 86400000))
+      : 0;
+
+  const daysLeftInSubscription =
+    isPaidActive && subEndsAt
+      ? Math.max(0, Math.ceil((subEndsAt.getTime() - now.getTime()) / 86400000))
+      : 0;
 
   // Calculate rolling 30-day personal cycle for Free-After-Trial users
   let freeCycleStartsAt: Date | null = null;
@@ -286,10 +331,11 @@ export async function getUserSubscription(userId: number): Promise<UserSubscript
   let daysLeftInFreeCycle = 0;
 
   if (effectivePlan === "free_after_trial") {
-    const msSinceTrialEnd = Math.max(0, now.getTime() - trialEndsAt.getTime());
+    const cycleAnchor = trialEndsAt || subEndsAt || now;
+    const msSinceAnchor = Math.max(0, now.getTime() - cycleAnchor.getTime());
     const cycleDurationMs = 30 * 86400000;
-    const cycleIndex = Math.floor(msSinceTrialEnd / cycleDurationMs);
-    freeCycleStartsAt = new Date(trialEndsAt.getTime() + cycleIndex * cycleDurationMs);
+    const cycleIndex = Math.floor(msSinceAnchor / cycleDurationMs);
+    freeCycleStartsAt = new Date(cycleAnchor.getTime() + cycleIndex * cycleDurationMs);
     freeCycleEndsAt = new Date(freeCycleStartsAt.getTime() + cycleDurationMs);
     daysLeftInFreeCycle = Math.max(0, Math.ceil((freeCycleEndsAt.getTime() - now.getTime()) / 86400000));
   }
@@ -340,7 +386,11 @@ export async function getUserSubscription(userId: number): Promise<UserSubscript
       }
     } else if (proBlocked || premiumBlocked || manualPro || manualPremium) {
       if (effectivePlan === "pro" || effectivePlan === "premium") {
-        effectivePlan = isTrialActive ? "free_trial" : "free_after_trial";
+        effectivePlan = isTrialActive
+          ? "free_trial"
+          : isTrialClaimed
+          ? "free_after_trial"
+          : "unclaimed";
         effectiveStatus = "active";
         finalPaidActive = false;
       }
@@ -353,15 +403,25 @@ export async function getUserSubscription(userId: number): Promise<UserSubscript
     hasCourseAccess = await hasUserCourseAccess(userId, now);
   } catch (err) {}
 
-  const finalDaysLeftInSubscription = finalPaidActive && finalSubEndsAt
-    ? Math.max(0, Math.ceil((finalSubEndsAt.getTime() - now.getTime()) / 86400000))
-    : 0;
+  const finalDaysLeftInSubscription =
+    finalPaidActive && finalSubEndsAt
+      ? Math.max(0, Math.ceil((finalSubEndsAt.getTime() - now.getTime()) / 86400000))
+      : 0;
+
+  const trialStatus: TrialStatus = isTrialActive
+    ? "active"
+    : isTrialClaimed || effectivePlan === "free_after_trial"
+    ? "expired"
+    : "unclaimed";
 
   return {
     userId,
     plan: effectivePlan,
+    trialStatus,
     status: effectiveStatus,
     accountStatus: userAccountStatus,
+    trialClaimedAt,
+    isTrialClaimed,
     trialStartsAt,
     trialEndsAt,
     daysLeftInTrial,
@@ -376,6 +436,178 @@ export async function getUserSubscription(userId: number): Promise<UserSubscript
     pausedProDaysRemaining: pausedProDays,
     pausedPremiumDaysRemaining: pausedPremiumDays,
     hasCourseAccess,
+  };
+}
+
+/**
+ * Explicitly claim the 20-day Free Trial for an authenticated user.
+ * Atomic and idempotent per user:
+ * - If unclaimed: records `trialClaimedAt = now`, `trialStartsAt = now`, `trialEndsAt = now + 20 days`.
+ * - If already active: returns existing active trial state (`alreadyClaimed: true`) without resetting or extending.
+ * - If already expired: rejects (`FORBIDDEN`) — users cannot claim a second free trial.
+ * - If active paid subscription (`pro` or `premium`): rejects (`BAD_REQUEST`) — never downgrades paid plan.
+ */
+export async function claimFreeTrialPlan(userId: number, nowOverride?: Date): Promise<ClaimFreePlanResult> {
+  const existingLock = inFlightClaims.get(userId);
+  if (existingLock) {
+    return await existingLock;
+  }
+
+  const claimPromise = executeClaimFreeTrialPlan(userId, nowOverride).finally(() => {
+    inFlightClaims.delete(userId);
+  });
+  inFlightClaims.set(userId, claimPromise);
+  return await claimPromise;
+}
+
+async function executeClaimFreeTrialPlan(userId: number, nowOverride?: Date): Promise<ClaimFreePlanResult> {
+  const now = nowOverride ? new Date(nowOverride.getTime()) : new Date();
+  const currentSub = await getUserSubscription(userId, now);
+
+  if (currentSub.accountStatus !== "active") {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Account is not active.",
+    });
+  }
+
+  // State 4: Paid Subscription Active — do not overwrite or downgrade
+  if (currentSub.isPaidActive || currentSub.plan === "pro" || currentSub.plan === "premium") {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "You already have an active paid subscription.",
+    });
+  }
+
+  // State 2: Free Trial Already Active — idempotent success without resetting timestamps
+  if (currentSub.isTrialClaimed && currentSub.isTrialActive) {
+    const usage = await getUserUsage(userId, now);
+    return {
+      success: true,
+      alreadyClaimed: true,
+      subscription: currentSub,
+      usage,
+    };
+  }
+
+  // State 3: Free Trial Expired — cannot claim another trial
+  if (currentSub.isTrialClaimed || currentSub.trialStatus === "expired" || currentSub.plan === "free_after_trial") {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Your 20-day Free Trial has already expired. Upgrade to Pro or Premium to continue.",
+    });
+  }
+
+  // State 1: Unclaimed -> Activate 20-day Free Trial starting at `now`
+  const trialClaimedAt = new Date(now.getTime());
+  const trialStartsAt = new Date(trialClaimedAt.getTime());
+  const trialEndsAt = new Date(trialStartsAt.getTime() + FREE_TRIAL_DURATION_MS);
+
+  const existingRecord = inMemorySubscriptions.get(userId);
+  const newRecord = {
+    ...(existingRecord || {}),
+    userId,
+    plan: "free_trial" as const,
+    status: "active" as const,
+    trialClaimedAt,
+    trialStartsAt,
+    trialEndsAt,
+    subscriptionStartsAt: existingRecord?.subscriptionStartsAt ?? null,
+    subscriptionEndsAt: existingRecord?.subscriptionEndsAt ?? null,
+    pausedProDaysRemaining: existingRecord?.pausedProDaysRemaining ?? 0,
+    pausedPremiumDaysRemaining: existingRecord?.pausedPremiumDaysRemaining ?? 0,
+    freeCycleStartsAt: null,
+    freeCycleEndsAt: null,
+    createdAt: existingRecord?.createdAt ?? now,
+    updatedAt: now,
+  };
+
+  inMemorySubscriptions.set(userId, newRecord);
+
+  if (process.env.NODE_ENV !== "test") {
+    try {
+      await setSetting(`user_subscription_${userId}`, JSON.stringify(newRecord));
+    } catch {}
+  }
+
+  const db = await getDb();
+  if (db) {
+    try {
+      const rows = await db.select().from(subscriptions).where(eq(subscriptions.userId, userId)).limit(1);
+      if (rows.length > 0) {
+        await db
+          .update(subscriptions)
+          .set({
+            plan: "free_trial",
+            status: "active",
+            trialClaimedAt,
+            trialStartsAt,
+            trialEndsAt,
+            freeCycleStartsAt: null,
+            freeCycleEndsAt: null,
+            updatedAt: now,
+          } as any)
+          .where(eq(subscriptions.userId, userId));
+      } else {
+        await db.insert(subscriptions).values({
+          userId,
+          plan: "free_trial",
+          status: "active",
+          trialClaimedAt,
+          trialStartsAt,
+          trialEndsAt,
+          subscriptionStartsAt: null,
+          subscriptionEndsAt: null,
+          pausedProDaysRemaining: 0,
+          pausedPremiumDaysRemaining: 0,
+          freeCycleStartsAt: null,
+          freeCycleEndsAt: null,
+        } as any);
+      }
+    } catch (err) {
+      // Fallback if DB column trialClaimedAt is not yet migrated in remote DB
+      try {
+        const rows = await db.select().from(subscriptions).where(eq(subscriptions.userId, userId)).limit(1);
+        if (rows.length > 0) {
+          await db
+            .update(subscriptions)
+            .set({
+              plan: "free_trial",
+              status: "active",
+              trialStartsAt,
+              trialEndsAt,
+              freeCycleStartsAt: null,
+              freeCycleEndsAt: null,
+              updatedAt: now,
+            })
+            .where(eq(subscriptions.userId, userId));
+        } else {
+          await db.insert(subscriptions).values({
+            userId,
+            plan: "free_trial",
+            status: "active",
+            trialStartsAt,
+            trialEndsAt,
+            subscriptionStartsAt: null,
+            subscriptionEndsAt: null,
+            pausedProDaysRemaining: 0,
+            pausedPremiumDaysRemaining: 0,
+            freeCycleStartsAt: null,
+            freeCycleEndsAt: null,
+          });
+        }
+      } catch {}
+    }
+  }
+
+  const updatedSub = await getUserSubscription(userId, now);
+  const updatedUsage = await getUserUsage(userId, now);
+
+  return {
+    success: true,
+    alreadyClaimed: false,
+    subscription: updatedSub,
+    usage: updatedUsage,
   };
 }
 
@@ -684,17 +916,19 @@ export async function getDisciplineDaysInCycle(userId: number, cycleStart?: Date
 /**
  * Get comprehensive usage details and limits for the user
  */
-export async function getUserUsage(userId: number): Promise<UserUsage> {
-  const sub = await getUserSubscription(userId);
+export async function getUserUsage(userId: number, nowOverride?: Date): Promise<UserUsage> {
+  const sub = await getUserSubscription(userId, nowOverride);
 
   // Journal Books
-  const { getUserJournalConfig } = await import("../../db");
+  const { getUserJournalConfig } = await import("../journal");
   const journalConfig = await getUserJournalConfig(userId);
   const journalBooksCount = (journalConfig as any).books ? (journalConfig as any).books.length : 1;
 
   // Determine current active period for quota counts
   const currentPeriodStart = sub.isPaidActive
     ? sub.subscriptionStartsAt
+    : sub.isTrialActive
+    ? sub.trialStartsAt
     : sub.freeCycleStartsAt;
 
   const journalVideosCount = await getActiveSavedVideosCount(userId, "journal");
@@ -713,26 +947,39 @@ export async function getUserUsage(userId: number): Promise<UserUsage> {
     ? sub.daysLeftInTrial
     : sub.isPaidActive
     ? sub.daysLeftInSubscription
-    : sub.daysLeftInFreeCycle;
+    : sub.plan === "free_after_trial"
+    ? sub.daysLeftInFreeCycle
+    : 0;
 
   // Limits based on plan
-  let journalEntriesLimit: number | "unlimited" = "unlimited";
-  let journalBooksLimit: number | "unlimited" = 1;
+  let journalEntriesLimit: number | "unlimited" = 0;
+  let journalBooksLimit: number | "unlimited" = 0;
   let journalVideosLimit: number | "unlimited" = 0;
   let notebookPagesLimit: number | "unlimited" = 0;
   let notebookVideosLimit: number | "unlimited" = 0;
-  let disciplineDaysLimit: number | "unlimited" = "unlimited";
+  let disciplineDaysLimit: number | "unlimited" = 0;
 
   let isWorkoutLocked = true;
   let isCommunityLocked = true;
   let isMentorSupportLocked = true;
   let isOwnerChatLocked = true;
 
-  if (sub.plan === "free_trial") {
+  if (sub.plan === "unclaimed") {
+    journalEntriesLimit = 0;
+    journalBooksLimit = 0;
+    journalVideosLimit = 0;
+    notebookPagesLimit = 0;
+    notebookVideosLimit = 0;
+    disciplineDaysLimit = 0;
+    isWorkoutLocked = true;
+    isCommunityLocked = true;
+    isMentorSupportLocked = true;
+    isOwnerChatLocked = true;
+  } else if (sub.plan === "free_trial") {
     journalEntriesLimit = "unlimited";
     journalBooksLimit = 1;
     journalVideosLimit = 0;
-    notebookPagesLimit = 0;
+    notebookPagesLimit = 10;
     notebookVideosLimit = 0;
     disciplineDaysLimit = "unlimited";
     isWorkoutLocked = true;
@@ -783,9 +1030,17 @@ export async function getUserUsage(userId: number): Promise<UserUsage> {
 
   return {
     plan: sub.plan,
+    trialStatus: sub.trialStatus,
+    trialDurationDays: FREE_TRIAL_DURATION_DAYS,
     status: sub.status,
     accountStatus: sub.accountStatus,
     daysLeft,
+    trialClaimedAt: sub.trialClaimedAt,
+    isTrialClaimed: sub.isTrialClaimed,
+    isTrialActive: sub.isTrialActive,
+    isPaidActive: sub.isPaidActive,
+    trialStartsAt: sub.trialStartsAt,
+    trialEndsAt: sub.trialEndsAt,
     hasCourseAccess: sub.hasCourseAccess,
     journalEntriesCount,
     journalEntriesLimit,
@@ -811,10 +1066,24 @@ export async function getUserUsage(userId: number): Promise<UserUsage> {
 // SERVER-SIDE ACCESS CONTROL ENFORCEMENT HOOKS
 // ------------------------------------------------------------------------------
 
-export async function canCreateJournalBook(userId: number, currentBookCount: number): Promise<{ allowed: boolean; reason?: string }> {
-  const sub = await getUserSubscription(userId);
+export const UNCLAIMED_TRIAL_REASON =
+  "Activate your 20-day Free Trial to start using the available Journal and Private Trader Notebook features. Your trial begins only after you confirm your claim.";
+
+export async function canCreateJournalBook(
+  userId: number,
+  currentBookCount: number,
+  nowOverride?: Date
+): Promise<{ allowed: boolean; code?: string; reason?: string }> {
+  const sub = await getUserSubscription(userId, nowOverride);
   if (sub.accountStatus !== "active") {
     return { allowed: false, reason: "Account is not active." };
+  }
+  if (sub.plan === "unclaimed") {
+    return {
+      allowed: false,
+      code: "TRIAL_UNCLAIMED",
+      reason: UNCLAIMED_TRIAL_REASON,
+    };
   }
   if (sub.plan === "free_trial" || sub.plan === "free_after_trial") {
     if (currentBookCount >= 1) {
@@ -835,10 +1104,20 @@ export async function canCreateJournalBook(userId: number, currentBookCount: num
   return { allowed: true };
 }
 
-export async function canCreateTradeEntry(userId: number): Promise<{ allowed: boolean; reason?: string }> {
-  const sub = await getUserSubscription(userId);
+export async function canCreateTradeEntry(
+  userId: number,
+  nowOverride?: Date
+): Promise<{ allowed: boolean; code?: string; reason?: string }> {
+  const sub = await getUserSubscription(userId, nowOverride);
   if (sub.accountStatus !== "active") {
     return { allowed: false, reason: "Account is not active." };
+  }
+  if (sub.plan === "unclaimed") {
+    return {
+      allowed: false,
+      code: "TRIAL_UNCLAIMED",
+      reason: UNCLAIMED_TRIAL_REASON,
+    };
   }
   if (sub.plan === "free_after_trial") {
     const currentTradesInCycle = await getTradesCountInCycle(userId, sub.freeCycleStartsAt);
@@ -852,10 +1131,21 @@ export async function canCreateTradeEntry(userId: number): Promise<{ allowed: bo
   return { allowed: true };
 }
 
-export async function canSaveVideo(userId: number, source: "journal" | "notebook"): Promise<{ allowed: boolean; reason?: string }> {
-  const sub = await getUserSubscription(userId);
+export async function canSaveVideo(
+  userId: number,
+  source: "journal" | "notebook",
+  nowOverride?: Date
+): Promise<{ allowed: boolean; code?: string; reason?: string }> {
+  const sub = await getUserSubscription(userId, nowOverride);
   if (sub.accountStatus !== "active") {
     return { allowed: false, reason: "Account is not active." };
+  }
+  if (sub.plan === "unclaimed") {
+    return {
+      allowed: false,
+      code: "TRIAL_UNCLAIMED",
+      reason: UNCLAIMED_TRIAL_REASON,
+    };
   }
   if (sub.plan === "free_trial" || sub.plan === "free_after_trial") {
     return {
@@ -885,16 +1175,36 @@ export async function canSaveVideo(userId: number, source: "journal" | "notebook
   return { allowed: true };
 }
 
-export async function canCreateNotebookPage(userId: number): Promise<{ allowed: boolean; reason?: string }> {
-  const sub = await getUserSubscription(userId);
+export async function canCreateNotebookPage(
+  userId: number,
+  nowOverride?: Date
+): Promise<{ allowed: boolean; code?: string; reason?: string }> {
+  const sub = await getUserSubscription(userId, nowOverride);
   if (sub.accountStatus !== "active") {
     return { allowed: false, reason: "Account is not active." };
   }
-  if (sub.plan === "free_trial" || sub.plan === "free_after_trial") {
+  if (sub.plan === "unclaimed") {
     return {
       allowed: false,
-      reason: "Trader Notebook pages are available on Pro (10 pages/month) and Premium (Unlimited) plans.",
+      code: "TRIAL_UNCLAIMED",
+      reason: UNCLAIMED_TRIAL_REASON,
     };
+  }
+  if (sub.plan === "free_after_trial") {
+    return {
+      allowed: false,
+      reason: "Your 20-day Free Trial has expired. Upgrade to Pro (10 pages/month) or Premium (Unlimited) to create new notebook pages.",
+    };
+  }
+  if (sub.plan === "free_trial") {
+    const activePages = await getActiveNotebookPagesCount(userId, sub.trialStartsAt);
+    if (activePages >= 10) {
+      return {
+        allowed: false,
+        reason: "You have reached the Free Trial Notebook page limit (10/10). Upgrade to Pro or Premium for more pages.",
+      };
+    }
+    return { allowed: true };
   }
   if (sub.plan === "pro") {
     const activePages = await getActiveNotebookPagesCount(userId, sub.subscriptionStartsAt);
@@ -908,12 +1218,36 @@ export async function canCreateNotebookPage(userId: number): Promise<{ allowed: 
   return { allowed: true };
 }
 
-export async function canAccessWorkout(userId: number): Promise<{ allowed: boolean; reason?: string }> {
-  const sub = await getUserSubscription(userId);
+export async function canSaveNotebookContent(
+  userId: number,
+  nowOverride?: Date
+): Promise<{ allowed: boolean; code?: string; reason?: string }> {
+  const sub = await getUserSubscription(userId, nowOverride);
   if (sub.accountStatus !== "active") {
     return { allowed: false, reason: "Account is not active." };
   }
-  if (sub.plan === "free_trial" || sub.plan === "free_after_trial") {
+  if (sub.plan === "unclaimed") {
+    return {
+      allowed: false,
+      code: "TRIAL_UNCLAIMED",
+      reason: UNCLAIMED_TRIAL_REASON,
+    };
+  }
+  if (sub.plan === "free_after_trial") {
+    return {
+      allowed: false,
+      reason: "Your 20-day Free Trial has expired. Upgrade to Pro or Premium to add or edit notebook content.",
+    };
+  }
+  return { allowed: true };
+}
+
+export async function canAccessWorkout(userId: number, nowOverride?: Date): Promise<{ allowed: boolean; reason?: string }> {
+  const sub = await getUserSubscription(userId, nowOverride);
+  if (sub.accountStatus !== "active") {
+    return { allowed: false, reason: "Account is not active." };
+  }
+  if (sub.plan === "unclaimed" || sub.plan === "free_trial" || sub.plan === "free_after_trial") {
     return {
       allowed: false,
       reason: "Workout Routine & Completion is available with Pro and Premium. Upgrade to unlock structured workout checklists and tracking.",
@@ -922,15 +1256,13 @@ export async function canAccessWorkout(userId: number): Promise<{ allowed: boole
   return { allowed: true };
 }
 
-export async function canLogDiscipline(userId: number, date: string): Promise<{ allowed: boolean; reason?: string }> {
-  const sub = await getUserSubscription(userId);
+export async function canLogDiscipline(userId: number, date: string, nowOverride?: Date): Promise<{ allowed: boolean; reason?: string }> {
+  const sub = await getUserSubscription(userId, nowOverride);
   if (sub.accountStatus !== "active") {
     return { allowed: false, reason: "Account is not active." };
   }
   if (sub.plan === "free_after_trial") {
     const uniqueDays = await getDisciplineDaysInCycle(userId, sub.freeCycleStartsAt);
-    // If user already logged on this specific date in current cycle, they can toggle tasks on that day
-    // But if trying to start a 6th unique day, block it!
     const { getSetting } = await import("../../db");
     const raw = await getSetting(`discipline_completions_${userId}`);
     let alreadyHasDate = false;
@@ -950,12 +1282,12 @@ export async function canLogDiscipline(userId: number, date: string): Promise<{ 
   return { allowed: true };
 }
 
-export async function canAccessCommunity(userId: number): Promise<{ allowed: boolean; reason?: string }> {
-  const sub = await getUserSubscription(userId);
+export async function canAccessCommunity(userId: number, nowOverride?: Date): Promise<{ allowed: boolean; reason?: string }> {
+  const sub = await getUserSubscription(userId, nowOverride);
   if (sub.accountStatus !== "active") {
     return { allowed: false, reason: "Account is not active." };
   }
-  if (sub.plan === "free_trial" || sub.plan === "free_after_trial") {
+  if (sub.plan === "unclaimed" || sub.plan === "free_trial" || sub.plan === "free_after_trial") {
     return {
       allowed: false,
       reason: "Community Chat access is available with Pro and Premium. Upgrade to join the community.",
@@ -964,8 +1296,8 @@ export async function canAccessCommunity(userId: number): Promise<{ allowed: boo
   return { allowed: true };
 }
 
-export async function canAccessMentorSupport(userId: number): Promise<{ allowed: boolean; reason?: string }> {
-  const sub = await getUserSubscription(userId);
+export async function canAccessMentorSupport(userId: number, nowOverride?: Date): Promise<{ allowed: boolean; reason?: string }> {
+  const sub = await getUserSubscription(userId, nowOverride);
   if (sub.accountStatus !== "active") {
     return { allowed: false, reason: "Account is not active." };
   }
@@ -978,8 +1310,8 @@ export async function canAccessMentorSupport(userId: number): Promise<{ allowed:
   return { allowed: true };
 }
 
-export async function canAccessOwnerChat(userId: number): Promise<{ allowed: boolean; reason?: string }> {
-  const sub = await getUserSubscription(userId);
+export async function canAccessOwnerChat(userId: number, nowOverride?: Date): Promise<{ allowed: boolean; reason?: string }> {
+  const sub = await getUserSubscription(userId, nowOverride);
   if (sub.accountStatus !== "active") {
     return { allowed: false, reason: "Account is not active." };
   }

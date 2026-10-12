@@ -430,7 +430,7 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-transparent dark:text-white transition-colors">
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-[#070e1b] dark:text-slate-100 transition-colors">
       {/* Sticky Top Header */}
       <AdminHeader onRefreshAll={refetchAll} isRefreshing={isRefreshingAny} />
 

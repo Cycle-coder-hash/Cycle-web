@@ -83,11 +83,12 @@ export const supabaseServer = createClient(supabaseUrl, supabaseAnonKey, {
           { status: 400, headers: { "Content-Type": "application/json" } }
         );
 
-      if (Date.now() < supabaseOfflineUntil) {
+      if (Date.now() < supabaseOfflineUntil && !process.env.TEST_LIVE_DB) {
         return offlineResponse();
       }
+      const timeoutMs = process.env.TEST_LIVE_DB ? 8000 : 1200;
       const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), 1200);
+      const id = setTimeout(() => controller.abort(), timeoutMs);
       const signal = options.signal
         ? (AbortSignal as any).any
           ? (AbortSignal as any).any([options.signal, controller.signal])
@@ -96,12 +97,16 @@ export const supabaseServer = createClient(supabaseUrl, supabaseAnonKey, {
       try {
         const response = await fetch(url, { ...options, signal });
         if (response.status >= 500) {
-          supabaseOfflineUntil = Date.now() + 60_000;
+          if (!process.env.TEST_LIVE_DB) {
+            supabaseOfflineUntil = Date.now() + 60_000;
+          }
           return offlineResponse();
         }
         return response;
       } catch {
-        supabaseOfflineUntil = Date.now() + 60_000;
+        if (!process.env.TEST_LIVE_DB) {
+          supabaseOfflineUntil = Date.now() + 60_000;
+        }
         return offlineResponse();
       } finally {
         clearTimeout(id);

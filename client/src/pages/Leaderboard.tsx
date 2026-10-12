@@ -108,11 +108,11 @@ interface SparkParticle {
 const SPARKLE_COLORS = [
   "#ffffff", // pure white
   "#f0f9ff", // luminous ice white
-  "#5C9CEB", // --accent-primary / --glow-soft
-  "#3F6FD1", // --bg-glow
-  "#8AB8F5", // soft sky shimmer
-  "#1B2F5E", // --bg-navy-mid
-  "#00FFA1", // --accent-highlight mint shimmer
+  "#38bdf8", // bright sky blue
+  "#22d3ee", // cyan
+  "#67e8f9", // glowing cyan
+  "#a5f3fc", // radiant cyan
+  "#34d399", // emerald shimmer
 ];
 
 function HeroSparkleCanvas({
@@ -482,7 +482,7 @@ export default function Leaderboard() {
 
   if (isAuthLoading || !user) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] dark:bg-transparent flex items-center justify-center">
+      <div className="min-h-screen bg-[#f8fafc] dark:bg-[#070e1b] flex items-center justify-center">
         <div className="size-10 border-4 border-sky-500/20 border-t-sky-500 rounded-full animate-spin" />
       </div>
     );
@@ -491,20 +491,20 @@ export default function Leaderboard() {
   return (
     <div
       dir={isRTL ? "rtl" : "ltr"}
-      className={`min-h-screen bg-[#f8fafc] text-[#09111f] dark:bg-transparent dark:text-white transition-colors duration-300 ${
+      className={`min-h-screen bg-[#f8fafc] text-[#09111f] dark:bg-[#070e1b] dark:text-slate-100 transition-colors duration-300 ${
         isUr ? "font-urdu" : isBn ? "font-bangla" : ""
       }`}
     >
       {/* ========================================================================= */}
       {/* HEADER / NAVIGATION BAR */}
       {/* ========================================================================= */}
-      <header className="sticky inset-x-0 top-0 z-50 border-b border-slate-200/80 bg-white/85 text-slate-900 backdrop-blur-xl transition-colors dark:border-[var(--border-subtle)] dark:bg-[var(--bg-base)]/80 dark:text-white">
+      <header className="sticky inset-x-0 top-0 z-50 border-b border-slate-200/80 bg-white/85 text-slate-900 backdrop-blur-xl transition-colors dark:border-slate-800/80 dark:bg-[#070e1b]/85 dark:text-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-3">
             <BrandLogo size={40} className="shrink-0" />
             <div className="flex flex-col">
               <HeaderBrandWordmark className="text-xs sm:text-sm" />
-              <span className="text-[10px] font-bold text-[#0284c7] dark:text-[var(--glow-soft)]">
+              <span className="text-[10px] font-bold text-[#0284c7] dark:text-sky-400">
                 {selectText({
                   en: "GLOBAL LEADERBOARD",
                   bn: "গ্লোবাল লিডারবোর্ড",
@@ -523,7 +523,7 @@ export default function Leaderboard() {
             <button
               onClick={toggleTheme}
               aria-label="Toggle Dark/Light Mode"
-              className="flex size-9 items-center justify-center rounded-full border border-slate-300/80 bg-slate-100 text-slate-700 transition hover:bg-slate-200 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] dark:text-yellow-400 dark:hover:bg-white/10"
+              className="flex size-9 items-center justify-center rounded-full border border-slate-300/80 bg-slate-100 text-slate-700 transition hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-yellow-400 dark:hover:bg-slate-700"
             >
               {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
             </button>
@@ -533,7 +533,7 @@ export default function Leaderboard() {
 
             {/* User portal CTA */}
             <Link href="/dashboard">
-              <Button size="sm" className="hidden sm:inline-flex btn-primary-glow text-white font-bold text-xs rounded-xl">
+              <Button size="sm" className="hidden sm:inline-flex bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs rounded-xl">
                 {selectText({
                   en: "My Dashboard",
                   bn: "আমার ড্যাশবোর্ড",
@@ -554,7 +554,7 @@ export default function Leaderboard() {
         {/* ======================================================================= */}
         <section
           ref={heroSectionRef}
-          className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white/90 to-slate-50/90 p-6 sm:p-10 dark:border-[var(--border-subtle)] dark:bg-none dark:bg-[var(--surface)] backdrop-blur-md shadow-xl"
+          className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white/90 to-slate-50/90 p-6 sm:p-10 dark:border-slate-800/80 dark:from-[#081326]/90 dark:to-[#050b17]/95 backdrop-blur-md shadow-xl"
         >
           <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-blue-600/10 blur-3xl pointer-events-none" />
@@ -588,7 +588,7 @@ export default function Leaderboard() {
                   en: (
                     <>
                       Rule Compliance & Authentic Execution. <br />
-                      <span className="headline-gradient-accent">
+                      <span className="heading-gradient-shimmer">
                         Ranked by Process, Not Blind Gambling.
                       </span>
                     </>
@@ -596,7 +596,7 @@ export default function Leaderboard() {
                   bn: (
                     <>
                       সুশৃঙ্খল নিয়ম ও রিয়েল এক্সিকিউশন। <br />
-                      <span className="headline-gradient-accent">
+                      <span className="heading-gradient-shimmer">
                         আন্দাজে জুয়া নয়, প্রসেস-ভিত্তিক লিডারবোর্ড।
                       </span>
                     </>
@@ -604,7 +604,7 @@ export default function Leaderboard() {
                   ur: (
                     <>
                       قواعد کی پابندی اور حقیقی عمل درآمد۔ <br />
-                      <span className="headline-gradient-accent">
+                      <span className="heading-gradient-shimmer">
                         اندھا دھند جوا نہیں، طریقہ کار پر مبنی درجہ بندی۔
                       </span>
                     </>
@@ -719,7 +719,7 @@ export default function Leaderboard() {
         {/* ALL-TIME BADGE & SEARCH BAR */}
         {/* ======================================================================= */}
         <section className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-          <div className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-black text-slate-700 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] backdrop-blur-md dark:text-slate-200 shadow-sm">
+          <div className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-black text-slate-700 dark:border-slate-800 dark:bg-[#070e1b] dark:text-slate-300 shadow-sm">
             <Trophy size={14} className="text-amber-500" />
             <span>
               {selectText({
@@ -742,7 +742,7 @@ export default function Leaderboard() {
               })}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full rounded-2xl border border-slate-200 bg-white py-2 ${isRTL ? "pr-9 pl-4" : "pl-9 pr-4"} text-xs font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-500 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] backdrop-blur-md dark:text-white dark:focus:border-[var(--accent-primary)]`}
+              className={`w-full rounded-2xl border border-slate-200 bg-white py-2 ${isRTL ? "pr-9 pl-4" : "pl-9 pr-4"} text-xs font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-500 dark:border-slate-800 dark:bg-[#070e1b] dark:text-white dark:focus:border-sky-500`}
             />
           </div>
         </section>
@@ -755,7 +755,7 @@ export default function Leaderboard() {
               {selectText({
                 en: "Loading real trader rankings...",
                 bn: "রিয়েল ট্রেডার ডেটা লোড হচ্ছে...",
-                ur: "حقیقی ٹریڈرز کا ڈیٹا লোڈ ہو رہا ہے...",
+                ur: "حقیقی ٹریڈرز کا ڈیٹا لوڈ ہو رہا ہے...",
               })}
             </p>
           </div>
@@ -784,7 +784,7 @@ export default function Leaderboard() {
 
         {/* Clean Empty state */}
         {!isLoading && !isError && filteredRankings.length === 0 && (
-          <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] backdrop-blur-md space-y-4 shadow-sm">
+          <div className="rounded-3xl border border-slate-200 bg-white p-12 text-center dark:border-slate-800 dark:bg-[#070e1b]/80 space-y-4 shadow-sm">
             <Trophy size={48} className="mx-auto text-slate-400 dark:text-slate-600" />
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">
               {selectText({
@@ -813,7 +813,7 @@ export default function Leaderboard() {
         )}
 
         {/* ======================================================================= */}
-        {/* TOP 3 PODIUM & RANKED LIST (RANKS #4–#10) */}
+        {/* TOP 3 PODIUM & RANKED LIST (RANKS #4–#30) */}
         {/* ======================================================================= */}
         {!isLoading && !isError && (
           <LeaderboardRankingsSection

@@ -36,6 +36,7 @@ import { JournalTradesTableSection } from "./JournalTradesTableSection";
 import { JournalTradeDetailsAndConfirmModals } from "./JournalTradeDetailsAndConfirmModals";
 import { printTrade, exportTradePdf } from "@/lib/tradePdfExport";
 import { UpgradeModal, UpgradeFeatureType } from "@/components/subscription/UpgradeModal";
+import { ClaimFreePlanModal } from "@/components/subscription/ClaimFreePlanModal";
 
 interface TraderJournalProps {
   isBn?: boolean;
@@ -82,12 +83,29 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
   const [deleteTradeConfirmId, setDeleteTradeConfirmId] = useState<string | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
-  // Subscription Usage & Upgrade Modal
+  // Subscription Usage, Claim Modal & Upgrade Modal
   const { data: subUsage } = trpc.subscription.getMyUsage.useQuery(undefined, { enabled: !!user });
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [upgradeFeature, setUpgradeFeature] = useState<UpgradeFeatureType>("generic");
+  const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
+  const [pendingActionAfterClaim, setPendingActionAfterClaim] = useState<
+    | { type: "open_new_trade"; datePrefill?: string }
+    | { type: "save_trade"; tradeData: Omit<TradeEntry, "id" | "tradeNumber" | "createdAt"> }
+    | { type: "open_new_book" }
+    | { type: "create_book"; bookData: Omit<JournalBook, "id" | "createdAt"> }
+    | null
+  >(null);
+
+  const isUnclaimed = Boolean(
+    user && subUsage && (subUsage.plan === "unclaimed" || (subUsage as any).trialStatus === "unclaimed") && !(subUsage as any).isPaidActive
+  );
 
   const handleOpenNewBook = () => {
+    if (isUnclaimed) {
+      setPendingActionAfterClaim({ type: "open_new_book" });
+      setIsClaimModalOpen(true);
+      return;
+    }
     if (subUsage && subUsage.journalBooksLimit !== "unlimited") {
       if (books.length >= subUsage.journalBooksLimit) {
         setUpgradeFeature("journal_books");
@@ -100,6 +118,12 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
   };
 
   const handleOpenNewTrade = (datePrefill?: string) => {
+    if (isUnclaimed) {
+      setCalendarPrefillDate(datePrefill);
+      setPendingActionAfterClaim({ type: "open_new_trade", datePrefill });
+      setIsClaimModalOpen(true);
+      return;
+    }
     if (subUsage && subUsage.journalEntriesLimit !== "unlimited") {
       if (subUsage.journalEntriesCount >= subUsage.journalEntriesLimit) {
         setUpgradeFeature("trade_limit");
@@ -150,6 +174,7 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
   const syncTradesMutation = trpc.customer.syncTrades.useMutation({
     onSuccess: () => {
       utils.leaderboard.rankings.invalidate();
+      utils.leaderboard.myRank.invalidate();
     },
   });
 
@@ -157,6 +182,7 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
     onSuccess: () => {
       utils.customer.userTrades.invalidate();
       utils.leaderboard.rankings.invalidate();
+      utils.leaderboard.myRank.invalidate();
     },
   });
 
@@ -184,9 +210,9 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
     return currentBook?.startingBalance || 10000;
   }, [books, currentBook, selectedBookId]);
 
-  // Synchronize remote Journal Books from database (with idempotent PC data rescue)
+  // Synchronize remote Journal Books from database (never auto-write when unclaimed)
   useEffect(() => {
-    if (!user) return;
+    if (!user || !subUsage || isUnclaimed) return;
     if (remoteBooksQuery.data && Array.isArray(remoteBooksQuery.data)) {
       setBooks((prevLocal) => {
         const local = prevLocal || [];
@@ -201,18 +227,17 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
           }
           return merged;
         } else if (local.length > 0) {
-          // PC Data Rescue: server has 0 books, upload existing local books
           saveBooksMutation.mutate({ books: local });
           return local;
         }
         return local;
       });
     }
-  }, [remoteBooksQuery.data, user, userId]);
+  }, [remoteBooksQuery.data, user, userId, subUsage, isUnclaimed]);
 
-  // Synchronize remote Trade Entries from database (with idempotent PC data rescue)
+  // Synchronize remote Trade Entries from database (never auto-write when unclaimed)
   useEffect(() => {
-    if (!user) return;
+    if (!user || !subUsage || isUnclaimed) return;
     if (remoteTradesQuery.data && Array.isArray(remoteTradesQuery.data)) {
       setTrades((prevLocal) => {
         const local = prevLocal || [];
@@ -232,7 +257,6 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
           }
           return merged;
         } else if (local.length > 0) {
-          // PC Data Rescue: server has 0 trades, upload existing local trades
           syncTradesMutation.mutate({
             trades: local,
             startingBalance: effectiveStartingBalance,
@@ -244,7 +268,7 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
         return local;
       });
     }
-  }, [remoteTradesQuery.data, user, userId, effectiveStartingBalance, currencySymbol, currentBook?.name]);
+  }, [remoteTradesQuery.data, user, userId, effectiveStartingBalance, currencySymbol, currentBook?.name, subUsage, isUnclaimed]);
 
   // Overall or Book Statistics
   const stats: JournalStats = useMemo(() => {
@@ -323,7 +347,7 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
   }, [books, selectedBookId, userId]);
 
   // Handlers for Books
-  const handleCreateBook = (bookData: Omit<JournalBook, "id" | "createdAt">) => {
+  const executeCreateBook = (bookData: Omit<JournalBook, "id" | "createdAt">) => {
     const created = createJournalBook(bookData, userId);
     const updated = getStoredJournalBooks(userId);
     setBooks(updated);
@@ -331,7 +355,20 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
     saveBooksMutation.mutate({ books: updated });
   };
 
+  const handleCreateBook = (bookData: Omit<JournalBook, "id" | "createdAt">) => {
+    if (isUnclaimed) {
+      setPendingActionAfterClaim({ type: "create_book", bookData });
+      setIsClaimModalOpen(true);
+      return;
+    }
+    executeCreateBook(bookData);
+  };
+
   const handleUpdateBook = (book: JournalBook) => {
+    if (isUnclaimed) {
+      setIsClaimModalOpen(true);
+      return;
+    }
     updateJournalBook(book, userId);
     const updated = getStoredJournalBooks(userId);
     setBooks(updated);
@@ -349,11 +386,12 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
   };
 
   // Handlers for Trades
-  const handleSaveTrade = (tradeData: Omit<TradeEntry, "id" | "tradeNumber" | "createdAt">) => {
+  const executeSaveTrade = (tradeData: Omit<TradeEntry, "id" | "tradeNumber" | "createdAt">) => {
     addTrade(tradeData, userId);
     const updated = getStoredTrades(userId);
     setTrades(updated);
     setIsTradeModalOpen(false);
+    setCalendarPrefillDate(undefined);
     syncTradesMutation.mutate({
       trades: updated,
       startingBalance: effectiveStartingBalance,
@@ -362,7 +400,20 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
     });
   };
 
+  const handleSaveTrade = (tradeData: Omit<TradeEntry, "id" | "tradeNumber" | "createdAt">) => {
+    if (isUnclaimed) {
+      setPendingActionAfterClaim({ type: "save_trade", tradeData });
+      setIsClaimModalOpen(true);
+      return;
+    }
+    executeSaveTrade(tradeData);
+  };
+
   const handleUpdateTrade = (trade: TradeEntry) => {
+    if (isUnclaimed) {
+      setIsClaimModalOpen(true);
+      return;
+    }
     updateTrade(trade, userId);
     const updated = getStoredTrades(userId);
     setTrades(updated);
@@ -383,6 +434,34 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
     setDeleteTradeConfirmId(null);
     if (viewingTrade?.id === tradeId) setViewingTrade(null);
     deleteTradeMutation.mutate({ tradeId });
+  };
+
+  const handleClaimSuccess = () => {
+    const action = pendingActionAfterClaim;
+    setPendingActionAfterClaim(null);
+    if (!action) return;
+    if (action.type === "open_new_trade") {
+      setCalendarPrefillDate(action.datePrefill);
+      setEditingTrade(null);
+      setIsTradeModalOpen(true);
+    } else if (action.type === "save_trade") {
+      executeSaveTrade(action.tradeData);
+    } else if (action.type === "open_new_book") {
+      if (books.length >= 1) {
+        setUpgradeFeature("journal_books");
+        setIsUpgradeModalOpen(true);
+      } else {
+        setEditingBook(null);
+        setIsBookModalOpen(true);
+      }
+    } else if (action.type === "create_book") {
+      if (books.length >= 1) {
+        setUpgradeFeature("journal_books");
+        setIsUpgradeModalOpen(true);
+      } else {
+        executeCreateBook(action.bookData);
+      }
+    }
   };
 
   return (
@@ -605,6 +684,17 @@ export function TraderJournal({ isBn = false, user }: TraderJournalProps) {
         onClose={() => setIsUpgradeModalOpen(false)}
         feature={upgradeFeature}
         currentPlan={subUsage?.plan}
+      />
+
+      {/* Explicit 20-Day Free Trial Claim Modal */}
+      <ClaimFreePlanModal
+        isOpen={isClaimModalOpen}
+        onClose={() => {
+          setIsClaimModalOpen(false);
+          setPendingActionAfterClaim(null);
+        }}
+        onClaimSuccess={handleClaimSuccess}
+        source="journal"
       />
     </div>
   );

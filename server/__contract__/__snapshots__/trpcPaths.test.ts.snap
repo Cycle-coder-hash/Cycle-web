@@ -118,6 +118,7 @@ exports[`contract: tRPC procedure paths > exposes the frozen set of procedure pa
   "public.paymentSettings [query]",
   "public.products [query]",
   "subscription.checkAccess [query]",
+  "subscription.claimFreePlan [mutation]",
   "subscription.createNotebookPage [mutation]",
   "subscription.deleteNotebookPage [mutation]",
   "subscription.getMySubscription [query]",

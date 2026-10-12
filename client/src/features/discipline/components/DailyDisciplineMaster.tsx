@@ -122,6 +122,8 @@ export function DailyDisciplineMaster({
       refetchSchedule();
       refetchStats();
       utils.subscription.getMyUsage.invalidate();
+      utils.leaderboard.myRank.invalidate();
+      utils.leaderboard.rankings.invalidate();
     },
     onError: (err) => {
       if (err.data?.code === "FORBIDDEN") {

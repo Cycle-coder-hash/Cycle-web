@@ -7,7 +7,8 @@ import {
   getUserTrades,
   getAllTraderTrades,
 } from "../journal";
-import { listAllUsers, getTraderProfile } from "../../db";
+import { listAllUsers, getTraderProfile } from "../auth";
+import { isEligibleForLeaderboard, getUserSubscription } from "../subscription";
 import { LeaderboardTrader } from "@shared/types/leaderboard";
 
 export type { LeaderboardTrader };
@@ -129,7 +130,11 @@ function parseTimeframeBounds(timeframe: "all" | "month" | "week"): { startDate?
   return {};
 }
 
-export async function getAllLeaderboardRankings(timeframe: "all" | "month" | "week" = "all"): Promise<LeaderboardTrader[]> {
+async function computeScoredLeaderboardEntries(
+  timeframe: "all" | "month" | "week" = "all",
+  options?: { paidOnly?: boolean }
+): Promise<LeaderboardTrader[]> {
+  const paidOnly = options?.paidOnly ?? true;
   const allUsers = await listAllUsers();
   const allTrades = await getAllTraderTrades();
   const { startDate, endDate } = parseTimeframeBounds(timeframe);
@@ -164,8 +169,15 @@ export async function getAllLeaderboardRankings(timeframe: "all" | "month" | "we
     if (!isEmailVerified) continue;
 
     // Eligibility Rule 2: Active account (not suspended / banned)
-    const isSuspended = (user as any).status === "suspended" || (user as any).status === "banned" || (user as any).accountStatus === "suspended" || (user as any).accountStatus === "banned";
+    const isSuspended =
+      (user as any).status === "suspended" ||
+      (user as any).status === "banned" ||
+      (user as any).accountStatus === "suspended" ||
+      (user as any).accountStatus === "banned";
     if (isSuspended) continue;
+
+    const sub = await getUserSubscription(user.id);
+    if (sub.accountStatus !== "active") continue;
 
     // Filter user trades by timeframe (all-time default)
     let userTrades = allTrades.filter((t) => t.userId === user.id);
@@ -174,10 +186,11 @@ export async function getAllLeaderboardRankings(timeframe: "all" | "month" | "we
     }
     if (userTrades.length === 0) continue;
 
-    // Eligibility Rule 3: Must have an ACTIVE PRO or ACTIVE PREMIUM subscription
-    const { isEligibleForLeaderboard } = await import("../../subscription");
-    const hasPaidPlan = await isEligibleForLeaderboard(user.id, user);
-    if (!hasPaidPlan) continue;
+    // Eligibility Rule 4 (Public Leaderboard only): Must have an ACTIVE PRO or ACTIVE PREMIUM subscription
+    if (paidOnly) {
+      const hasPaidPlan = await isEligibleForLeaderboard(user.id, user);
+      if (!hasPaidPlan) continue;
+    }
 
     // Filter user discipline completions by timeframe
     let userCompletions = allCompletions.filter((c) => c.userId === user.id && c.completed);
@@ -358,6 +371,21 @@ export async function getAllLeaderboardRankings(timeframe: "all" | "month" | "we
   return results;
 }
 
+/**
+ * Returns all eligible scored users (Free, Pro, and Premium) with their global rank.
+ * Used to compute personal Global Rank in the Dashboard Overview.
+ */
+export async function getAllGlobalScoredRankings(timeframe: "all" | "month" | "week" = "all"): Promise<LeaderboardTrader[]> {
+  return computeScoredLeaderboardEntries(timeframe, { paidOnly: false });
+}
+
+/**
+ * Returns all eligible paid (active Pro or Premium) users ranked for the public Leaderboard.
+ */
+export async function getAllLeaderboardRankings(timeframe: "all" | "month" | "week" = "all"): Promise<LeaderboardTrader[]> {
+  return computeScoredLeaderboardEntries(timeframe, { paidOnly: true });
+}
+
 export async function getLeaderboardRankings(timeframe: "all" | "month" | "week" = "all"): Promise<LeaderboardTrader[]> {
   const allRanked = await getAllLeaderboardRankings(timeframe);
   return allRanked.slice(0, 10);
@@ -368,7 +396,7 @@ export async function getUserGlobalRank(userId: number): Promise<{
   overallScore: number | null;
   isRanked: boolean;
 }> {
-  const allRanked = await getAllLeaderboardRankings("all");
+  const allRanked = await getAllGlobalScoredRankings("all");
   const entry = allRanked.find((r) => r.userId === userId);
   if (!entry) {
     return { rank: null, overallScore: null, isRanked: false };
