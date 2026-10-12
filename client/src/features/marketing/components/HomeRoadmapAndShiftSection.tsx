@@ -73,14 +73,14 @@ export function HomeRoadmapAndShiftSection({
       {/* ========================================================================= */}
       {/* THE SHIFT SECTION */}
       {/* ========================================================================= */}
-      <section className="content-auto bg-[#f1f5f9] py-16 sm:py-20 dark:bg-[#070e1b] lg:py-28 transition-colors">
+      <section className="content-auto bg-[#f1f5f9] py-16 sm:py-20 dark:bg-transparent lg:py-28 transition-colors">
         <div className="mx-auto grid max-w-7xl gap-16 px-5 lg:grid-cols-[.8fr_1.2fr] lg:px-8">
           <div>
             <p className="eyebrow">{copy.shiftEyebrow}</p>
-            <h2 className="mt-4 text-4xl font-extrabold leading-tight tracking-[-.03em] text-slate-900 dark:text-white sm:text-5xl">
+            <h2 className="mt-4 text-4xl font-extrabold leading-tight tracking-[-.03em] text-slate-900 dark:text-[var(--text-primary)] sm:text-5xl">
               {copy.shiftTitle1}
               <br />
-              <span className="text-[#51708f] dark:text-sky-400">{copy.shiftTitle2}</span>
+              <span className="text-[#51708f] dark:text-[var(--glow-soft)] headline-gradient-accent">{copy.shiftTitle2}</span>
             </h2>
             <p className="mt-6 max-w-md leading-relaxed text-slate-600 dark:text-slate-300 text-base">
               {copy.shiftDesc}
@@ -88,7 +88,7 @@ export function HomeRoadmapAndShiftSection({
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="relative rounded-3xl border border-rose-200 bg-white p-7 shadow-sm dark:border-rose-900/40 dark:bg-slate-900/90">
+            <div className="relative rounded-3xl border border-rose-200 bg-white p-7 shadow-sm backdrop-blur-md dark:border-[var(--border-subtle)] dark:bg-[var(--surface)]">
               <AnimatedCardBorder color="red" />
               <div className="flex items-center justify-between">
                 <div className="text-xs font-extrabold uppercase tracking-[.18em] text-rose-600 dark:text-rose-400">
@@ -96,7 +96,7 @@ export function HomeRoadmapAndShiftSection({
                 </div>
                 <AlertOctagon size={16} className="text-rose-500" />
               </div>
-              <div className="mt-7 space-y-4 text-sm text-slate-600 dark:text-slate-400">
+              <div className="mt-7 space-y-4 text-sm text-slate-600 dark:text-slate-300">
                 {HYPE_ITEMS_EN.map((_, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <span className="grid size-6 place-items-center rounded-full bg-rose-50 text-[10px] font-bold text-rose-600 dark:bg-rose-950/60 dark:text-rose-400">
@@ -112,18 +112,18 @@ export function HomeRoadmapAndShiftSection({
               </div>
             </div>
 
-            <div className="relative rounded-3xl bg-[#0d1a2d] p-7 text-white shadow-xl shadow-[#0d1a2d]/25 dark:bg-slate-800 dark:shadow-slate-950/50 border border-slate-700/50">
+            <div className="relative rounded-3xl bg-[#0d1a2d] p-7 text-white shadow-xl shadow-[#0d1a2d]/25 backdrop-blur-md dark:bg-[var(--bg-navy-mid)]/45 dark:shadow-slate-950/50 border border-slate-700/50 dark:border-[var(--border-subtle)]">
               <AnimatedCardBorder color="green" />
               <div className="flex items-center justify-between">
-                <div className="text-xs font-extrabold uppercase tracking-[.18em] text-[#38bdf8]">
+                <div className="text-xs font-extrabold uppercase tracking-[.18em] text-[var(--glow-soft)]">
                   {copy.realityHeader}
                 </div>
-                <ShieldCheck size={16} className="text-[#38bdf8]" />
+                <ShieldCheck size={16} className="text-[var(--accent-highlight)]" />
               </div>
-              <div className="mt-7 space-y-4 text-sm text-slate-300">
+              <div className="mt-7 space-y-4 text-sm text-slate-200">
                 {REALITY_ITEMS_EN.map((_, i) => (
                   <div key={i} className="flex items-center gap-3">
-                    <span className="grid size-6 place-items-center rounded-full bg-white/10 text-[10px] font-bold text-[#38bdf8]">
+                    <span className="grid size-6 place-items-center rounded-full bg-white/10 text-[10px] font-bold text-[var(--glow-soft)]">
                       {language === "bn"
                         ? String(i + 1).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[+d])
                         : String(i + 1).padStart(2, "0")}
@@ -144,19 +144,19 @@ export function HomeRoadmapAndShiftSection({
       {/* ========================================================================= */}
       <section
         id="roadmap"
-        className="content-auto bg-white py-16 sm:py-24 dark:bg-[#070e1b] lg:py-32 transition-colors"
+        className="content-auto bg-white py-16 sm:py-24 dark:bg-transparent lg:py-32 transition-colors"
       >
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
             <div>
               <p className="eyebrow">{copy.roadmapEyebrow}</p>
-              <h2 className="mt-4 text-4xl font-extrabold tracking-[-.03em] text-slate-900 dark:text-white sm:text-5xl">
+              <h2 className="mt-4 text-4xl font-extrabold tracking-[-.03em] text-slate-900 dark:text-[var(--text-primary)] sm:text-5xl">
                 {copy.roadmapTitle1}
                 <br />
-                <span className="text-[#51708f] dark:text-sky-400">{copy.roadmapTitle2}</span>
+                <span className="text-[#51708f] dark:text-[var(--glow-soft)] headline-gradient-accent">{copy.roadmapTitle2}</span>
               </h2>
             </div>
-            <p className="max-w-md text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+            <p className="max-w-md text-sm leading-relaxed text-slate-500 dark:text-slate-300">
               {copy.roadmapDesc}
             </p>
           </div>
@@ -179,10 +179,10 @@ export function HomeRoadmapAndShiftSection({
                       setActiveStage(i);
                       setSelectedStageModal(i);
                     }}
-                    className={`group relative h-full w-full rounded-2xl border p-6 text-left transition-all duration-200 hover:-translate-y-1 ${
+                    className={`group relative h-full w-full rounded-2xl border p-6 text-left transition-all duration-200 hover:-translate-y-1 backdrop-blur-md ${
                       isActive
-                        ? "border-[#0d1a2d] bg-[#0d1a2d] text-white shadow-xl shadow-[#0d1a2d]/25 dark:border-sky-400 dark:bg-slate-800"
-                        : "border-slate-200 bg-white hover:border-[#0284c7]/50 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900/90 dark:hover:border-sky-500/50"
+                        ? "border-[#0d1a2d] bg-[#0d1a2d] text-white shadow-xl shadow-[#0d1a2d]/25 dark:border-[var(--accent-primary)] dark:bg-[var(--bg-navy-mid)]/55 dark:shadow-[0_4px_24px_-4px_rgba(92,156,235,0.3)]"
+                        : "border-slate-200 bg-white hover:border-[#0284c7]/50 hover:shadow-lg dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] dark:hover:border-[var(--accent-primary)]/60"
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -190,15 +190,15 @@ export function HomeRoadmapAndShiftSection({
                         <span
                           className={`font-mono text-xs font-bold px-2 py-0.5 rounded-md ${
                             isActive
-                              ? "bg-white/10 text-[#38bdf8]"
-                              : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                              ? "bg-white/10 text-[var(--accent-highlight)]"
+                              : "bg-slate-100 text-slate-600 dark:bg-[var(--surface)] dark:text-slate-300 dark:border dark:border-[var(--border-subtle)]"
                           }`}
                         >
                           {stage.num}
                         </span>
                         <span
                           className={`text-[10px] font-bold uppercase tracking-wider ${
-                            isActive ? "text-slate-300" : "text-[#0284c7] dark:text-sky-400"
+                            isActive ? "text-slate-200" : "text-[#0284c7] dark:text-[var(--glow-soft)]"
                           }`}
                         >
                           {stage.category}
@@ -208,30 +208,30 @@ export function HomeRoadmapAndShiftSection({
                       <span
                         className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-all group-hover:translate-x-0.5 ${
                           isActive
-                            ? "bg-[#38bdf8] text-slate-950"
-                            : "bg-slate-100 text-slate-500 group-hover:bg-[#0284c7] group-hover:text-white dark:bg-slate-800 dark:text-slate-400 dark:group-hover:bg-sky-500 dark:group-hover:text-slate-950"
+                            ? "bg-[var(--accent-highlight)] text-slate-950"
+                            : "bg-slate-100 text-slate-500 group-hover:bg-[#0284c7] group-hover:text-white dark:bg-[var(--surface)] dark:text-slate-300 dark:group-hover:bg-[var(--accent-primary)] dark:group-hover:text-slate-950"
                         }`}
                       >
                         <ArrowRight size={11} />
                       </span>
                     </div>
 
-                    <h3 className="mt-5 text-lg font-extrabold leading-snug dark:text-white">
+                    <h3 className="mt-5 text-lg font-extrabold leading-snug dark:text-[var(--text-primary)]">
                       {stage.title}
                     </h3>
 
                     <p
                       className={`mt-2 text-xs line-clamp-2 leading-relaxed ${
-                        isActive ? "text-slate-300" : "text-slate-500 dark:text-slate-400"
+                        isActive ? "text-slate-200" : "text-slate-500 dark:text-slate-300"
                       }`}
                     >
                       {stage.summary}
                     </p>
 
-                    <div className="mt-5 flex items-center gap-1.5 border-t border-slate-100 pt-3 text-[11px] font-semibold dark:border-slate-800">
+                    <div className="mt-5 flex items-center gap-1.5 border-t border-slate-100 pt-3 text-[11px] font-semibold dark:border-[var(--border-subtle)]">
                       <span
                         className={
-                          isActive ? "text-[#38bdf8]" : "text-[#0284c7] dark:text-sky-400"
+                          isActive ? "text-[var(--glow-soft)]" : "text-[#0284c7] dark:text-[var(--glow-soft)]"
                         }
                       >
                         {copy.clickPrompt}
@@ -239,7 +239,7 @@ export function HomeRoadmapAndShiftSection({
                       <ChevronRight
                         size={13}
                         className={
-                          isActive ? "text-[#38bdf8]" : "text-[#0284c7] dark:text-sky-400"
+                          isActive ? "text-[var(--glow-soft)]" : "text-[#0284c7] dark:text-[var(--glow-soft)]"
                         }
                       />
                     </div>

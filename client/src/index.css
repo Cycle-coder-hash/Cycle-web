@@ -1,8 +1,110 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @custom-variant dark (&:is(.dark *));
-@theme inline { --radius-sm:calc(var(--radius) - 4px); --radius-md:calc(var(--radius) - 2px); --radius-lg:var(--radius); --radius-xl:calc(var(--radius) + 4px); --color-background:var(--background); --color-foreground:var(--foreground); --color-card:var(--card); --color-card-foreground:var(--card-foreground); --color-popover:var(--popover); --color-popover-foreground:var(--popover-foreground); --color-primary:var(--primary); --color-primary-foreground:var(--primary-foreground); --color-secondary:var(--secondary); --color-secondary-foreground:var(--secondary-foreground); --color-muted:var(--muted); --color-muted-foreground:var(--muted-foreground); --color-accent:var(--accent); --color-accent-foreground:var(--accent-foreground); --color-destructive:var(--destructive); --color-destructive-foreground:var(--destructive-foreground); --color-border:var(--border); --color-input:var(--input); --color-ring:var(--ring); }
-:root { --radius:.7rem; --background:oklch(1 0 0); --foreground:oklch(.18 .02 250); --card:oklch(1 0 0); --card-foreground:oklch(.18 .02 250); --popover:oklch(1 0 0); --popover-foreground:oklch(.18 .02 250); --primary:oklch(.25 .045 250); --primary-foreground:oklch(.98 .01 250); --secondary:oklch(.96 .015 220); --secondary-foreground:oklch(.25 .045 250); --muted:oklch(.95 .01 240); --muted-foreground:oklch(.5 .025 245); --accent:oklch(.9 .18 115); --accent-foreground:oklch(.2 .04 115); --destructive:oklch(.58 .2 25); --destructive-foreground:oklch(.98 0 0); --border:oklch(.9 .015 240); --input:oklch(.9 .015 240); --ring:oklch(.5 .08 240); }
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-bg-base: var(--bg-base);
+  --color-bg-navy-mid: var(--bg-navy-mid);
+  --color-bg-glow: var(--bg-glow);
+  --color-glow-soft: var(--glow-soft);
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-highlight: var(--accent-highlight);
+  --color-text-primary: var(--text-primary);
+  --color-text-muted: var(--text-muted);
+  --color-surface: var(--surface);
+  --color-border-subtle: var(--border-subtle);
+}
+
+:root {
+  /* Premium Navy-Blue Gradient Design Tokens */
+  --bg-base: #0D1118;
+  --bg-navy-mid: #1B2F5E;
+  --bg-glow: #3F6FD1;
+  --glow-soft: #5C9CEB;
+  --accent-primary: #5C9CEB;
+  --accent-highlight: #00FFA1;
+  --text-primary: #FFFFFF;
+  --text-muted: #7D7F81;
+  --surface: rgba(255, 255, 255, 0.05);
+  --border-subtle: rgba(255, 255, 255, 0.14);
+
+  /* Light Mode Theme Mapping */
+  --radius: .7rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(.18 .02 250);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(.18 .02 250);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(.18 .02 250);
+  --primary: oklch(.25 .045 250);
+  --primary-foreground: oklch(.98 .01 250);
+  --secondary: oklch(.96 .015 220);
+  --secondary-foreground: oklch(.25 .045 250);
+  --muted: oklch(.95 .01 240);
+  --muted-foreground: oklch(.5 .025 245);
+  --accent: oklch(.9 .18 115);
+  --accent-foreground: oklch(.2 .04 115);
+  --destructive: oklch(.58 .2 25);
+  --destructive-foreground: oklch(.98 0 0);
+  --border: oklch(.9 .015 240);
+  --input: oklch(.9 .015 240);
+  --ring: oklch(.5 .08 240);
+}
+
+.dark {
+  /* Dark Mode Theme Mapping to Navy-Blue Design Tokens */
+  --background: var(--bg-base);
+  --foreground: var(--text-primary);
+  --card: var(--surface);
+  --card-foreground: var(--text-primary);
+  --popover: #111824;
+  --popover-foreground: var(--text-primary);
+  --primary: var(--accent-primary);
+  --primary-foreground: #0D1118;
+  --secondary: rgba(27, 47, 94, 0.45);
+  --secondary-foreground: var(--text-primary);
+  --muted: var(--surface);
+  --muted-foreground: var(--text-muted);
+  --accent: rgba(92, 156, 235, 0.16);
+  --accent-foreground: var(--text-primary);
+  --destructive: oklch(.58 .2 25);
+  --destructive-foreground: var(--text-primary);
+  --border: var(--border-subtle);
+  --input: var(--border-subtle);
+  --ring: var(--accent-primary);
+
+  /* Map existing sky/cyan Tailwind palette tokens in dark mode to the new blue palette */
+  --color-sky-300: #8AB8F5;
+  --color-sky-400: var(--glow-soft);
+  --color-sky-500: var(--accent-primary);
+  --color-sky-600: var(--bg-glow);
+  --color-cyan-300: #8AB8F5;
+  --color-cyan-400: var(--glow-soft);
+  --color-cyan-500: var(--bg-glow);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -23,7 +125,8 @@
     touch-action: manipulation;
   }
   html.dark, html.dark body {
-    background-color: #020813;
+    background-color: var(--bg-base);
+    color: var(--text-primary);
   }
   html[lang="bn"], .font-bangla {
     font-family: 'Hind Siliguri', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
@@ -39,6 +142,44 @@
 @layer components {
   .container { width:100%; margin-inline:auto; padding-inline:1rem; }
   .eyebrow { font-size:.75rem; line-height:1rem; font-weight:600; text-transform:uppercase; letter-spacing:.2em; color:#51708f; }
+  .dark .eyebrow { color: var(--glow-soft); }
+
+  /* Headline highlighted text gradient (--glow-soft -> white in dark mode) */
+  .dark .headline-gradient-accent {
+    background: linear-gradient(135deg, var(--glow-soft) 0%, var(--text-primary) 95%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+
+  /* Primary CTA Button: --accent-primary gradient + soft blue glow shadow, stronger on hover */
+  .btn-primary-glow {
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--bg-glow) 100%);
+    color: var(--text-primary);
+    box-shadow: 0 4px 20px -2px rgba(92, 156, 235, 0.42), 0 0 12px 0 rgba(63, 111, 209, 0.28);
+    transition: all 0.25s ease;
+  }
+  .btn-primary-glow:hover {
+    background: linear-gradient(135deg, #6FA9F0 0%, var(--accent-primary) 100%);
+    box-shadow: 0 6px 28px -1px rgba(92, 156, 235, 0.65), 0 0 18px 2px rgba(63, 111, 209, 0.42);
+  }
+
+  /* Glass-style card, pill, and badge tokens in dark mode */
+  .dark .glass-surface {
+    background-color: var(--surface);
+    border-color: var(--border-subtle);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* Small Mint Highlight Token (--accent-highlight: #00FFA1) */
+  .text-accent-highlight {
+    color: var(--accent-highlight);
+  }
+  .bg-accent-highlight {
+    background-color: var(--accent-highlight);
+  }
   .terminal-card { animation: float 7s ease-in-out infinite; }
   .preserve-3d { transform-style: preserve-3d; }
   .perspective-1000 { perspective: 1000px; }
@@ -119,10 +260,10 @@
   overflow: hidden;
   white-space: nowrap;
   pointer-events: none;
-  color: #22d3ee;
-  -webkit-text-fill-color: #22d3ee;
+  color: var(--glow-soft);
+  -webkit-text-fill-color: var(--glow-soft);
   -webkit-text-stroke: 0;
-  text-shadow: 0 0 14px rgba(34, 211, 238, 0.6), 0 0 2px rgba(34, 211, 238, 0.9);
+  text-shadow: 0 0 14px rgba(92, 156, 235, 0.6), 0 0 2px rgba(92, 156, 235, 0.9);
   letter-spacing: inherit;
   font-family: inherit;
   font-weight: inherit;
@@ -190,7 +331,7 @@
   will-change: opacity, transform;
 }
 
-/* Leaderboard Hero: Heading Line 2 Flowing Gradient Shimmer */
+/* Leaderboard Hero: Heading Line 2 Flowing Gradient Shimmer (--glow-soft -> white) */
 @keyframes heading-gradient-shimmer {
   0% {
     background-position: 0% center;
@@ -203,11 +344,11 @@
 .heading-gradient-shimmer {
   background: linear-gradient(
     90deg,
-    #22d3ee 0%,
-    #34d399 25%,
-    #22d3ee 50%,
-    #34d399 75%,
-    #22d3ee 100%
+    var(--glow-soft) 0%,
+    var(--text-primary) 25%,
+    var(--glow-soft) 50%,
+    var(--text-primary) 75%,
+    var(--glow-soft) 100%
   );
   background-size: 200% auto;
   -webkit-background-clip: text;

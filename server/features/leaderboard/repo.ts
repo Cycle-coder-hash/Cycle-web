@@ -360,7 +360,7 @@ export async function getAllLeaderboardRankings(timeframe: "all" | "month" | "we
 
 export async function getLeaderboardRankings(timeframe: "all" | "month" | "week" = "all"): Promise<LeaderboardTrader[]> {
   const allRanked = await getAllLeaderboardRankings(timeframe);
-  return allRanked.slice(0, 30);
+  return allRanked.slice(0, 10);
 }
 
 export async function getUserGlobalRank(userId: number): Promise<{

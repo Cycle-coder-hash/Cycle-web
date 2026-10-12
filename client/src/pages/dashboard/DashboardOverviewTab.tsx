@@ -162,8 +162,8 @@ export function DashboardOverviewTab({
     >
       {/* Subscription Status & Usage Widget */}
       {subUsage && (
-        <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm dark:border-slate-800/80 dark:bg-[#0b162a]">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-5 border-b border-slate-100 dark:border-slate-800">
+        <div className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-sm dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] backdrop-blur-md">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-5 border-b border-slate-100 dark:border-[var(--border-subtle)]">
             <div className="flex items-center gap-3.5">
               <div
                 className={`size-12 rounded-2xl flex items-center justify-center shrink-0 shadow-md ${
@@ -228,7 +228,7 @@ export function DashboardOverviewTab({
                   </span>
 
                   {subUsage.isLeaderboardEligible && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#00FFA1]/15 text-[var(--accent-highlight)] border border-[#00FFA1]/30">
                       ✓ {selectText({ en: "LEADERBOARD ACTIVE", bn: "লিডারবোর্ড সক্রিয়", ur: "لیڈر بورڈ فعال" })}
                     </span>
                   )}
@@ -289,7 +289,7 @@ export function DashboardOverviewTab({
                 <Link href="/checkout?plan=pro">
                   <Button
                     size="sm"
-                    className="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-xs h-9 shadow-md shadow-sky-500/20"
+                    className="btn-primary-glow text-white font-bold text-xs h-9"
                   >
                     {selectText({
                       en: `Get Pro (${formatPrice({ bdt: 599, usd: 5 })})`,
@@ -305,7 +305,7 @@ export function DashboardOverviewTab({
           {/* Quota Counters Grid */}
           <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
             {/* Journal Entries */}
-            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
+            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-[var(--border-subtle)]">
               <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 {selectText({ en: "Journal Trades", bn: "জার্নাল ট্রেড", ur: "جرنل ٹریڈز" })}
               </div>
@@ -317,7 +317,7 @@ export function DashboardOverviewTab({
             </div>
 
             {/* Journal Books */}
-            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
+            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-[var(--border-subtle)]">
               <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 {selectText({ en: "Journal Books", bn: "জার্নাল বুকস", ur: "جرنل کتب" })}
               </div>
@@ -329,7 +329,7 @@ export function DashboardOverviewTab({
             </div>
 
             {/* Saved Videos */}
-            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
+            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-[var(--border-subtle)]">
               <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 {selectText({ en: "Saved Videos", bn: "সংরক্ষিত ভিডিও", ur: "محفوظ ویڈیوز" })}
               </div>
@@ -343,7 +343,7 @@ export function DashboardOverviewTab({
             </div>
 
             {/* Notebook Pages */}
-            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
+            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-[var(--border-subtle)]">
               <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 {selectText({ en: "Notebook Pages", bn: "নোটবুক পেজ", ur: "نوٹ بک صفحات" })}
               </div>
@@ -357,7 +357,7 @@ export function DashboardOverviewTab({
             </div>
 
             {/* Discipline Days */}
-            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
+            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-[var(--border-subtle)]">
               <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 {selectText({ en: "Discipline Days", bn: "ডিসিপ্লিন দিন", ur: "ڈسپلن کے دن" })}
               </div>
@@ -369,13 +369,13 @@ export function DashboardOverviewTab({
             </div>
 
             {/* Workout Routine */}
-            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
+            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-[var(--border-subtle)]">
               <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 {selectText({ en: "Workout Routine", bn: "ওয়ার্কআউট রুটিন", ur: "ورزش کی روٹین" })}
               </div>
               <div
                 className={`mt-1 text-sm font-extrabold ${
-                  subUsage.isWorkoutLocked ? "text-slate-400 dark:text-slate-500" : "text-emerald-500"
+                  subUsage.isWorkoutLocked ? "text-slate-400 dark:text-slate-500" : "text-emerald-600 dark:text-[var(--accent-highlight)]"
                 }`}
               >
                 {subUsage.isWorkoutLocked
@@ -385,13 +385,13 @@ export function DashboardOverviewTab({
             </div>
 
             {/* Community Chat */}
-            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
+            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-[var(--border-subtle)]">
               <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 {selectText({ en: "Community Chat", bn: "কমিউনিটি চ্যাট", ur: "کمیونٹی چیٹ" })}
               </div>
               <div
                 className={`mt-1 text-sm font-extrabold ${
-                  subUsage.isCommunityLocked ? "text-slate-400 dark:text-slate-500" : "text-emerald-500"
+                  subUsage.isCommunityLocked ? "text-slate-400 dark:text-slate-500" : "text-emerald-600 dark:text-[var(--accent-highlight)]"
                 }`}
               >
                 {subUsage.isCommunityLocked
@@ -401,7 +401,7 @@ export function DashboardOverviewTab({
             </div>
 
             {/* Mentor Support */}
-            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
+            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-[var(--border-subtle)]">
               <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 {selectText({ en: "Mentor Support", bn: "মেন্টর সাপোর্ট", ur: "مینٹور سپورٹ" })}
               </div>
@@ -421,16 +421,16 @@ export function DashboardOverviewTab({
 
       {/* Verified Student VIP Telegram Banner */}
       {hasApprovedPurchase && (
-        <div className="relative overflow-hidden rounded-3xl border border-sky-500/40 bg-gradient-to-r from-[#081f3d] via-[#09172c] to-[#071324] p-5 sm:p-7 shadow-xl shadow-sky-950/40 backdrop-blur-sm">
+        <div className="relative overflow-hidden rounded-3xl border border-[var(--border-subtle)] bg-gradient-to-r from-[#1B2F5E]/60 via-[#0D1118]/80 to-[#0D1118]/90 p-5 sm:p-7 shadow-xl backdrop-blur-md">
           <div className="absolute top-0 right-0 w-80 h-40 bg-sky-500/10 blur-3xl pointer-events-none" />
           <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
             <div className="flex items-start gap-4">
-              <div className="flex size-12 sm:size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/30">
+              <div className="flex size-12 sm:size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-[var(--accent-primary)] to-[var(--bg-glow)] text-white shadow-lg shadow-[#5C9CEB]/30">
                 <Send size={24} className="translate-x-0.5 -translate-y-0.5" />
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 border border-emerald-500/30">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[#00FFA1]/15 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-[var(--accent-highlight)] border border-[#00FFA1]/30">
                     ✓ {selectText({ en: "Enrollment Approved", bn: "এনরোলমেন্ট অ্যাপ্রুভড", ur: "اندراج منظور شدہ" })}
                   </span>
                   <span className="text-[11px] font-bold text-sky-400">
@@ -456,7 +456,7 @@ export function DashboardOverviewTab({
             <div className="flex items-center gap-2.5 shrink-0 w-full sm:w-auto">
               <Button
                 onClick={() => window.open(telegramUrl, "_blank")}
-                className="flex-1 sm:flex-none h-11 px-5 rounded-xl bg-gradient-to-r from-sky-400 to-blue-500 hover:from-sky-300 hover:to-blue-400 text-slate-950 font-black text-xs shadow-lg shadow-sky-500/20 gap-1.5"
+                className="flex-1 sm:flex-none h-11 px-5 rounded-xl btn-primary-glow text-white font-black text-xs gap-1.5"
               >
                 <Send size={15} />
                 <span>{selectText({ en: "Open VIP Telegram", bn: "টেলিগ্রামে প্রবেশ করুন", ur: "وی آئی پی ٹیلیگرام کھولیں" })}</span>
@@ -464,7 +464,7 @@ export function DashboardOverviewTab({
               <Button
                 variant="outline"
                 onClick={() => window.dispatchEvent(new CustomEvent("open-telegram-modal"))}
-                className="h-11 px-4 rounded-xl border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-200 font-bold text-xs"
+                className="h-11 px-4 rounded-xl border-[var(--border-subtle)] bg-[var(--surface)] hover:bg-white/10 text-slate-200 font-bold text-xs"
               >
                 <span>{selectText({ en: "Instructions", bn: "নির্দেশিকা", ur: "ہدایات" })}</span>
               </Button>
@@ -474,7 +474,7 @@ export function DashboardOverviewTab({
       )}
 
       {/* Financial Market Time Zone Information Widget */}
-      <div className="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white/95 p-5 sm:p-6 shadow-sm dark:border-slate-800/90 dark:bg-gradient-to-r dark:from-[#0a1628] dark:via-[#091424] dark:to-[#07101e] backdrop-blur-sm transition-all">
+      <div className="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white/95 p-5 sm:p-6 shadow-sm dark:border-[var(--border-subtle)] dark:bg-none dark:bg-[var(--surface)] backdrop-blur-md transition-all">
         {/* Background decorative glow */}
         <div className="absolute -top-12 -right-12 size-48 rounded-full bg-sky-500/10 blur-3xl pointer-events-none" />
 
@@ -494,7 +494,7 @@ export function DashboardOverviewTab({
                   <Globe size={10} />
                   <span>{currentTimezone.market}</span>
                 </span>
-                <span className="inline-flex items-center rounded-md bg-slate-100 dark:bg-slate-800/80 px-2 py-0.5 text-[10px] font-mono font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700" dir="ltr">
+                <span className="inline-flex items-center rounded-md bg-slate-100 dark:bg-white/10 px-2 py-0.5 text-[10px] font-mono font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[var(--border-subtle)]" dir="ltr">
                   UTC {currentTimezone.offset}
                 </span>
               </div>
@@ -519,13 +519,13 @@ export function DashboardOverviewTab({
           </div>
 
           {/* Right: Live Digital Clock & Settings Link */}
-          <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between sm:justify-start lg:justify-center gap-3 shrink-0 pt-2 lg:pt-0 border-t border-slate-100 dark:border-slate-800/70 lg:border-t-0">
+          <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end justify-between sm:justify-start lg:justify-center gap-3 shrink-0 pt-2 lg:pt-0 border-t border-slate-100 dark:border-[var(--border-subtle)] lg:border-t-0">
             <div className="flex items-center gap-3">
               <div className="rounded-2xl border border-sky-500/30 bg-sky-500/5 dark:bg-sky-500/10 px-4 py-2 text-left sm:text-right" dir="ltr">
                 <div className="flex items-center gap-2 justify-start sm:justify-end">
                   <span className="relative flex size-2">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--accent-highlight)] opacity-75" />
+                    <span className="relative inline-flex size-2 rounded-full bg-[var(--accent-highlight)]" />
                   </span>
                   <span className="text-xs font-bold text-slate-500 dark:text-slate-400 font-mono">
                     {liveMarketTime.date || "..."}
@@ -557,7 +557,7 @@ export function DashboardOverviewTab({
       {/* Top Banner KPI Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2.5 sm:gap-4">
         {/* 1. Total Documented Trades */}
-        <div className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-6 shadow-xs dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] backdrop-blur-md">
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider">
               {selectText({ en: "Journal Entries", bn: "মোট ট্রেড জার্নাল", ur: "جرنل اندراجات" })}
@@ -580,7 +580,7 @@ export function DashboardOverviewTab({
         </div>
 
         {/* 2. Win Rate */}
-        <div className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-6 shadow-xs dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] backdrop-blur-md">
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider">
               {selectText({ en: "Trade Win Rate", bn: "ট্রেড উইনরেট", ur: "ٹریڈ ون ریٹ" })}
@@ -589,7 +589,7 @@ export function DashboardOverviewTab({
           </div>
           <div className="mt-2.5 sm:mt-4 flex items-baseline gap-1.5 sm:gap-2">
             <span className="text-xl sm:text-3xl font-black font-mono" dir="ltr">{journalStats.winRate}%</span>
-            <span className="text-[10px] sm:text-xs font-bold text-emerald-600 dark:text-emerald-400" dir="ltr">
+            <span className="text-[10px] sm:text-xs font-bold text-emerald-600 dark:text-[var(--accent-highlight)]" dir="ltr">
               ({journalStats.wins}W / {journalStats.losses}L)
             </span>
           </div>
@@ -603,7 +603,7 @@ export function DashboardOverviewTab({
         </div>
 
         {/* 3. Journal Logs */}
-        <div className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-6 shadow-xs dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] backdrop-blur-md">
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider">
               {selectText({ en: "My Resources", bn: "আনলকড রিসোর্স", ur: "میرے وسائل" })}
@@ -621,13 +621,13 @@ export function DashboardOverviewTab({
         {/* 4. Today's Discipline */}
         <button
           onClick={() => onSelectTab("discipline")}
-          className="rounded-2xl sm:rounded-3xl bg-[#081833] p-3.5 sm:p-6 text-white shadow-xl shadow-[#081833]/15 dark:bg-slate-800 text-left transition-all hover:ring-2 hover:ring-[#38bdf8]/50 cursor-pointer"
+          className="rounded-2xl sm:rounded-3xl bg-[#1B2F5E] p-3.5 sm:p-6 text-white shadow-xl shadow-[#1B2F5E]/20 dark:border dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] backdrop-blur-md text-left transition-all hover:ring-2 hover:ring-[var(--glow-soft)]/50 cursor-pointer"
         >
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider text-[#38bdf8]">
+            <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider text-[var(--glow-soft)]">
               {selectText({ en: "Today's Discipline", bn: "আজকের রুটিন", ur: "آج کا ڈسپلن" })}
             </span>
-            <ClipboardCheck size={16} className="text-[#38bdf8] sm:w-[18px] sm:h-[18px]" />
+            <ClipboardCheck size={16} className="text-[var(--glow-soft)] sm:w-[18px] sm:h-[18px]" />
           </div>
           <div className="mt-2.5 sm:mt-4 flex items-baseline gap-1.5 sm:gap-2">
             <span className="text-xl sm:text-3xl font-black font-mono" dir="ltr">
@@ -641,13 +641,13 @@ export function DashboardOverviewTab({
             <span className="truncate">
               {selectText({ en: "Process over emotion", bn: "ডিসিপ্লিনই শক্তি", ur: "جذبات پر طریقہ کار کو ترجیح" })}
             </span>
-            <ChevronRight size={14} className={`text-[#38bdf8] shrink-0 ${isRTL ? "rotate-180" : ""}`} />
+            <ChevronRight size={14} className={`text-[var(--glow-soft)] shrink-0 ${isRTL ? "rotate-180" : ""}`} />
           </div>
         </button>
 
         {/* 5. Your Global Rank */}
         <Link href="/leaderboard" className="col-span-2 sm:col-span-1">
-          <div className="rounded-2xl sm:rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-white to-slate-50 p-3.5 sm:p-6 shadow-xs dark:border-amber-500/30 dark:from-[#141d2e] dark:via-[#0c1527] dark:to-[#070e1b] transition-all hover:ring-2 hover:ring-amber-500/50 cursor-pointer h-full flex flex-col justify-between">
+          <div className="rounded-2xl sm:rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-white to-slate-50 p-3.5 sm:p-6 shadow-xs dark:border-amber-500/30 dark:from-[#1B2F5E]/40 dark:via-[var(--surface)] dark:to-[var(--bg-base)]/80 backdrop-blur-md transition-all hover:ring-2 hover:ring-amber-500/50 cursor-pointer h-full flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between text-slate-400">
                 <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">

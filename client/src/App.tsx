@@ -26,7 +26,7 @@ import { GlobalPreloader } from "./components/GlobalPreloader";
 import { WebsiteBackground } from "./components/WebsiteBackground";
 
 function PageFallback() {
-  return <div className="min-h-screen bg-[#020813]" />;
+  return <div className="min-h-screen bg-[var(--bg-base)]" />;
 }
 
 function StoreRedirect() {

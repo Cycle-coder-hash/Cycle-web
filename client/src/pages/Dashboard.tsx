@@ -935,7 +935,7 @@ export default function Dashboard() {
 
   if (loading || (isHashAuthenticating && !user)) {
     return (
-      <div className="grid min-h-screen place-items-center bg-[#070e1b] text-slate-300 dark:bg-[#070e1b] dark:text-slate-300">
+      <div className="grid min-h-screen place-items-center bg-transparent text-slate-300 dark:bg-transparent dark:text-slate-300">
         <div className="flex flex-col items-center gap-3">
           <BrandLogo size={64} className="animate-pulse" />
           <div className="text-sm font-bold tracking-widest uppercase text-slate-400">
@@ -948,7 +948,7 @@ export default function Dashboard() {
 
   if (!user) {
     return (
-      <div className="grid min-h-screen place-items-center bg-[#070e1b] p-6 text-white">
+      <div className="grid min-h-screen place-items-center bg-transparent p-6 text-white">
         <div className="max-w-md text-center">
           <BrandLogo size={96} className="mx-auto" />
           <h1 className="mt-6 text-3xl font-extrabold tracking-tight">Student Dashboard Access</h1>
@@ -956,7 +956,7 @@ export default function Dashboard() {
             Sign in to access your study library, trading journal, daily discipline routine, and unlocked bundles.
           </p>
           <Link href="/login">
-            <Button size="lg" className="mt-7 w-full bg-[#38bdf8] font-bold text-slate-950 hover:bg-[#7dd3fc]">
+            <Button size="lg" className="mt-7 w-full btn-primary-glow font-bold text-white">
               Sign In to Your Account
             </Button>
           </Link>
@@ -966,12 +966,13 @@ export default function Dashboard() {
   }
 
   type NavItem = {
-    id: "overview" | "roadmap" | "library" | "journal" | "notebook" | "discipline" | "calculator" | "orders" | "support";
+    id: "overview" | "roadmap" | "library" | "journal" | "notebook" | "backtest" | "discipline" | "calculator" | "orders" | "support";
     labelEn: string;
     labelBn: string;
     labelUr: string;
     icon: any;
     badge?: string;
+    externalHref?: string;
   };
 
   const navItems: NavItem[] = [
@@ -980,6 +981,7 @@ export default function Dashboard() {
     { id: "library", labelEn: t("dashboard.tabLibrary"), labelBn: "আমার লাইব্রেরি", labelUr: "میری لائبریری", icon: BookOpen, badge: entitlements?.length ? `${entitlements.length}` : undefined },
     { id: "journal", labelEn: t("dashboard.tabJournal"), labelBn: "ট্রেডিং জার্নাল", labelUr: "ٹریڈنگ جرنل", icon: NotebookPen, badge: (localTrades?.length || journal?.length) ? `${localTrades?.length || journal?.length}` : undefined },
     { id: "notebook", labelEn: "Private Trader Notebook", labelBn: "প্রাইভেট ট্রেডার নোটবুক", labelUr: "پرائیویٹ ٹریڈر نوٹ بک", icon: BookMarked },
+    { id: "backtest", labelEn: "Free Backtest", labelBn: "ফ্রি ব্যাকটেস্ট", labelUr: "فری بیک ٹیسٹ", icon: RotateCcw, externalHref: "https://fxreplay.com/" },
     { id: "discipline", labelEn: t("dashboard.tabDiscipline"), labelBn: "ডেইলি রুটিন", labelUr: "روزانہ کا معمول", icon: ClipboardCheck },
     { id: "calculator", labelEn: "Position Size Calculator", labelBn: "পজিশন সাইজ ক্যালকুলেটর", labelUr: "پوزیشن سائز کیلکولیٹر", icon: Calculator },
     {
@@ -1021,7 +1023,7 @@ export default function Dashboard() {
   return (
     <div
       dir={isRTL ? "rtl" : "ltr"}
-      className={`min-h-screen bg-[#f8fafc] text-slate-900 dark:bg-[#070e1b] dark:text-slate-100 transition-colors duration-300 selection:bg-[#38bdf8] selection:text-slate-950 overflow-x-hidden ${
+      className={`min-h-screen bg-[#f8fafc] text-slate-900 dark:bg-transparent dark:text-white transition-colors duration-300 selection:bg-[var(--accent-primary)] selection:text-slate-950 overflow-x-hidden ${
         isBn ? "font-bangla" : isUr ? "font-urdu" : ""
       }`}
     >
@@ -1038,7 +1040,7 @@ export default function Dashboard() {
       {/* DASHBOARD SIDEBAR */}
       {/* ========================================================================= */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col justify-between border-r border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-[#070e1b] transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col justify-between border-r border-slate-200 bg-white p-6 dark:border-[var(--border-subtle)] dark:bg-[var(--bg-base)]/90 backdrop-blur-xl transition-transform duration-300 ease-in-out ${
           isSidebarOpen ? "translate-x-0 shadow-2xl lg:shadow-none" : "-translate-x-full pointer-events-none"
         }`}
       >
@@ -1048,13 +1050,13 @@ export default function Dashboard() {
               <BrandLogo size={42} className="shrink-0" />
               <div>
                 <HeaderBrandWordmark className="text-xs" />
-                <div className="text-[10px] font-bold text-[#0284c7] dark:text-sky-400">TRADING REALITY PORTAL</div>
+                <div className="text-[10px] font-bold text-[#0284c7] dark:text-[var(--glow-soft)]">TRADING REALITY PORTAL</div>
               </div>
             </Link>
             <button
               type="button"
               onClick={toggleSidebar}
-              className="flex size-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition-colors cursor-pointer"
+              className="flex size-8 items-center justify-center rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:border-[var(--border-subtle)] dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white transition-colors cursor-pointer"
               title={
                 isSidebarOpen
                   ? selectText({ en: "Close Sidebar", bn: "সাইডবার বন্ধ করুন", ur: "سائیڈ بار بند کریں" })
@@ -1071,7 +1073,7 @@ export default function Dashboard() {
           </div>
 
           {/* User Profile Snippet */}
-          <div className="mt-8 rounded-2xl border border-slate-100 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/60">
+          <div className="mt-8 rounded-2xl border border-slate-100 bg-slate-50/80 p-4 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)]">
             <div className="flex items-center gap-3">
               {/* Circular Avatar / Profile Photo Area */}
               <div className="relative shrink-0 group">
@@ -1079,7 +1081,7 @@ export default function Dashboard() {
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   aria-label={selectText({ en: "Change profile photo", bn: "প্রোফাইল ছবি পরিবর্তন করুন", ur: "پروفائل تصویر تبدیل کریں" })}
-                  className="relative flex size-10 items-center justify-center rounded-full overflow-hidden border border-slate-200/80 bg-[#081833] font-mono text-sm font-bold text-white shadow-md transition-transform active:scale-95 cursor-pointer dark:border-slate-700/80 dark:bg-sky-500 dark:text-slate-950 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  className="relative flex size-10 items-center justify-center rounded-full overflow-hidden border border-slate-200/80 bg-[#081833] font-mono text-sm font-bold text-white shadow-md transition-transform active:scale-95 cursor-pointer dark:border-[var(--border-subtle)] dark:bg-[var(--accent-primary)] dark:text-slate-950 focus:outline-none focus:ring-2 focus:ring-sky-500"
                   title={selectText({ en: "Click to set or change profile photo", bn: "প্রোফাইল ছবি পরিবর্তন করতে ক্লিক করুন", ur: "پروفائل تصویر سیٹ یا تبدیل کرنے کے لیے کلک کریں" })}
                 >
                   {profilePhoto ? (
@@ -1187,7 +1189,7 @@ export default function Dashboard() {
                 <div className="truncate text-[11px] text-slate-400">{user.email}</div>
               </div>
             </div>
-            <div className="mt-3 flex items-center justify-between border-t border-slate-200/60 pt-2.5 dark:border-slate-800">
+            <div className="mt-3 flex items-center justify-between border-t border-slate-200/60 pt-2.5 dark:border-[var(--border-subtle)]">
               <span className="rounded-full bg-[#0284c7]/15 px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-[#0284c7] dark:bg-sky-500/20 dark:text-sky-400">
                 {user.role === "admin" ? "ADMIN ACCESS" : user.role === "support" ? "SUPPORT ACCESS" : "STUDENT PASS"}
               </span>
@@ -1201,7 +1203,35 @@ export default function Dashboard() {
           <nav className="mt-6 space-y-1.5">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = tab === item.id;
+              const isActive = !item.externalHref && tab === item.id;
+              const itemClasses = `flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all duration-200 cursor-pointer ${
+                isActive
+                  ? "bg-[#1B2F5E] text-white shadow-md dark:bg-[var(--accent-primary)] dark:text-slate-950"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white"
+              }`;
+
+              if (item.externalHref) {
+                return (
+                  <a
+                    key={item.id}
+                    href={item.externalHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => {
+                      if (typeof window !== "undefined" && window.innerWidth < 1024) {
+                        setIsSidebarOpen(false);
+                      }
+                    }}
+                    className={itemClasses}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon size={17} className="text-slate-400" />
+                      <span>{selectText({ en: item.labelEn, bn: item.labelBn, ur: item.labelUr })}</span>
+                    </div>
+                  </a>
+                );
+              }
+
               return (
                 <button
                   key={item.id}
@@ -1211,14 +1241,10 @@ export default function Dashboard() {
                       setIsSidebarOpen(false);
                     }
                   }}
-                  className={`flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all duration-200 cursor-pointer ${
-                    isActive
-                      ? "bg-[#081833] text-white shadow-md dark:bg-sky-500 dark:text-slate-950"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-white"
-                  }`}
+                  className={itemClasses}
                 >
                   <div className="flex items-center gap-3">
-                    <Icon size={17} className={isActive ? "text-[#38bdf8] dark:text-slate-950" : "text-slate-400"} />
+                    <Icon size={17} className={isActive ? "text-[var(--glow-soft)] dark:text-slate-950" : "text-slate-400"} />
                     <span>{selectText({ en: item.labelEn, bn: item.labelBn, ur: item.labelUr })}</span>
                   </div>
                   {item.badge && (
@@ -1226,7 +1252,7 @@ export default function Dashboard() {
                       className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
                         isActive
                           ? "bg-white/20 text-white dark:bg-slate-900/20 dark:text-slate-950"
-                          : "bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                          : "bg-slate-200 text-slate-600 dark:bg-white/10 dark:text-slate-300"
                       }`}
                     >
                       {item.badge}
@@ -1261,7 +1287,7 @@ export default function Dashboard() {
                   setIsSidebarOpen(false);
                 }
               }}
-              className="flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all duration-200 border border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-900/60 text-slate-700 hover:bg-slate-200/70 dark:text-slate-300 dark:hover:bg-slate-800 shadow-xs mt-2"
+              className="flex w-full items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all duration-200 border border-slate-200 dark:border-[var(--border-subtle)] bg-slate-100/60 dark:bg-[var(--surface)] text-slate-700 hover:bg-slate-200/70 dark:text-slate-300 dark:hover:bg-white/10 shadow-xs mt-2"
             >
               <div className="flex items-center gap-3">
                 <SettingsIcon size={17} className="text-sky-500 shrink-0" />
@@ -1275,13 +1301,13 @@ export default function Dashboard() {
         </div>
 
         {/* Sidebar Footer Controls */}
-        <div className="border-t border-slate-200/80 pt-4 dark:border-slate-800 space-y-3">
+        <div className="border-t border-slate-200/80 pt-4 dark:border-[var(--border-subtle)] space-y-3">
 
           <div className="flex items-center justify-between">
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="flex size-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-slate-800 dark:text-yellow-400 dark:hover:bg-slate-800"
+              className="flex size-9 items-center justify-center rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-100 dark:border-[var(--border-subtle)] dark:text-yellow-400 dark:hover:bg-white/10"
               title="Toggle theme"
             >
               {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
@@ -1311,13 +1337,13 @@ export default function Dashboard() {
         }`}
       >
         {/* Top Header */}
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 sm:px-6 backdrop-blur-md dark:border-slate-800 dark:bg-[#070e1b]/90">
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 sm:px-6 backdrop-blur-md dark:border-[var(--border-subtle)] dark:bg-[var(--bg-base)]/80">
           <div className="flex items-center gap-2.5 sm:gap-3">
             {/* Sidebar Toggle Button (Open / Close) */}
             <button
               type="button"
               onClick={toggleSidebar}
-              className="flex size-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
+              className="flex size-9 items-center justify-center rounded-xl border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white transition-all cursor-pointer shadow-xs active:scale-95 shrink-0"
               title={
                 isSidebarOpen
                   ? selectText({ en: "Close Sidebar", bn: "সাইডবার বন্ধ করুন", ur: "سائیڈ بار بند کریں" })
@@ -1325,7 +1351,7 @@ export default function Dashboard() {
               }
               aria-label={
                 isSidebarOpen
-                  ? selectText({ en: "Close Sidebar", bn: "সাইডবার বন্ধ করুন", ur: "سائیড بار بند کریں" })
+                  ? selectText({ en: "Close Sidebar", bn: "সাইডবার বন্ধ করুন", ur: "سائیڈ بار بند کریں" })
                   : selectText({ en: "Open Sidebar", bn: "সাইডবার খুলুন", ur: "سائیڈ بار کھولیں" })
               }
             >
@@ -1362,7 +1388,7 @@ export default function Dashboard() {
               <Button
                 onClick={() => window.dispatchEvent(new CustomEvent("open-telegram-modal"))}
                 size="sm"
-                className="gap-1.5 text-xs font-black bg-gradient-to-r from-sky-500 to-blue-600 text-white hover:from-sky-400 hover:to-blue-500 shadow-md shadow-sky-500/20 px-2 sm:px-3 h-8 sm:h-9"
+                className="gap-1.5 text-xs font-black btn-primary-glow text-white px-2 sm:px-3 h-8 sm:h-9"
                 title={selectText({ en: "VIP Telegram Community", bn: "ভিআইপি টেলিগ্রাম গ্রুপ", ur: "وی آئی پی ٹیلیگرام کمیونٹی" })}
               >
                 <Send size={13} className="translate-x-0.5 -translate-y-0.5" />
@@ -1378,14 +1404,14 @@ export default function Dashboard() {
             </Link>
 
             <Link href="/" className="hidden sm:inline-flex">
-              <Button variant="outline" size="sm" className="gap-1 text-xs font-bold border-slate-300 dark:border-slate-700 h-8 sm:h-9">
+              <Button variant="outline" size="sm" className="gap-1 text-xs font-bold border-slate-300 dark:border-[var(--border-subtle)] h-8 sm:h-9">
                 <ArrowLeft size={13} />
                 <span>{selectText({ en: "Main Website", bn: "মূল ওয়েবসাইট", ur: "مرکزی ویب سائٹ" })}</span>
               </Button>
             </Link>
 
             <Link href="/checkout">
-              <Button size="sm" className="gap-1 text-xs font-extrabold bg-[#081833] text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 px-2.5 sm:px-3 h-8 sm:h-9">
+              <Button size="sm" className="gap-1 text-xs font-extrabold btn-primary-glow text-white px-2.5 sm:px-3 h-8 sm:h-9">
                 <Sparkles size={13} />
                 <span className="hidden sm:inline">{selectText({ en: "Browse Store", bn: "স্টোর ব্রাউজ", ur: "اسٹور براؤز کریں" })}</span>
               </Button>

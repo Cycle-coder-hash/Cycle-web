@@ -107,10 +107,10 @@ export function WebsiteBackground() {
         }
       `}</style>
 
-      {/* 1. Very dark navy/black base foundation (stationary) */}
-      <div className="absolute inset-0 bg-[#020813]" />
+      {/* 1. Deep navy-black base foundation (--bg-base: #0D1118) */}
+      <div className="absolute inset-0 bg-[var(--bg-base)]" />
 
-      {/* 2. Atmospheric Radial Gradients & Glows (matching reference screenshot glow positions) */}
+      {/* 2. Large Soft Radial Gradient from Top/Left (--bg-glow -> --bg-navy-mid -> --bg-base) */}
       <div
         className="absolute animate-bg-glow"
         style={{
@@ -119,23 +119,19 @@ export function WebsiteBackground() {
           right: "-40px",
           bottom: "-40px",
           background: `
-            /* Soft cyan/teal focal highlight at upper right (matching candle light ambience) */
-            radial-gradient(circle 380px at 76% 22%, rgba(56, 189, 248, 0.14) 0%, rgba(6, 182, 212, 0.08) 45%, transparent 75%),
-            /* Center-right & upper hero: Deep-blue/teal atmospheric bloom */
-            radial-gradient(ellipse 980px 700px at 64% 28%, rgba(14, 116, 144, 0.22) 0%, rgba(15, 65, 130, 0.15) 34%, rgba(8, 35, 75, 0.07) 64%, transparent 82%),
-            /* Center-right focal glow behind candlestick/dashboard */
-            radial-gradient(ellipse 650px 550px at 74% 34%, rgba(6, 182, 212, 0.15) 0%, rgba(13, 148, 136, 0.09) 42%, transparent 75%),
-            /* Center-left soft deep-blue atmospheric depth */
-            radial-gradient(ellipse 800px 550px at 22% 34%, rgba(15, 48, 100, 0.16) 0%, rgba(10, 28, 65, 0.08) 46%, transparent 75%),
-            /* Center-lower atmospheric spread (ensures seamless continuity down the full page) */
-            radial-gradient(ellipse 1100px 650px at 50% 75%, rgba(14, 116, 144, 0.09) 0%, rgba(15, 48, 100, 0.05) 50%, transparent 80%),
-            /* Top horizon ambient spread */
-            radial-gradient(ellipse 1200px 380px at 50% 0%, rgba(14, 116, 144, 0.11) 0%, transparent 70%)
+            /* Primary large soft radial glow from top-left (--bg-glow -> --bg-navy-mid -> --bg-base) */
+            radial-gradient(ellipse 1150px 820px at 18% 12%, color-mix(in srgb, var(--bg-glow) 34%, transparent) 0%, color-mix(in srgb, var(--bg-navy-mid) 52%, transparent) 46%, transparent 82%),
+            /* Secondary upper-left & top horizon soft sky-blue bloom (--glow-soft) */
+            radial-gradient(circle 520px at 12% 8%, color-mix(in srgb, var(--glow-soft) 20%, transparent) 0%, color-mix(in srgb, var(--bg-glow) 10%, transparent) 48%, transparent 78%),
+            /* Upper-right counterbalance behind hero candle/showcase */
+            radial-gradient(ellipse 760px 580px at 76% 26%, color-mix(in srgb, var(--glow-soft) 16%, transparent) 0%, color-mix(in srgb, var(--bg-navy-mid) 28%, transparent) 48%, transparent 78%),
+            /* Lower-center navy depth for seamless full-page scroll continuity */
+            radial-gradient(ellipse 1100px 680px at 42% 76%, color-mix(in srgb, var(--bg-navy-mid) 36%, transparent) 0%, color-mix(in srgb, var(--bg-glow) 10%, transparent) 52%, transparent 84%)
           `,
         }}
       />
 
-      {/* 3. Subtle Futuristic Technical Grid (48px x 48px fine orthogonal lines matching reference) */}
+      {/* 3. Hexagon / Honeycomb + Fine Technical Grid Pattern in New Blue Palette (--glow-soft / --bg-glow) */}
       <div
         className="absolute animate-bg-grid"
         style={{
@@ -144,15 +140,16 @@ export function WebsiteBackground() {
           right: "-48px",
           bottom: "-48px",
           backgroundImage: `
-            linear-gradient(to right, rgba(56, 189, 248, 0.065) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(56, 189, 248, 0.065) 1px, transparent 1px)
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='98' viewBox='0 0 56 98'%3E%3Cg fill='none' stroke='%235C9CEB' stroke-opacity='0.075' stroke-width='1'%3E%3Cpath d='M28 66L0 50L0 16L28 0L56 16L56 50L28 66L28 100'/%3E%3Cpath d='M28 0L28 34L0 50L0 84L28 100L56 84L56 50L28 34'/%3E%3C/g%3E%3C/svg%3E"),
+            linear-gradient(to right, rgba(92, 156, 235, 0.045) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(92, 156, 235, 0.045) 1px, transparent 1px)
           `,
-          backgroundSize: "48px 48px",
+          backgroundSize: "56px 98px, 48px 48px, 48px 48px",
           backgroundPosition: "center center",
         }}
       />
 
-      {/* 4. Subtle Ambient Highlight Accents (softly tinted grid cells with slow gentle pulse) */}
+      {/* 4. Subtle Ambient Highlight Accents (softly tinted blue cells with slow gentle pulse) */}
       <div
         className="absolute animate-bg-highlights"
         style={{
@@ -161,19 +158,19 @@ export function WebsiteBackground() {
           right: "-30px",
           bottom: "-30px",
           backgroundImage: `
-            radial-gradient(circle 90px at 8% 46%, rgba(14, 165, 233, 0.045) 0%, transparent 70%),
-            radial-gradient(circle 100px at 88% 54%, rgba(13, 148, 136, 0.045) 0%, transparent 70%),
-            radial-gradient(circle 80px at 15% 24%, rgba(56, 189, 248, 0.035) 0%, transparent 70%)
+            radial-gradient(circle 110px at 14% 26%, rgba(92, 156, 235, 0.06) 0%, transparent 70%),
+            radial-gradient(circle 120px at 84% 52%, rgba(63, 111, 209, 0.055) 0%, transparent 70%),
+            radial-gradient(circle 95px at 10% 58%, rgba(27, 47, 94, 0.08) 0%, transparent 70%)
           `,
         }}
       />
 
-      {/* 5. Subtle Vignette & Contrast Guard (smooth edge depth without hard cutoffs) */}
+      {/* 5. Edge Vignette & Contrast Guard (smooth edge darkening toward --bg-base) */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 110% 95% at 50% 48%, transparent 58%, rgba(2, 8, 19, 0.35) 85%, rgba(2, 8, 19, 0.70) 100%)",
+            "radial-gradient(ellipse 108% 94% at 46% 44%, transparent 54%, rgba(13, 17, 24, 0.42) 82%, rgba(13, 17, 24, 0.78) 100%)",
         }}
       />
     </div>

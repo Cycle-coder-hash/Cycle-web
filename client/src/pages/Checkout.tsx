@@ -170,8 +170,8 @@ export default function Checkout() {
 
   if (!user) {
     return (
-      <div className="grid min-h-screen place-items-center bg-[#08111f] p-6 text-center text-white">
-        <div className="max-w-md w-full">
+      <div className="grid min-h-screen place-items-center bg-transparent p-6 text-center text-white">
+        <div className="max-w-md w-full rounded-3xl bg-[var(--surface)] border border-[var(--border-subtle)] backdrop-blur-md p-8 shadow-2xl">
           <div className="flex justify-center">
             <BrandLogo size={90} />
           </div>
@@ -195,7 +195,7 @@ export default function Checkout() {
                   ur: "آرڈرز اور ادائیگی آپ کے محفوظ کسٹمر اکاؤنٹ سے منسلک ہوتے ہیں۔",
                 })}
           </p>
-          <Button onClick={() => startLogin()} className="mt-6 w-full h-11 bg-sky-500 text-slate-950 font-extrabold hover:bg-sky-400 shadow-lg shadow-sky-500/20">
+          <Button onClick={() => startLogin()} className="mt-6 w-full h-11 btn-primary-glow font-extrabold">
             {selectText({
               en: "Sign In / Register",
               bn: "সাইন ইন / রেজিস্ট্রেশন",
@@ -209,9 +209,9 @@ export default function Checkout() {
 
   if (freeClaimedSuccess) {
     return (
-      <div className="grid min-h-screen place-items-center bg-[#f8fafc] dark:bg-[#070e1b] p-5">
-        <div className="max-w-md w-full rounded-3xl bg-white dark:bg-[#0b172a] p-7 sm:p-10 text-center shadow-2xl border border-slate-200 dark:border-slate-800">
-          <div className="mx-auto grid size-16 place-items-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+      <div className="grid min-h-screen place-items-center bg-[#f8fafc] dark:bg-transparent p-5">
+        <div className="max-w-md w-full rounded-3xl bg-white dark:bg-[var(--surface)] dark:backdrop-blur-md p-7 sm:p-10 text-center shadow-2xl border border-slate-200 dark:border-[var(--border-subtle)]">
+          <div className="mx-auto grid size-16 place-items-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-[var(--accent-highlight)]">
             <Check size={32} />
           </div>
           <h1 className="mt-5 text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
@@ -242,7 +242,7 @@ export default function Checkout() {
           </p>
           <div className="mt-6 space-y-2.5">
             <Link href="/dashboard">
-              <Button className="w-full h-12 bg-[#081833] text-white font-bold hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400">
+              <Button className="w-full h-12 bg-[#081833] text-white font-bold hover:bg-[#0c244b] dark:bg-[var(--accent-primary)] dark:text-white dark:hover:brightness-110">
                 {selectText({
                   en: "Go to Dashboard & Library →",
                   bn: "ড্যাশবোর্ড ও লাইব্রেরিতে যান →",
@@ -258,9 +258,9 @@ export default function Checkout() {
 
   if (submitted) {
     return (
-      <div className="grid min-h-screen place-items-center bg-[#f8fafc] dark:bg-[#070e1b] p-5">
-        <div className="max-w-md w-full rounded-3xl bg-white dark:bg-[#0b172a] p-7 sm:p-10 text-center shadow-2xl border border-slate-200 dark:border-slate-800">
-          <div className="mx-auto grid size-16 place-items-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+      <div className="grid min-h-screen place-items-center bg-[#f8fafc] dark:bg-transparent p-5">
+        <div className="max-w-md w-full rounded-3xl bg-white dark:bg-[var(--surface)] dark:backdrop-blur-md p-7 sm:p-10 text-center shadow-2xl border border-slate-200 dark:border-[var(--border-subtle)]">
+          <div className="mx-auto grid size-16 place-items-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-[var(--accent-highlight)]">
             <Check size={32} />
           </div>
           <h1 className="mt-5 text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">
@@ -288,7 +288,7 @@ export default function Checkout() {
             })}
           </p>
           <Link href="/dashboard">
-            <Button className="mt-6 w-full h-12 bg-[#081833] text-white font-bold hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400">
+            <Button className="mt-6 w-full h-12 bg-[#081833] text-white font-bold hover:bg-[#0c244b] dark:bg-[var(--accent-primary)] dark:text-white dark:hover:brightness-110">
               {selectText({
                 en: "Go to Dashboard",
                 bn: "ড্যাশবোর্ডে যান",
@@ -302,9 +302,9 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 dark:bg-[#070e1b] dark:text-slate-100">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 dark:bg-transparent dark:text-slate-100">
       {/* Header */}
-      <header className="border-b border-slate-200 bg-white/90 px-4 py-3.5 backdrop-blur-md sticky top-0 z-30 dark:border-slate-800 dark:bg-[#070e1b]/90">
+      <header className="border-b border-slate-200 bg-white/90 px-4 py-3.5 backdrop-blur-md sticky top-0 z-30 dark:border-[var(--border-subtle)] dark:bg-[#0D1118]/80">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
             <BrandLogo size={36} />
@@ -344,14 +344,14 @@ export default function Checkout() {
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           {/* Form Card */}
-          <section className="rounded-3xl bg-white p-5 sm:p-8 shadow-sm border border-slate-200/80 dark:bg-[#0b162a] dark:border-slate-800/80">
+          <section className="rounded-3xl bg-white p-5 sm:p-8 shadow-sm border border-slate-200/80 dark:bg-[var(--surface)] dark:backdrop-blur-md dark:border-[var(--border-subtle)]">
             {error && (
               <div role="alert" className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs font-semibold text-rose-700 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-300">
                 {error}
               </div>
             )}
 
-            <div className="text-[11px] font-extrabold uppercase tracking-widest text-[#0284c7] dark:text-[#38bdf8]">
+            <div className="text-[11px] font-extrabold uppercase tracking-widest text-[#0284c7] dark:text-[var(--glow-soft)]">
               {isFree
                 ? selectText({
                     en: "FREE ACCESS ENROLLMENT",
@@ -395,8 +395,8 @@ export default function Checkout() {
                   onClick={() => setSelected(b.id)}
                   className={`flex w-full items-center justify-between rounded-2xl border p-4 text-left transition-all ${
                     selected === b.id
-                      ? "border-[#0284c7] bg-sky-50/70 shadow-xs dark:bg-sky-950/30 dark:border-sky-500 ring-2 ring-sky-500/20"
-                      : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/50 dark:hover:border-slate-700"
+                      ? "border-[#0284c7] bg-sky-50/70 shadow-xs dark:bg-[var(--accent-primary)]/12 dark:border-[var(--accent-primary)] ring-2 ring-[var(--accent-primary)]/25"
+                      : "border-slate-200 bg-white hover:border-slate-300 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] dark:hover:border-[var(--accent-primary)]/40"
                   }`}
                 >
                   <div>
@@ -407,7 +407,7 @@ export default function Checkout() {
                       {isBn ? b.descriptionBn || b.descriptionEn : b.descriptionEn}
                     </div>
                   </div>
-                  <div className="text-base sm:text-lg font-black text-[#0284c7] dark:text-[#38bdf8] shrink-0 text-right">
+                  <div className="text-base sm:text-lg font-black text-[#0284c7] dark:text-[var(--glow-soft)] shrink-0 text-right">
                     <span>{formatPrice({ bdt: b.price, usd: b.priceUsd, fallback: `৳${b.price}` })}</span>
                     {currency !== "USD" && b.priceUsd && (
                       <span className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400 ml-1">
@@ -463,8 +463,8 @@ export default function Checkout() {
                             onClick={() => setMethod(g.id)}
                             className={`relative flex items-center sm:flex-col justify-between sm:justify-center p-3.5 sm:p-4 rounded-2xl border text-left sm:text-center transition-all cursor-pointer ${
                               isSelected
-                                ? `${g.activeBorder} bg-white dark:bg-[#0c1c38] shadow-md ring-2 ${g.activeRing}`
-                                : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-[#070e1b] dark:hover:border-slate-700"
+                                ? `${g.activeBorder} bg-white dark:bg-[var(--accent-primary)]/12 shadow-md ring-2 ${g.activeRing}`
+                                : "border-slate-200 bg-white hover:border-slate-300 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] dark:hover:border-[var(--accent-primary)]/40"
                             }`}
                           >
                             {/* Desktop Checkmark */}
@@ -509,8 +509,8 @@ export default function Checkout() {
                         onClick={() => setMethod("other")}
                         className={`relative flex items-center sm:flex-col justify-between sm:justify-center p-3.5 sm:p-4 rounded-2xl border text-left sm:text-center transition-all cursor-pointer ${
                           method === "other"
-                            ? "border-sky-500 dark:border-sky-400 bg-white dark:bg-[#0c1c38] shadow-md ring-2 ring-sky-500/30"
-                            : "border-slate-200 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-[#070e1b] dark:hover:border-slate-700"
+                            ? "border-sky-500 dark:border-[var(--accent-primary)] bg-white dark:bg-[var(--accent-primary)]/12 shadow-md ring-2 ring-[var(--accent-primary)]/30"
+                            : "border-slate-200 bg-white hover:border-slate-300 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] dark:hover:border-[var(--accent-primary)]/40"
                         }`}
                       >
                         {/* Desktop Checkmark */}
@@ -521,7 +521,7 @@ export default function Checkout() {
                         )}
 
                         <div className="flex items-center gap-3 sm:flex-col sm:gap-2">
-                          <div className="flex h-11 sm:h-12 w-24 sm:w-28 items-center justify-center rounded-xl bg-white p-1.5 shadow-xs border border-slate-200 shrink-0 text-sky-600 dark:text-sky-400">
+                          <div className="flex h-11 sm:h-12 w-24 sm:w-28 items-center justify-center rounded-xl bg-white p-1.5 shadow-xs border border-slate-200 shrink-0 text-sky-600 dark:text-[var(--accent-primary)]">
                             <CreditCard size={24} />
                           </div>
                           <div>
@@ -534,7 +534,7 @@ export default function Checkout() {
                                 })}
                               </span>
                             </div>
-                            <span className="mt-0.5 inline-block text-[10px] font-extrabold px-2 py-0.5 rounded-full border bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/25">
+                            <span className="mt-0.5 inline-block text-[10px] font-extrabold px-2 py-0.5 rounded-full border bg-sky-500/10 text-sky-600 dark:text-[var(--glow-soft)] border-sky-500/25">
                               {selectText({
                                 en: "Manual Contact",
                                 bn: "ম্যানুয়াল যোগাযোগ",
@@ -561,9 +561,9 @@ export default function Checkout() {
 
                 {/* Conditional: Other Payment Info Panel vs Gateway Details & Form */}
                 {method === "other" ? (
-                    <div className="rounded-3xl border border-sky-500/30 bg-sky-500/5 p-5 sm:p-6 dark:border-sky-500/20 dark:bg-[#0c1c38]/80 shadow-xs space-y-5 animate-in fade-in duration-200">
+                    <div className="rounded-3xl border border-sky-500/30 bg-sky-500/5 p-5 sm:p-6 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] shadow-xs space-y-5 animate-in fade-in duration-200">
                       {/* Header */}
-                      <div className="flex items-center gap-2.5 pb-3 border-b border-slate-200/70 dark:border-slate-800">
+                      <div className="flex items-center gap-2.5 pb-3 border-b border-slate-200/70 dark:border-[var(--border-subtle)]">
                         <div className="flex h-8 px-2.5 items-center justify-center rounded-lg bg-sky-500/10 text-sky-500 border border-sky-500/20 shrink-0">
                           <Send size={16} />
                         </div>
@@ -586,7 +586,7 @@ export default function Checkout() {
                       </p>
 
                       {/* Telegram Contact Card */}
-                      <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-[#070e1b] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xs dark:border-[var(--border-subtle)] dark:bg-[#0D1118]/70 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="flex items-center gap-3.5">
                           <div className="flex size-11 items-center justify-center rounded-xl bg-sky-500/10 text-sky-500 border border-sky-500/20 shrink-0">
                             <Send size={20} />
@@ -605,7 +605,7 @@ export default function Checkout() {
                           href="https://t.me/cycleofchart"
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex h-11 items-center justify-center gap-2 px-5 rounded-xl font-bold text-xs sm:text-sm bg-sky-500 hover:bg-sky-400 text-slate-950 shadow-md shadow-sky-500/20 transition-all cursor-pointer shrink-0"
+                          className="inline-flex h-11 items-center justify-center gap-2 px-5 rounded-xl font-bold text-xs sm:text-sm btn-primary-glow transition-all cursor-pointer shrink-0"
                         >
                           <Send size={14} />
                           <span>
@@ -633,9 +633,9 @@ export default function Checkout() {
                   ) : (
                     <>
                       {/* Payment Details Guidance Card */}
-                      <div className="rounded-3xl border border-slate-200/90 bg-slate-50/70 p-5 sm:p-6 dark:border-slate-800/90 dark:bg-[#0c182c]/80 shadow-xs space-y-4">
+                      <div className="rounded-3xl border border-slate-200/90 bg-slate-50/70 p-5 sm:p-6 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] shadow-xs space-y-4">
                         {/* Header */}
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200/70 dark:border-slate-800">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200/70 dark:border-[var(--border-subtle)]">
                           <div className="flex items-center gap-2.5">
                             <div className="flex h-8 px-2.5 items-center justify-center rounded-lg bg-white shadow-xs border border-slate-200 shrink-0">
                               {React.createElement(activeGatewayMeta.logo, { size: 18 })}
@@ -656,7 +656,7 @@ export default function Checkout() {
                         </div>
 
                         {/* Prominent Wallet Number with 1-Click Copy */}
-                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-[#070e1b] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-[var(--border-subtle)] dark:bg-[#0D1118]/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                           <div>
                             <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
                               {currentAccountType === "Personal"
@@ -683,7 +683,7 @@ export default function Checkout() {
                             className={`h-10 px-4 gap-2 font-bold text-xs rounded-xl shadow-xs transition-all ${
                               copiedNumber
                                 ? "bg-emerald-600 text-white hover:bg-emerald-600"
-                                : "bg-[#081833] text-white hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400"
+                                : "bg-[#081833] text-white hover:bg-[#0c244b] dark:bg-[var(--accent-primary)] dark:text-white dark:hover:brightness-110"
                             }`}
                           >
                             {copiedNumber ? (
@@ -706,7 +706,7 @@ export default function Checkout() {
                             {selectText({ en: "Quick Payment Steps:", bn: "পেমেন্টের সহজ ধাপসমূহ:", ur: "فوری ادائیگی کے مراحل:" })}
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                            <div className="rounded-xl border border-slate-200/60 bg-white/70 p-3 dark:border-slate-800 dark:bg-slate-900/60">
+                            <div className="rounded-xl border border-slate-200/60 bg-white/70 p-3 dark:border-[var(--border-subtle)] dark:bg-[#0D1118]/50">
                               <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white text-[11px]">
                                 <span className="flex size-4 items-center justify-center rounded-full bg-sky-500/20 text-sky-600 dark:text-sky-400 text-[10px] font-black">1</span>
                                 <span>{selectText({ en: "Open App", bn: "অ্যাপ খুলুন", ur: "ایپ کھولیں" })}</span>
@@ -720,7 +720,7 @@ export default function Checkout() {
                               </p>
                             </div>
 
-                            <div className="rounded-xl border border-slate-200/60 bg-white/70 p-3 dark:border-slate-800 dark:bg-slate-900/60">
+                            <div className="rounded-xl border border-slate-200/60 bg-white/70 p-3 dark:border-[var(--border-subtle)] dark:bg-[#0D1118]/50">
                               <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white text-[11px]">
                                 <span className="flex size-4 items-center justify-center rounded-full bg-sky-500/20 text-sky-600 dark:text-sky-400 text-[10px] font-black">2</span>
                                 <span>
@@ -745,7 +745,7 @@ export default function Checkout() {
                               </p>
                             </div>
 
-                            <div className="rounded-xl border border-slate-200/60 bg-white/70 p-3 dark:border-slate-800 dark:bg-slate-900/60">
+                            <div className="rounded-xl border border-slate-200/60 bg-white/70 p-3 dark:border-[var(--border-subtle)] dark:bg-[#0D1118]/50">
                               <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white text-[11px]">
                                 <span className="flex size-4 items-center justify-center rounded-full bg-sky-500/20 text-sky-600 dark:text-sky-400 text-[10px] font-black">3</span>
                                 <span>{selectText({ en: "Paste TrxID", bn: "TrxID পেস্ট করুন", ur: "TrxID درج کریں" })}</span>
@@ -793,7 +793,7 @@ export default function Checkout() {
                         value={tx}
                         onChange={(e) => setTx(e.target.value.toUpperCase())}
                         placeholder="e.g. 8A1B2C3D9E"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-base font-bold font-mono tracking-wider outline-none focus:border-[#0284c7] focus:bg-white focus:ring-2 focus:ring-sky-500/20 dark:border-slate-800 dark:bg-slate-950 dark:text-white uppercase"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3.5 text-base font-bold font-mono tracking-wider outline-none focus:border-[#0284c7] focus:bg-white focus:ring-2 focus:ring-sky-500/20 dark:border-[var(--border-subtle)] dark:bg-[#0D1118]/80 dark:text-white uppercase"
                       />
                       <p className="mt-1.5 text-[11px] text-slate-400">
                         {selectText({
@@ -810,7 +810,7 @@ export default function Checkout() {
                         type="checkbox"
                         checked={ack}
                         onChange={(e) => setAck(e.target.checked)}
-                        className="mt-0.5 size-4 accent-[#081833] dark:accent-sky-500 rounded"
+                        className="mt-0.5 size-4 accent-[#081833] dark:accent-[var(--accent-primary)] rounded"
                       />
                       <span>
                         {selectText({
@@ -834,7 +834,7 @@ export default function Checkout() {
                           noRefundAcknowledged: true,
                         })
                       }
-                      className="mt-6 w-full h-12 bg-[#081833] text-white font-extrabold text-sm hover:bg-[#0c244b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 active:scale-[0.99] disabled:opacity-50 shadow-lg shadow-sky-950/20"
+                      className="mt-6 w-full h-12 bg-[#081833] text-white font-extrabold text-sm hover:bg-[#0c244b] dark:bg-[var(--accent-primary)] dark:text-white dark:hover:brightness-110 active:scale-[0.99] disabled:opacity-50 shadow-lg shadow-sky-950/20"
                     >
                       {submit.isPending
                         ? selectText({
@@ -855,7 +855,7 @@ export default function Checkout() {
               <>
                 {/* Free Package Notice */}
                 <div className="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 text-xs text-emerald-950 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
-                  <div className="flex items-center gap-2 font-extrabold text-emerald-700 dark:text-emerald-400">
+                  <div className="flex items-center gap-2 font-extrabold text-emerald-700 dark:text-[var(--accent-highlight)]">
                     <Sparkles size={16} className="shrink-0" />
                     <span>
                       {selectText({
@@ -908,16 +908,16 @@ export default function Checkout() {
           </section>
 
           {/* Sidebar Order Summary */}
-          <aside className="h-fit rounded-3xl bg-[#081833] p-6 sm:p-7 text-white shadow-2xl space-y-6">
+          <aside className="h-fit rounded-3xl bg-[#081833] dark:bg-[var(--surface)] dark:backdrop-blur-md dark:border dark:border-[var(--border-subtle)] p-6 sm:p-7 text-white shadow-2xl space-y-6">
             <div className="flex items-center justify-between">
-              <div className="text-xs font-black uppercase tracking-widest text-[#38bdf8]">
+              <div className="text-xs font-black uppercase tracking-widest text-[var(--glow-soft)]">
                 {selectText({
                   en: "ORDER SUMMARY",
                   bn: "অর্ডার সারাংশ",
                   ur: "آرڈر کا خلاصہ",
                 })}
               </div>
-              <span className="rounded-full bg-sky-500/20 px-2.5 py-0.5 text-[10px] font-extrabold text-sky-300 border border-sky-500/30">
+              <span className="rounded-full bg-[var(--accent-primary)]/20 px-2.5 py-0.5 text-[10px] font-extrabold text-[var(--glow-soft)] border border-[var(--accent-primary)]/30">
                 {selectText({
                   en: "Encrypted Checkout",
                   bn: "এনক্রিপ্ট করা চেকআউট",
@@ -945,7 +945,7 @@ export default function Checkout() {
                       })}
                 </div>
               </div>
-              <div dir="ltr" className="text-2xl sm:text-3xl font-black text-[#38bdf8] shrink-0 text-right">
+              <div dir="ltr" className="text-2xl sm:text-3xl font-black text-[var(--glow-soft)] shrink-0 text-right">
                 {isFree ? (
                   selectText({ en: "FREE", bn: "ফ্রি", ur: "مفت" })
                 ) : (

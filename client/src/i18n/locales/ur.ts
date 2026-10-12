@@ -7,7 +7,7 @@ export const ur: TranslationSchema = {
     freeBasics: "مفت بنیادی اسباق",
     leaderboard: "لیڈر بورڈ",
     support: "سپورٹ",
-    signIn: "سائن ان",
+    signIn: "Go Process",
     dashboard: "ڈیش بورڈ",
     logout: "لاگ آؤٹ",
     language: "زبان",

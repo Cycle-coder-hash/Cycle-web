@@ -678,9 +678,9 @@ export function SettingsPreferencesAndSecurityPanels({
                   <MessageSquare size={15} />
                   <span>
                     {selectText({
-                      en: "Open 1-on-1 Support Desk",
-                      bn: "সাপোর্ট সেন্টারে প্রবেশ করুন",
-                      ur: "1-on-1 سپورٹ ڈیسک کھولیں",
+                      en: "Support Desk",
+                      bn: "সাপোর্ট ডেস্ক",
+                      ur: "سپورٹ ڈیسک",
                     })}
                   </span>
                 </Button>

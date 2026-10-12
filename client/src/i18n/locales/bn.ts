@@ -7,7 +7,7 @@ export const bn: TranslationSchema = {
     freeBasics: "ফ্রি বেসিকস",
     leaderboard: "লিডারবোর্ড",
     support: "সাপোর্ট",
-    signIn: "সাইন ইন",
+    signIn: "Go Process",
     dashboard: "ড্যাশবোর্ড",
     logout: "লগ আউট",
     language: "ভাষা",

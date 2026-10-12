@@ -106,10 +106,10 @@ export function LeaderboardRankingsSection({
                 : "border-amber-600/40 dark:border-amber-700/60 shadow-amber-900/10";
 
               const glowBg = isChampion
-                ? "bg-gradient-to-b from-amber-500/15 via-slate-50/80 to-white dark:from-amber-500/20 dark:via-[#09152b] dark:to-[#050b17]"
+                ? "bg-gradient-to-b from-amber-500/15 via-slate-50/80 to-white dark:from-amber-500/15 dark:via-[#1B2F5E]/40 dark:to-[var(--bg-base)]/80 backdrop-blur-md"
                 : isSilver
-                ? "bg-gradient-to-b from-slate-300/20 via-slate-50/80 to-white dark:from-slate-400/15 dark:via-[#081326] dark:to-[#050b17]"
-                : "bg-gradient-to-b from-amber-700/15 via-slate-50/80 to-white dark:from-amber-800/15 dark:via-[#081326] dark:to-[#050b17]";
+                ? "bg-gradient-to-b from-slate-300/20 via-slate-50/80 to-white dark:from-slate-400/15 dark:via-[#1B2F5E]/35 dark:to-[var(--bg-base)]/80 backdrop-blur-md"
+                : "bg-gradient-to-b from-amber-700/15 via-slate-50/80 to-white dark:from-amber-800/15 dark:via-[#1B2F5E]/35 dark:to-[var(--bg-base)]/80 backdrop-blur-md";
 
               const badgeColor = isChampion
                 ? "bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 shadow-md shadow-amber-500/30"
@@ -157,7 +157,7 @@ export function LeaderboardRankingsSection({
                     </div>
 
                     {/* Overall Composite Score (Whole Number / 100) */}
-                    <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-3 dark:border-slate-800/80 dark:bg-[#071124]/90 shadow-inner">
+                    <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-3 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] shadow-inner">
                       <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         {selectText({
                           en: "Overall Score",
@@ -165,7 +165,7 @@ export function LeaderboardRankingsSection({
                           ur: "مجموعی اسکور",
                         })}
                       </div>
-                      <div className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-emerald-400" dir="ltr">
+                      <div className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[var(--glow-soft)] via-white to-[var(--accent-highlight)]" dir="ltr">
                         {Math.round(trader.overallScore)} <span className="text-xs font-bold text-slate-400">/ 100</span>
                       </div>
                     </div>
@@ -173,7 +173,7 @@ export function LeaderboardRankingsSection({
                     {/* Key Performance Metrics Grid */}
                     <div className="grid grid-cols-2 gap-2 text-left pt-1">
                       {/* Rule Adherence */}
-                      <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
+                      <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)]">
                         <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
                           {selectText({
                             en: "Rule Adherence",
@@ -187,7 +187,7 @@ export function LeaderboardRankingsSection({
                       </div>
 
                       {/* Discipline Routine */}
-                      <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
+                      <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)]">
                         <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
                           {selectText({
                             en: "Discipline",
@@ -195,13 +195,13 @@ export function LeaderboardRankingsSection({
                             ur: "ڈسپلن",
                           })}
                         </div>
-                        <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400" dir="ltr">
+                        <div className="text-sm font-extrabold text-emerald-600 dark:text-[var(--accent-highlight)]" dir="ltr">
                           {trader.disciplineScore}%
                         </div>
                       </div>
 
                       {/* Consistency */}
-                      <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
+                      <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)]">
                         <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
                           {selectText({
                             en: "Consistency",
@@ -216,7 +216,7 @@ export function LeaderboardRankingsSection({
                       </div>
 
                       {/* Win Rate */}
-                      <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
+                      <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)]">
                         <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
                           {selectText({
                             en: "Win Rate",
@@ -224,7 +224,7 @@ export function LeaderboardRankingsSection({
                             ur: "Win Rate",
                           })}
                         </div>
-                        <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400" dir="ltr">
+                        <div className="text-sm font-extrabold text-emerald-600 dark:text-[var(--accent-highlight)]" dir="ltr">
                           {trader.winRate}%
                         </div>
                         <div className="text-[10px] text-slate-400" dir="ltr">
@@ -233,7 +233,7 @@ export function LeaderboardRankingsSection({
                       </div>
 
                       {/* Total Trades */}
-                      <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
+                      <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)]">
                         <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
                           {selectText({
                             en: "Total Trades",
@@ -248,15 +248,15 @@ export function LeaderboardRankingsSection({
 
                       {/* Profit (Rendered ONLY if positive) */}
                       {hasPositiveProfit ? (
-                        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-2.5 dark:border-emerald-500/30 dark:bg-emerald-500/10">
-                          <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-2.5 dark:border-[#00FFA1]/30 dark:bg-[#00FFA1]/10">
+                          <div className="text-[10px] font-bold text-emerald-600 dark:text-[var(--accent-highlight)]">
                             {selectText({
                               en: "Profit",
                               bn: "প্রফিট",
                               ur: "منافع",
                             })}
                           </div>
-                          <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400" dir="ltr">
+                          <div className="text-sm font-extrabold text-emerald-600 dark:text-[var(--accent-highlight)]" dir="ltr">
                             +${trader.totalPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </div>
                         </div>
@@ -286,7 +286,7 @@ export function LeaderboardRankingsSection({
       )}
 
       {/* ======================================================================= */}
-      {/* RANKED LIST (RANKS #4–#30) */}
+      {/* RANKED LIST (RANKS #4–#10) */}
       {/* ======================================================================= */}
       {restRankings.length > 0 && (
         <section className={`space-y-4 ${isUr ? "font-urdu" : ""}`} dir={isRTL ? "rtl" : "ltr"}>
@@ -295,9 +295,9 @@ export function LeaderboardRankingsSection({
               <Layers size={18} className="text-sky-400" />
               <h2 className="text-sm font-extrabold uppercase tracking-widest text-slate-700 dark:text-slate-200">
                 {selectText({
-                  en: "Global Rankings (#4–#30)",
-                  bn: "র‌্যাঙ্কিং তালিকা (#৪–#৩০)",
-                  ur: "عالمی درجہ بندی (#4–#30)",
+                  en: "Global Rankings (#4–#10)",
+                  bn: "র‌্যাঙ্কিং তালিকা (#৪–#১০)",
+                  ur: "عالمی درجہ بندی (#4–#10)",
                 })}
               </h2>
             </div>
@@ -312,10 +312,10 @@ export function LeaderboardRankingsSection({
           </div>
 
           {/* Desktop Table */}
-          <div className="hidden lg:block overflow-hidden rounded-3xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-[#070e1b]/90 shadow-lg">
+          <div className="hidden lg:block overflow-hidden rounded-3xl border border-slate-200 bg-white dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] backdrop-blur-md shadow-lg">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-900/60 text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <tr className="border-b border-slate-200 bg-slate-50/80 dark:border-[var(--border-subtle)] dark:bg-white/5 text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   <th className="py-3.5 pl-6 pr-3">Rank</th>
                   <th className="py-3.5 px-3">Trader</th>
                   <th className="py-3.5 px-3 text-center">
@@ -376,16 +376,16 @@ export function LeaderboardRankingsSection({
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
+              <tbody className="divide-y divide-slate-100 dark:divide-white/10 font-medium">
                 {restRankings.map((t) => (
                   <tr
                     key={t.userId}
                     onClick={() => onSelectTrader(t)}
-                    className="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40 cursor-pointer"
+                    className="transition-colors hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer"
                   >
                     {/* Rank */}
                     <td className="py-4 pl-6 pr-3 font-mono font-bold text-slate-500">
-                      <span className="inline-flex size-7 items-center justify-center rounded-lg bg-slate-100 font-black text-slate-700 dark:bg-slate-800 dark:text-slate-300" dir="ltr">
+                      <span className="inline-flex size-7 items-center justify-center rounded-lg bg-slate-100 font-black text-slate-700 dark:bg-white/10 dark:text-slate-200" dir="ltr">
                         #{t.rank}
                       </span>
                     </td>
@@ -428,7 +428,7 @@ export function LeaderboardRankingsSection({
 
                     {/* Discipline Routine */}
                     <td className="py-4 px-3 text-center">
-                      <span className="inline-flex rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-extrabold text-emerald-600 dark:text-emerald-400" dir="ltr">
+                      <span className="inline-flex rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-extrabold text-emerald-600 dark:text-[var(--accent-highlight)]" dir="ltr">
                         {t.disciplineScore}%
                       </span>
                     </td>
@@ -451,7 +451,7 @@ export function LeaderboardRankingsSection({
 
                     {/* Win Rate */}
                     <td className="py-4 px-3 text-center">
-                      <span className="font-extrabold text-emerald-600 dark:text-emerald-400" dir="ltr">
+                      <span className="font-extrabold text-emerald-600 dark:text-[var(--accent-highlight)]" dir="ltr">
                         {t.winRate}%
                       </span>
                     </td>
@@ -459,7 +459,7 @@ export function LeaderboardRankingsSection({
                     {/* Profit (ONLY positive displayed) */}
                     <td className="py-4 px-3 text-right">
                       {t.totalPnl > 0 ? (
-                        <span className="font-black text-emerald-600 dark:text-emerald-400 font-mono" dir="ltr">
+                        <span className="font-black text-emerald-600 dark:text-[var(--accent-highlight)] font-mono" dir="ltr">
                           +${t.totalPnl.toFixed(2)}
                         </span>
                       ) : (
@@ -487,17 +487,17 @@ export function LeaderboardRankingsSection({
             </table>
           </div>
 
-          {/* Mobile Card List for #4 to #30 */}
+          {/* Mobile Card List for #4 to #10 */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:hidden">
             {restRankings.map((t) => (
               <div
                 key={t.userId}
                 onClick={() => onSelectTrader(t)}
-                className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-[#070e1b] space-y-3 cursor-pointer hover:border-sky-500/40 transition"
+                className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-[var(--border-subtle)] dark:bg-[var(--surface)] backdrop-blur-md space-y-3 cursor-pointer hover:border-sky-500/40 transition"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
-                    <span className="inline-flex size-7 items-center justify-center rounded-lg bg-slate-100 font-mono text-xs font-black text-slate-700 dark:bg-slate-800 dark:text-slate-300" dir="ltr">
+                    <span className="inline-flex size-7 items-center justify-center rounded-lg bg-slate-100 font-mono text-xs font-black text-slate-700 dark:bg-white/10 dark:text-slate-200" dir="ltr">
                       #{t.rank}
                     </span>
                     <div className="size-8 rounded-full overflow-hidden bg-slate-800 flex items-center justify-center font-bold text-white text-xs">
@@ -524,7 +524,7 @@ export function LeaderboardRankingsSection({
                 </div>
 
                 {/* Metrics grid */}
-                <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 dark:border-slate-800/80">
+                <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 dark:border-[var(--border-subtle)]">
                   <div className="flex justify-between">
                     <span className="text-slate-400">
                       {selectText({
@@ -543,7 +543,7 @@ export function LeaderboardRankingsSection({
                         ur: "ڈسپلن:",
                       })}
                     </span>
-                    <span className="font-bold text-emerald-500" dir="ltr">{t.disciplineScore}%</span>
+                    <span className="font-bold text-emerald-600 dark:text-[var(--accent-highlight)]" dir="ltr">{t.disciplineScore}%</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">
@@ -553,7 +553,7 @@ export function LeaderboardRankingsSection({
                         ur: "Win Rate:",
                       })}
                     </span>
-                    <span className="font-bold text-emerald-500" dir="ltr">{t.winRate}%</span>
+                    <span className="font-bold text-emerald-600 dark:text-[var(--accent-highlight)]" dir="ltr">{t.winRate}%</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">
@@ -566,7 +566,7 @@ export function LeaderboardRankingsSection({
                     <span className="font-bold" dir="ltr">{t.totalTrades}</span>
                   </div>
                   {t.totalPnl > 0 ? (
-                    <div className="col-span-2 flex justify-between font-mono pt-1 border-t border-slate-100 dark:border-slate-800/60">
+                    <div className="col-span-2 flex justify-between font-mono pt-1 border-t border-slate-100 dark:border-[var(--border-subtle)]">
                       <span className="text-slate-400">
                         {selectText({
                           en: "Profit:",
@@ -574,7 +574,7 @@ export function LeaderboardRankingsSection({
                           ur: "منافع:",
                         })}
                       </span>
-                      <span className="font-extrabold text-emerald-500" dir="ltr">+${t.totalPnl.toFixed(2)}</span>
+                      <span className="font-extrabold text-emerald-600 dark:text-[var(--accent-highlight)]" dir="ltr">+${t.totalPnl.toFixed(2)}</span>
                     </div>
                   ) : null}
                 </div>
@@ -599,7 +599,7 @@ export function TraderPerformanceModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
       <div
         dir={isRTL ? "rtl" : "ltr"}
-        className={`relative w-full max-w-2xl overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 dark:border-slate-800 dark:bg-[#070e1b] shadow-2xl max-h-[90vh] overflow-y-auto space-y-6 ${
+        className={`relative w-full max-w-2xl overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 dark:border-[var(--border-subtle)] dark:bg-[var(--bg-base)] shadow-2xl max-h-[90vh] overflow-y-auto space-y-6 ${
           isUr ? "font-urdu" : ""
         }`}
       >

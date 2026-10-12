@@ -13,14 +13,14 @@ interface TrailPoint {
   color: RGB;
 }
 
-// Exact requested RGB sequence: cyan → blue → purple → pink → green → cyan
+// Shifted to the premium navy-blue gradient palette (--glow-soft, --bg-glow, --bg-navy-mid, subtle --accent-highlight)
 const RGB_PALETTE: RGB[] = [
-  { r: 0, g: 235, b: 255 }, // Cyan
-  { r: 45, g: 115, b: 255 }, // Blue
-  { r: 168, g: 85, b: 247 }, // Purple
-  { r: 244, g: 63, b: 142 }, // Pink
-  { r: 16, g: 215, b: 125 }, // Green
-  { r: 0, g: 235, b: 255 }, // Back to Cyan
+  { r: 92, g: 156, b: 235 },  // --glow-soft / --accent-primary (#5C9CEB)
+  { r: 63, g: 111, b: 209 },  // --bg-glow (#3F6FD1)
+  { r: 138, g: 184, b: 245 }, // Luminous soft sky blue (#8AB8F5)
+  { r: 27, g: 47, b: 94 },    // --bg-navy-mid (#1B2F5E)
+  { r: 0, g: 255, b: 161 },   // --accent-highlight (#00FFA1 subtle touch)
+  { r: 92, g: 156, b: 235 },  // Back to --glow-soft (#5C9CEB)
 ];
 
 function getInterpolatedRgb(progress: number): RGB {

@@ -595,9 +595,9 @@ export default function Settings() {
     labelBn: string;
     labelUr: string;
     icon: any;
-    descEn: string;
-    descBn: string;
-    descUr: string;
+    descEn?: string;
+    descBn?: string;
+    descUr?: string;
   }[] = [
     {
       id: "account",
@@ -645,9 +645,6 @@ export default function Settings() {
       labelBn: "সহায়তা ও গাইড",
       labelUr: "سپورٹ اور مدد",
       icon: HelpCircle,
-      descEn: "1-on-1 mentor desk, curriculum docs",
-      descBn: "১-অন-১ মেন্টর ও কারিকুলাম গাইড",
-      descUr: "1-on-1 مینٹور ڈیسک، نصابی دستاویزات",
     },
   ];
 
@@ -771,6 +768,9 @@ export default function Settings() {
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
+              const desc = tab.descEn
+                ? selectText({ en: tab.descEn, bn: tab.descBn || tab.descEn, ur: tab.descUr || tab.descEn })
+                : "";
               return (
                 <button
                   key={tab.id}
@@ -781,9 +781,9 @@ export default function Settings() {
                       : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-white"
                   }`}
                 >
-                  <div className="flex items-start gap-3">
+                  <div className={`flex ${desc ? "items-start" : "items-center"} gap-3`}>
                     <div
-                      className={`mt-0.5 rounded-lg p-1.5 ${
+                      className={`${desc ? "mt-0.5" : ""} rounded-lg p-1.5 ${
                         isActive
                           ? "bg-white/10 dark:bg-slate-900/20 text-white dark:text-slate-950"
                           : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
@@ -795,13 +795,15 @@ export default function Settings() {
                       <div className="text-xs font-bold">
                         {selectText({ en: tab.labelEn, bn: tab.labelBn, ur: tab.labelUr })}
                       </div>
-                      <div
-                        className={`text-[10px] line-clamp-1 ${
-                          isActive ? "text-slate-300 dark:text-slate-800" : "text-slate-400 dark:text-slate-500"
-                        }`}
-                      >
-                        {selectText({ en: tab.descEn, bn: tab.descBn, ur: tab.descUr })}
-                      </div>
+                      {desc && (
+                        <div
+                          className={`text-[10px] line-clamp-1 ${
+                            isActive ? "text-slate-300 dark:text-slate-800" : "text-slate-400 dark:text-slate-500"
+                          }`}
+                        >
+                          {desc}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <ChevronRight size={14} className={isActive ? "opacity-100" : "opacity-30"} />

@@ -12,6 +12,7 @@ import {
   Moon,
   NotebookPen,
   Receipt,
+  RotateCcw,
   Send,
   Settings as SettingsIcon,
   Sparkles,
@@ -312,6 +313,23 @@ export function DashboardMobileNav({
                   </div>
                 </div>
               </button>
+
+              {/* Free Backtest */}
+              <a
+                href="https://fxreplay.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={onCloseDrawer}
+                className="flex items-center gap-3 p-3 rounded-2xl border border-slate-800/80 bg-slate-900/70 text-left text-xs font-bold text-slate-300 hover:bg-slate-800 transition-all cursor-pointer"
+              >
+                <div className="size-9 rounded-xl bg-sky-500/10 flex items-center justify-center shrink-0 text-sky-400">
+                  <RotateCcw size={18} />
+                </div>
+                <div className="min-w-0">
+                  <div className="truncate font-extrabold">{selectText({ en: "Free Backtest", bn: "ফ্রি ব্যাকটেস্ট", ur: "فری بیک ٹیسٹ" })}</div>
+                  <div className="text-[10px] text-slate-400 font-normal">FX Replay</div>
+                </div>
+              </a>
 
               {/* Position Calculator */}
               <button

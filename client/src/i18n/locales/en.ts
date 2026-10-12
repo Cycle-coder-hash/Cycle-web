@@ -7,7 +7,7 @@ export const en: TranslationSchema = {
     freeBasics: "Free Basics",
     leaderboard: "Leaderboard",
     support: "Support",
-    signIn: "Sign In",
+    signIn: "Go Process",
     dashboard: "Dashboard",
     logout: "Log Out",
     language: "Language",
