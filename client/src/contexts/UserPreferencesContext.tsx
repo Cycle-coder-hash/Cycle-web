@@ -7,17 +7,18 @@ export interface CurrencyConfig {
   symbol: string;
   name: string;
   flag: string;
+  rateAgainstUsd: number;
 }
 
 export const SUPPORTED_CURRENCIES: CurrencyConfig[] = [
-  { code: "BDT", symbol: "৳", name: "Bangladeshi Taka", flag: "🇧🇩" },
-  { code: "USD", symbol: "$", name: "US Dollar", flag: "🇺🇸" },
-  { code: "PKR", symbol: "₨", name: "Pakistani Rupee", flag: "🇵🇰" },
-  { code: "EUR", symbol: "€", name: "Euro", flag: "🇪🇺" },
-  { code: "GBP", symbol: "£", name: "British Pound", flag: "🇬🇧" },
-  { code: "AED", symbol: "AED", name: "UAE Dirham", flag: "🇦🇪" },
-  { code: "SAR", symbol: "SAR", name: "Saudi Riyal", flag: "🇸🇦" },
-  { code: "INR", symbol: "₹", name: "Indian Rupee", flag: "🇮🇳" },
+  { code: "BDT", symbol: "৳", name: "Bangladeshi Taka", flag: "🇧🇩", rateAgainstUsd: 122 },
+  { code: "USD", symbol: "$", name: "US Dollar", flag: "🇺🇸", rateAgainstUsd: 1 },
+  { code: "PKR", symbol: "₨", name: "Pakistani Rupee", flag: "🇵🇰", rateAgainstUsd: 280 },
+  { code: "EUR", symbol: "€", name: "Euro", flag: "🇪🇺", rateAgainstUsd: 0.92 },
+  { code: "GBP", symbol: "£", name: "British Pound", flag: "🇬🇧", rateAgainstUsd: 0.78 },
+  { code: "AED", symbol: "AED", name: "UAE Dirham", flag: "🇦🇪", rateAgainstUsd: 3.67 },
+  { code: "SAR", symbol: "SAR", name: "Saudi Riyal", flag: "🇸🇦", rateAgainstUsd: 3.75 },
+  { code: "INR", symbol: "₹", name: "Indian Rupee", flag: "🇮🇳", rateAgainstUsd: 87 },
 ];
 
 export interface TimezoneOption {
@@ -51,6 +52,8 @@ interface UserPreferencesContextType {
   currentTimezone: TimezoneOption;
   formatTime: (date: Date | string | number, options?: Intl.DateTimeFormatOptions) => string;
   formatCurrency: (amount: number, customDecimals?: number) => string;
+  convertAmount: (amount: number, fromCurrency?: "USD" | "BDT") => number;
+  formatPrice: (params: { bdt?: number | string; usd?: number | string; fallback?: string }) => string;
   allTimezones: TimezoneOption[];
   allCurrencies: CurrencyConfig[];
 }
@@ -183,6 +186,66 @@ export function UserPreferencesProvider({ children }: { children: React.ReactNod
     [currentCurrency]
   );
 
+  const convertAmount = useCallback(
+    (amount: number, fromCurrency: "USD" | "BDT" = "BDT"): number => {
+      if (isNaN(amount) || amount === 0) return 0;
+      if (fromCurrency === "BDT") {
+        if (currency === "BDT") return amount;
+        const inUsd = amount / 122;
+        return inUsd * currentCurrency.rateAgainstUsd;
+      } else {
+        if (currency === "USD") return amount;
+        return amount * currentCurrency.rateAgainstUsd;
+      }
+    },
+    [currency, currentCurrency]
+  );
+
+  const formatPrice = useCallback(
+    (params: { bdt?: number | string; usd?: number | string; fallback?: string }): string => {
+      const bdtNum =
+        params.bdt !== undefined && params.bdt !== null
+          ? parseFloat(String(params.bdt).replace(/[^\d.]/g, "") || "0")
+          : undefined;
+      const usdNum =
+        params.usd !== undefined && params.usd !== null
+          ? parseFloat(String(params.usd).replace(/[^\d.]/g, "") || "0")
+          : undefined;
+
+      if ((bdtNum === 0 || usdNum === 0) && (bdtNum !== undefined || usdNum !== undefined)) {
+        return `${currentCurrency.symbol} 0`;
+      }
+
+      if (currency === "BDT" && bdtNum !== undefined) {
+        return `৳${Math.round(bdtNum).toLocaleString()}`;
+      }
+
+      if (currency === "USD" && usdNum !== undefined) {
+        return `$${usdNum % 1 === 0 ? usdNum : usdNum.toFixed(2)}`;
+      }
+
+      let converted: number;
+      if (usdNum !== undefined && usdNum > 0) {
+        converted = usdNum * currentCurrency.rateAgainstUsd;
+      } else if (bdtNum !== undefined && bdtNum > 0) {
+        converted = (bdtNum / 122) * currentCurrency.rateAgainstUsd;
+      } else {
+        return params.fallback || `${currentCurrency.symbol} 0`;
+      }
+
+      const noDecimal =
+        currentCurrency.code === "BDT" || currentCurrency.code === "PKR" || currentCurrency.code === "INR";
+      const decimals = noDecimal ? 0 : 2;
+      const formatted = new Intl.NumberFormat(undefined, {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      }).format(converted);
+
+      return `${currentCurrency.symbol} ${formatted}`;
+    },
+    [currency, currentCurrency]
+  );
+
   return (
     <UserPreferencesContext.Provider
       value={{
@@ -194,6 +257,8 @@ export function UserPreferencesProvider({ children }: { children: React.ReactNod
         currentTimezone,
         formatTime,
         formatCurrency,
+        convertAmount,
+        formatPrice,
         allTimezones: SUPPORTED_TIMEZONES,
         allCurrencies: SUPPORTED_CURRENCIES,
       }}

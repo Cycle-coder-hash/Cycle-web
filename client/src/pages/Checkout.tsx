@@ -24,12 +24,14 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { HeaderBrandWordmark } from "@/components/HeaderBrandWordmark";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 import { toast } from "sonner";
 import { BkashLogo, NagadLogo, RocketLogo } from "@/components/payment/PaymentIcons";
 
 export default function Checkout() {
   const { user } = useAuth();
   const { language, selectText, isRTL } = useLanguage();
+  const { formatPrice, currency } = useUserPreferences();
   const isBn = language === "bn";
   const { data: bundles } = trpc.public.bundles.useQuery();
   const { data: settings } = trpc.public.paymentSettings.useQuery();
@@ -406,8 +408,8 @@ export default function Checkout() {
                     </div>
                   </div>
                   <div className="text-base sm:text-lg font-black text-[#0284c7] dark:text-[#38bdf8] shrink-0 text-right">
-                    <span>৳{b.price}</span>
-                    {b.priceUsd && (
+                    <span>{formatPrice({ bdt: b.price, usd: b.priceUsd, fallback: `৳${b.price}` })}</span>
+                    {currency !== "USD" && b.priceUsd && (
                       <span className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400 ml-1">
                         / ${b.priceUsd}
                       </span>
@@ -727,6 +729,11 @@ export default function Checkout() {
                                     bn: `৳${price} পাঠান`,
                                     ur: `৳${price} بھیجیں`,
                                   })}
+                                  {currency !== "BDT" && (
+                                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium ml-1">
+                                      ({formatPrice({ bdt: price, usd: chosen?.priceUsd })})
+                                    </span>
+                                  )}
                                 </span>
                               </div>
                               <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
@@ -943,8 +950,8 @@ export default function Checkout() {
                   selectText({ en: "FREE", bn: "ফ্রি", ur: "مفت" })
                 ) : (
                   <div>
-                    <span>৳{price}</span>
-                    {chosen?.priceUsd && (
+                    <span>{formatPrice({ bdt: price, usd: chosen?.priceUsd, fallback: `৳${price}` })}</span>
+                    {currency !== "USD" && chosen?.priceUsd && (
                       <span className="text-base sm:text-lg font-bold text-slate-300 ml-1.5">
                         / ${chosen.priceUsd}
                       </span>
@@ -993,9 +1000,16 @@ export default function Checkout() {
               <span className="text-sm font-bold text-slate-300">
                 {selectText({ en: "Total Payable", bn: "মোট প্রদেয়", ur: "کل واجب الادا" })}
               </span>
-              <span dir="ltr" className="text-2xl font-black text-white">
-                {isFree ? "৳0.00" : `৳${price}`}
-              </span>
+              <div dir="ltr" className="text-right">
+                <span className="text-2xl font-black text-white">
+                  {isFree ? formatPrice({ bdt: 0, usd: 0 }) : formatPrice({ bdt: price, usd: chosen?.priceUsd, fallback: `৳${price}` })}
+                </span>
+                {!isFree && currency !== "BDT" && (
+                  <div className="text-xs text-slate-400 font-semibold mt-0.5">
+                    (≈ ৳{price} BDT)
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Status & Assurance */}

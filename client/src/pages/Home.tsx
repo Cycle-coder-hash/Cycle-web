@@ -41,6 +41,7 @@ import { NewsHeadlineStats } from "@/components/NewsHeadlineStats";
 import { JournalAnalyticsShowcase } from "@/components/JournalAnalyticsShowcase";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { FreeEbookModal } from "@/components/ebook/FreeEbookModal";
 
@@ -70,6 +71,7 @@ export default function Home() {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { t, language, isRTL, selectText } = useLanguage();
+  const { formatPrice, currency } = useUserPreferences();
   const isBn = language === "bn";
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeStage, setActiveStage] = useState(0);
@@ -644,15 +646,17 @@ export default function Home() {
                           <div className="flex items-baseline flex-wrap gap-2 sm:gap-2.5">
                             {item.originalPrice && (
                               <span className="text-base sm:text-lg font-bold line-through text-slate-400 dark:text-slate-500">
-                                ৳{formatBdt(item.originalPrice, isBn, "5550")}
+                                {formatPrice({ bdt: item.originalPrice, usd: "45", fallback: `৳${item.originalPrice}` })}
                               </span>
                             )}
                             <span className="text-3xl sm:text-4xl font-black tracking-tight">
-                              ৳{formatBdt(item.price, isBn, item.id === 1 ? "0" : item.id === 2 ? "2499" : "4999")}
+                              {formatPrice({ bdt: item.price, usd: item.priceUsd, fallback: `৳${item.price}` })}
                             </span>
-                            <span className="text-xl sm:text-2xl font-bold text-slate-500 dark:text-slate-400">
-                              / ${formatUsd(item.priceUsd, isBn, item.id === 1 ? "0" : item.id === 2 ? "20" : "40")}
-                            </span>
+                            {currency !== "USD" && item.priceUsd && (
+                              <span className="text-base sm:text-lg font-bold text-slate-500 dark:text-slate-400">
+                                / ${formatUsd(item.priceUsd, isBn, item.id === 1 ? "0" : item.id === 2 ? "20" : "40")}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>

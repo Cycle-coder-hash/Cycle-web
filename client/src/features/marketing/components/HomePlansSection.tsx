@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { CheckCircle2, Crown, LockKeyhole, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 
 export type HomePlanModalType = "free" | "pro" | "premium" | null;
 
@@ -28,6 +29,7 @@ export function HomePlansSection({
   pricing,
 }: HomePlansSectionProps) {
   const { language, selectText } = useLanguage();
+  const { formatPrice, currency } = useUserPreferences();
   const isBn = language === "bn";
 
   const formatBdt = (val: string | number | undefined, bn: boolean, fallback: string) => {
@@ -97,10 +99,7 @@ export function HomePlansSection({
                 </div>
                 <div className="mt-4 flex items-baseline flex-wrap gap-1.5">
                   <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
-                    ৳{formatBdt(freeTrialBdt, isBn, "0")}
-                  </span>
-                  <span className="text-xl sm:text-2xl font-bold text-slate-500 dark:text-slate-400">
-                    / ${formatUsd(freeTrialUsd, isBn, "0")}
+                    {formatPrice({ bdt: freeTrialBdt, usd: freeTrialUsd, fallback: "0" })}
                   </span>
                   <span className="text-xs text-slate-500 dark:text-slate-400 font-medium ml-1">
                     {selectText({ en: "/ 30 days", bn: "/ ৩০ দিন", ur: "/ 30 دن" })}
@@ -195,11 +194,13 @@ export function HomePlansSection({
                 </div>
                 <div className="mt-4 flex items-baseline flex-wrap gap-1.5">
                   <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
-                    ৳{formatBdt(proBdt, isBn, "599")}
+                    {formatPrice({ bdt: proBdt, usd: proUsd, fallback: "599" })}
                   </span>
-                  <span className="text-xl sm:text-2xl font-bold text-sky-600 dark:text-sky-400">
-                    / ${formatUsd(proUsd, isBn, "5")}
-                  </span>
+                  {currency !== "USD" && proUsd && (
+                    <span className="text-xl sm:text-2xl font-bold text-sky-600 dark:text-sky-400">
+                      / ${formatUsd(proUsd, isBn, "5")}
+                    </span>
+                  )}
                   <span className="text-xs text-slate-500 dark:text-slate-400 font-medium ml-1">
                     {selectText({ en: "per month", bn: "প্রতি মাস", ur: "فی مہینہ" })}
                   </span>
@@ -253,9 +254,9 @@ export function HomePlansSection({
                 <Link href="/checkout?plan=pro" className="block w-full">
                   <Button className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-xs h-10 shadow-lg shadow-sky-500/25">
                     {selectText({
-                      en: `Get Pro — ৳${formatBdt(proBdt, false, "599")} / $${formatUsd(proUsd, false, "5")} per month`,
-                      bn: `প্রো কিনুন — ৳${formatBdt(proBdt, true, "599")} / $${formatUsd(proUsd, true, "5")} প্রতি মাস`,
-                      ur: `پرو حاصل کریں — ৳${formatBdt(proBdt, false, "599")} / $${formatUsd(proUsd, false, "5")} فی مہینہ`,
+                      en: `Get Pro — ${formatPrice({ bdt: proBdt, usd: proUsd, fallback: "599" })}${currency !== "USD" ? ` / $${formatUsd(proUsd, false, "5")}` : ""} per month`,
+                      bn: `প্রো কিনুন — ${formatPrice({ bdt: proBdt, usd: proUsd, fallback: "599" })}${currency !== "USD" ? ` / $${formatUsd(proUsd, true, "5")}` : ""} প্রতি মাস`,
+                      ur: `پرو حاصل کریں — ${formatPrice({ bdt: proBdt, usd: proUsd, fallback: "599" })}${currency !== "USD" ? ` / $${formatUsd(proUsd, false, "5")}` : ""} فی مہینہ`,
                     })}
                   </Button>
                 </Link>
@@ -283,11 +284,13 @@ export function HomePlansSection({
                 </div>
                 <div className="mt-4 flex items-baseline flex-wrap gap-1.5">
                   <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
-                    ৳{formatBdt(premiumBdt, isBn, "999")}
+                    {formatPrice({ bdt: premiumBdt, usd: premiumUsd, fallback: "999" })}
                   </span>
-                  <span className="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400">
-                    / ${formatUsd(premiumUsd, isBn, "10")}
-                  </span>
+                  {currency !== "USD" && premiumUsd && (
+                    <span className="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400">
+                      / ${formatUsd(premiumUsd, isBn, "10")}
+                    </span>
+                  )}
                   <span className="text-xs text-slate-500 dark:text-slate-400 font-medium ml-1">
                     {selectText({ en: "per month", bn: "প্রতি মাস", ur: "فی مہینہ" })}
                   </span>
@@ -345,9 +348,9 @@ export function HomePlansSection({
                 <Link href="/checkout?plan=premium" className="block w-full">
                   <Button className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black font-bold text-xs h-10 shadow-lg shadow-amber-500/25">
                     {selectText({
-                      en: `Get Premium — ৳${formatBdt(premiumBdt, false, "999")} / $${formatUsd(premiumUsd, false, "10")} per month`,
-                      bn: `প্রিমিয়াম কিনুন — ৳${formatBdt(premiumBdt, true, "999")} / $${formatUsd(premiumUsd, true, "10")} প্রতি মাস`,
-                      ur: `پریمیم حاصل کریں — ৳${formatBdt(premiumBdt, false, "999")} / $${formatUsd(premiumUsd, false, "10")} فی مہینہ`,
+                      en: `Get Premium — ${formatPrice({ bdt: premiumBdt, usd: premiumUsd, fallback: "999" })}${currency !== "USD" ? ` / $${formatUsd(premiumUsd, false, "10")}` : ""} per month`,
+                      bn: `প্রিমিয়াম কিনুন — ${formatPrice({ bdt: premiumBdt, usd: premiumUsd, fallback: "999" })}${currency !== "USD" ? ` / $${formatUsd(premiumUsd, true, "10")}` : ""} প্রতি মাস`,
+                      ur: `پریمیم حاصل کریں — ${formatPrice({ bdt: premiumBdt, usd: premiumUsd, fallback: "999" })}${currency !== "USD" ? ` / $${formatUsd(premiumUsd, false, "10")}` : ""} فی مہینہ`,
                     })}
                   </Button>
                 </Link>
@@ -407,15 +410,15 @@ export function HomePlansSection({
                     selectText({ en: "30-Day Free Trial & Permanent Free Tier", bn: "৩০ দিনের ফ্রি ট্রায়াল ও পার্মানেন্ট ফ্রি টিয়ার", ur: "30 دن کی مفت آزمائش اور مستقل مفت درجہ" })}
                   {selectedPlanModal === "pro" &&
                     selectText({
-                      en: `Pro Trader Plan — ৳${formatBdt(proBdt, false, "599")} / $${formatUsd(proUsd, false, "5")} per month`,
-                      bn: `প্রো ট্রেডার প্ল্যান — ৳${formatBdt(proBdt, true, "599")} / $${formatUsd(proUsd, true, "5")} প্রতি মাস`,
-                      ur: `پرو ٹریڈر پلان — ৳${formatBdt(proBdt, false, "599")} / $${formatUsd(proUsd, false, "5")} فی مہینہ`,
+                      en: `Pro Trader Plan — ${formatPrice({ bdt: proBdt, usd: proUsd, fallback: "599" })}${currency !== "USD" ? ` / $${formatUsd(proUsd, false, "5")}` : ""} per month`,
+                      bn: `প্রো ট্রেডার প্ল্যান — ${formatPrice({ bdt: proBdt, usd: proUsd, fallback: "599" })}${currency !== "USD" ? ` / $${formatUsd(proUsd, true, "5")}` : ""} প্রতি মাস`,
+                      ur: `پرو ٹریڈر پلان — ${formatPrice({ bdt: proBdt, usd: proUsd, fallback: "599" })}${currency !== "USD" ? ` / $${formatUsd(proUsd, false, "5")}` : ""} فی مہینہ`,
                     })}
                   {selectedPlanModal === "premium" &&
                     selectText({
-                      en: `Premium Institutional Plan — ৳${formatBdt(premiumBdt, false, "999")} / $${formatUsd(premiumUsd, false, "10")} per month`,
-                      bn: `প্রিমিয়াম ইন্সটিটিউশনাল প্ল্যান — ৳${formatBdt(premiumBdt, true, "999")} / $${formatUsd(premiumUsd, true, "10")} প্রতি মাস`,
-                      ur: `پریمیم ادارہ جاتی پلان — ৳${formatBdt(premiumBdt, false, "999")} / $${formatUsd(premiumUsd, false, "10")} فی مہینہ`,
+                      en: `Premium Institutional Plan — ${formatPrice({ bdt: premiumBdt, usd: premiumUsd, fallback: "999" })}${currency !== "USD" ? ` / $${formatUsd(premiumUsd, false, "10")}` : ""} per month`,
+                      bn: `প্রিমিয়াম ইন্সটিটিউশনাল প্ল্যান — ${formatPrice({ bdt: premiumBdt, usd: premiumUsd, fallback: "999" })}${currency !== "USD" ? ` / $${formatUsd(premiumUsd, true, "10")}` : ""} প্রতি মাস`,
+                      ur: `پریمیم ادارہ جاتی پلان — ${formatPrice({ bdt: premiumBdt, usd: premiumUsd, fallback: "999" })}${currency !== "USD" ? ` / $${formatUsd(premiumUsd, false, "10")}` : ""} فی مہینہ`,
                     })}
                 </h3>
                 <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -428,7 +431,7 @@ export function HomePlansSection({
                   {selectedPlanModal === "pro" &&
                     selectText({
                       en: "The Pro Plan is crafted for active disciplined traders needing separate books, video storage, structured fitness routines, and community collaboration. Renew manually every month with zero automatic debits. If upgraded during your Free Trial, you receive 5 BONUS DAYS (35 days total).",
-                      bn: "প্রো প্ল্যানটি সুশৃঙ্খল ট্রেডারদের জন্য ডিজাইন করা হয়েছে যাদের একাধিক জার্নাল বুক, ভিডিও স্টোরেজ, ফিটনেস রুটিন এবং কমিউনিটি সুবিধা প্রয়োজন। কোনো অটো-ডেবিট ছাড়া প্রতি মাসে ম্যানুয়ালি নবায়নযোগ্য। ফ্রি ট্রায়াল চলাকালে আপগ্রেড করলে পাবেন অতিরিক্ত ৫ বোনাস দিন (মোট ৩৫ দিন)।",
+                      bn: "প্রো প্ল্যানটি সুশৃঙ্খল ট্রেডারদের জন্য ডিজাইন করা হয়েছে যাদের একাধিক জার্নাল বুক, video স্টোরেজ, ফিটনেস রুটিন এবং কমিউনিটি সুবিধা প্রয়োজন। কোনো অটো-ডেবিট ছাড়া প্রতি মাসে ম্যানুয়ালি নবায়নযোগ্য। ফ্রি ট্রায়াল চলাকালে আপগ্রেড করলে পাবেন অতিরিক্ত ৫ বোনাস দিন (মোট ৩৫ দিন)।",
                       ur: "پرو پلان فعال اور منظم ٹریڈرز کے لیے بنایا گیا ہے جنہیں علیحدہ جرنل بکس، ویڈیو اسٹوریج، فٹنس معمولات اور کمیونٹی سپورٹ درکار ہو۔ کوئی خودکار کٹوتی نہیں، ہر ماہ دستی تجدید۔ آزمائش کے دوران اپ گریڈ پر 5 بونس دن (کل 35 دن)۔",
                     })}
                   {selectedPlanModal === "premium" &&
@@ -446,9 +449,9 @@ export function HomePlansSection({
                   <thead className="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
                     <tr>
                       <th className="p-3">{selectText({ en: "Feature", bn: "সুবিধা", ur: "خصوصیت" })}</th>
-                      <th className="p-3 text-center">{selectText({ en: "Free Trial (৳0 / $0)", bn: "ফ্রি ট্রায়াল (৳০ / $০)", ur: "مفت آزمائش (৳0 / $0)" })}</th>
-                      <th className="p-3 text-center">{selectText({ en: `Pro (৳${formatBdt(proBdt, false, "599")} / $${formatUsd(proUsd, false, "5")})`, bn: `প্রো (৳${formatBdt(proBdt, true, "599")} / $${formatUsd(proUsd, true, "5")})`, ur: `پرو (৳${formatBdt(proBdt, false, "599")} / $${formatUsd(proUsd, false, "5")})` })}</th>
-                      <th className="p-3 text-center">{selectText({ en: `Premium (৳${formatBdt(premiumBdt, false, "999")} / $${formatUsd(premiumUsd, false, "10")})`, bn: `প্রিমিয়াম (৳${formatBdt(premiumBdt, true, "999")} / $${formatUsd(premiumUsd, true, "10")})`, ur: `پریمیم (৳${formatBdt(premiumBdt, false, "999")} / $${formatUsd(premiumUsd, false, "10")})` })}</th>
+                      <th className="p-3 text-center">{selectText({ en: `Free Trial (${formatPrice({ bdt: 0, usd: 0 })})`, bn: `ফ্রি ট্রায়াল (${formatPrice({ bdt: 0, usd: 0 })})`, ur: `مفت آزمائش (${formatPrice({ bdt: 0, usd: 0 })})` })}</th>
+                      <th className="p-3 text-center">{selectText({ en: `Pro (${formatPrice({ bdt: proBdt, usd: proUsd, fallback: "599" })})`, bn: `প্রো (${formatPrice({ bdt: proBdt, usd: proUsd, fallback: "599" })})`, ur: `پرو (${formatPrice({ bdt: proBdt, usd: proUsd, fallback: "599" })})` })}</th>
+                      <th className="p-3 text-center">{selectText({ en: `Premium (${formatPrice({ bdt: premiumBdt, usd: premiumUsd, fallback: "999" })})`, bn: `প্রিমিয়াম (${formatPrice({ bdt: premiumBdt, usd: premiumUsd, fallback: "999" })})`, ur: `پریمیم (${formatPrice({ bdt: premiumBdt, usd: premiumUsd, fallback: "999" })})` })}</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
@@ -546,9 +549,9 @@ export function HomePlansSection({
                 <Link href="/checkout?plan=pro" className="w-full sm:w-auto">
                   <Button className="w-full sm:w-auto bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold text-xs">
                     {selectText({
-                      en: `Proceed to Checkout (৳${formatBdt(proBdt, false, "599")} / $${formatUsd(proUsd, false, "5")} / mo)`,
-                      bn: `চেকআউটে যান (৳${formatBdt(proBdt, true, "599")} / $${formatUsd(proUsd, true, "5")} / মাস)`,
-                      ur: `چیک آؤٹ پر جائیں (৳${formatBdt(proBdt, false, "599")} / $${formatUsd(proUsd, false, "5")} / ماہ)`,
+                      en: `Proceed to Checkout (${formatPrice({ bdt: proBdt, usd: proUsd, fallback: "599" })}${currency !== "USD" ? ` / $${formatUsd(proUsd, false, "5")}` : ""} / mo)`,
+                      bn: `চেকআউটে যান (${formatPrice({ bdt: proBdt, usd: proUsd, fallback: "599" })}${currency !== "USD" ? ` / $${formatUsd(proUsd, true, "5")}` : ""} / মাস)`,
+                      ur: `چیک آؤٹ پر جائیں (${formatPrice({ bdt: proBdt, usd: proUsd, fallback: "599" })}${currency !== "USD" ? ` / $${formatUsd(proUsd, false, "5")}` : ""} / ماہ)`,
                     })}
                   </Button>
                 </Link>
@@ -557,9 +560,9 @@ export function HomePlansSection({
                 <Link href="/checkout?plan=premium" className="w-full sm:w-auto">
                   <Button className="w-full sm:w-auto bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-bold text-xs">
                     {selectText({
-                      en: `Proceed to Checkout (৳${formatBdt(premiumBdt, false, "999")} / $${formatUsd(premiumUsd, false, "10")} / mo)`,
-                      bn: `চেকআউটে যান (৳${formatBdt(premiumBdt, true, "999")} / $${formatUsd(premiumUsd, true, "10")} / মাস)`,
-                      ur: `چیک آؤٹ پر جائیں (৳${formatBdt(premiumBdt, false, "999")} / $${formatUsd(premiumUsd, false, "10")} / ماہ)`,
+                      en: `Proceed to Checkout (${formatPrice({ bdt: premiumBdt, usd: premiumUsd, fallback: "999" })}${currency !== "USD" ? ` / $${formatUsd(premiumUsd, false, "10")}` : ""} / mo)`,
+                      bn: `চেকআউটে যান (${formatPrice({ bdt: premiumBdt, usd: premiumUsd, fallback: "999" })}${currency !== "USD" ? ` / $${formatUsd(premiumUsd, true, "10")}` : ""} / মাস)`,
+                      ur: `چیک آؤٹ پر جائیں (${formatPrice({ bdt: premiumBdt, usd: premiumUsd, fallback: "999" })}${currency !== "USD" ? ` / $${formatUsd(premiumUsd, false, "10")}` : ""} / ماہ)`,
                     })}
                   </Button>
                 </Link>

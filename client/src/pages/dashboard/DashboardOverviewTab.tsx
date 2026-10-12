@@ -19,7 +19,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { TimezoneOption } from "@/contexts/UserPreferencesContext";
+import { useUserPreferences, type TimezoneOption } from "@/contexts/UserPreferencesContext";
 import type { TradeEntry } from "@/types/journal";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -149,6 +149,7 @@ export function DashboardOverviewTab({
   onToggleDisciplineRule,
 }: DashboardOverviewTabProps) {
   const { language, isRTL, selectText } = useLanguage();
+  const { formatPrice } = useUserPreferences();
   const isBn = language === "bn";
   const isUr = language === "ur";
 
@@ -272,14 +273,14 @@ export function DashboardOverviewTab({
                     <Crown size={14} />
                     {subUsage.plan === "pro"
                       ? selectText({
-                          en: "Upgrade to Premium (৳999 / $10)",
-                          bn: "প্রিমিয়ামে আপগ্রেড করুন (৳৯৯৯ / $১০)",
-                          ur: "پریمیم پر اپ گریڈ کریں (৳999 / $10)",
+                          en: `Upgrade to Premium (${formatPrice({ bdt: 999, usd: 10 })})`,
+                          bn: `প্রিমিয়ামে আপগ্রেড করুন (${formatPrice({ bdt: 999, usd: 10 })})`,
+                          ur: `پریمیم پر اپ گریڈ کریں (${formatPrice({ bdt: 999, usd: 10 })})`,
                         })
                       : selectText({
-                          en: "Get Premium (৳999 / $10)",
-                          bn: "প্রিমিয়াম নিন (৳৯৯৯ / $১০)",
-                          ur: "پریمیم حاصل کریں (৳999 / $10)",
+                          en: `Get Premium (${formatPrice({ bdt: 999, usd: 10 })})`,
+                          bn: `প্রিমিয়াম নিন (${formatPrice({ bdt: 999, usd: 10 })})`,
+                          ur: `پریمیم حاصل کریں (${formatPrice({ bdt: 999, usd: 10 })})`,
                         })}
                   </Button>
                 </Link>
@@ -291,9 +292,9 @@ export function DashboardOverviewTab({
                     className="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-xs h-9 shadow-md shadow-sky-500/20"
                   >
                     {selectText({
-                      en: "Get Pro (৳599 / $5)",
-                      bn: "প্রো নিন (৳৫৯৯ / $৫)",
-                      ur: "پرو حاصل کریں (৳599 / $5)",
+                      en: `Get Pro (${formatPrice({ bdt: 599, usd: 5 })})`,
+                      bn: `প্রো নিন (${formatPrice({ bdt: 599, usd: 5 })})`,
+                      ur: `پرو حاصل کریں (${formatPrice({ bdt: 599, usd: 5 })})`,
                     })}
                   </Button>
                 </Link>

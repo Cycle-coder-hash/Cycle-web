@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   Zap,
 } from "lucide-react";
+import { useUserPreferences } from "@/contexts/UserPreferencesContext";
 
 export type UpgradeFeatureType =
   | "journal_books"
@@ -174,6 +175,7 @@ export function UpgradeModal({
   customDescription,
   currentPlan,
 }: UpgradeModalProps) {
+  const { formatPrice, currency } = useUserPreferences();
   const info = FEATURE_INFO[feature] || FEATURE_INFO.generic;
   const Icon = info.icon;
   const isPremiumExclusive =
@@ -219,8 +221,10 @@ export function UpgradeModal({
                     </span>
                   </div>
                   <div className="text-2xl font-black text-white flex items-baseline gap-1.5 flex-wrap">
-                    <span>৳599</span>
-                    <span className="text-lg font-bold text-cyan-400">/ $5</span>
+                    <span>{formatPrice({ bdt: 599, usd: 5 })}</span>
+                    {currency !== "USD" && (
+                      <span className="text-lg font-bold text-cyan-400">/ $5</span>
+                    )}
                     <span className="text-xs text-gray-400 font-normal"> / month</span>
                   </div>
                   <ul className="mt-3 space-y-1.5 text-xs text-gray-300">
@@ -239,7 +243,7 @@ export function UpgradeModal({
                     window.location.href = "/checkout?plan=pro";
                   }}
                 >
-                  Get Pro — ৳599 / $5/mo
+                  Get Pro — {formatPrice({ bdt: 599, usd: 5 })}{currency !== "USD" ? " / $5" : ""}/mo
                 </Button>
               </div>
             )}
@@ -261,8 +265,10 @@ export function UpgradeModal({
                   </span>
                 </div>
                 <div className="text-2xl font-black text-white flex items-baseline gap-1.5 flex-wrap">
-                  <span>৳999</span>
-                  <span className="text-lg font-bold text-amber-400">/ $10</span>
+                  <span>{formatPrice({ bdt: 999, usd: 10 })}</span>
+                  {currency !== "USD" && (
+                    <span className="text-lg font-bold text-amber-400">/ $10</span>
+                  )}
                   <span className="text-xs text-gray-400 font-normal"> / month</span>
                 </div>
                 <ul className="mt-3 space-y-1.5 text-xs text-gray-300">
@@ -281,7 +287,7 @@ export function UpgradeModal({
                   window.location.href = "/checkout?plan=premium";
                 }}
               >
-                Get Premium — ৳999 / $10/mo
+                Get Premium — {formatPrice({ bdt: 999, usd: 10 })}{currency !== "USD" ? " / $10" : ""}/mo
               </Button>
             </div>
           </div>
