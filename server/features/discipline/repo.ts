@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, isNull, ne, or } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import {
   disciplineTasks,
   disciplineTaskCompletions,
@@ -17,6 +17,7 @@ import {
   DisciplineSetting,
 } from "../../../drizzle/schema";
 import { getDb, getSetting, setSetting, supabaseServer } from "../../infra/db";
+import { deriveNumericIdFromOpenId } from "@shared/const";
 export const DEFAULT_DISCIPLINE_TASKS = [
   { title: "Wake up at 6:00 AM & Hydrate", time: "06:00 AM", isMandatory: true, isTrackable: true, orderIndex: 1 },
   { title: "Morning Routine & Mindset Preparation", time: "06:30 AM", isMandatory: true, isTrackable: true, orderIndex: 2 },
@@ -314,72 +315,252 @@ export async function ensureDisciplineDefaults(userId: number) {
 }
 
 // ------------------------------------------------------------------------------
-// SCHEDULE & TASKS
+// SCHEDULE & TASKS PERSISTENCE HELPERS
 // ------------------------------------------------------------------------------
 
-export async function getDisciplineSchedule(userId: number, date: string) {
-  await ensureDisciplineDefaults(userId);
-  const db = await getDb();
+const userDisciplineTasksCache = new Map<number, any[]>();
+const userDisciplineExercisesCache = new Map<number, any[]>();
 
-  if (db) {
+/**
+ * Resolves user canonical numeric ID (users.id) and derived openId hash ID.
+ */
+async function resolveDisciplineUserId(
+  userId: number,
+  openId?: string
+): Promise<{ canonicalId: number; derivedId: number }> {
+  let canonicalId = userId;
+  let resolvedOpenId = openId || "";
+
+  if (!resolvedOpenId && userId > 0) {
     try {
-      const tasks = await db
-        .select()
-        .from(disciplineTasks)
-        .where(and(eq(disciplineTasks.userId, userId), eq(disciplineTasks.isActive, true)))
-        .orderBy(asc(disciplineTasks.orderIndex), asc(disciplineTasks.id));
+      const { getUserById, inMemoryUsers } = await import("../auth/repo");
+      const user = await getUserById(userId);
+      if (user?.openId) {
+        resolvedOpenId = user.openId;
+        canonicalId = user.id;
+      } else {
+        for (const u of Array.from(inMemoryUsers.values())) {
+          if (u.openId && deriveNumericIdFromOpenId(u.openId) === userId) {
+            resolvedOpenId = u.openId;
+            canonicalId = u.id || canonicalId;
+            break;
+          }
+        }
+      }
+    } catch {}
 
-      const completions = await db
-        .select()
-        .from(disciplineTaskCompletions)
-        .where(and(eq(disciplineTaskCompletions.userId, userId), eq(disciplineTaskCompletions.date, date)));
-
-      const mergedTasks = tasks.map((t: any) => {
-        const startTime = t.startTime !== undefined && t.startTime !== null ? t.startTime : (t.time ? t.time : null);
-        const endTime = t.endTime !== undefined && t.endTime !== null ? t.endTime : null;
-        return {
-          ...t,
-          startTime,
-          endTime,
-          completed: completions.some((c: any) => c.taskId === t.id && c.completed),
-        };
-      });
-
-      return { tasks: mergedTasks, date };
-    } catch (err) {
-      console.warn("[getDisciplineSchedule db error]:", err);
+    if (!resolvedOpenId) {
+      try {
+        const { data } = await supabaseServer.from("users").select("id, openId");
+        if (data && data.length) {
+          for (const row of data) {
+            if (row.openId && deriveNumericIdFromOpenId(row.openId) === userId) {
+              resolvedOpenId = row.openId;
+              canonicalId = row.id;
+              break;
+            }
+          }
+        }
+      } catch {}
     }
+  } else if (resolvedOpenId) {
+    try {
+      const { getUserByOpenId } = await import("../auth/repo");
+      const user = await getUserByOpenId(resolvedOpenId);
+      if (user?.id) {
+        canonicalId = user.id;
+      }
+    } catch {}
   }
 
-  // In-memory fallback
-  const tasks = inMemoryDisciplineTasks
-    .filter((t) => t.userId === userId && t.isActive !== false)
-    .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+  const derivedId = resolvedOpenId ? deriveNumericIdFromOpenId(resolvedOpenId) : (userId > 9999 ? userId : 0);
+  return { canonicalId, derivedId };
+}
 
-  let completions = inMemoryDisciplineCompletions.filter(
-    (c) => c.userId === userId && c.date === date
-  );
+/**
+ * Loads all tasks for a user from persistent storage (settings table in Supabase) or DB.
+ */
+export async function loadUserDisciplineTasks(userId: number, openId?: string): Promise<any[]> {
+  const { canonicalId, derivedId } = await resolveDisciplineUserId(userId, openId);
 
-  if (completions.length === 0) {
+  // 1. Try Drizzle PostgreSQL if available
+  const db = await getDb();
+  if (db) {
     try {
-      const raw = await getSetting(`discipline_task_comp_${userId}_${date}`);
-      if (raw) {
-        const parsed = JSON.parse(raw);
+      const dbTasks = await db
+        .select()
+        .from(disciplineTasks)
+        .where(
+          and(
+            or(eq(disciplineTasks.userId, canonicalId), eq(disciplineTasks.userId, derivedId)),
+            eq(disciplineTasks.isActive, true)
+          )
+        )
+        .orderBy(asc(disciplineTasks.orderIndex), asc(disciplineTasks.id));
+      if (dbTasks && dbTasks.length > 0) {
+        userDisciplineTasksCache.set(canonicalId, dbTasks);
+        if (derivedId) userDisciplineTasksCache.set(derivedId, dbTasks);
+        return dbTasks;
+      }
+    } catch (err) {}
+  }
+
+  // 2. Check in-memory cache
+  if (userDisciplineTasksCache.has(canonicalId)) {
+    return userDisciplineTasksCache.get(canonicalId)!;
+  }
+  if (derivedId && userDisciplineTasksCache.has(derivedId)) {
+    return userDisciplineTasksCache.get(derivedId)!;
+  }
+
+  // 3. Load from persistent settings table in Supabase
+  let tasks: any[] = [];
+  try {
+    const rawCanonical = await getSetting(`discipline_tasks_${canonicalId}`);
+    if (rawCanonical) {
+      const parsed = JSON.parse(rawCanonical);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        tasks = parsed;
+      }
+    }
+  } catch {}
+
+  if (tasks.length === 0 && derivedId && derivedId !== canonicalId) {
+    try {
+      const rawDerived = await getSetting(`discipline_tasks_${derivedId}`);
+      if (rawDerived) {
+        const parsed = JSON.parse(rawDerived);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          completions = parsed;
+          tasks = parsed;
         }
       }
     } catch {}
   }
 
-  const mergedTasks = tasks.map((t) => {
+  const normalizedTasks = tasks.map((t, idx) => ({
+    id: Number(t.id) || idx + 1,
+    userId: canonicalId,
+    title: String(t.title || "").trim(),
+    startTime: t.startTime !== undefined && t.startTime !== null ? String(t.startTime).trim() : null,
+    endTime: t.endTime !== undefined && t.endTime !== null ? String(t.endTime).trim() : null,
+    time: t.startTime !== undefined && t.startTime !== null ? String(t.startTime).trim() : (t.time ? String(t.time).trim() : null),
+    isMandatory: t.isMandatory !== false,
+    isTrackable: t.isTrackable !== false,
+    orderIndex: Number(t.orderIndex) || idx + 1,
+    isActive: t.isActive !== false,
+    createdAt: t.createdAt || new Date().toISOString(),
+    updatedAt: t.updatedAt || new Date().toISOString(),
+  }));
+
+  userDisciplineTasksCache.set(canonicalId, normalizedTasks);
+  if (derivedId) userDisciplineTasksCache.set(derivedId, normalizedTasks);
+
+  for (let i = inMemoryDisciplineTasks.length - 1; i >= 0; i--) {
+    if (inMemoryDisciplineTasks[i].userId === canonicalId || inMemoryDisciplineTasks[i].userId === derivedId) {
+      inMemoryDisciplineTasks.splice(i, 1);
+    }
+  }
+  inMemoryDisciplineTasks.push(...normalizedTasks);
+
+  return normalizedTasks;
+}
+
+/**
+ * Persists all tasks for a user to persistent storage (settings table in Supabase) and cache.
+ */
+export async function saveUserDisciplineTasks(userId: number, tasks: any[], openId?: string): Promise<void> {
+  const { canonicalId, derivedId } = await resolveDisciplineUserId(userId, openId);
+
+  userDisciplineTasksCache.set(canonicalId, tasks);
+  if (derivedId) userDisciplineTasksCache.set(derivedId, tasks);
+
+  for (let i = inMemoryDisciplineTasks.length - 1; i >= 0; i--) {
+    if (inMemoryDisciplineTasks[i].userId === canonicalId || inMemoryDisciplineTasks[i].userId === derivedId) {
+      inMemoryDisciplineTasks.splice(i, 1);
+    }
+  }
+  inMemoryDisciplineTasks.push(...tasks);
+
+  const payload = JSON.stringify(tasks);
+  try {
+    await setSetting(`discipline_tasks_${canonicalId}`, payload);
+  } catch (err) {
+    console.warn(`[saveUserDisciplineTasks setSetting error for ${canonicalId}]:`, err);
+  }
+
+  if (derivedId && derivedId !== canonicalId) {
+    try {
+      await setSetting(`discipline_tasks_${derivedId}`, payload);
+    } catch {}
+  }
+}
+
+// ------------------------------------------------------------------------------
+// SCHEDULE & TASKS
+// ------------------------------------------------------------------------------
+
+export async function getDisciplineSchedule(userId: number, date: string) {
+  await ensureDisciplineDefaults(userId);
+  const { canonicalId, derivedId } = await resolveDisciplineUserId(userId);
+
+  // Load all tasks for user and filter for active
+  const allTasks = await loadUserDisciplineTasks(canonicalId);
+  const activeTasks = allTasks
+    .filter((t) => t.isActive !== false)
+    .sort((a, b) => (Number(a.orderIndex) || 0) - (Number(b.orderIndex) || 0));
+
+  let completions: any[] = [];
+  const db = await getDb();
+  if (db) {
+    try {
+      completions = await db
+        .select()
+        .from(disciplineTaskCompletions)
+        .where(
+          and(
+            or(eq(disciplineTaskCompletions.userId, canonicalId), eq(disciplineTaskCompletions.userId, derivedId)),
+            eq(disciplineTaskCompletions.date, date)
+          )
+        );
+    } catch (err) {
+      console.warn("[getDisciplineSchedule completions db error]:", err);
+    }
+  }
+
+  if (completions.length === 0) {
+    completions = inMemoryDisciplineCompletions.filter(
+      (c) => (c.userId === canonicalId || (derivedId && c.userId === derivedId)) && c.date === date
+    );
+  }
+
+  if (completions.length === 0) {
+    try {
+      let raw = await getSetting(`discipline_task_comp_${canonicalId}_${date}`);
+      if (!raw && derivedId && derivedId !== canonicalId) {
+        raw = await getSetting(`discipline_task_comp_${derivedId}_${date}`);
+      }
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          completions = parsed;
+          for (const item of completions) {
+            if (!inMemoryDisciplineCompletions.some((c) => c.userId === canonicalId && c.taskId === item.taskId && c.date === date)) {
+              inMemoryDisciplineCompletions.push({ ...item, userId: canonicalId });
+            }
+          }
+        }
+      }
+    } catch {}
+  }
+
+  const mergedTasks = activeTasks.map((t: any) => {
     const startTime = t.startTime !== undefined && t.startTime !== null ? t.startTime : (t.time ? t.time : null);
     const endTime = t.endTime !== undefined && t.endTime !== null ? t.endTime : null;
     return {
       ...t,
       startTime,
       endTime,
-      completed: completions.some((c: any) => c.taskId === t.id && c.completed),
+      completed: completions.some((c: any) => Number(c.taskId) === Number(t.id) && c.completed),
     };
   });
 
@@ -397,21 +578,29 @@ export async function addDisciplineTask(
     isTrackable: boolean;
   }
 ) {
+  const { canonicalId, derivedId } = await resolveDisciplineUserId(userId);
   const startTime = task.startTime?.trim() || null;
   const endTime = task.endTime?.trim() || null;
   const legacyTime = startTime || task.time?.trim() || null;
 
+  // Load existing tasks to ensure we append without overwriting
+  const allUserTasks = await loadUserDisciplineTasks(canonicalId);
+
+  // Compute strictly unique monotonic next ID
+  const maxId = allUserTasks.reduce((max, t) => Math.max(max, Number(t.id) || 0), 0);
+  const nextId = maxId > 0 ? maxId + 1 : 1;
+
+  // Compute next orderIndex
+  const activeTasks = allUserTasks.filter((t) => t.isActive !== false);
+  const maxOrder = activeTasks.reduce((max, t) => Math.max(max, Number(t.orderIndex) || 0), 0);
+  const nextOrder = maxOrder + 1;
+
+  let dbInsertId: number | null = null;
   const db = await getDb();
   if (db) {
     try {
-      const existing = await db
-        .select()
-        .from(disciplineTasks)
-        .where(and(eq(disciplineTasks.userId, userId), eq(disciplineTasks.isActive, true)));
-      const nextOrder = existing.length + 1;
-
       const res = await db.insert(disciplineTasks).values({
-        userId,
+        userId: canonicalId,
         title: task.title.trim(),
         startTime,
         endTime,
@@ -421,31 +610,17 @@ export async function addDisciplineTask(
         orderIndex: nextOrder,
         isActive: true,
       });
-      const insertId = res[0]?.insertId || res[0]?.id;
-      return {
-        id: insertId || disciplineTaskAutoId++,
-        userId,
-        title: task.title.trim(),
-        startTime,
-        endTime,
-        time: legacyTime,
-        isMandatory: task.isMandatory ?? true,
-        isTrackable: task.isTrackable ?? true,
-        orderIndex: nextOrder,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      dbInsertId = res[0]?.insertId || res[0]?.id || null;
     } catch (err) {
       console.warn("[addDisciplineTask db error]:", err);
     }
   }
 
-  const existing = inMemoryDisciplineTasks.filter((t) => t.userId === userId && t.isActive !== false);
-  const nextOrder = existing.length + 1;
-  const created = {
-    id: disciplineTaskAutoId++,
-    userId,
+  const finalId = dbInsertId || nextId;
+
+  const createdTask = {
+    id: finalId,
+    userId: canonicalId,
     title: task.title.trim(),
     startTime,
     endTime,
@@ -454,11 +629,15 @@ export async function addDisciplineTask(
     isTrackable: task.isTrackable ?? true,
     orderIndex: nextOrder,
     isActive: true,
-    createdAt: new Date(),
-    updatedAt: new Date(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
-  inMemoryDisciplineTasks.push(created);
-  return created;
+
+  // Append new task to existing list (preserves all existing tasks)
+  const updatedAllTasks = [...allUserTasks, createdTask];
+  await saveUserDisciplineTasks(canonicalId, updatedAllTasks, derivedId ? String(derivedId) : undefined);
+
+  return createdTask;
 }
 
 export async function updateDisciplineTask(
@@ -474,6 +653,7 @@ export async function updateDisciplineTask(
     orderIndex: number;
   }>
 ) {
+  const { canonicalId, derivedId } = await resolveDisciplineUserId(userId);
   const cleanUpdates: any = { ...updates };
   if (cleanUpdates.startTime !== undefined) {
     cleanUpdates.startTime = cleanUpdates.startTime?.trim() || null;
@@ -492,43 +672,82 @@ export async function updateDisciplineTask(
           ...cleanUpdates,
           updatedAt: new Date(),
         })
-        .where(and(eq(disciplineTasks.id, taskId), eq(disciplineTasks.userId, userId)));
-      return true;
+        .where(
+          and(
+            eq(disciplineTasks.id, taskId),
+            or(eq(disciplineTasks.userId, canonicalId), eq(disciplineTasks.userId, derivedId))
+          )
+        );
     } catch (err) {
       console.warn("[updateDisciplineTask db error]:", err);
     }
   }
 
-  const task = inMemoryDisciplineTasks.find((t) => t.id === taskId && t.userId === userId);
-  if (task) {
-    Object.assign(task, cleanUpdates, { updatedAt: new Date() });
+  const allUserTasks = await loadUserDisciplineTasks(canonicalId);
+  const targetIdx = allUserTasks.findIndex((t) => Number(t.id) === Number(taskId));
+
+  if (targetIdx !== -1) {
+    allUserTasks[targetIdx] = {
+      ...allUserTasks[targetIdx],
+      ...cleanUpdates,
+      updatedAt: new Date().toISOString(),
+    };
+    await saveUserDisciplineTasks(canonicalId, allUserTasks, derivedId ? String(derivedId) : undefined);
     return true;
   }
+
   return false;
 }
 
 export async function deleteDisciplineTask(userId: number, taskId: number) {
+  const { canonicalId, derivedId } = await resolveDisciplineUserId(userId);
+
   const db = await getDb();
   if (db) {
     try {
-      // Soft-delete task and delete completions
       await db
         .update(disciplineTasks)
         .set({ isActive: false, updatedAt: new Date() })
-        .where(and(eq(disciplineTasks.id, taskId), eq(disciplineTasks.userId, userId)));
+        .where(
+          and(
+            eq(disciplineTasks.id, taskId),
+            or(eq(disciplineTasks.userId, canonicalId), eq(disciplineTasks.userId, derivedId))
+          )
+        );
       await db
         .delete(disciplineTaskCompletions)
-        .where(and(eq(disciplineTaskCompletions.taskId, taskId), eq(disciplineTaskCompletions.userId, userId)));
-      return true;
+        .where(
+          and(
+            eq(disciplineTaskCompletions.taskId, taskId),
+            or(eq(disciplineTaskCompletions.userId, canonicalId), eq(disciplineTaskCompletions.userId, derivedId))
+          )
+        );
     } catch (err) {
       console.warn("[deleteDisciplineTask db error]:", err);
     }
   }
 
-  const task = inMemoryDisciplineTasks.find((t) => t.id === taskId && t.userId === userId);
-  if (task) {
-    task.isActive = false;
+  const allUserTasks = await loadUserDisciplineTasks(canonicalId);
+  const targetIdx = allUserTasks.findIndex((t) => Number(t.id) === Number(taskId));
+
+  if (targetIdx !== -1) {
+    allUserTasks[targetIdx] = {
+      ...allUserTasks[targetIdx],
+      isActive: false,
+      updatedAt: new Date().toISOString(),
+    };
+    await saveUserDisciplineTasks(canonicalId, allUserTasks, derivedId ? String(derivedId) : undefined);
   }
+
+  for (let i = inMemoryDisciplineCompletions.length - 1; i >= 0; i--) {
+    if (
+      inMemoryDisciplineCompletions[i].taskId === taskId &&
+      (inMemoryDisciplineCompletions[i].userId === canonicalId || inMemoryDisciplineCompletions[i].userId === derivedId)
+    ) {
+      inMemoryDisciplineCompletions.splice(i, 1);
+    }
+  }
+
   return true;
 }
 
@@ -538,24 +757,16 @@ export async function toggleDisciplineTaskCompletion(
   date: string,
   completed: boolean
 ) {
+  const { canonicalId, derivedId } = await resolveDisciplineUserId(userId);
   const db = await getDb();
   if (db) {
     try {
-      // Verify task belongs to user
-      const task = await db
-        .select()
-        .from(disciplineTasks)
-        .where(and(eq(disciplineTasks.id, taskId), eq(disciplineTasks.userId, userId)))
-        .limit(1);
-
-      if (!task.length) throw new Error("Task not found or unauthorized");
-
       const existing = await db
         .select()
         .from(disciplineTaskCompletions)
         .where(
           and(
-            eq(disciplineTaskCompletions.userId, userId),
+            or(eq(disciplineTaskCompletions.userId, canonicalId), eq(disciplineTaskCompletions.userId, derivedId)),
             eq(disciplineTaskCompletions.taskId, taskId),
             eq(disciplineTaskCompletions.date, date)
           )
@@ -572,21 +783,20 @@ export async function toggleDisciplineTaskCompletion(
           .where(eq(disciplineTaskCompletions.id, existing[0].id));
       } else {
         await db.insert(disciplineTaskCompletions).values({
-          userId,
+          userId: canonicalId,
           taskId,
           date,
           completed,
           completedAt: completed ? new Date() : null,
         });
       }
-      return true;
     } catch (err) {
       console.warn("[toggleDisciplineTaskCompletion db error]:", err);
     }
   }
 
   const existing = inMemoryDisciplineCompletions.find(
-    (c) => c.userId === userId && c.taskId === taskId && c.date === date
+    (c) => (c.userId === canonicalId || (derivedId && c.userId === derivedId)) && c.taskId === taskId && c.date === date
   );
   if (existing) {
     existing.completed = completed;
@@ -594,7 +804,7 @@ export async function toggleDisciplineTaskCompletion(
   } else {
     inMemoryDisciplineCompletions.push({
       id: disciplineCompletionAutoId++,
-      userId,
+      userId: canonicalId,
       taskId,
       date,
       completed,
@@ -604,12 +814,258 @@ export async function toggleDisciplineTaskCompletion(
 
   try {
     const currentCompletions = inMemoryDisciplineCompletions.filter(
-      (c) => c.userId === userId && c.date === date
+      (c) => (c.userId === canonicalId || (derivedId && c.userId === derivedId)) && c.date === date
     );
-    await setSetting(`discipline_task_comp_${userId}_${date}`, JSON.stringify(currentCompletions));
+    await setSetting(`discipline_task_comp_${canonicalId}_${date}`, JSON.stringify(currentCompletions));
+    if (derivedId && derivedId !== canonicalId) {
+      await setSetting(`discipline_task_comp_${derivedId}_${date}`, JSON.stringify(currentCompletions));
+    }
+
+    // Maintain unique completed dates record
+    const hasAnyCompleted = currentCompletions.some((c) => c.completed);
+    let datesList: string[] = [];
+    try {
+      const rawDates = await getSetting(`discipline_completed_dates_${canonicalId}`);
+      if (rawDates) datesList = JSON.parse(rawDates) || [];
+    } catch {}
+    const datesSet = new Set(datesList);
+    if (hasAnyCompleted) {
+      datesSet.add(date);
+    } else {
+      datesSet.delete(date);
+    }
+    const updatedDates = Array.from(datesSet);
+    await setSetting(`discipline_completed_dates_${canonicalId}`, JSON.stringify(updatedDates));
+    if (derivedId && derivedId !== canonicalId) {
+      await setSetting(`discipline_completed_dates_${derivedId}`, JSON.stringify(updatedDates));
+    }
   } catch {}
 
   return true;
+}
+
+/**
+ * Returns all unique dates where user has completed at least one discipline task in the period.
+ */
+export async function getUserCompletedDisciplineDates(userId: number, minDateStr?: string): Promise<string[]> {
+  const { canonicalId, derivedId } = await resolveDisciplineUserId(userId);
+  const db = await getDb();
+  const completedDates = new Set<string>();
+
+  if (db) {
+    try {
+      const rows = await db
+        .select({ date: disciplineTaskCompletions.date })
+        .from(disciplineTaskCompletions)
+        .where(
+          and(
+            or(eq(disciplineTaskCompletions.userId, canonicalId), eq(disciplineTaskCompletions.userId, derivedId)),
+            eq(disciplineTaskCompletions.completed, true),
+            minDateStr ? sql`${disciplineTaskCompletions.date} >= ${minDateStr}` : sql`1=1`
+          )
+        );
+      for (const r of rows) {
+        if (r.date) completedDates.add(r.date);
+      }
+    } catch (err) {}
+  }
+
+  for (const c of inMemoryDisciplineCompletions) {
+    if ((c.userId === canonicalId || (derivedId && c.userId === derivedId)) && c.completed) {
+      if (!minDateStr || c.date >= minDateStr) {
+        completedDates.add(c.date);
+      }
+    }
+  }
+
+  try {
+    let rawDates = await getSetting(`discipline_completed_dates_${canonicalId}`);
+    if (!rawDates && derivedId && derivedId !== canonicalId) {
+      rawDates = await getSetting(`discipline_completed_dates_${derivedId}`);
+    }
+    if (rawDates) {
+      const parsed = JSON.parse(rawDates);
+      if (Array.isArray(parsed)) {
+        for (const d of parsed) {
+          if (typeof d === "string" && (!minDateStr || d >= minDateStr)) {
+            completedDates.add(d);
+          }
+        }
+      }
+    }
+  } catch {}
+
+  return Array.from(completedDates);
+}
+
+/**
+ * Checks whether user has already completed any discipline tasks on the specified date.
+ */
+export async function isDisciplineDateAlreadyLogged(userId: number, date: string): Promise<boolean> {
+  const { canonicalId, derivedId } = await resolveDisciplineUserId(userId);
+  const db = await getDb();
+
+  if (db) {
+    try {
+      const rows = await db
+        .select({ id: disciplineTaskCompletions.id })
+        .from(disciplineTaskCompletions)
+        .where(
+          and(
+            or(eq(disciplineTaskCompletions.userId, canonicalId), eq(disciplineTaskCompletions.userId, derivedId)),
+            eq(disciplineTaskCompletions.date, date),
+            eq(disciplineTaskCompletions.completed, true)
+          )
+        )
+        .limit(1);
+      if (rows.length > 0) return true;
+    } catch (err) {}
+  }
+
+  const inMem = inMemoryDisciplineCompletions.some(
+    (c) => (c.userId === canonicalId || (derivedId && c.userId === derivedId)) && c.date === date && c.completed
+  );
+  if (inMem) return true;
+
+  try {
+    let raw = await getSetting(`discipline_task_comp_${canonicalId}_${date}`);
+    if (!raw && derivedId && derivedId !== canonicalId) {
+      raw = await getSetting(`discipline_task_comp_${derivedId}_${date}`);
+    }
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.some((c: any) => c.completed)) {
+        return true;
+      }
+    }
+  } catch {}
+
+  try {
+    let rawDates = await getSetting(`discipline_completed_dates_${canonicalId}`);
+    if (!rawDates && derivedId && derivedId !== canonicalId) {
+      rawDates = await getSetting(`discipline_completed_dates_${derivedId}`);
+    }
+    if (rawDates) {
+      const parsed = JSON.parse(rawDates);
+      if (Array.isArray(parsed) && parsed.includes(date)) {
+        return true;
+      }
+    }
+  } catch {}
+
+  return false;
+}
+
+// ------------------------------------------------------------------------------
+// WORKOUT
+// ------------------------------------------------------------------------------
+
+/**
+ * Loads all exercises for a user from persistent storage (settings table in Supabase) or DB.
+ */
+export async function loadUserDisciplineExercises(userId: number, openId?: string): Promise<any[]> {
+  const { canonicalId, derivedId } = await resolveDisciplineUserId(userId, openId);
+
+  const db = await getDb();
+  if (db) {
+    try {
+      const dbExercises = await db
+        .select()
+        .from(disciplineExercises)
+        .where(
+          and(
+            or(eq(disciplineExercises.userId, canonicalId), eq(disciplineExercises.userId, derivedId)),
+            eq(disciplineExercises.isActive, true)
+          )
+        )
+        .orderBy(asc(disciplineExercises.orderIndex), asc(disciplineExercises.id));
+      if (dbExercises && dbExercises.length > 0) {
+        userDisciplineExercisesCache.set(canonicalId, dbExercises);
+        if (derivedId) userDisciplineExercisesCache.set(derivedId, dbExercises);
+        return dbExercises;
+      }
+    } catch (err) {}
+  }
+
+  if (userDisciplineExercisesCache.has(canonicalId)) {
+    return userDisciplineExercisesCache.get(canonicalId)!;
+  }
+  if (derivedId && userDisciplineExercisesCache.has(derivedId)) {
+    return userDisciplineExercisesCache.get(derivedId)!;
+  }
+
+  let exercises: any[] = [];
+  try {
+    const rawCanonical = await getSetting(`discipline_exercises_${canonicalId}`);
+    if (rawCanonical) {
+      const parsed = JSON.parse(rawCanonical);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        exercises = parsed;
+      }
+    }
+  } catch {}
+
+  if (exercises.length === 0 && derivedId && derivedId !== canonicalId) {
+    try {
+      const rawDerived = await getSetting(`discipline_exercises_${derivedId}`);
+      if (rawDerived) {
+        const parsed = JSON.parse(rawDerived);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          exercises = parsed;
+        }
+      }
+    } catch {}
+  }
+
+  const normalized = exercises.map((e, idx) => ({
+    id: Number(e.id) || idx + 1,
+    userId: canonicalId,
+    name: String(e.name || "").trim(),
+    difficulty: e.difficulty || "Intermediate",
+    orderIndex: Number(e.orderIndex) || idx + 1,
+    isActive: e.isActive !== false,
+    createdAt: e.createdAt || new Date().toISOString(),
+  }));
+
+  userDisciplineExercisesCache.set(canonicalId, normalized);
+  if (derivedId) userDisciplineExercisesCache.set(derivedId, normalized);
+
+  for (let i = inMemoryDisciplineExercises.length - 1; i >= 0; i--) {
+    if (inMemoryDisciplineExercises[i].userId === canonicalId || inMemoryDisciplineExercises[i].userId === derivedId) {
+      inMemoryDisciplineExercises.splice(i, 1);
+    }
+  }
+  inMemoryDisciplineExercises.push(...normalized);
+
+  return normalized;
+}
+
+/**
+ * Persists all exercises for a user to persistent storage (settings table in Supabase) and cache.
+ */
+export async function saveUserDisciplineExercises(userId: number, exercises: any[], openId?: string): Promise<void> {
+  const { canonicalId, derivedId } = await resolveDisciplineUserId(userId, openId);
+
+  userDisciplineExercisesCache.set(canonicalId, exercises);
+  if (derivedId) userDisciplineExercisesCache.set(derivedId, exercises);
+
+  for (let i = inMemoryDisciplineExercises.length - 1; i >= 0; i--) {
+    if (inMemoryDisciplineExercises[i].userId === canonicalId || inMemoryDisciplineExercises[i].userId === derivedId) {
+      inMemoryDisciplineExercises.splice(i, 1);
+    }
+  }
+  inMemoryDisciplineExercises.push(...exercises);
+
+  const payload = JSON.stringify(exercises);
+  try {
+    await setSetting(`discipline_exercises_${canonicalId}`, payload);
+  } catch (err) {}
+
+  if (derivedId && derivedId !== canonicalId) {
+    try {
+      await setSetting(`discipline_exercises_${derivedId}`, payload);
+    } catch {}
+  }
 }
 
 // ------------------------------------------------------------------------------
@@ -618,61 +1074,63 @@ export async function toggleDisciplineTaskCompletion(
 
 export async function getDisciplineWorkouts(userId: number, date: string) {
   await ensureDisciplineDefaults(userId);
-  const db = await getDb();
+  const { canonicalId, derivedId } = await resolveDisciplineUserId(userId);
 
+  const allExercises = await loadUserDisciplineExercises(canonicalId);
+  const activeExercises = allExercises
+    .filter((e) => e.isActive !== false)
+    .sort((a, b) => (Number(a.orderIndex) || 0) - (Number(b.orderIndex) || 0));
+
+  let completions: any[] = [];
+  const db = await getDb();
   if (db) {
     try {
-      const exercises = await db
-        .select()
-        .from(disciplineExercises)
-        .where(and(eq(disciplineExercises.userId, userId), eq(disciplineExercises.isActive, true)))
-        .orderBy(asc(disciplineExercises.orderIndex), asc(disciplineExercises.id));
-
-      const completions = await db
+      completions = await db
         .select()
         .from(disciplineWorkoutCompletions)
-        .where(and(eq(disciplineWorkoutCompletions.userId, userId), eq(disciplineWorkoutCompletions.date, date)));
-
-      const merged = exercises.map((e: any) => ({
-        ...e,
-        completed: completions.some((c: any) => c.exerciseId === e.id && c.completed),
-      }));
-
-      const completedCount = merged.filter((e: any) => e.completed).length;
-      const progressPercent = merged.length ? Math.round((completedCount / merged.length) * 100) : 0;
-
-      return { exercises: merged, progressPercent, date };
+        .where(
+          and(
+            or(eq(disciplineWorkoutCompletions.userId, canonicalId), eq(disciplineWorkoutCompletions.userId, derivedId)),
+            eq(disciplineWorkoutCompletions.date, date)
+          )
+        );
     } catch (err) {
       console.warn("[getDisciplineWorkouts db error]:", err);
     }
   }
 
-  const exercises = inMemoryDisciplineExercises
-    .filter((e) => e.userId === userId && e.isActive !== false)
-    .sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
-
-  let completions = inMemoryDisciplineWorkoutCompletions.filter(
-    (c) => c.userId === userId && c.date === date
-  );
+  if (completions.length === 0) {
+    completions = inMemoryDisciplineWorkoutCompletions.filter(
+      (c) => (c.userId === canonicalId || (derivedId && c.userId === derivedId)) && c.date === date
+    );
+  }
 
   if (completions.length === 0) {
     try {
-      const raw = await getSetting(`discipline_workout_comp_${userId}_${date}`);
+      let raw = await getSetting(`discipline_workout_comp_${canonicalId}_${date}`);
+      if (!raw && derivedId && derivedId !== canonicalId) {
+        raw = await getSetting(`discipline_workout_comp_${derivedId}_${date}`);
+      }
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) {
           completions = parsed;
+          for (const item of completions) {
+            if (!inMemoryDisciplineWorkoutCompletions.some((c) => c.userId === canonicalId && c.exerciseId === item.exerciseId && c.date === date)) {
+              inMemoryDisciplineWorkoutCompletions.push({ ...item, userId: canonicalId });
+            }
+          }
         }
       }
     } catch {}
   }
 
-  const merged = exercises.map((e) => ({
+  const merged = activeExercises.map((e: any) => ({
     ...e,
-    completed: completions.some((c: any) => c.exerciseId === e.id && c.completed),
+    completed: completions.some((c: any) => Number(c.exerciseId) === Number(e.id) && c.completed),
   }));
 
-  const completedCount = merged.filter((e) => e.completed).length;
+  const completedCount = merged.filter((e: any) => e.completed).length;
   const progressPercent = merged.length ? Math.round((completedCount / merged.length) * 100) : 0;
 
   return { exercises: merged, progressPercent, date };
@@ -682,48 +1140,48 @@ export async function addDisciplineExercise(
   userId: number,
   exercise: { name: string; difficulty: string }
 ) {
+  const { canonicalId, derivedId } = await resolveDisciplineUserId(userId);
+  const allExercises = await loadUserDisciplineExercises(canonicalId);
+
+  const maxId = allExercises.reduce((max, e) => Math.max(max, Number(e.id) || 0), 0);
+  const nextId = maxId > 0 ? maxId + 1 : 1;
+
+  const activeExercises = allExercises.filter((e) => e.isActive !== false);
+  const maxOrder = activeExercises.reduce((max, e) => Math.max(max, Number(e.orderIndex) || 0), 0);
+  const nextOrder = maxOrder + 1;
+
+  let dbInsertId: number | null = null;
   const db = await getDb();
   if (db) {
     try {
-      const existing = await db
-        .select()
-        .from(disciplineExercises)
-        .where(and(eq(disciplineExercises.userId, userId), eq(disciplineExercises.isActive, true)));
-      const nextOrder = existing.length + 1;
-
       const res = await db.insert(disciplineExercises).values({
-        userId,
+        userId: canonicalId,
         name: exercise.name.trim(),
         difficulty: exercise.difficulty || "Intermediate",
         orderIndex: nextOrder,
         isActive: true,
       });
-      const insertId = res[0]?.insertId || res[0]?.id;
-      return {
-        id: insertId || disciplineExerciseAutoId++,
-        userId,
-        ...exercise,
-        orderIndex: nextOrder,
-        isActive: true,
-        createdAt: new Date(),
-      };
+      dbInsertId = res[0]?.insertId || res[0]?.id || null;
     } catch (err) {
       console.warn("[addDisciplineExercise db error]:", err);
     }
   }
 
-  const existing = inMemoryDisciplineExercises.filter((e) => e.userId === userId && e.isActive !== false);
-  const nextOrder = existing.length + 1;
+  const finalId = dbInsertId || nextId;
+
   const created = {
-    id: disciplineExerciseAutoId++,
-    userId,
+    id: finalId,
+    userId: canonicalId,
     name: exercise.name.trim(),
     difficulty: exercise.difficulty || "Intermediate",
     orderIndex: nextOrder,
     isActive: true,
-    createdAt: new Date(),
+    createdAt: new Date().toISOString(),
   };
-  inMemoryDisciplineExercises.push(created);
+
+  const updatedAll = [...allExercises, created];
+  await saveUserDisciplineExercises(canonicalId, updatedAll, derivedId ? String(derivedId) : undefined);
+
   return created;
 }
 
@@ -732,48 +1190,88 @@ export async function updateDisciplineExercise(
   exerciseId: number,
   updates: Partial<{ name: string; difficulty: string }>
 ) {
+  const { canonicalId, derivedId } = await resolveDisciplineUserId(userId);
+
   const db = await getDb();
   if (db) {
     try {
       await db
         .update(disciplineExercises)
         .set(updates)
-        .where(and(eq(disciplineExercises.id, exerciseId), eq(disciplineExercises.userId, userId)));
-      return true;
+        .where(
+          and(
+            eq(disciplineExercises.id, exerciseId),
+            or(eq(disciplineExercises.userId, canonicalId), eq(disciplineExercises.userId, derivedId))
+          )
+        );
     } catch (err) {
       console.warn("[updateDisciplineExercise db error]:", err);
     }
   }
 
-  const ex = inMemoryDisciplineExercises.find((e) => e.id === exerciseId && e.userId === userId);
-  if (ex) {
-    Object.assign(ex, updates);
+  const allExercises = await loadUserDisciplineExercises(canonicalId);
+  const targetIdx = allExercises.findIndex((e) => Number(e.id) === Number(exerciseId));
+
+  if (targetIdx !== -1) {
+    allExercises[targetIdx] = {
+      ...allExercises[targetIdx],
+      ...updates,
+    };
+    await saveUserDisciplineExercises(canonicalId, allExercises, derivedId ? String(derivedId) : undefined);
     return true;
   }
+
   return false;
 }
 
 export async function deleteDisciplineExercise(userId: number, exerciseId: number) {
+  const { canonicalId, derivedId } = await resolveDisciplineUserId(userId);
+
   const db = await getDb();
   if (db) {
     try {
       await db
         .update(disciplineExercises)
         .set({ isActive: false })
-        .where(and(eq(disciplineExercises.id, exerciseId), eq(disciplineExercises.userId, userId)));
+        .where(
+          and(
+            eq(disciplineExercises.id, exerciseId),
+            or(eq(disciplineExercises.userId, canonicalId), eq(disciplineExercises.userId, derivedId))
+          )
+        );
       await db
         .delete(disciplineWorkoutCompletions)
-        .where(and(eq(disciplineWorkoutCompletions.exerciseId, exerciseId), eq(disciplineWorkoutCompletions.userId, userId)));
-      return true;
+        .where(
+          and(
+            eq(disciplineWorkoutCompletions.exerciseId, exerciseId),
+            or(eq(disciplineWorkoutCompletions.userId, canonicalId), eq(disciplineWorkoutCompletions.userId, derivedId))
+          )
+        );
     } catch (err) {
       console.warn("[deleteDisciplineExercise db error]:", err);
     }
   }
 
-  const ex = inMemoryDisciplineExercises.find((e) => e.id === exerciseId && e.userId === userId);
-  if (ex) {
-    ex.isActive = false;
+  const allExercises = await loadUserDisciplineExercises(canonicalId);
+  const targetIdx = allExercises.findIndex((e) => Number(e.id) === Number(exerciseId));
+
+  if (targetIdx !== -1) {
+    allExercises[targetIdx] = {
+      ...allExercises[targetIdx],
+      isActive: false,
+    };
+    await saveUserDisciplineExercises(canonicalId, allExercises, derivedId ? String(derivedId) : undefined);
   }
+
+  for (let i = inMemoryDisciplineWorkoutCompletions.length - 1; i >= 0; i--) {
+    if (
+      inMemoryDisciplineWorkoutCompletions[i].exerciseId === exerciseId &&
+      (inMemoryDisciplineWorkoutCompletions[i].userId === canonicalId || inMemoryDisciplineWorkoutCompletions[i].userId === derivedId)
+    ) {
+      inMemoryDisciplineWorkoutCompletions.splice(i, 1);
+    }
+  }
+
   return true;
 }
 
@@ -783,6 +1281,8 @@ export async function toggleDisciplineWorkoutCompletion(
   date: string,
   completed: boolean
 ) {
+  const { canonicalId, derivedId } = await resolveDisciplineUserId(userId);
+
   const db = await getDb();
   if (db) {
     try {
@@ -791,7 +1291,7 @@ export async function toggleDisciplineWorkoutCompletion(
         .from(disciplineWorkoutCompletions)
         .where(
           and(
-            eq(disciplineWorkoutCompletions.userId, userId),
+            or(eq(disciplineWorkoutCompletions.userId, canonicalId), eq(disciplineWorkoutCompletions.userId, derivedId)),
             eq(disciplineWorkoutCompletions.exerciseId, exerciseId),
             eq(disciplineWorkoutCompletions.date, date)
           )
@@ -805,7 +1305,7 @@ export async function toggleDisciplineWorkoutCompletion(
           .where(eq(disciplineWorkoutCompletions.id, existing[0].id));
       } else {
         await db.insert(disciplineWorkoutCompletions).values({
-          userId,
+          userId: canonicalId,
           exerciseId,
           date,
           completed,
@@ -818,14 +1318,14 @@ export async function toggleDisciplineWorkoutCompletion(
   }
 
   const existing = inMemoryDisciplineWorkoutCompletions.find(
-    (c) => c.userId === userId && c.exerciseId === exerciseId && c.date === date
+    (c) => (c.userId === canonicalId || (derivedId && c.userId === derivedId)) && c.exerciseId === exerciseId && c.date === date
   );
   if (existing) {
     existing.completed = completed;
   } else {
     inMemoryDisciplineWorkoutCompletions.push({
       id: disciplineWorkoutAutoId++,
-      userId,
+      userId: canonicalId,
       exerciseId,
       date,
       completed,
@@ -834,9 +1334,12 @@ export async function toggleDisciplineWorkoutCompletion(
 
   try {
     const currentCompletions = inMemoryDisciplineWorkoutCompletions.filter(
-      (c) => c.userId === userId && c.date === date
+      (c) => (c.userId === canonicalId || (derivedId && c.userId === derivedId)) && c.date === date
     );
-    await setSetting(`discipline_workout_comp_${userId}_${date}`, JSON.stringify(currentCompletions));
+    await setSetting(`discipline_workout_comp_${canonicalId}_${date}`, JSON.stringify(currentCompletions));
+    if (derivedId && derivedId !== canonicalId) {
+      await setSetting(`discipline_workout_comp_${derivedId}_${date}`, JSON.stringify(currentCompletions));
+    }
   } catch {}
 
   return true;
@@ -1334,6 +1837,7 @@ export async function updateDisciplineSettings(
 
 export async function getDisciplineStats(userId: number) {
   await ensureDisciplineDefaults(userId);
+  const { canonicalId, derivedId } = await resolveDisciplineUserId(userId);
   const db = await getDb();
 
   let tasks: any[] = [];
@@ -1347,38 +1851,57 @@ export async function getDisciplineStats(userId: number) {
       tasks = await db
         .select()
         .from(disciplineTasks)
-        .where(and(eq(disciplineTasks.userId, userId), eq(disciplineTasks.isActive, true)));
+        .where(
+          and(
+            or(eq(disciplineTasks.userId, canonicalId), eq(disciplineTasks.userId, derivedId)),
+            eq(disciplineTasks.isActive, true)
+          )
+        );
 
       completions = await db
         .select()
         .from(disciplineTaskCompletions)
-        .where(eq(disciplineTaskCompletions.userId, userId));
+        .where(or(eq(disciplineTaskCompletions.userId, canonicalId), eq(disciplineTaskCompletions.userId, derivedId)));
 
       workoutCompletions = await db
         .select()
         .from(disciplineWorkoutCompletions)
-        .where(eq(disciplineWorkoutCompletions.userId, userId));
+        .where(or(eq(disciplineWorkoutCompletions.userId, canonicalId), eq(disciplineWorkoutCompletions.userId, derivedId)));
 
       forexLogs = await db
         .select()
         .from(disciplineForexLogs)
-        .where(eq(disciplineForexLogs.userId, userId));
+        .where(or(eq(disciplineForexLogs.userId, canonicalId), eq(disciplineForexLogs.userId, derivedId)));
 
       const s = await db
         .select()
         .from(disciplineSettings)
-        .where(eq(disciplineSettings.userId, userId))
+        .where(or(eq(disciplineSettings.userId, canonicalId), eq(disciplineSettings.userId, derivedId)))
         .limit(1);
       userSettings = s[0];
     } catch (err) {
       console.warn("[getDisciplineStats db error]:", err);
     }
-  } else {
-    tasks = inMemoryDisciplineTasks.filter((t) => t.userId === userId && t.isActive !== false);
-    completions = inMemoryDisciplineCompletions.filter((c) => c.userId === userId);
-    workoutCompletions = inMemoryDisciplineWorkoutCompletions.filter((w) => w.userId === userId);
-    forexLogs = inMemoryDisciplineForexLogs.filter((f) => f.userId === userId);
-    userSettings = inMemoryDisciplineSettings.get(userId);
+  }
+
+  if (tasks.length === 0) {
+    tasks = await loadUserDisciplineTasks(canonicalId);
+  }
+  if (completions.length === 0) {
+    completions = inMemoryDisciplineCompletions.filter(
+      (c) => c.userId === canonicalId || (derivedId && c.userId === derivedId)
+    );
+  }
+  if (workoutCompletions.length === 0) {
+    workoutCompletions = inMemoryDisciplineWorkoutCompletions.filter(
+      (w) => w.userId === canonicalId || (derivedId && w.userId === derivedId)
+    );
+  }
+  if (forexLogs.length === 0) {
+    forexLogs = await getDisciplineForexLogs(canonicalId);
+  }
+  if (!userSettings) {
+    userSettings = inMemoryDisciplineSettings.get(canonicalId) || (derivedId ? inMemoryDisciplineSettings.get(derivedId) : null);
   }
 
   const instStudent = DEFAULT_INSTITUTIONAL_STUDENTS.find((s: any) => s.id === userId);
@@ -1588,6 +2111,7 @@ export async function getDisciplineStats(userId: number) {
 // ------------------------------------------------------------------------------
 
 export async function exportDisciplineData(userId: number) {
+  const { canonicalId, derivedId } = await resolveDisciplineUserId(userId);
   const db = await getDb();
   let tasks: any[] = [];
   let completions: any[] = [];
@@ -1599,30 +2123,38 @@ export async function exportDisciplineData(userId: number) {
 
   if (db) {
     try {
-      tasks = await db.select().from(disciplineTasks).where(eq(disciplineTasks.userId, userId));
-      completions = await db.select().from(disciplineTaskCompletions).where(eq(disciplineTaskCompletions.userId, userId));
-      exercises = await db.select().from(disciplineExercises).where(eq(disciplineExercises.userId, userId));
-      workoutCompletions = await db.select().from(disciplineWorkoutCompletions).where(eq(disciplineWorkoutCompletions.userId, userId));
-      journals = await db.select().from(disciplineDailyJournals).where(eq(disciplineDailyJournals.userId, userId));
-      forexLogs = await db.select().from(disciplineForexLogs).where(eq(disciplineForexLogs.userId, userId));
-      const s = await db.select().from(disciplineSettings).where(eq(disciplineSettings.userId, userId)).limit(1);
+      tasks = await db.select().from(disciplineTasks).where(or(eq(disciplineTasks.userId, canonicalId), eq(disciplineTasks.userId, derivedId)));
+      completions = await db.select().from(disciplineTaskCompletions).where(or(eq(disciplineTaskCompletions.userId, canonicalId), eq(disciplineTaskCompletions.userId, derivedId)));
+      exercises = await db.select().from(disciplineExercises).where(or(eq(disciplineExercises.userId, canonicalId), eq(disciplineExercises.userId, derivedId)));
+      workoutCompletions = await db.select().from(disciplineWorkoutCompletions).where(or(eq(disciplineWorkoutCompletions.userId, canonicalId), eq(disciplineWorkoutCompletions.userId, derivedId)));
+      journals = await db.select().from(disciplineDailyJournals).where(or(eq(disciplineDailyJournals.userId, canonicalId), eq(disciplineDailyJournals.userId, derivedId)));
+      forexLogs = await db.select().from(disciplineForexLogs).where(or(eq(disciplineForexLogs.userId, canonicalId), eq(disciplineForexLogs.userId, derivedId)));
+      const s = await db.select().from(disciplineSettings).where(or(eq(disciplineSettings.userId, canonicalId), eq(disciplineSettings.userId, derivedId))).limit(1);
       userSettings = s[0] || null;
     } catch (err) {
       console.warn("[exportDisciplineData db error]:", err);
     }
-  } else {
-    tasks = inMemoryDisciplineTasks.filter((t) => t.userId === userId);
-    completions = inMemoryDisciplineCompletions.filter((c) => c.userId === userId);
-    exercises = inMemoryDisciplineExercises.filter((e) => e.userId === userId);
-    workoutCompletions = inMemoryDisciplineWorkoutCompletions.filter((w) => w.userId === userId);
-    journals = inMemoryDisciplineJournals.filter((j) => j.userId === userId);
-    forexLogs = inMemoryDisciplineForexLogs.filter((f) => f.userId === userId);
-    userSettings = inMemoryDisciplineSettings.get(userId) || null;
+  }
+
+  if (tasks.length === 0) {
+    tasks = await loadUserDisciplineTasks(canonicalId);
+  }
+  if (exercises.length === 0) {
+    exercises = await loadUserDisciplineExercises(canonicalId);
+  }
+  if (journals.length === 0) {
+    journals = await getDisciplineJournals(canonicalId);
+  }
+  if (forexLogs.length === 0) {
+    forexLogs = await getDisciplineForexLogs(canonicalId);
+  }
+  if (!userSettings) {
+    userSettings = inMemoryDisciplineSettings.get(canonicalId) || null;
   }
 
   return {
     version: "1.0",
-    appName: "Cycle of Chart â€” Daily Discipline",
+    appName: "Cycle of Chart — Daily Discipline",
     exportedAt: new Date().toISOString(),
     tasks,
     completions,
@@ -1639,6 +2171,7 @@ export async function importDisciplineData(userId: number, backup: any) {
     throw new Error("Invalid backup file: Not a valid JSON object");
   }
 
+  const { canonicalId, derivedId } = await resolveDisciplineUserId(userId);
   const db = await getDb();
 
   // Validate tasks array
@@ -1655,7 +2188,7 @@ export async function importDisciplineData(userId: number, backup: any) {
       for (const t of tasksToImport) {
         if (t.title) {
           await db.insert(disciplineTasks).values({
-            userId,
+            userId: canonicalId,
             title: String(t.title).trim(),
             time: t.time || "08:00 AM",
             isMandatory: t.isMandatory !== false,
@@ -1670,7 +2203,7 @@ export async function importDisciplineData(userId: number, backup: any) {
       for (const e of exercisesToImport) {
         if (e.name) {
           await db.insert(disciplineExercises).values({
-            userId,
+            userId: canonicalId,
             name: String(e.name).trim(),
             difficulty: e.difficulty || "Intermediate",
             orderIndex: Number(e.orderIndex) || 0,
@@ -1683,7 +2216,7 @@ export async function importDisciplineData(userId: number, backup: any) {
       for (const j of journalsToImport) {
         if (j.date && j.content) {
           await db.insert(disciplineDailyJournals).values({
-            userId,
+            userId: canonicalId,
             date: String(j.date),
             content: String(j.content),
           });
@@ -1694,7 +2227,7 @@ export async function importDisciplineData(userId: number, backup: any) {
       for (const f of forexLogsToImport) {
         if (f.date) {
           await db.insert(disciplineForexLogs).values({
-            userId,
+            userId: canonicalId,
             date: String(f.date),
             minutes: Number(f.minutes) || 0,
             pairs: f.pairs ? String(f.pairs) : "",
@@ -1705,127 +2238,121 @@ export async function importDisciplineData(userId: number, backup: any) {
 
       // 5. Settings
       if (backup.settings) {
-        await updateDisciplineSettings(userId, backup.settings);
+        await updateDisciplineSettings(canonicalId, backup.settings);
       }
-      return { success: true, count: tasksToImport.length + exercisesToImport.length + journalsToImport.length };
     } catch (err) {
       console.warn("[importDisciplineData db error]:", err);
     }
   }
 
-  // In-memory fallback
-  tasksToImport.forEach((t: any) => {
-    if (t.title) {
-      inMemoryDisciplineTasks.push({
-        id: disciplineTaskAutoId++,
-        userId,
-        title: String(t.title).trim(),
-        time: t.time || "08:00 AM",
-        isMandatory: t.isMandatory !== false,
-        isTrackable: t.isTrackable !== false,
-        orderIndex: Number(t.orderIndex) || 0,
-        isActive: t.isActive !== false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-    }
-  });
+  // Persistent settings fallback & cache synchronization
+  if (tasksToImport.length > 0) {
+    const existing = await loadUserDisciplineTasks(canonicalId);
+    let maxId = existing.reduce((max, t) => Math.max(max, Number(t.id) || 0), 0);
+    const newTasks = tasksToImport.map((t: any, idx: number) => ({
+      id: Number(t.id) || ++maxId,
+      userId: canonicalId,
+      title: String(t.title).trim(),
+      startTime: t.startTime?.trim() || null,
+      endTime: t.endTime?.trim() || null,
+      time: t.startTime?.trim() || t.time?.trim() || "08:00 AM",
+      isMandatory: t.isMandatory !== false,
+      isTrackable: t.isTrackable !== false,
+      orderIndex: Number(t.orderIndex) || idx + 1,
+      isActive: t.isActive !== false,
+      createdAt: t.createdAt || new Date().toISOString(),
+      updatedAt: t.updatedAt || new Date().toISOString(),
+    }));
+    await saveUserDisciplineTasks(canonicalId, [...existing, ...newTasks], derivedId ? String(derivedId) : undefined);
+  }
 
-  exercisesToImport.forEach((e: any) => {
-    if (e.name) {
-      inMemoryDisciplineExercises.push({
-        id: disciplineExerciseAutoId++,
-        userId,
-        name: String(e.name).trim(),
-        difficulty: e.difficulty || "Intermediate",
-        orderIndex: Number(e.orderIndex) || 0,
-        isActive: e.isActive !== false,
-        createdAt: new Date(),
-      });
-    }
-  });
+  if (exercisesToImport.length > 0) {
+    const existingEx = await loadUserDisciplineExercises(canonicalId);
+    let maxExId = existingEx.reduce((max, e) => Math.max(max, Number(e.id) || 0), 0);
+    const newEx = exercisesToImport.map((e: any, idx: number) => ({
+      id: Number(e.id) || ++maxExId,
+      userId: canonicalId,
+      name: String(e.name).trim(),
+      difficulty: e.difficulty || "Intermediate",
+      orderIndex: Number(e.orderIndex) || idx + 1,
+      isActive: e.isActive !== false,
+      createdAt: e.createdAt || new Date().toISOString(),
+    }));
+    await saveUserDisciplineExercises(canonicalId, [...existingEx, ...newEx], derivedId ? String(derivedId) : undefined);
+  }
 
-  journalsToImport.forEach((j: any) => {
+  for (const j of journalsToImport) {
     if (j.date && j.content) {
-      inMemoryDisciplineJournals.push({
-        id: disciplineJournalAutoId++,
-        userId,
-        date: String(j.date),
-        content: String(j.content),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      await saveDisciplineJournal(canonicalId, String(j.date), String(j.content));
     }
-  });
+  }
 
-  forexLogsToImport.forEach((f: any) => {
+  for (const f of forexLogsToImport) {
     if (f.date) {
-      inMemoryDisciplineForexLogs.push({
-        id: disciplineForexAutoId++,
-        userId,
-        date: String(f.date),
-        minutes: Number(f.minutes) || 0,
-        pairs: f.pairs ? String(f.pairs) : "",
-        notes: f.notes ? String(f.notes) : "",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      await saveDisciplineForexLog(canonicalId, String(f.date), Number(f.minutes) || 0, f.pairs ? String(f.pairs) : "", f.notes ? String(f.notes) : "");
     }
-  });
+  }
 
   if (backup.settings) {
-    inMemoryDisciplineSettings.set(userId, {
-      userId,
-      ...backup.settings,
-      updatedAt: new Date(),
-    });
+    await updateDisciplineSettings(canonicalId, backup.settings);
   }
 
   return { success: true, count: tasksToImport.length + exercisesToImport.length + journalsToImport.length };
 }
 
 export async function resetDisciplineData(userId: number) {
+  const { canonicalId, derivedId } = await resolveDisciplineUserId(userId);
   const db = await getDb();
   if (db) {
     try {
-      await db.delete(disciplineTaskCompletions).where(eq(disciplineTaskCompletions.userId, userId));
-      await db.delete(disciplineTasks).where(eq(disciplineTasks.userId, userId));
-      await db.delete(disciplineWorkoutCompletions).where(eq(disciplineWorkoutCompletions.userId, userId));
-      await db.delete(disciplineExercises).where(eq(disciplineExercises.userId, userId));
-      await db.delete(disciplineDailyJournals).where(eq(disciplineDailyJournals.userId, userId));
-      await db.delete(disciplineForexLogs).where(eq(disciplineForexLogs.userId, userId));
-      await db.delete(disciplineSettings).where(eq(disciplineSettings.userId, userId));
-
-      // Re-seed clean defaults for user
-      await ensureDisciplineDefaults(userId);
-      return true;
+      await db.delete(disciplineTaskCompletions).where(or(eq(disciplineTaskCompletions.userId, canonicalId), eq(disciplineTaskCompletions.userId, derivedId)));
+      await db.delete(disciplineTasks).where(or(eq(disciplineTasks.userId, canonicalId), eq(disciplineTasks.userId, derivedId)));
+      await db.delete(disciplineWorkoutCompletions).where(or(eq(disciplineWorkoutCompletions.userId, canonicalId), eq(disciplineWorkoutCompletions.userId, derivedId)));
+      await db.delete(disciplineExercises).where(or(eq(disciplineExercises.userId, canonicalId), eq(disciplineExercises.userId, derivedId)));
+      await db.delete(disciplineDailyJournals).where(or(eq(disciplineDailyJournals.userId, canonicalId), eq(disciplineDailyJournals.userId, derivedId)));
+      await db.delete(disciplineForexLogs).where(or(eq(disciplineForexLogs.userId, canonicalId), eq(disciplineForexLogs.userId, derivedId)));
+      await db.delete(disciplineSettings).where(or(eq(disciplineSettings.userId, canonicalId), eq(disciplineSettings.userId, derivedId)));
     } catch (err) {
       console.warn("[resetDisciplineData db error]:", err);
     }
   }
 
+  // Clear persistent tasks and exercises in settings
+  await saveUserDisciplineTasks(canonicalId, [], derivedId ? String(derivedId) : undefined);
+  await saveUserDisciplineExercises(canonicalId, [], derivedId ? String(derivedId) : undefined);
+
+  try {
+    await setSetting(`discipline_journals_${canonicalId}`, "[]");
+    await setSetting(`discipline_forex_${canonicalId}`, "[]");
+    if (derivedId && derivedId !== canonicalId) {
+      await setSetting(`discipline_journals_${derivedId}`, "[]");
+      await setSetting(`discipline_forex_${derivedId}`, "[]");
+    }
+  } catch {}
+
   // In-memory cleanup
   for (let i = inMemoryDisciplineTasks.length - 1; i >= 0; i--) {
-    if (inMemoryDisciplineTasks[i].userId === userId) inMemoryDisciplineTasks.splice(i, 1);
+    if (inMemoryDisciplineTasks[i].userId === canonicalId || inMemoryDisciplineTasks[i].userId === derivedId) inMemoryDisciplineTasks.splice(i, 1);
   }
   for (let i = inMemoryDisciplineCompletions.length - 1; i >= 0; i--) {
-    if (inMemoryDisciplineCompletions[i].userId === userId) inMemoryDisciplineCompletions.splice(i, 1);
+    if (inMemoryDisciplineCompletions[i].userId === canonicalId || inMemoryDisciplineCompletions[i].userId === derivedId) inMemoryDisciplineCompletions.splice(i, 1);
   }
   for (let i = inMemoryDisciplineExercises.length - 1; i >= 0; i--) {
-    if (inMemoryDisciplineExercises[i].userId === userId) inMemoryDisciplineExercises.splice(i, 1);
+    if (inMemoryDisciplineExercises[i].userId === canonicalId || inMemoryDisciplineExercises[i].userId === derivedId) inMemoryDisciplineExercises.splice(i, 1);
   }
   for (let i = inMemoryDisciplineWorkoutCompletions.length - 1; i >= 0; i--) {
-    if (inMemoryDisciplineWorkoutCompletions[i].userId === userId) inMemoryDisciplineWorkoutCompletions.splice(i, 1);
+    if (inMemoryDisciplineWorkoutCompletions[i].userId === canonicalId || inMemoryDisciplineWorkoutCompletions[i].userId === derivedId) inMemoryDisciplineWorkoutCompletions.splice(i, 1);
   }
   for (let i = inMemoryDisciplineJournals.length - 1; i >= 0; i--) {
-    if (inMemoryDisciplineJournals[i].userId === userId) inMemoryDisciplineJournals.splice(i, 1);
+    if (inMemoryDisciplineJournals[i].userId === canonicalId || inMemoryDisciplineJournals[i].userId === derivedId) inMemoryDisciplineJournals.splice(i, 1);
   }
   for (let i = inMemoryDisciplineForexLogs.length - 1; i >= 0; i--) {
-    if (inMemoryDisciplineForexLogs[i].userId === userId) inMemoryDisciplineForexLogs.splice(i, 1);
+    if (inMemoryDisciplineForexLogs[i].userId === canonicalId || inMemoryDisciplineForexLogs[i].userId === derivedId) inMemoryDisciplineForexLogs.splice(i, 1);
   }
-  inMemoryDisciplineSettings.delete(userId);
+  inMemoryDisciplineSettings.delete(canonicalId);
+  if (derivedId) inMemoryDisciplineSettings.delete(derivedId);
 
-  await ensureDisciplineDefaults(userId);
+  await ensureDisciplineDefaults(canonicalId);
   return true;
 }
 

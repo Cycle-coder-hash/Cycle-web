@@ -239,13 +239,13 @@ export function DisciplineScheduleTab({
         </div>
       ) : (
         <div className="space-y-2.5">
-          {tasks.map((task: any) => {
+          {tasks.map((task: any, idx: number) => {
             const isChecked = task.completed;
             const timeDisplay = formatTaskTimeRange(task.startTime, task.endTime, task.time);
             const autoStatus = computeTaskStatus(task, selectedDate);
             return (
               <div
-                key={task.id}
+                key={`task-${task.id ?? idx}-${idx}`}
                 className={`group flex items-center justify-between rounded-2xl border p-4 transition-all duration-150 ${
                   isChecked
                     ? "border-emerald-200/80 bg-emerald-50/40 text-emerald-950 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-200"

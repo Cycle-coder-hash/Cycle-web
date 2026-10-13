@@ -92,7 +92,7 @@ export interface ClaimFreePlanResult {
 }
 
 // In-memory fallback stores for local development / test isolation
-const inMemorySubscriptions: Map<number, any> = new Map();
+export const inMemorySubscriptions: Map<number, any> = new Map();
 const inMemoryAccountStatuses: Map<number, AccountStatus> = new Map();
 const inMemorySavedVideos: Array<{ id: number; userId: number; videoUrl: string; source: "journal" | "notebook"; createdAt: Date }> = [];
 const inMemoryNotebookPages: Array<{ id: number; userId: number; pageId: string; createdAt: Date }> = [];
@@ -876,41 +876,15 @@ export async function getTradesCountInCycle(userId: number, cycleStart?: Date | 
  * Get unique discipline days logged in current cycle (for free-after-trial 5-day limit)
  */
 export async function getDisciplineDaysInCycle(userId: number, cycleStart?: Date | null): Promise<number> {
-  const db = await getDb();
   const cycleStartStr = cycleStart ? cycleStart.toISOString().slice(0, 10) : "";
-
-  if (db && cycleStart) {
-    try {
-      const rows = await db
-        .select({ date: disciplineTaskCompletions.date })
-        .from(disciplineTaskCompletions)
-        .where(
-          and(
-            eq(disciplineTaskCompletions.userId, userId),
-            eq(disciplineTaskCompletions.completed, true),
-            sql`${disciplineTaskCompletions.date} >= ${cycleStartStr}`
-          )
-        );
-      const unique = new Set(rows.map((r: any) => r.date));
-      return unique.size;
-    } catch {}
+  try {
+    const { getUserCompletedDisciplineDates } = await import("../discipline/repo");
+    const dates = await getUserCompletedDisciplineDates(userId, cycleStartStr);
+    return dates.length;
+  } catch (err) {
+    console.warn("[getDisciplineDaysInCycle error]:", err);
+    return 0;
   }
-
-  // In-memory completions lookup fallback
-  const { getAllTraderTrades } = await import("../../db");
-  const inMemorySettingKey = `discipline_completions_${userId}`;
-  const raw = await getSetting(inMemorySettingKey);
-  if (raw) {
-    try {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        const filtered = cycleStartStr ? parsed.filter((c: any) => c.date >= cycleStartStr && c.completed) : parsed;
-        const unique = new Set(filtered.map((c: any) => c.date));
-        return unique.size;
-      }
-    } catch {}
-  }
-  return 0;
 }
 
 /**
@@ -1262,21 +1236,23 @@ export async function canLogDiscipline(userId: number, date: string, nowOverride
     return { allowed: false, reason: "Account is not active." };
   }
   if (sub.plan === "free_after_trial") {
-    const uniqueDays = await getDisciplineDaysInCycle(userId, sub.freeCycleStartsAt);
-    const { getSetting } = await import("../../db");
-    const raw = await getSetting(`discipline_completions_${userId}`);
-    let alreadyHasDate = false;
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) alreadyHasDate = parsed.some((c: any) => c.date === date);
-      } catch {}
-    }
-    if (!alreadyHasDate && uniqueDays >= 5) {
-      return {
-        allowed: false,
-        reason: "You have reached your free monthly Daily Discipline limit (5/5 days). Upgrade to Pro or Premium for more access.",
-      };
+    try {
+      const { isDisciplineDateAlreadyLogged, getUserCompletedDisciplineDates } = await import("../discipline/repo");
+      const alreadyHasDate = await isDisciplineDateAlreadyLogged(userId, date);
+      if (alreadyHasDate) {
+        // User already logged on this specific date in current cycle, allow toggling tasks
+        return { allowed: true };
+      }
+      const cycleStartStr = sub.freeCycleStartsAt ? sub.freeCycleStartsAt.toISOString().slice(0, 10) : "";
+      const uniqueDates = await getUserCompletedDisciplineDates(userId, cycleStartStr);
+      if (uniqueDates.length >= 5) {
+        return {
+          allowed: false,
+          reason: "You have reached your free monthly Daily Discipline limit (5/5 days). Upgrade to Pro or Premium for more access.",
+        };
+      }
+    } catch (err) {
+      console.warn("[canLogDiscipline check error]:", err);
     }
   }
   return { allowed: true };

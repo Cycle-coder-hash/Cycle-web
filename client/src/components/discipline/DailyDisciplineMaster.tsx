@@ -23,6 +23,7 @@ import { DailyDisciplineAnalytics } from "@/features/discipline";
 import { DisciplineSettingsTab } from "./DisciplineSettingsTab";
 import { DisciplineDataManagementTab } from "./DisciplineDataManagementTab";
 import { UpgradeModal, UpgradeFeatureType } from "@/components/subscription/UpgradeModal";
+import { toast } from "sonner";
 
 interface DailyDisciplineMasterProps {
   user: any;
@@ -99,22 +100,37 @@ export function DailyDisciplineMaster({
   // ============================================================================
   const addTaskMutation = trpc.customer.addDisciplineTask.useMutation({
     onSuccess: () => {
+      utils.customer.disciplineSchedule.invalidate();
       refetchSchedule();
       refetchStats();
+      toast.success(isBn ? "টাস্ক সফলভাবে তৈরি হয়েছে" : "Task added successfully");
+    },
+    onError: (err) => {
+      toast.error(err.message || (isBn ? "টাস্ক যোগ করতে ব্যর্থ হয়েছে" : "Failed to add task"));
     },
   });
 
   const updateTaskMutation = trpc.customer.updateDisciplineTask.useMutation({
     onSuccess: () => {
+      utils.customer.disciplineSchedule.invalidate();
       refetchSchedule();
       refetchStats();
+      toast.success(isBn ? "টাস্ক সফলভাবে আপডেট হয়েছে" : "Task updated successfully");
+    },
+    onError: (err) => {
+      toast.error(err.message || (isBn ? "টাস্ক আপডেট করতে ব্যর্থ হয়েছে" : "Failed to update task"));
     },
   });
 
   const deleteTaskMutation = trpc.customer.deleteDisciplineTask.useMutation({
     onSuccess: () => {
+      utils.customer.disciplineSchedule.invalidate();
       refetchSchedule();
       refetchStats();
+      toast.success(isBn ? "টাস্ক মুছে ফেলা হয়েছে" : "Task deleted successfully");
+    },
+    onError: (err) => {
+      toast.error(err.message || (isBn ? "টাস্ক মুছতে ব্যর্থ হয়েছে" : "Failed to delete task"));
     },
   });
 
@@ -128,6 +144,8 @@ export function DailyDisciplineMaster({
       if (err.data?.code === "FORBIDDEN") {
         setUpgradeFeature("discipline_limit");
         setIsUpgradeModalOpen(true);
+      } else {
+        toast.error(err.message || (isBn ? "টাস্ক আপডেট করতে ব্যর্থ হয়েছে" : "Failed to toggle task"));
       }
     },
   });
@@ -319,13 +337,6 @@ export function DailyDisciplineMaster({
             isLoading={isScheduleLoading}
             isBn={isBn}
             onToggleTask={(taskId, completed) => {
-              if (completed && subUsage && subUsage.disciplineDaysLimit !== "unlimited") {
-                if (subUsage.disciplineDaysCount >= subUsage.disciplineDaysLimit) {
-                  setUpgradeFeature("discipline_limit");
-                  setIsUpgradeModalOpen(true);
-                  return;
-                }
-              }
               toggleTaskMutation.mutate({ taskId, date: selectedDate, completed });
             }}
             onAddTask={(task) => addTaskMutation.mutate(task)}
