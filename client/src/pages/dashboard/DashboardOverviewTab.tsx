@@ -24,6 +24,7 @@ import { useUserPreferences, type TimezoneOption } from "@/contexts/UserPreferen
 import type { TradeEntry } from "@/types/journal";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ClaimFreePlanModal } from "@/features/subscription";
+import { DailyDisciplineOverviewCard } from "@/features/discipline";
 
 // Daily Discipline Rules
 const DAILY_DISCIPLINE_RULES = [
@@ -130,7 +131,7 @@ export interface DashboardOverviewTabProps {
   orders: ReadonlyArray<DashboardOverviewOrderItem> | null | undefined;
   localTrades: ReadonlyArray<TradeEntry> | null | undefined;
   journal: ReadonlyArray<DashboardOverviewJournalItem> | null | undefined;
-  onSelectTab: (nextTab: "discipline" | "orders" | "library" | "journal") => void;
+  onSelectTab: (nextTab: "discipline" | "orders" | "library" | "journal" | "discipline-analytics") => void;
   onToggleDisciplineRule: (payload: { label: string; date: string; completed: boolean }) => void;
 }
 
@@ -715,6 +716,12 @@ export function DashboardOverviewTab({
           </div>
         </Link>
       </div>
+
+      {/* Daily Discipline Analytics Feature Showcase Card */}
+      <DailyDisciplineOverviewCard
+        isBn={isBn}
+        onExplore={() => onSelectTab("discipline-analytics")}
+      />
 
       {/* Recent Order Status Alert Banner */}
       {orders && orders.length > 0 && (

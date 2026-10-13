@@ -57,13 +57,13 @@ export interface PricingFormState {
 export const DEFAULT_PRICING_FORM: PricingFormState = {
   courses: {
     freeEbook: { priceBdt: "0", priceUsd: "0" },
-    basicToAdvance: { priceBdt: "2499", priceUsd: "20" },
-    proBlueprint: { priceBdt: "4999", priceUsd: "40", originalPriceBdt: "5550" },
+    basicToAdvance: { priceBdt: "2499", priceUsd: "19.99" },
+    proBlueprint: { priceBdt: "4999", priceUsd: "39.99", originalPriceBdt: "5550" },
   },
   subscriptions: {
     freeTrial: { priceBdt: "0", priceUsd: "0", billingPeriod: "30 days" },
-    pro: { priceBdt: "599", priceUsd: "5", billingPeriod: "month" },
-    premium: { priceBdt: "999", priceUsd: "10", billingPeriod: "month" },
+    pro: { priceBdt: "599", priceUsd: "4.99", billingPeriod: "month" },
+    premium: { priceBdt: "999", priceUsd: "9.99", billingPeriod: "month" },
   },
 };
 
@@ -649,7 +649,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       </label>
                       <input
                         type="text"
-                        value={paymentConfig.pricing?.courses?.basicToAdvance?.priceUsd ?? "20"}
+                        value={paymentConfig.pricing?.courses?.basicToAdvance?.priceUsd ?? "19.99"}
                         onChange={(e) => updateCoursePricing("basicToAdvance", "priceUsd", e.target.value)}
                         className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-mono text-xs font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                       />
@@ -665,7 +665,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       <span className="text-[10px] bg-amber-500/20 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded font-black">POPULAR</span>
                     </div>
                     <span className="rounded-md bg-amber-500/20 px-2 py-0.5 text-[11px] font-mono font-bold text-amber-700 dark:text-amber-300">
-                      Live Card: ৳{paymentConfig.pricing?.courses?.proBlueprint?.priceBdt ?? "4999"} / ${paymentConfig.pricing?.courses?.proBlueprint?.priceUsd ?? "40"}
+                      Live Card: ৳{paymentConfig.pricing?.courses?.proBlueprint?.priceBdt ?? "4999"} / ${paymentConfig.pricing?.courses?.proBlueprint?.priceUsd ?? "39.99"}
                     </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -686,7 +686,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       </label>
                       <input
                         type="text"
-                        value={paymentConfig.pricing?.courses?.proBlueprint?.priceUsd ?? "40"}
+                        value={paymentConfig.pricing?.courses?.proBlueprint?.priceUsd ?? "39.99"}
                         onChange={(e) => updateCoursePricing("proBlueprint", "priceUsd", e.target.value)}
                         className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-mono text-xs font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                       />
@@ -771,7 +771,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       Pro Plan (Monthly)
                     </div>
                     <span className="rounded-md bg-sky-500/15 px-2 py-0.5 text-[11px] font-mono font-bold text-sky-700 dark:text-sky-300">
-                      Live Card: ৳{paymentConfig.pricing?.subscriptions?.pro?.priceBdt ?? "599"} / ${paymentConfig.pricing?.subscriptions?.pro?.priceUsd ?? "5"} per {paymentConfig.pricing?.subscriptions?.pro?.billingPeriod ?? "month"}
+                      Live Card: ৳{paymentConfig.pricing?.subscriptions?.pro?.priceBdt ?? "599"} / ${paymentConfig.pricing?.subscriptions?.pro?.priceUsd ?? "4.99"} per {paymentConfig.pricing?.subscriptions?.pro?.billingPeriod ?? "month"}
                     </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -792,7 +792,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       </label>
                       <input
                         type="text"
-                        value={paymentConfig.pricing?.subscriptions?.pro?.priceUsd ?? "5"}
+                        value={paymentConfig.pricing?.subscriptions?.pro?.priceUsd ?? "4.99"}
                         onChange={(e) => updateSubscriptionPricing("pro", "priceUsd", e.target.value)}
                         className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-mono text-xs font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                       />
@@ -819,7 +819,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       <span className="text-[10px] bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded font-black">ALL ACCESS</span>
                     </div>
                     <span className="rounded-md bg-emerald-500/20 px-2 py-0.5 text-[11px] font-mono font-bold text-emerald-700 dark:text-emerald-300">
-                      Live Card: ৳{paymentConfig.pricing?.subscriptions?.premium?.priceBdt ?? "999"} / ${paymentConfig.pricing?.subscriptions?.premium?.priceUsd ?? "10"} per {paymentConfig.pricing?.subscriptions?.premium?.billingPeriod ?? "month"}
+                      Live Card: ৳{paymentConfig.pricing?.subscriptions?.premium?.priceBdt ?? "999"} / ${paymentConfig.pricing?.subscriptions?.premium?.priceUsd ?? "9.99"} per {paymentConfig.pricing?.subscriptions?.premium?.billingPeriod ?? "month"}
                     </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -840,7 +840,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       </label>
                       <input
                         type="text"
-                        value={paymentConfig.pricing?.subscriptions?.premium?.priceUsd ?? "10"}
+                        value={paymentConfig.pricing?.subscriptions?.premium?.priceUsd ?? "9.99"}
                         onChange={(e) => updateSubscriptionPricing("premium", "priceUsd", e.target.value)}
                         className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-mono text-xs font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                       />
@@ -902,11 +902,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               </div>
               <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800/60">
                 <span className="text-slate-600 dark:text-slate-400 text-[11px]">Basic Course</span>
-                <span className="font-bold font-mono text-sky-600 dark:text-sky-400">৳{paymentConfig.pricing?.courses?.basicToAdvance?.priceBdt ?? "2499"} / ${paymentConfig.pricing?.courses?.basicToAdvance?.priceUsd ?? "20"}</span>
+                <span className="font-bold font-mono text-sky-600 dark:text-sky-400">৳{paymentConfig.pricing?.courses?.basicToAdvance?.priceBdt ?? "2499"} / ${paymentConfig.pricing?.courses?.basicToAdvance?.priceUsd ?? "19.99"}</span>
               </div>
               <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800/60">
                 <span className="text-slate-600 dark:text-slate-400 text-[11px]">Pro Blueprint</span>
-                <span className="font-bold font-mono text-amber-600 dark:text-amber-400">৳{paymentConfig.pricing?.courses?.proBlueprint?.priceBdt ?? "4999"} / ${paymentConfig.pricing?.courses?.proBlueprint?.priceUsd ?? "40"}</span>
+                <span className="font-bold font-mono text-amber-600 dark:text-amber-400">৳{paymentConfig.pricing?.courses?.proBlueprint?.priceBdt ?? "4999"} / ${paymentConfig.pricing?.courses?.proBlueprint?.priceUsd ?? "39.99"}</span>
               </div>
               <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800/60">
                 <span className="text-slate-600 dark:text-slate-400 text-[11px]">Free Trial</span>
@@ -914,11 +914,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               </div>
               <div className="flex justify-between items-center py-1 border-b border-slate-100 dark:border-slate-800/60">
                 <span className="text-slate-600 dark:text-slate-400 text-[11px]">Pro Plan</span>
-                <span className="font-bold font-mono text-sky-600 dark:text-sky-400">৳{paymentConfig.pricing?.subscriptions?.pro?.priceBdt ?? "599"} / ${paymentConfig.pricing?.subscriptions?.pro?.priceUsd ?? "5"}/mo</span>
+                <span className="font-bold font-mono text-sky-600 dark:text-sky-400">৳{paymentConfig.pricing?.subscriptions?.pro?.priceBdt ?? "599"} / ${paymentConfig.pricing?.subscriptions?.pro?.priceUsd ?? "4.99"}/mo</span>
               </div>
               <div className="flex justify-between items-center py-1">
                 <span className="text-slate-600 dark:text-slate-400 text-[11px]">Premium Plan</span>
-                <span className="font-bold font-mono text-emerald-600 dark:text-emerald-400">৳{paymentConfig.pricing?.subscriptions?.premium?.priceBdt ?? "999"} / ${paymentConfig.pricing?.subscriptions?.premium?.priceUsd ?? "10"}/mo</span>
+                <span className="font-bold font-mono text-emerald-600 dark:text-emerald-400">৳{paymentConfig.pricing?.subscriptions?.premium?.priceBdt ?? "999"} / ${paymentConfig.pricing?.subscriptions?.premium?.priceUsd ?? "9.99"}/mo</span>
               </div>
             </div>
           </div>

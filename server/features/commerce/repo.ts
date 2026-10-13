@@ -53,13 +53,13 @@ export interface PricingConfig {
 export const DEFAULT_PRICING_CONFIG: PricingConfig = {
   courses: {
     freeEbook: { priceBdt: "0", priceUsd: "0" },
-    basicToAdvance: { priceBdt: "2499", priceUsd: "20" },
-    proBlueprint: { priceBdt: "4999", priceUsd: "40", originalPriceBdt: "5550" },
+    basicToAdvance: { priceBdt: "2499", priceUsd: "19.99" },
+    proBlueprint: { priceBdt: "4999", priceUsd: "39.99", originalPriceBdt: "5550" },
   },
   subscriptions: {
     freeTrial: { priceBdt: "0", priceUsd: "0", billingPeriod: "30 days" },
-    pro: { priceBdt: "599", priceUsd: "5", billingPeriod: "month" },
-    premium: { priceBdt: "999", priceUsd: "10", billingPeriod: "month" },
+    pro: { priceBdt: "599", priceUsd: "4.99", billingPeriod: "month" },
+    premium: { priceBdt: "999", priceUsd: "9.99", billingPeriod: "month" },
   },
 };
 

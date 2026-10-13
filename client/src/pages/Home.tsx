@@ -96,8 +96,9 @@ export default function Home() {
 
   const formatUsd = (val: string | number | undefined, bn: boolean, fallback = "0") => {
     const raw = val !== undefined && val !== null && String(val).trim() !== "" ? String(val) : fallback;
-    const num = parseInt(raw.replace(/\D/g, "") || "0", 10);
-    const formatted = num === 0 ? "0" : num.toLocaleString("en-US");
+    const num = parseFloat(raw);
+    if (isNaN(num) || num === 0) return bn ? "০" : "0";
+    const formatted = num % 1 === 0 ? num.toString() : num.toFixed(2);
     return bn ? formatted.replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[+d]) : formatted;
   };
 
@@ -524,7 +525,32 @@ export default function Home() {
               </div>
             </div>
 
-            <div ref={pricingRef} className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8 items-stretch max-w-7xl mx-auto">
+            {/* PRICING & PAYMENT INFORMATION NOTICE */}
+            <div className="mt-8 rounded-2xl border border-sky-500/30 bg-sky-500/[0.04] p-5 sm:p-6 dark:border-sky-500/20 dark:bg-[#0c182c]/80 shadow-xs">
+              <div className="flex items-center gap-2.5 pb-2.5 border-b border-sky-500/15">
+                <div className="flex h-7 px-2 items-center justify-center rounded-lg bg-sky-500/15 text-sky-500 border border-sky-500/25 shrink-0">
+                  <Sparkles size={14} />
+                </div>
+                <h3 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                  PRICING &amp; PAYMENT INFORMATION
+                </h3>
+              </div>
+
+              <div className="mt-3 space-y-1.5 text-xs sm:text-sm">
+                <p className="text-slate-700 dark:text-slate-300">
+                  <strong className="text-slate-900 dark:text-white font-extrabold">Bangladesh:</strong> BDT prices apply when paying in Bangladeshi Taka (৳).
+                </p>
+                <p className="text-slate-700 dark:text-slate-300">
+                  <strong className="text-slate-900 dark:text-white font-extrabold">International:</strong> USD prices apply when paying in US Dollars ($).
+                </p>
+              </div>
+
+              <p className="mt-3 text-xs font-medium text-slate-500 dark:text-slate-400">
+                Please select the appropriate currency and payment method at checkout.
+              </p>
+            </div>
+
+            <div ref={pricingRef} className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8 items-stretch max-w-7xl mx-auto">
               {storeBundles.map((item: any, i: number) => {
                 const isPopular = item.highlight || i === 1;
                 const topRibbonText = selectText({
@@ -640,24 +666,37 @@ export default function Home() {
 
                     {/* Pricing & CTA Button */}
                     <div className="mt-8 border-t border-slate-100 pt-5 dark:border-slate-800">
-                      <div className="flex items-baseline justify-between mb-4">
-                        <div>
-                          <div className="flex items-baseline flex-wrap gap-2 sm:gap-2.5">
-                            {item.originalPrice && (
-                              <span className="text-base sm:text-lg font-bold line-through text-slate-400 dark:text-slate-500">
-                                {formatPrice({ bdt: item.originalPrice, usd: "45", fallback: `৳${item.originalPrice}` })}
-                              </span>
-                            )}
-                            <span className="text-3xl sm:text-4xl font-black tracking-tight">
-                              {formatPrice({ bdt: item.price, usd: item.priceUsd, fallback: `৳${item.price}` })}
+                      <div className="mb-4">
+                        {isFreePackage ? (
+                          <div className="flex flex-col gap-0.5" dir="ltr">
+                            <span className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
+                              ৳0 BDT
                             </span>
-                            {currency !== "USD" && item.priceUsd && (
-                              <span className="text-base sm:text-lg font-bold text-slate-500 dark:text-slate-400">
-                                / ${formatUsd(item.priceUsd, isBn, item.id === 1 ? "0" : item.id === 2 ? "20" : "40")}
+                            <span className="text-xl sm:text-2xl font-bold text-slate-500 dark:text-slate-400">
+                              $0 USD
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col gap-0.5" dir="ltr">
+                            {item.originalPrice && (
+                              <span className="text-sm sm:text-base font-bold line-through text-slate-400 dark:text-slate-500">
+                                ৳{formatBdt(item.originalPrice, false, "5550")} BDT
                               </span>
                             )}
+                            <span className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
+                              ৳{formatBdt(item.price, false, item.id === 2 ? "2499" : "4999")} BDT
+                            </span>
+                            <span
+                              className={`text-xl sm:text-2xl font-bold ${
+                                isPopular
+                                  ? "text-[#38bdf8]"
+                                  : "text-sky-600 dark:text-sky-400"
+                              }`}
+                            >
+                              ${formatUsd(item.priceUsd, false, item.id === 2 ? "19.99" : "39.99")} USD
+                            </span>
                           </div>
-                        </div>
+                        )}
                       </div>
 
                       <Link href={`/checkout?bundle=${item.id}`} className="block w-full">

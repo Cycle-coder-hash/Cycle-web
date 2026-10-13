@@ -60,6 +60,7 @@ import { TraderNotebook } from "@/components/notebook/TraderNotebook";
 import { getStoredTrades } from "@/lib/traderJournalStorage";
 import { getDashboardRoadmapStages, DashboardRoadmapStage } from "@/data/roadmapStages";
 import { DailyDisciplineMaster } from "@/components/discipline/DailyDisciplineMaster";
+import { DailyDisciplineAnalytics } from "@/features/discipline";
 import { PositionSizeCalculator } from "@/components/calculator/PositionSizeCalculator";
 import { uploadImage } from "@/lib/mediaUpload";
 import { CourseTelegramModal } from "@/components/CourseTelegramModal";
@@ -80,17 +81,19 @@ export default function Dashboard() {
 
   // Active Tab
   const [tab, setTab] = useState<
-    "overview" | "roadmap" | "library" | "journal" | "notebook" | "discipline" | "calculator" | "orders" | "support"
+    "overview" | "roadmap" | "library" | "journal" | "notebook" | "discipline" | "discipline-analytics" | "calculator" | "orders" | "support"
   >(() => {
     if (typeof window !== "undefined") {
       if (window.location.pathname === "/notebook") return "notebook";
       if (window.location.pathname === "/discipline") return "discipline";
+      if (window.location.pathname === "/discipline-analytics") return "discipline-analytics";
       if (window.location.pathname === "/calculator") return "calculator";
       const params = new URLSearchParams(window.location.search);
       const tabParam = params.get("tab");
       if (
         tabParam === "notebook" ||
         tabParam === "discipline" ||
+        tabParam === "discipline-analytics" ||
         tabParam === "calculator" ||
         tabParam === "roadmap" ||
         tabParam === "library" ||
@@ -156,6 +159,10 @@ export default function Dashboard() {
         setTab("discipline");
         return;
       }
+      if (window.location.pathname === "/discipline-analytics") {
+        setTab("discipline-analytics");
+        return;
+      }
       if (window.location.pathname === "/calculator") {
         setTab("calculator");
         return;
@@ -165,6 +172,7 @@ export default function Dashboard() {
       if (
         tabParam === "notebook" ||
         tabParam === "discipline" ||
+        tabParam === "discipline-analytics" ||
         tabParam === "calculator" ||
         tabParam === "roadmap" ||
         tabParam === "library" ||
@@ -1025,7 +1033,7 @@ export default function Dashboard() {
   return (
     <div
       dir={isRTL ? "rtl" : "ltr"}
-      className={`min-h-screen bg-[#f8fafc] text-slate-900 dark:bg-[#070e1b] dark:text-slate-100 transition-colors duration-300 selection:bg-[#38bdf8] selection:text-slate-950 overflow-x-hidden ${
+      className={`min-h-screen lg:h-screen lg:overflow-hidden bg-[#f8fafc] text-slate-900 dark:bg-[#070e1b] dark:text-slate-100 transition-colors duration-300 selection:bg-[#38bdf8] selection:text-slate-950 overflow-x-hidden ${
         isBn ? "font-bangla" : isUr ? "font-urdu" : ""
       }`}
     >
@@ -1042,11 +1050,11 @@ export default function Dashboard() {
       {/* DASHBOARD SIDEBAR */}
       {/* ========================================================================= */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col justify-between border-r border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-[#070e1b] transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-[#070e1b] transition-transform duration-300 ease-in-out overflow-y-auto overscroll-contain ${
           isSidebarOpen ? "translate-x-0 shadow-2xl lg:shadow-none" : "-translate-x-full pointer-events-none"
         }`}
       >
-        <div>
+        <div className="shrink-0">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-3">
               <BrandLogo size={42} className="shrink-0" />
@@ -1303,7 +1311,7 @@ export default function Dashboard() {
         </div>
 
         {/* Sidebar Footer Controls */}
-        <div className="border-t border-slate-200/80 pt-4 dark:border-slate-800 space-y-3">
+        <div className="mt-auto shrink-0 border-t border-slate-200/80 pt-4 dark:border-slate-800 space-y-3">
 
           <div className="flex items-center justify-between">
             {/* Theme Toggle */}
@@ -1334,12 +1342,12 @@ export default function Dashboard() {
       {/* MAIN CONTENT AREA */}
       {/* ========================================================================= */}
       <div
-        className={`flex min-h-screen flex-col transition-[padding] duration-300 ease-in-out ${
+        className={`flex min-h-screen lg:min-h-0 lg:h-screen flex-col transition-[padding] duration-300 ease-in-out lg:overflow-y-auto lg:overscroll-contain ${
           isSidebarOpen ? "lg:pl-72" : "lg:pl-0"
         }`}
       >
         {/* Top Header */}
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 sm:px-6 backdrop-blur-md dark:border-slate-800 dark:bg-[#070e1b]/90">
+        <header className="sticky top-0 z-20 shrink-0 flex h-16 items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 sm:px-6 backdrop-blur-md dark:border-slate-800 dark:bg-[#070e1b]/90">
           <div className="flex items-center gap-2.5 sm:gap-3">
             {/* Sidebar Toggle Button (Open / Close) */}
             <button
@@ -1502,6 +1510,20 @@ export default function Dashboard() {
           {/* ========================================================================= */}
           {tab === "discipline" && (
             <DailyDisciplineMaster user={user} isBn={isBn} />
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB: DAILY DISCIPLINE ANALYTICS */}
+          {/* ========================================================================= */}
+          {tab === "discipline-analytics" && (
+            <DailyDisciplineAnalytics
+              user={user}
+              isBn={isBn}
+              onBackToOverview={() => setTab("overview")}
+              onGoToDiscipline={() => {
+                setTab("discipline");
+              }}
+            />
           )}
 
           {/* ========================================================================= */}

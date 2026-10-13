@@ -31,6 +31,7 @@ export type DashboardTab =
   | "journal"
   | "notebook"
   | "discipline"
+  | "discipline-analytics"
   | "calculator"
   | "orders"
   | "support";

@@ -76,11 +76,11 @@ export default function Checkout() {
   });
 
   const baseBundles = [
-    { id: 101, titleEn: "CYCLE OF CHART — PRO PLAN (MONTHLY)", descriptionEn: "Unlimited trades · 5 books · 30 videos · Workout · Community", price: "599", priceUsd: "5" },
-    { id: 102, titleEn: "CYCLE OF CHART — PREMIUM PLAN (MONTHLY)", descriptionEn: "Unlimited institutional access · Mentor support · Owner chat · Leaderboard", price: "999", priceUsd: "10" },
+    { id: 101, titleEn: "CYCLE OF CHART — PRO PLAN (MONTHLY)", descriptionEn: "Unlimited trades · 5 books · 30 videos · Workout · Community", price: "599", priceUsd: "4.99" },
+    { id: 102, titleEn: "CYCLE OF CHART — PREMIUM PLAN (MONTHLY)", descriptionEn: "Unlimited institutional access · Mentor support · Owner chat · Leaderboard", price: "999", priceUsd: "9.99" },
     { id: 1, titleEn: "Free eBook Package", descriptionEn: "15 PDFs · fixed package price", price: "00", priceUsd: "0" },
-    { id: 2, titleEn: "CYCLE OF CHART BASIC TO ADVANCE COURSE", descriptionEn: "Structured course · eBook included", price: "2499", priceUsd: "20" },
-    { id: 4, titleEn: "CYCLE OF CHART — PROFESSIONAL TRADING BLUEPRINT", descriptionEn: "Complete A–Z Trading Blueprint", originalPrice: "5550", price: "4999", priceUsd: "40" },
+    { id: 2, titleEn: "CYCLE OF CHART BASIC TO ADVANCE COURSE", descriptionEn: "Structured course · eBook included", price: "2499", priceUsd: "19.99" },
+    { id: 4, titleEn: "CYCLE OF CHART — PROFESSIONAL TRADING BLUEPRINT", descriptionEn: "Complete A–Z Trading Blueprint", originalPrice: "5550", price: "4999", priceUsd: "39.99" },
   ];
   const bundlesList = baseBundles.map((b) => {
     const match = bundles?.find((apiB: any) => apiB.id === b.id);
@@ -407,12 +407,16 @@ export default function Checkout() {
                       {isBn ? b.descriptionBn || b.descriptionEn : b.descriptionEn}
                     </div>
                   </div>
-                  <div className="text-base sm:text-lg font-black text-[#0284c7] dark:text-[#38bdf8] shrink-0 text-right">
-                    <span>{formatPrice({ bdt: b.price, usd: b.priceUsd, fallback: `৳${b.price}` })}</span>
-                    {currency !== "USD" && b.priceUsd && (
-                      <span className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400 ml-1">
-                        / ${b.priceUsd}
-                      </span>
+                  <div className="text-base sm:text-lg font-black text-[#0284c7] dark:text-[#38bdf8] shrink-0 text-right" dir="ltr">
+                    {b.id === 1 ? (
+                      <span>৳0 / $0</span>
+                    ) : (
+                      <div className="flex flex-col items-end">
+                        <span>৳{b.price} BDT</span>
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                          ${b.priceUsd} USD
+                        </span>
+                      </div>
                     )}
                   </div>
                 </button>
@@ -725,13 +729,13 @@ export default function Checkout() {
                                 <span className="flex size-4 items-center justify-center rounded-full bg-sky-500/20 text-sky-600 dark:text-sky-400 text-[10px] font-black">2</span>
                                 <span>
                                   {selectText({
-                                    en: `Send ৳${price}`,
-                                    bn: `৳${price} পাঠান`,
-                                    ur: `৳${price} بھیجیں`,
+                                    en: `Send ৳${price} BDT`,
+                                    bn: `৳${price} BDT পাঠান`,
+                                    ur: `৳${price} BDT بھیجیں`,
                                   })}
-                                  {currency !== "BDT" && (
+                                  {chosen?.priceUsd && (
                                     <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium ml-1">
-                                      ({formatPrice({ bdt: price, usd: chosen?.priceUsd })})
+                                      (${chosen.priceUsd} USD)
                                     </span>
                                   )}
                                 </span>
@@ -949,11 +953,11 @@ export default function Checkout() {
                 {isFree ? (
                   selectText({ en: "FREE", bn: "ফ্রি", ur: "مفت" })
                 ) : (
-                  <div>
-                    <span>{formatPrice({ bdt: price, usd: chosen?.priceUsd, fallback: `৳${price}` })}</span>
-                    {currency !== "USD" && chosen?.priceUsd && (
-                      <span className="text-base sm:text-lg font-bold text-slate-300 ml-1.5">
-                        / ${chosen.priceUsd}
+                  <div className="flex flex-col items-end">
+                    <span>৳{price} BDT</span>
+                    {chosen?.priceUsd && (
+                      <span className="text-sm sm:text-base font-bold text-slate-300">
+                        ${chosen.priceUsd} USD
                       </span>
                     )}
                   </div>
@@ -1001,12 +1005,18 @@ export default function Checkout() {
                 {selectText({ en: "Total Payable", bn: "মোট প্রদেয়", ur: "کل واجب الادا" })}
               </span>
               <div dir="ltr" className="text-right">
-                <span className="text-2xl font-black text-white">
-                  {isFree ? formatPrice({ bdt: 0, usd: 0 }) : formatPrice({ bdt: price, usd: chosen?.priceUsd, fallback: `৳${price}` })}
-                </span>
-                {!isFree && currency !== "BDT" && (
-                  <div className="text-xs text-slate-400 font-semibold mt-0.5">
-                    (≈ ৳{price} BDT)
+                {isFree ? (
+                  <span className="text-2xl font-black text-white">
+                    ৳0 / $0
+                  </span>
+                ) : (
+                  <div className="flex flex-col items-end">
+                    <span className="text-2xl font-black text-white">৳{price} BDT</span>
+                    {chosen?.priceUsd && (
+                      <span className="text-xs text-slate-300 font-bold">
+                        ${chosen.priceUsd} USD
+                      </span>
+                    )}
                   </div>
                 )}
               </div>

@@ -19,6 +19,7 @@ import { DisciplineWorkoutTab } from "./DisciplineWorkoutTab";
 import { DisciplineJournalTab } from "./DisciplineJournalTab";
 import { DisciplineForexTrackerTab } from "./DisciplineForexTrackerTab";
 import { DisciplineStatsTab } from "./DisciplineStatsTab";
+import { DailyDisciplineAnalytics } from "./DailyDisciplineAnalytics";
 import { DisciplineSettingsTab } from "./DisciplineSettingsTab";
 import { DisciplineDataManagementTab } from "./DisciplineDataManagementTab";
 import { UpgradeModal, UpgradeFeatureType } from "@/components/subscription/UpgradeModal";
@@ -387,13 +388,11 @@ export function DailyDisciplineMaster({
 
         {/* 6. STATS & ANALYTICS */}
         {activeTab === "stats" && (
-          <DisciplineStatsTab
-            stats={statsData}
-            isLoading={isStatsLoading}
+          <DailyDisciplineAnalytics
+            user={user}
             isBn={isBn}
-            onSelectDate={(d) => {
-              setSelectedDate(d);
-              setActiveTab("schedule");
+            onGoToDiscipline={(tab) => {
+              if (tab) setActiveTab(tab as any);
             }}
           />
         )}
