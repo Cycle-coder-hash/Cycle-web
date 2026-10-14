@@ -38,6 +38,8 @@ export default function Settings() {
   const {
     timezone,
     setTimezone,
+    isAutoTimezone,
+    deviceTimezone,
     currency,
     setCurrency,
     currentCurrency,
@@ -852,6 +854,8 @@ export default function Settings() {
               allTimezones={allTimezones}
               timezone={timezone}
               setTimezone={setTimezone}
+              isAutoTimezone={isAutoTimezone}
+              deviceTimezone={deviceTimezone}
               allCurrencies={allCurrencies}
               currency={currency}
               setCurrency={setCurrency}

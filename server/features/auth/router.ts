@@ -328,11 +328,21 @@ export const authRouter = router({
       z.object({
         theme: z.enum(["dark", "light"]).optional(),
         language: language.optional(),
-        timezone: z.string().optional(),
+        timezone: z.string().nullable().optional(),
         currency: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
+      if (input.timezone && input.timezone !== "auto") {
+        try {
+          Intl.DateTimeFormat(undefined, { timeZone: input.timezone });
+        } catch {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invalid IANA timezone name",
+          });
+        }
+      }
       const userKey = ctx.user.openId || ctx.user.id;
       const updated = await saveUserPreferences(userKey, input);
       return { success: true, preferences: updated };

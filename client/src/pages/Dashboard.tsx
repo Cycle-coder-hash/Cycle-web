@@ -62,6 +62,7 @@ import { getDashboardRoadmapStages, DashboardRoadmapStage } from "@/data/roadmap
 import { DailyDisciplineMaster } from "@/components/discipline/DailyDisciplineMaster";
 import { DailyDisciplineAnalytics } from "@/features/discipline";
 import { PositionSizeCalculator } from "@/components/calculator/PositionSizeCalculator";
+import { MarketSessionsPage } from "@/features/market-sessions";
 import { uploadImage } from "@/lib/mediaUpload";
 import { CourseTelegramModal } from "@/components/CourseTelegramModal";
 import { NewUserOnboardingModal } from "@/components/NewUserOnboardingModal";
@@ -81,13 +82,14 @@ export default function Dashboard() {
 
   // Active Tab
   const [tab, setTab] = useState<
-    "overview" | "roadmap" | "library" | "journal" | "notebook" | "discipline" | "discipline-analytics" | "calculator" | "orders" | "support"
+    "overview" | "roadmap" | "library" | "journal" | "notebook" | "discipline" | "discipline-analytics" | "calculator" | "market-sessions" | "orders" | "support"
   >(() => {
     if (typeof window !== "undefined") {
       if (window.location.pathname === "/notebook") return "notebook";
       if (window.location.pathname === "/discipline") return "discipline";
       if (window.location.pathname === "/discipline-analytics") return "discipline-analytics";
       if (window.location.pathname === "/calculator") return "calculator";
+      if (window.location.pathname === "/dashboard/market-sessions" || window.location.pathname === "/market-sessions") return "market-sessions";
       const params = new URLSearchParams(window.location.search);
       const tabParam = params.get("tab");
       if (
@@ -95,6 +97,7 @@ export default function Dashboard() {
         tabParam === "discipline" ||
         tabParam === "discipline-analytics" ||
         tabParam === "calculator" ||
+        tabParam === "market-sessions" ||
         tabParam === "roadmap" ||
         tabParam === "library" ||
         tabParam === "journal" ||
@@ -167,6 +170,10 @@ export default function Dashboard() {
         setTab("calculator");
         return;
       }
+      if (window.location.pathname === "/dashboard/market-sessions" || window.location.pathname === "/market-sessions") {
+        setTab("market-sessions");
+        return;
+      }
       const params = new URLSearchParams(window.location.search);
       const tabParam = params.get("tab");
       if (
@@ -174,6 +181,7 @@ export default function Dashboard() {
         tabParam === "discipline" ||
         tabParam === "discipline-analytics" ||
         tabParam === "calculator" ||
+        tabParam === "market-sessions" ||
         tabParam === "roadmap" ||
         tabParam === "library" ||
         tabParam === "journal" ||
@@ -193,7 +201,13 @@ export default function Dashboard() {
     if (typeof window === "undefined") return;
     const path = window.location.pathname;
     // Preserve dedicated subroute URLs so they are not overwritten to /dashboard
-    if (path === "/notebook" || path === "/discipline" || path === "/calculator") {
+    if (
+      path === "/notebook" ||
+      path === "/discipline" ||
+      path === "/calculator" ||
+      path === "/dashboard/market-sessions" ||
+      path === "/market-sessions"
+    ) {
       return;
     }
     const url = new URL(window.location.href);
@@ -976,7 +990,7 @@ export default function Dashboard() {
   }
 
   type NavItem = {
-    id: "overview" | "roadmap" | "library" | "journal" | "notebook" | "backtest" | "discipline" | "calculator" | "orders" | "support";
+    id: "overview" | "roadmap" | "library" | "journal" | "notebook" | "backtest" | "discipline" | "calculator" | "market-sessions" | "orders" | "support";
     labelEn: string;
     labelBn: string;
     labelUr: string;
@@ -994,6 +1008,7 @@ export default function Dashboard() {
     { id: "backtest", labelEn: "Free Backtest", labelBn: "ফ্রি ব্যাকটেস্ট", labelUr: "فری بیک ٹیسٹ", icon: RotateCcw, externalHref: "https://fxreplay.com/" },
     { id: "discipline", labelEn: t("dashboard.tabDiscipline"), labelBn: "ডেইলি রুটিন", labelUr: "روزانہ کا معمول", icon: ClipboardCheck },
     { id: "calculator", labelEn: "Position Size Calculator", labelBn: "পজিশন সাইজ ক্যালকুলেটর", labelUr: "پوزیشن سائز کیلکولیٹر", icon: Calculator },
+    { id: "market-sessions", labelEn: "Market Sessions", labelBn: "মার্কেট সেশন", labelUr: "مارکیٹ سیشنز", icon: Clock },
     {
       id: "orders",
       labelEn: t("dashboard.tabOrders"),
@@ -1531,6 +1546,13 @@ export default function Dashboard() {
           {/* ========================================================================= */}
           {tab === "calculator" && (
             <PositionSizeCalculator />
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB: MARKET SESSIONS */}
+          {/* ========================================================================= */}
+          {tab === "market-sessions" && (
+            <MarketSessionsPage />
           )}
 
           {/* ========================================================================= */}

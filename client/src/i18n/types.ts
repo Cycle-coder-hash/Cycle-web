@@ -214,6 +214,7 @@ export interface TranslationSchema {
     tabDiscipline: string;
     tabOrders: string;
     tabSupport: string;
+    tabMarketSessions: string;
     totalPnl: string;
     winRate: string;
     bestSetup: string;

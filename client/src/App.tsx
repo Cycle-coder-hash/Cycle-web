@@ -48,6 +48,8 @@ function Router() {
         <Route path="/notebook" component={Dashboard} />
         <Route path="/discipline" component={Dashboard} />
         <Route path="/calculator" component={Dashboard} />
+        <Route path="/dashboard/market-sessions" component={Dashboard} />
+        <Route path="/market-sessions" component={Dashboard} />
         <Route path="/leaderboard" component={Leaderboard} />
         <Route path="/settings" component={Settings} />
         <Route path="/checkout" component={Checkout} />

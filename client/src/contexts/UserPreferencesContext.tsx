@@ -45,7 +45,10 @@ export const SUPPORTED_TIMEZONES: TimezoneOption[] = [
 
 interface UserPreferencesContextType {
   timezone: string;
-  setTimezone: (tz: string) => Promise<void>;
+  setTimezone: (tz: string | null) => Promise<void>;
+  manualTimezone: string | null;
+  isAutoTimezone: boolean;
+  deviceTimezone: string;
   currency: string;
   setCurrency: (cur: string) => Promise<void>;
   currentCurrency: CurrencyConfig;
@@ -60,17 +63,28 @@ interface UserPreferencesContextType {
 
 const UserPreferencesContext = createContext<UserPreferencesContextType | undefined>(undefined);
 
-const DEFAULT_TIMEZONE = "Asia/Dhaka";
 const DEFAULT_CURRENCY = "BDT";
 
 export function UserPreferencesProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const utils = trpc.useUtils();
 
-  const [timezone, setTimezoneState] = useState<string>(() => {
-    if (typeof window === "undefined") return DEFAULT_TIMEZONE;
-    return localStorage.getItem("cycle_user_timezone") || DEFAULT_TIMEZONE;
+  const deviceTimezone = useMemo(() => {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+    } catch {
+      return "UTC";
+    }
+  }, []);
+
+  const [manualTimezone, setManualTimezoneState] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    const stored = localStorage.getItem("cycle_user_timezone");
+    return stored && stored !== "auto" ? stored : null;
   });
+
+  const timezone = manualTimezone || deviceTimezone;
+  const isAutoTimezone = !manualTimezone;
 
   const [currency, setCurrencyState] = useState<string>(() => {
     if (typeof window === "undefined") return DEFAULT_CURRENCY;
@@ -90,9 +104,12 @@ export function UserPreferencesProvider({ children }: { children: React.ReactNod
     if (settingsQuery.data?.preferences) {
       const serverTz = settingsQuery.data.preferences.timezone;
       const serverCur = settingsQuery.data.preferences.currency;
-      if (serverTz && SUPPORTED_TIMEZONES.some((t) => t.value === serverTz)) {
-        setTimezoneState(serverTz);
+      if (serverTz && serverTz !== "auto") {
+        setManualTimezoneState(serverTz);
         localStorage.setItem("cycle_user_timezone", serverTz);
+      } else if (serverTz === null || serverTz === "auto") {
+        setManualTimezoneState(null);
+        localStorage.removeItem("cycle_user_timezone");
       }
       if (serverCur && SUPPORTED_CURRENCIES.some((c) => c.code === serverCur)) {
         setCurrencyState(serverCur);
@@ -102,12 +119,19 @@ export function UserPreferencesProvider({ children }: { children: React.ReactNod
   }, [settingsQuery.data]);
 
   const setTimezone = useCallback(
-    async (tz: string) => {
-      setTimezoneState(tz);
-      localStorage.setItem("cycle_user_timezone", tz);
+    async (tz: string | null) => {
+      const isAuto = tz === null || tz === "auto" || tz === "";
+      if (isAuto) {
+        setManualTimezoneState(null);
+        localStorage.removeItem("cycle_user_timezone");
+      } else {
+        setManualTimezoneState(tz);
+        localStorage.setItem("cycle_user_timezone", tz);
+      }
+
       if (user) {
         try {
-          await updatePreferencesMutation.mutateAsync({ timezone: tz });
+          await updatePreferencesMutation.mutateAsync({ timezone: isAuto ? null : tz });
           await utils.auth.getSettings.invalidate();
         } catch (e) {
           console.warn("[Failed to sync timezone with backend]:", e);
@@ -140,11 +164,34 @@ export function UserPreferencesProvider({ children }: { children: React.ReactNod
     );
   }, [currency]);
 
-  const currentTimezone = useMemo(() => {
-    return (
-      SUPPORTED_TIMEZONES.find((t) => t.value === timezone) ||
-      SUPPORTED_TIMEZONES.find((t) => t.value === DEFAULT_TIMEZONE)!
-    );
+  const currentTimezone = useMemo<TimezoneOption>(() => {
+    const predefined = SUPPORTED_TIMEZONES.find((t) => t.value === timezone);
+
+    let dynamicOffset = "+00:00";
+    try {
+      const parts = new Intl.DateTimeFormat("en-US", { timeZone: timezone, timeZoneName: "longOffset" }).formatToParts(new Date());
+      const longTz = parts.find((p) => p.type === "timeZoneName")?.value || "";
+      const match = longTz.match(/GMT([+-]\d{2}:\d{2})/);
+      if (match) {
+        dynamicOffset = match[1];
+      }
+    } catch {}
+
+    if (predefined) {
+      return {
+        ...predefined,
+        offset: dynamicOffset || predefined.offset,
+      };
+    }
+
+    const city = timezone.split("/").pop()?.replace(/_/g, " ") || timezone;
+    return {
+      value: timezone,
+      label: `${city} (UTC${dynamicOffset})`,
+      city,
+      offset: dynamicOffset,
+      market: "Financial Market",
+    };
   }, [timezone]);
 
   const formatTime = useCallback(
@@ -251,6 +298,9 @@ export function UserPreferencesProvider({ children }: { children: React.ReactNod
       value={{
         timezone,
         setTimezone,
+        manualTimezone,
+        isAutoTimezone,
+        deviceTimezone,
         currency,
         setCurrency,
         currentCurrency,

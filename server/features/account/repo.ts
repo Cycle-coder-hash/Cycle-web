@@ -8,26 +8,37 @@ export function normalizeUserLanguage(lang?: string | null): "en" | "bn" | "ur" 
 export interface UserPreferences {
   theme: "dark" | "light";
   language: "en" | "bn" | "ur";
-  timezone: string;
+  timezone: string | null;
   currency: string;
 }
 
 export const DEFAULT_USER_PREFERENCES: UserPreferences = {
   theme: "dark",
   language: "en",
-  timezone: "Asia/Dhaka",
+  timezone: null,
   currency: "BDT",
 };
+
+export function isValidIanaTimezone(tz?: string | null): tz is string {
+  if (!tz || typeof tz !== "string") return false;
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone: tz });
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export async function getUserPreferences(userKey: string | number): Promise<UserPreferences> {
   try {
     const raw = await getSetting(`user_preferences_${userKey}`);
     if (raw) {
       const parsed = JSON.parse(raw);
+      const rawTz = parsed.timezone;
       return {
         theme: parsed.theme === "light" ? "light" : "dark",
         language: normalizeUserLanguage(parsed.language),
-        timezone: parsed.timezone || "Asia/Dhaka",
+        timezone: typeof rawTz === "string" && rawTz !== "auto" && isValidIanaTimezone(rawTz) ? rawTz : null,
         currency: parsed.currency || "BDT",
       };
     }
@@ -39,9 +50,20 @@ export async function getUserPreferences(userKey: string | number): Promise<User
 
 export async function saveUserPreferences(userKey: string | number, prefs: Partial<UserPreferences>): Promise<UserPreferences> {
   const current = await getUserPreferences(userKey);
+  let nextTz: string | null = current.timezone;
+  if ("timezone" in prefs) {
+    const candidate = prefs.timezone;
+    if (candidate === null || candidate === "auto" || candidate === "") {
+      nextTz = null;
+    } else if (typeof candidate === "string" && isValidIanaTimezone(candidate)) {
+      nextTz = candidate;
+    }
+  }
+
   const updated: UserPreferences = {
     ...current,
     ...prefs,
+    timezone: nextTz,
     language: prefs.language ? normalizeUserLanguage(prefs.language) : current.language,
     theme: prefs.theme ? (prefs.theme === "light" ? "light" : "dark") : current.theme,
   };

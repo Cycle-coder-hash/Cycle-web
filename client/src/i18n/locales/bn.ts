@@ -99,6 +99,7 @@ export const bn: TranslationSchema = {
     tabDiscipline: "ডেইলি রুটিন",
     tabOrders: "অর্ডার ও ইনভয়েস",
     tabSupport: "ডিরেক্ট সাপোর্ট",
+    tabMarketSessions: "মার্কেট সেশন",
     totalPnl: "মোট রিয়ালাইজড P&L",
     winRate: "উইন রেট",
     bestSetup: "সেরা সেটআপ",

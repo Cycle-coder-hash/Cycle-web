@@ -99,6 +99,7 @@ export const en: TranslationSchema = {
     tabDiscipline: "Daily Routine",
     tabOrders: "Orders & Invoices",
     tabSupport: "Direct Support",
+    tabMarketSessions: "Market Sessions",
     totalPnl: "Net Realized P&L",
     winRate: "Win Rate",
     bestSetup: "Primary Setup",

@@ -99,6 +99,7 @@ export const ur: TranslationSchema = {
     tabDiscipline: "روزمرہ معمول",
     tabOrders: "آرڈرز",
     tabSupport: "براہ راست سپورٹ",
+    tabMarketSessions: "مارکیٹ سیشنز",
     totalPnl: "کل منافع / نقصان (P&L)",
     winRate: "کامیابی کا تناسب",
     bestSetup: "بہترین سیٹ اپ",

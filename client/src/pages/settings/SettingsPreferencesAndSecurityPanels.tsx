@@ -43,7 +43,9 @@ export interface SettingsPreferencesAndSecurityPanelsProps {
   liveClock: string;
   allTimezones: TimezoneOption[];
   timezone: string;
-  setTimezone: (tz: string) => Promise<void> | void;
+  setTimezone: (tz: string | null) => Promise<void> | void;
+  isAutoTimezone?: boolean;
+  deviceTimezone?: string;
   allCurrencies: CurrencyConfig[];
   currency: string;
   setCurrency: (cur: string) => Promise<void> | void;
@@ -80,6 +82,8 @@ export function SettingsPreferencesAndSecurityPanels({
   allTimezones,
   timezone,
   setTimezone,
+  isAutoTimezone,
+  deviceTimezone,
   allCurrencies,
   currency,
   setCurrency,
@@ -334,8 +338,47 @@ export function SettingsPreferencesAndSecurityPanels({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Auto (Device) Option */}
+              <div
+                onClick={() => {
+                  setTimezone(null);
+                  toast.success(
+                    selectText({
+                      en: `Timezone set to Auto (Device: ${deviceTimezone || "System"})`,
+                      bn: `টাইমজোন অটো ডিভাইসে সেট হয়েছে (${deviceTimezone || ""})`,
+                      ur: `ٹائم زون خودکار ڈیوائস پر سیٹ ہو گیا (${deviceTimezone || ""})`,
+                    })
+                  );
+                }}
+                className={`cursor-pointer rounded-xl border p-3.5 transition-all ${
+                  isAutoTimezone
+                    ? "border-sky-500 bg-sky-500/10 shadow-xs"
+                    : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <span>{selectText({ en: "Auto (device)", bn: "অটো (ডিভাইস)", ur: "خودکار (ڈیوائس)" })}</span>
+                    {isAutoTimezone && (
+                      <span className="text-[9px] bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-extrabold px-1.5 py-0.5 rounded">
+                        {selectText({ en: "ACTIVE", bn: "সক্রিয়", ur: "فعال" })}
+                      </span>
+                    )}
+                  </span>
+                  <span dir="ltr" className="font-mono text-[10px] font-bold text-sky-600 dark:text-sky-400 bg-sky-500/10 dark:bg-sky-500/20 px-1.5 py-0.5 rounded">
+                    AUTO
+                  </span>
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate">
+                  {deviceTimezone || "Detected Device Zone"}
+                </div>
+                <div className="text-[10px] font-mono text-sky-600 dark:text-sky-400 mt-1.5 font-semibold">
+                  {selectText({ en: "Re-reads on every page load", bn: "প্রতি পেজ লোডে অটো রি-রিড", ur: "ہر صفحہ لوڈ پر خودکار اپ ڈیٹ" })}
+                </div>
+              </div>
+
               {allTimezones.map((tz) => {
-                const isSelected = timezone === tz.value;
+                const isSelected = !isAutoTimezone && timezone === tz.value;
                 return (
                   <div
                     key={tz.value}

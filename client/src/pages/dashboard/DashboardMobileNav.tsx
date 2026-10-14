@@ -4,6 +4,7 @@ import {
   BookOpen,
   Calculator,
   ClipboardCheck,
+  Clock,
   Layers,
   LayoutDashboard,
   LogOut,
@@ -33,6 +34,7 @@ export type DashboardTab =
   | "discipline"
   | "discipline-analytics"
   | "calculator"
+  | "market-sessions"
   | "orders"
   | "support";
 
@@ -351,6 +353,28 @@ export function DashboardMobileNav({
                 <div className="min-w-0">
                   <div className="truncate font-extrabold">{selectText({ en: "Calculator", bn: "ক্যালকুলেটর", ur: "کیلکولیٹر" })}</div>
                   <div className="text-[10px] text-slate-400 font-normal">Risk & Sizing</div>
+                </div>
+              </button>
+
+              {/* Market Sessions */}
+              <button
+                type="button"
+                onClick={() => {
+                  onSelectTab("market-sessions");
+                  onCloseDrawer();
+                }}
+                className={`flex items-center gap-3 p-3 rounded-2xl border text-left text-xs font-bold transition-all cursor-pointer ${
+                  tab === "market-sessions"
+                    ? "border-sky-500/50 bg-sky-500/15 text-sky-400"
+                    : "border-slate-800/80 bg-slate-900/70 text-slate-300 hover:bg-slate-800"
+                }`}
+              >
+                <div className="size-9 rounded-xl bg-cyan-500/10 flex items-center justify-center shrink-0 text-cyan-400">
+                  <Clock size={18} />
+                </div>
+                <div className="min-w-0">
+                  <div className="truncate font-extrabold">{selectText({ en: "Market Sessions", bn: "মার্কেট সেশন", ur: "مارکیٹ سیشنز" })}</div>
+                  <div className="text-[10px] text-slate-400 font-normal">Forex Clocks</div>
                 </div>
               </button>
 
