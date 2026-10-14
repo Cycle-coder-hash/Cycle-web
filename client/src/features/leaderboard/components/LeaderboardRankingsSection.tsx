@@ -151,7 +151,12 @@ export function LeaderboardRankingsSection({
                         <span>{trader.name}</span>
                         <CheckCircle2 size={16} className="text-sky-400 shrink-0" />
                       </h3>
-                      <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400" dir="ltr">
+                      {trader.bio && (
+                        <p className="text-xs text-slate-600 dark:text-slate-300 italic line-clamp-2 mt-1 px-2 leading-relaxed" title={trader.bio}>
+                          "{trader.bio}"
+                        </p>
+                      )}
+                      <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mt-0.5" dir="ltr">
                         {trader.bestPair}
                       </div>
                     </div>
@@ -405,6 +410,11 @@ export function LeaderboardRankingsSection({
                             <span>{t.name}</span>
                             <CheckCircle2 size={13} className="text-sky-400" />
                           </div>
+                          {t.bio && (
+                            <div className="text-[11px] text-slate-500 dark:text-slate-400 italic line-clamp-1 max-w-[200px] sm:max-w-[280px]" title={t.bio}>
+                              "{t.bio}"
+                            </div>
+                          )}
                           <div className="text-[10px] text-slate-400" dir="ltr">
                             {t.bestPair}
                           </div>
@@ -512,6 +522,11 @@ export function LeaderboardRankingsSection({
                         <span>{t.name}</span>
                         <CheckCircle2 size={12} className="text-sky-400" />
                       </div>
+                      {t.bio && (
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400 italic line-clamp-1" title={t.bio}>
+                          "{t.bio}"
+                        </div>
+                      )}
                       <div className="text-[10px] text-slate-400" dir="ltr">{t.bestPair}</div>
                     </div>
                   </div>
@@ -638,7 +653,12 @@ export function TraderPerformanceModal({
               <span>{selectedTrader.name}</span>
               <CheckCircle2 size={18} className="text-sky-400 shrink-0" />
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            {selectedTrader.bio && (
+              <p className="text-xs text-slate-600 dark:text-slate-300 italic mt-1 leading-relaxed" title={selectedTrader.bio}>
+                "{selectedTrader.bio}"
+              </p>
+            )}
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               <span dir="ltr">{selectedTrader.bestPair}</span> ·{" "}
               {selectText({
                 en: "Verified Real Trader",

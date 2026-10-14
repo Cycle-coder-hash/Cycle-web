@@ -146,6 +146,17 @@ export interface TranslationSchema {
     hypeHeader: string;
     realityHeader: string;
   };
+  brainEvolution?: {
+    beginner: string;
+    professional: string;
+    card1: string;
+    card2: string;
+    card3: string;
+    card4: string;
+    card5: string;
+    card6: string;
+    card7: string;
+  };
   roadmap: {
     eyebrow: string;
     title1: string;

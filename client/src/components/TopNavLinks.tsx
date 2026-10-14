@@ -85,7 +85,7 @@ export function TopNavLinks({
 
   // Shared pill styling classes
   const desktopPillBase =
-    "relative inline-flex items-center gap-1.5 px-3.5 py-1.5 text-[14px] font-semibold tracking-[-0.01em] rounded-full transition-all duration-200 ease-out select-none border";
+    "relative inline-flex items-center gap-1.5 px-3 lg:px-3.5 py-1.5 text-[13px] lg:text-[14px] font-semibold tracking-[-0.01em] rounded-full transition-all duration-200 ease-out select-none border shrink-0";
   const mobilePillBase =
     "relative flex items-center gap-2.5 px-4 py-2.5 text-[15px] font-semibold tracking-[-0.01em] rounded-xl transition-all duration-200 ease-out border";
 

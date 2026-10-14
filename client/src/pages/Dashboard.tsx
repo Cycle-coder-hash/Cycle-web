@@ -74,7 +74,7 @@ import { DashboardSupportTab } from "./dashboard/DashboardSupportTab";
 import { DashboardMobileNav } from "./dashboard/DashboardMobileNav";
 import { DashboardRoadmapStageModal } from "./dashboard/DashboardRoadmapStageModal";
 import { DashboardReceiptModal, type DashboardInvoiceOrder } from "./dashboard/DashboardReceiptModal";
-import { ClaimFreePlanModal } from "@/features/subscription";
+import { ClaimFreePlanModal, SubscriptionPlanBadge } from "@/features/subscription";
 
 export default function Dashboard() {
   const { user, loading, logout } = useAuth();
@@ -462,15 +462,22 @@ export default function Dashboard() {
   const [profilePhoto, setProfilePhoto] = useState<string | null>(() => {
     if (!user) return null;
     const userKey = user.openId || user.email || String(user.id);
-    return (user as any)?.avatar || (typeof window !== "undefined" ? localStorage.getItem(`cycle_user_avatar_${userKey}`) : null) || null;
+    if ((user as any)?.avatar !== undefined) {
+      return (user as any).avatar;
+    }
+    return typeof window !== "undefined" ? localStorage.getItem(`cycle_user_avatar_${userKey}`) : null;
   });
 
   // Keep profile photo in sync if user changes or session refreshes
   useEffect(() => {
     if (user) {
       const userKey = user.openId || user.email || String(user.id);
-      const stored = (user as any)?.avatar || localStorage.getItem(`cycle_user_avatar_${userKey}`);
-      setProfilePhoto(stored || null);
+      if ((user as any)?.avatar !== undefined) {
+        setProfilePhoto((user as any).avatar);
+      } else {
+        const stored = typeof window !== "undefined" ? localStorage.getItem(`cycle_user_avatar_${userKey}`) : null;
+        setProfilePhoto(stored || null);
+      }
     } else {
       setProfilePhoto(null);
     }
@@ -491,14 +498,23 @@ export default function Dashboard() {
   const [isSavingName, setIsSavingName] = useState(false);
   const [nameError, setNameError] = useState("");
 
-  // Keep display name in sync if user changes or session refreshes
+  // Student Custom Bio State
+  const [bio, setBio] = useState<string | null>(() => {
+    if (!user) return null;
+    const userKey = user.openId || user.email || String(user.id);
+    return (user as any)?.bio || (typeof window !== "undefined" ? localStorage.getItem(`cycle_user_bio_${userKey}`) : null) || null;
+  });
+
+  // Keep display name and bio in sync if user changes or session refreshes
   useEffect(() => {
     if (user) {
       const userKey = user.openId || user.email || String(user.id);
-      const stored = localStorage.getItem(`cycle_user_custom_name_${userKey}`);
-      setDisplayName(stored || user.name || "Trader");
+      const storedName = localStorage.getItem(`cycle_user_custom_name_${userKey}`);
+      setDisplayName(storedName || user.name || "Trader");
+      const storedBio = localStorage.getItem(`cycle_user_bio_${userKey}`);
+      setBio(storedBio || (user as any)?.bio || null);
     }
-  }, [user?.name, user?.email, user?.openId, user?.id]);
+  }, [user?.name, user?.email, user?.openId, user?.id, (user as any)?.bio]);
 
   // Synchronize when profile is updated from Settings or other views in real-time
   useEffect(() => {
@@ -509,6 +525,7 @@ export default function Dashboard() {
       if (detail.userId && detail.userId !== currentKey) return;
       if (detail.name !== undefined) setDisplayName(detail.name);
       if (detail.avatar !== undefined) setProfilePhoto(detail.avatar);
+      if (detail.bio !== undefined) setBio(detail.bio || null);
     };
     window.addEventListener("cycle_user_profile_updated", handleProfileUpdate);
     return () => window.removeEventListener("cycle_user_profile_updated", handleProfileUpdate);
@@ -683,7 +700,7 @@ export default function Dashboard() {
         );
 
         // Upload to ImgBB (with Free CDN fallback)
-        uploadImage(dataUrl, `avatar_${userKey}.webp`)
+        uploadImage(dataUrl, `avatar_${userKey}_${Date.now()}.webp`)
           .then((cloudUrl) => {
             setProfilePhoto(cloudUrl);
 
@@ -737,7 +754,7 @@ export default function Dashboard() {
               selectText({
                 en: "Failed to upload photo to cloud.",
                 bn: "ক্লাউডে ছবি আপলোড ব্যর্থ হয়েছে।",
-                ur: "کلاؤڈ پر تصویر اپ لوڈ کرنے میں ناکامی۔",
+                ur: "کلاؤڈ پر تصویر اپ لوڈ کرنے میں ناکامی।",
               }),
               { id: toastId }
             );
@@ -749,6 +766,61 @@ export default function Dashboard() {
 
     // Reset input so re-selecting same file triggers change
     e.target.value = "";
+  };
+
+  const handleRemovePhoto = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!profilePhoto || !user) return;
+    const userKey = user.openId || user.email || String(user.id);
+    const toastId = toast.loading(selectText({
+      en: "Removing photo...",
+      bn: "ছবি সরানো হচ্ছে...",
+      ur: "تصویر ہٹائی جا رہی ہے...",
+    }));
+
+    try {
+      if (userKey) {
+        localStorage.removeItem(`cycle_user_avatar_${userKey}`);
+        const cached = localStorage.getItem("manus-runtime-user-info");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed) {
+            parsed.avatar = null;
+            localStorage.setItem("manus-runtime-user-info", JSON.stringify(parsed));
+          }
+        }
+      }
+      setProfilePhoto(null);
+
+      await updateProfileMutation.mutateAsync({ avatar: null });
+
+      try {
+        await supabase.auth.updateUser({
+          data: { avatar: null, avatar_url: null },
+        });
+      } catch {}
+
+      await trpcUtils.auth.me.invalidate();
+      await trpcUtils.leaderboard.rankings.invalidate();
+
+      window.dispatchEvent(
+        new CustomEvent("cycle_user_profile_updated", {
+          detail: { userId: userKey, avatar: null },
+        })
+      );
+
+      toast.success(selectText({
+        en: "Profile photo removed",
+        bn: "প্রোফাইল ছবি সরানো হয়েছে",
+        ur: "پروفائل تصویر ہٹا دی گئی",
+      }), { id: toastId });
+    } catch {
+      toast.error(selectText({
+        en: "Failed to remove photo",
+        bn: "ছবি সরাতে ব্যর্থ",
+        ur: "تصویر ہٹانے میں ناکامی",
+      }), { id: toastId });
+    }
   };
 
   useEffect(() => {
@@ -1125,6 +1197,18 @@ export default function Dashboard() {
                   </div>
                 </button>
 
+                {profilePhoto && (
+                  <button
+                    type="button"
+                    onClick={handleRemovePhoto}
+                    title={selectText({ en: "Remove photo", bn: "ছবি মুছুন", ur: "تصویر ہٹائیں" })}
+                    aria-label={selectText({ en: "Remove photo", bn: "ছবি মুছুন", ur: "تصویر ہٹائیں" })}
+                    className="absolute -top-1 -right-1 z-10 flex size-4 items-center justify-center rounded-full bg-rose-500 hover:bg-rose-600 text-white shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Trash2 size={10} />
+                  </button>
+                )}
+
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -1134,8 +1218,10 @@ export default function Dashboard() {
                 />
               </div>
               <div className="min-w-0 flex-1 overflow-hidden">
-                {!isEditingName ? (
-                  <div className="flex items-center gap-1.5 group/name">
+                <div className="flex items-center justify-between gap-1.5 mb-0.5">
+                  <div className="min-w-0 flex-1">
+                    {!isEditingName ? (
+                      <div className="flex items-center gap-1.5 group/name">
                     <span
                       className="truncate text-sm font-extrabold text-slate-900 dark:text-white hover:text-sky-500 dark:hover:text-sky-400 cursor-pointer transition-colors"
                       title={selectText({ en: "Click to edit your display name", bn: "কাস্টম নাম এডিট করতে ক্লিক করুন", ur: "ڈسپلے نام ایڈٹ کرنے کے لیے کلک کریں" })}
@@ -1210,6 +1296,19 @@ export default function Dashboard() {
                       <p className="text-[10px] text-rose-500 font-medium truncate">{nameError}</p>
                     )}
                   </form>
+                )}
+                  </div>
+                  {!isEditingName && (
+                    <SubscriptionPlanBadge plan={subUsage?.plan} />
+                  )}
+                </div>
+                {bio && (
+                  <p
+                    className="text-[11px] text-slate-500 dark:text-slate-400 italic line-clamp-2 my-0.5 leading-snug"
+                    title={bio}
+                  >
+                    "{bio}"
+                  </p>
                 )}
                 <div className="truncate text-[11px] text-slate-400">{user.email}</div>
               </div>

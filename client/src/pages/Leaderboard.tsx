@@ -514,8 +514,10 @@ export default function Leaderboard() {
             </div>
           </Link>
 
-          {/* Nav Links */}
-          <TopNavLinks isBn={isBn} />
+          {/* Nav Links: Balanced flex container */}
+          <div className="hidden md:flex flex-1 items-center justify-center px-2 lg:px-6">
+            <TopNavLinks isBn={isBn} />
+          </div>
 
           {/* Controls */}
           <div className="flex items-center gap-3">

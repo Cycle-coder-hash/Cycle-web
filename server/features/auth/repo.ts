@@ -27,18 +27,35 @@ export interface TraderProfileData {
   name: string;
   avatar: string | null;
   username?: string | null;
+  bio?: string | null;
   phone?: string | null;
   role?: string;
   language?: "en" | "bn" | "ur";
+  isCustomName?: boolean;
+  isCustomAvatar?: boolean;
   updatedAt?: string;
 }
 
+export const inMemoryTraderProfiles: Map<string, TraderProfileData> = new Map();
+
+export function resetInMemoryUsersForTests() {
+  inMemoryUsers.clear();
+  inMemoryTraderProfiles.clear();
+  inMemoryTokens.length = 0;
+}
+
 export async function getTraderProfile(openIdOrUserId: string | number): Promise<TraderProfileData | null> {
+  if (!openIdOrUserId) return null;
+  const key = `trader_profile_${openIdOrUserId}`;
+  if (inMemoryTraderProfiles.has(key)) {
+    return inMemoryTraderProfiles.get(key)!;
+  }
   try {
-    const key = `trader_profile_${openIdOrUserId}`;
     const raw = await getSetting(key);
     if (raw) {
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      inMemoryTraderProfiles.set(key, parsed);
+      return parsed;
     }
   } catch (err) {
     console.warn("[getTraderProfile error]:", err);
@@ -48,8 +65,14 @@ export async function getTraderProfile(openIdOrUserId: string | number): Promise
 
 export async function saveTraderProfile(profile: TraderProfileData): Promise<void> {
   try {
-    const key = `trader_profile_${profile.openId || profile.userId}`;
-    await setSetting(key, JSON.stringify(profile));
+    if (profile.openId) {
+      inMemoryTraderProfiles.set(`trader_profile_${profile.openId}`, profile);
+      await setSetting(`trader_profile_${profile.openId}`, JSON.stringify(profile));
+    }
+    if (profile.userId) {
+      inMemoryTraderProfiles.set(`trader_profile_${profile.userId}`, profile);
+      await setSetting(`trader_profile_${profile.userId}`, JSON.stringify(profile));
+    }
 
     const registryKey = "global_trader_registry";
     const rawRegistry = await getSetting(registryKey);
@@ -69,7 +92,7 @@ export async function saveTraderProfile(profile: TraderProfileData): Promise<voi
 export async function updateUserProfile(
   userId: number,
   openId: string | undefined,
-  updates: { name?: string; phone?: string | null; language?: "en" | "bn" | "ur"; avatar?: string | null; username?: string | null }
+  updates: { name?: string; phone?: string | null; language?: "en" | "bn" | "ur"; avatar?: string | null; username?: string | null; bio?: string | null }
 ): Promise<void> {
   const resolvedOpenId = openId || (userId ? `usr_${userId}` : "");
 
@@ -81,29 +104,37 @@ export async function updateUserProfile(
       if (updates.language) existing.language = updates.language;
       if (updates.avatar !== undefined) existing.avatar = updates.avatar;
       if (updates.username !== undefined) existing.username = updates.username;
+      if (updates.bio !== undefined) (existing as any).bio = updates.bio;
       existing.updatedAt = new Date();
     }
   }
   for (const u of Array.from(inMemoryUsers.values())) {
-    if (u.id === userId) {
+    if (u.id === userId || (resolvedOpenId && u.openId === resolvedOpenId)) {
       if (updates.name) u.name = updates.name;
       if (updates.phone !== undefined) u.phone = updates.phone;
       if (updates.language) u.language = updates.language;
       if (updates.avatar !== undefined) u.avatar = updates.avatar;
       if (updates.username !== undefined) u.username = updates.username;
+      if (updates.bio !== undefined) (u as any).bio = updates.bio;
       u.updatedAt = new Date();
     }
   }
 
-  const existingProf = resolvedOpenId ? await getTraderProfile(resolvedOpenId) : null;
+  const existingProf = (resolvedOpenId ? await getTraderProfile(resolvedOpenId) : null) || (userId ? await getTraderProfile(userId) : null);
+  const isCustomName = updates.name !== undefined ? true : (existingProf?.isCustomName ?? false);
+  const isCustomAvatar = updates.avatar !== undefined ? true : (existingProf?.isCustomAvatar ?? false);
+
   const newProfile: TraderProfileData = {
     userId,
     openId: resolvedOpenId,
     name: updates.name || existingProf?.name || "Trader",
-    avatar: updates.avatar !== undefined ? updates.avatar : (existingProf?.avatar || null),
+    avatar: updates.avatar !== undefined ? updates.avatar : (existingProf?.avatar ?? null),
     phone: updates.phone !== undefined ? updates.phone : (existingProf?.phone || null),
     language: updates.language || existingProf?.language || "en",
     username: updates.username !== undefined ? updates.username : (existingProf?.username || null),
+    bio: updates.bio !== undefined ? updates.bio : (existingProf?.bio || null),
+    isCustomName,
+    isCustomAvatar,
     updatedAt: new Date().toISOString(),
   };
   await saveTraderProfile(newProfile);
@@ -115,6 +146,7 @@ export async function updateUserProfile(
       if (updates.phone !== undefined) supaUpdate.phone = updates.phone;
       if (updates.language) supaUpdate.language = updates.language;
       if (updates.avatar !== undefined) supaUpdate.avatar = updates.avatar;
+      if (updates.bio !== undefined) supaUpdate.bio = updates.bio;
       await supabaseServer.from("users").update(supaUpdate).eq("openId", resolvedOpenId);
     }
   } catch (supaErr) {
@@ -150,20 +182,38 @@ export async function upsertUser(user: InsertUser): Promise<void> {
 
   const numericId = user.id || inMemoryUsers.get(user.openId)?.id || deriveNumericIdFromOpenId(user.openId);
 
-  const existingProf = await getTraderProfile(user.openId);
-  const resolvedAvatar = user.avatar !== undefined ? user.avatar : (existingProf?.avatar || null);
-  const resolvedName = user.name || existingProf?.name || "Trader";
+  const existingProf = (await getTraderProfile(user.openId)) || (numericId ? await getTraderProfile(numericId) : null);
+  const existingUser = inMemoryUsers.get(user.openId);
+
+  // If user has customized their name, do not let Google OAuth / external provider overwrite it
+  const hasCustomName = existingProf?.isCustomName || (existingProf?.name && existingProf.name !== "Trader" && existingProf.name !== user.name);
+  const resolvedName = (hasCustomName ? existingProf?.name : null) || user.name || existingProf?.name || existingUser?.name || "Trader";
+
+  // If user has customized or removed their avatar, do not let Google OAuth / external provider overwrite it
+  let resolvedAvatar: string | null = null;
+  if (existingProf?.isCustomAvatar) {
+    resolvedAvatar = existingProf.avatar !== undefined ? existingProf.avatar : null;
+  } else if (existingProf?.avatar !== undefined && existingProf.avatar !== user.avatar) {
+    resolvedAvatar = existingProf.avatar;
+  } else {
+    resolvedAvatar = user.avatar !== undefined ? user.avatar : (existingProf?.avatar || existingUser?.avatar || null);
+  }
 
   const userRecord = {
     id: numericId,
     ...user,
     name: resolvedName,
     avatar: resolvedAvatar,
-    createdAt: inMemoryUsers.get(user.openId)?.createdAt || new Date(),
+    username: existingProf?.username || (existingUser as any)?.username || null,
+    bio: existingProf?.bio !== undefined ? existingProf.bio : ((existingUser as any)?.bio || null),
+    emailVerified: user.emailVerified ?? existingUser?.emailVerified ?? true,
+    accountStatus: (user as any).accountStatus || existingUser?.accountStatus || "active",
+    status: (user as any).status || existingUser?.status || "active",
+    createdAt: existingUser?.createdAt || new Date(),
     updatedAt: new Date(),
     lastSignedIn: user.lastSignedIn || new Date(),
-    role: user.role || (user.openId === ENV.ownerOpenId ? "admin" : "user"),
-    language: user.language || "en",
+    role: user.role || (user.openId === ENV.ownerOpenId ? "admin" : (existingUser?.role || "user")),
+    language: user.language || existingUser?.language || "en",
   };
 
   inMemoryUsers.set(user.openId, userRecord);
@@ -173,9 +223,13 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     openId: user.openId,
     name: resolvedName,
     avatar: resolvedAvatar,
+    username: userRecord.username,
+    bio: userRecord.bio,
     phone: user.phone || null,
     role: userRecord.role as string,
     language: userRecord.language as any,
+    isCustomName: existingProf?.isCustomName ?? false,
+    isCustomAvatar: existingProf?.isCustomAvatar ?? false,
     updatedAt: new Date().toISOString(),
   });
 
@@ -183,6 +237,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     const { data: supaUser } = await supabaseServer.from("users").upsert({
       openId: user.openId,
       name: resolvedName,
+      avatar: resolvedAvatar,
       email: user.email || null,
       phone: user.phone || null,
       passwordHash: user.passwordHash || null,
@@ -232,9 +287,11 @@ export async function getUserByOpenId(openId: string): Promise<User | undefined>
       const rows = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
       if (rows && rows[0]) {
         const user = rows[0];
-        const prof = await getTraderProfile(openId);
+        const prof = (await getTraderProfile(openId)) || (user.id ? await getTraderProfile(user.id) : null);
+        if (prof?.name) (user as any).name = prof.name;
         if (prof?.avatar !== undefined) (user as any).avatar = prof.avatar;
         if (prof?.username) (user as any).username = prof.username;
+        if (prof?.bio !== undefined) (user as any).bio = prof.bio;
         inMemoryUsers.set(openId, user);
         return user;
       }
@@ -246,7 +303,7 @@ export async function getUserByOpenId(openId: string): Promise<User | undefined>
   try {
     const { data, error } = await supabaseServer.from("users").select("*").eq("openId", openId).maybeSingle();
     if (data && !error) {
-      const prof = await getTraderProfile(openId);
+      const prof = (await getTraderProfile(openId)) || (data.id ? await getTraderProfile(data.id) : null);
       const builtUser: any = {
         id: data.id,
         openId: data.openId,
@@ -259,6 +316,7 @@ export async function getUserByOpenId(openId: string): Promise<User | undefined>
         language: data.language || "en",
         avatar: prof?.avatar !== undefined ? prof.avatar : (data.avatar || null),
         username: prof?.username || null,
+        bio: prof?.bio !== undefined ? prof.bio : ((data as any).bio || null),
         emailVerified: true,
         createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
         updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
@@ -273,9 +331,11 @@ export async function getUserByOpenId(openId: string): Promise<User | undefined>
 
   let user = inMemoryUsers.get(openId);
   if (user) {
-    const prof = await getTraderProfile(openId);
+    const prof = (await getTraderProfile(openId)) || (user.id ? await getTraderProfile(user.id) : null);
+    if (prof?.name) user.name = prof.name;
     if (prof?.avatar !== undefined) user.avatar = prof.avatar;
     if (prof?.username) user.username = prof.username;
+    if (prof?.bio !== undefined) (user as any).bio = prof.bio;
     return user;
   }
 
@@ -291,9 +351,11 @@ export async function getUserByEmail(email: string): Promise<User | undefined> {
       const rows = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
       if (rows && rows[0]) {
         const u = rows[0];
-        const prof = await getTraderProfile(u.openId);
+        const prof = (u.openId ? await getTraderProfile(u.openId) : null) || (u.id ? await getTraderProfile(u.id) : null);
+        if (prof?.name) (u as any).name = prof.name;
         if (prof?.avatar !== undefined) (u as any).avatar = prof.avatar;
         if (prof?.username) (u as any).username = prof.username;
+        if (prof?.bio !== undefined) (u as any).bio = prof.bio;
         inMemoryUsers.set(u.openId, u);
         return u;
       }
@@ -305,7 +367,7 @@ export async function getUserByEmail(email: string): Promise<User | undefined> {
   try {
     const { data, error } = await supabaseServer.from("users").select("*").eq("email", normalizedEmail).maybeSingle();
     if (data && !error) {
-      const prof = await getTraderProfile(data.openId);
+      const prof = (data.openId ? await getTraderProfile(data.openId) : null) || (data.id ? await getTraderProfile(data.id) : null);
       const builtUser: any = {
         id: data.id,
         openId: data.openId,
@@ -318,6 +380,7 @@ export async function getUserByEmail(email: string): Promise<User | undefined> {
         language: data.language || "en",
         avatar: prof?.avatar !== undefined ? prof.avatar : (data.avatar || null),
         username: prof?.username || null,
+        bio: prof?.bio !== undefined ? prof.bio : ((data as any).bio || null),
         emailVerified: true,
         createdAt: data.createdAt ? new Date(data.createdAt) : new Date(),
         updatedAt: data.updatedAt ? new Date(data.updatedAt) : new Date(),
@@ -332,9 +395,11 @@ export async function getUserByEmail(email: string): Promise<User | undefined> {
 
   for (const u of Array.from(inMemoryUsers.values())) {
     if (u.email && u.email.toLowerCase() === normalizedEmail) {
-      const prof = await getTraderProfile(u.openId);
+      const prof = (u.openId ? await getTraderProfile(u.openId) : null) || (u.id ? await getTraderProfile(u.id) : null);
+      if (prof?.name) u.name = prof.name;
       if (prof?.avatar !== undefined) u.avatar = prof.avatar;
       if (prof?.username) u.username = prof.username;
+      if (prof?.bio !== undefined) (u as any).bio = prof.bio;
       return u;
     }
   }
@@ -349,9 +414,11 @@ export async function getUserById(id: number): Promise<User | undefined> {
       const rows = await db.select().from(users).where(eq(users.id, id)).limit(1);
       if (rows.length) {
         const u = rows[0];
-        const prof = await getTraderProfile(u.openId || u.id);
+        const prof = (u.openId ? await getTraderProfile(u.openId) : null) || (u.id ? await getTraderProfile(u.id) : null);
+        if (prof?.name) (u as any).name = prof.name;
         if (prof?.avatar !== undefined) (u as any).avatar = prof.avatar;
         if (prof?.username) (u as any).username = prof.username;
+        if (prof?.bio !== undefined) (u as any).bio = prof.bio;
         return u;
       }
     } catch {}
@@ -359,17 +426,21 @@ export async function getUserById(id: number): Promise<User | undefined> {
   try {
     const { data } = await supabaseServer.from("users").select("*").eq("id", id).maybeSingle();
     if (data) {
-      const prof = await getTraderProfile(data.openId || data.id);
+      const prof = (data.openId ? await getTraderProfile(data.openId) : null) || (data.id ? await getTraderProfile(data.id) : null);
+      if (prof?.name) (data as any).name = prof.name;
       if (prof?.avatar !== undefined) (data as any).avatar = prof.avatar;
       if (prof?.username) (data as any).username = prof.username;
+      if (prof?.bio !== undefined) (data as any).bio = prof.bio;
       return data;
     }
   } catch {}
   for (const u of Array.from(inMemoryUsers.values())) {
     if (u.id === id) {
-      const prof = await getTraderProfile(u.openId || u.id);
+      const prof = (u.openId ? await getTraderProfile(u.openId) : null) || (u.id ? await getTraderProfile(u.id) : null);
+      if (prof?.name) (u as any).name = prof.name;
       if (prof?.avatar !== undefined) (u as any).avatar = prof.avatar;
       if (prof?.username) (u as any).username = prof.username;
+      if (prof?.bio !== undefined) (u as any).bio = prof.bio;
       return u;
     }
   }
@@ -681,14 +752,13 @@ export async function listAllUsers() {
 
   const allUsersList = Array.from(inMemoryUsers.values());
   for (const u of allUsersList) {
-    if (u.openId) {
-      try {
-        const prof = await getTraderProfile(u.openId);
-        if (prof?.name && (!u.name || u.name === "Trader")) u.name = prof.name;
-        if (prof?.avatar !== undefined && prof?.avatar !== null) u.avatar = prof.avatar;
-        if (prof?.username) (u as any).username = prof.username;
-      } catch {}
-    }
+    try {
+      const prof = (u.openId ? await getTraderProfile(u.openId) : null) || (u.id ? await getTraderProfile(u.id) : null);
+      if (prof?.name) u.name = prof.name;
+      if (prof?.avatar !== undefined) u.avatar = prof.avatar;
+      if (prof?.username) (u as any).username = prof.username;
+      if (prof?.bio !== undefined) (u as any).bio = prof.bio;
+    } catch {}
   }
 
   return allUsersList;

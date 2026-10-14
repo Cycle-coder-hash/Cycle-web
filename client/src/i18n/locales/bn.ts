@@ -31,6 +31,17 @@ export const bn: TranslationSchema = {
     hypeHeader: "ট্রেডিং হাইপ (ফাঁদ)",
     realityHeader: "ট্রেডিং রিয়েলিটি (সত্য)",
   },
+  brainEvolution: {
+    beginner: "বিগিনার",
+    professional: "প্রফেশনাল",
+    card1: "দ্রুত শেখা",
+    card2: "শৃঙ্খলা",
+    card3: "ধারাবাহিক কাজ",
+    card4: "প্রসেস",
+    card5: "জার্নাল",
+    card6: "এজ তৈরি",
+    card7: "প্রফেশনাল ট্রেডার",
+  },
   roadmap: {
     eyebrow: "দ্য রোডম্যাপ",
     title1: "বিগিনার থেকে",

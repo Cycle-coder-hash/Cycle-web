@@ -4,4 +4,6 @@ export * from "./components/NewsHeadlineStats";
 export * from "./components/HomePlansSection";
 export * from "./components/HomeOwnerProfileSection";
 export * from "./components/HomeRoadmapAndShiftSection";
+export * from "./components/TraderBrainEvolutionSection";
+export * from "./components/TraderBrainCanvas";
 export * from "./lib/homeStaticData";

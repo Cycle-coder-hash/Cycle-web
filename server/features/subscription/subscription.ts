@@ -12,7 +12,7 @@ import {
 } from "../../../drizzle/schema";
 import { getDb } from "../../infra/db/client";
 import { getSetting, setSetting } from "../../infra/db/settings";
-import { getUserById } from "../auth";
+import { getUserById } from "../auth/repo";
 
 export const FREE_TRIAL_DURATION_DAYS = 20;
 export const FREE_TRIAL_DURATION_MS = FREE_TRIAL_DURATION_DAYS * 86400000;

@@ -42,7 +42,23 @@ import { getUserSubscription } from "../subscription";
 const language = z.enum(["en", "bn", "ur"]);
 
 export const authRouter = router({
-  me: publicProcedure.query((opts) => opts.ctx.user),
+  me: publicProcedure.query(async (opts) => {
+    if (!opts.ctx.user) return null;
+    try {
+      const user = (await getUserById(opts.ctx.user.id)) || opts.ctx.user;
+      const traderProf = (opts.ctx.user.openId ? await getTraderProfile(opts.ctx.user.openId) : null) || (opts.ctx.user.id ? await getTraderProfile(opts.ctx.user.id) : null);
+      return {
+        ...opts.ctx.user,
+        ...(user || {}),
+        name: traderProf?.name || user?.name || opts.ctx.user.name || "Trader",
+        avatar: traderProf?.avatar !== undefined ? traderProf.avatar : ((user as any)?.avatar !== undefined ? (user as any).avatar : opts.ctx.user.avatar),
+        username: traderProf?.username || (user as any)?.username || null,
+        bio: traderProf?.bio !== undefined ? traderProf.bio : ((user as any)?.bio || null),
+      };
+    } catch {
+      return opts.ctx.user;
+    }
+  }),
 
   register: publicProcedure
     .input(
@@ -275,6 +291,7 @@ export const authRouter = router({
       username: traderProf?.username || (user as any).username || null,
       email: user.email || ctx.user.email || "",
       avatar: traderProf?.avatar !== undefined ? traderProf.avatar : ((user as any).avatar || null),
+      bio: traderProf?.bio !== undefined ? traderProf.bio : ((user as any).bio || null),
       phone: user.phone || traderProf?.phone || null,
       role: ctx.user.role,
       emailVerified: (user as any).emailVerified ?? true,
@@ -297,6 +314,18 @@ export const authRouter = router({
         phone: z.string().optional().nullable(),
         language: language.optional(),
         avatar: z.string().nullable().optional(),
+        bio: z
+          .string()
+          .nullable()
+          .optional()
+          .refine(
+            (val) => {
+              if (!val) return true;
+              const words = val.trim().split(/\s+/).filter(Boolean);
+              return words.length <= 20;
+            },
+            { message: "Bio cannot exceed 20 words" }
+          ),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -318,9 +347,21 @@ export const authRouter = router({
         language: input.language,
         avatar: input.avatar,
         username: input.username ? input.username.trim().toLowerCase() : undefined,
+        bio: input.bio !== undefined ? (input.bio?.trim() || null) : undefined,
       });
 
-      return { success: true };
+      const updatedUser = (await getUserById(ctx.user.id)) || ctx.user;
+      const updatedProf = (ctx.user.openId ? await getTraderProfile(ctx.user.openId) : null) || (ctx.user.id ? await getTraderProfile(ctx.user.id) : null);
+      return {
+        success: true,
+        user: {
+          id: ctx.user.id,
+          name: updatedProf?.name || input.name || updatedUser.name || "Trader",
+          avatar: updatedProf?.avatar !== undefined ? updatedProf.avatar : (input.avatar !== undefined ? input.avatar : updatedUser.avatar),
+          username: updatedProf?.username || (input.username ? input.username.trim().toLowerCase() : (updatedUser as any).username),
+          bio: updatedProf?.bio !== undefined ? updatedProf.bio : ((updatedUser as any).bio || null),
+        },
+      };
     }),
 
   updatePreferences: protectedProcedure

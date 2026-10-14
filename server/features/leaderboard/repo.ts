@@ -7,7 +7,7 @@ import {
   getUserTrades,
   getAllTraderTrades,
 } from "../journal";
-import { listAllUsers, getTraderProfile } from "../auth";
+import { listAllUsers, getTraderProfile } from "../auth/repo";
 import { isEligibleForLeaderboard, getUserSubscription } from "../subscription";
 import { LeaderboardTrader } from "@shared/types/leaderboard";
 
@@ -300,9 +300,10 @@ async function computeScoredLeaderboardEntries(
     const gainPercent = startingBalance > 0 ? Math.round(((currentBalance - startingBalance) / startingBalance) * 1000) / 10 : 0;
 
     // Synchronize latest custom profile name & avatar independently
-    const prof = await getTraderProfile(user.openId);
+    const prof = (user.openId ? await getTraderProfile(user.openId) : null) || (user.id ? await getTraderProfile(user.id) : null);
     const resolvedName = prof?.name || user.name || `Trader #${user.id}`;
     const resolvedAvatar = prof?.avatar !== undefined ? prof.avatar : (user.avatar || null);
+    const resolvedBio = prof?.bio !== undefined ? prof.bio : ((user as any).bio || null);
 
     results.push({
       rank: 0,
@@ -310,6 +311,7 @@ async function computeScoredLeaderboardEntries(
       openId: user.openId,
       name: resolvedName,
       avatar: resolvedAvatar,
+      bio: resolvedBio,
       role: user.role || "user",
       startingBalance,
       currentBalance,

@@ -14,6 +14,7 @@ import {
   Loader2,
   Check,
   CheckCircle,
+  FileText,
 } from "lucide-react";
 import type { SettingsTab } from "./SettingsPreferencesAndSecurityPanels";
 
@@ -28,6 +29,13 @@ export interface SettingsAccountProfilePanelProps {
   settingsName?: string | null;
   settingsUsername?: string | null;
   settingsEmail?: string | null;
+  settingsBio?: string | null;
+  bio: string;
+  setBio: React.Dispatch<React.SetStateAction<string>>;
+  bioWordCount: number;
+  isSavingBio: boolean;
+  handleSaveBio: (e?: React.FormEvent) => void;
+  handleRemoveBio: () => void;
   isUploadingAvatar: boolean;
   isRemovingAvatar: boolean;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
@@ -57,6 +65,13 @@ export function SettingsAccountProfilePanel({
   settingsName,
   settingsUsername,
   settingsEmail,
+  settingsBio,
+  bio,
+  setBio,
+  bioWordCount,
+  isSavingBio,
+  handleSaveBio,
+  handleRemoveBio,
   isUploadingAvatar,
   isRemovingAvatar,
   fileInputRef,
@@ -334,6 +349,112 @@ export function SettingsAccountProfilePanel({
             </p>
           </form>
         </div>
+      </div>
+
+      {/* User Bio Card */}
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0a192f] p-6 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800/80">
+          <div>
+            <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <FileText size={18} className="text-sky-500" />
+              <span>{selectText({ en: "Bio", bn: "বায়ো", ur: "بائیو" })}</span>
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {selectText({
+                en: "Write a short personal trading bio (maximum 20 words). Appears on your profile and the Global Leaderboard.",
+                bn: "সংক্ষিপ্ত ট্রেডিং বায়ো লিখুন (সর্বোচ্চ ২০ শব্দ)। আপনার প্রোফাইল ও গ্লোবাল লিডারবোর্ডে প্রদর্শিত হবে।",
+                ur: "مختصر ذاتی ٹریڈنگ بائیو لکھیں (زیادہ سے زیادہ 20 الفاظ)۔ آپ کے پروفائل اور عالمی لیڈر بورڈ پر ظاہر ہوگا۔",
+              })}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <span
+              className={`rounded-full px-2.5 py-0.5 text-[11px] font-mono font-bold border transition-colors ${
+                bioWordCount > 20
+                  ? "bg-rose-500/15 border-rose-500/40 text-rose-500"
+                  : bioWordCount === 20
+                  ? "bg-amber-500/15 border-amber-500/40 text-amber-500"
+                  : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
+              }`}
+            >
+              {bioWordCount}/20 {selectText({ en: "words", bn: "শব্দ", ur: "الفاظ" })}
+            </span>
+          </div>
+        </div>
+
+        <form onSubmit={handleSaveBio} className="space-y-3">
+          <div className="space-y-1.5">
+            <textarea
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              rows={3}
+              placeholder={selectText({
+                en: "e.g. ICT price action scalper. Risk 1% per trade. Disciplined and focused on high-probability setups.",
+                bn: "যেমন: আইসিটি প্রাইস অ্যাকশন স্ক্যালপার। প্রতি ট্রেডে ১% রিস্ক। সুশৃঙ্খল ও ধারাবাহিক।",
+                ur: "مثال: آئی سی ٹی پرائس ایکشن اسکیلپر۔ فی ٹریڈ 1 فیصد رسک۔ پرعزم اور مستقل مزاج۔",
+              })}
+              className={`w-full rounded-xl p-3 text-xs sm:text-sm font-medium bg-slate-50 dark:bg-slate-900 border transition-all resize-none focus:outline-none focus:ring-2 ${
+                bioWordCount > 20
+                  ? "border-rose-500 focus:ring-rose-500/30 text-rose-600 dark:text-rose-400"
+                  : "border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:border-sky-500 focus:ring-sky-500/20"
+              }`}
+            />
+
+            {bioWordCount > 20 && (
+              <p className="text-[11px] font-bold text-rose-500 flex items-center gap-1">
+                <AlertTriangle size={12} className="shrink-0" />
+                <span>
+                  {selectText({
+                    en: `Bio exceeds the 20-word limit (${bioWordCount}/20 words). Please reduce ${bioWordCount - 20} word${bioWordCount - 20 > 1 ? "s" : ""} to save.`,
+                    bn: `বায়ো সর্বোচ্চ সীমা ২০ শব্দ অতিক্রম করেছে (${bioWordCount}/২০ শব্দ)। সেভ করতে ${bioWordCount - 20}টি শব্দ কমান।`,
+                    ur: `بائیو 20 الفاظ کی حد سے بڑھ گیا ہے (${bioWordCount}/20 الفاظ)۔ محفوظ کرنے کے لیے ${bioWordCount - 20} الفاظ کم کریں۔`,
+                  })}
+                </span>
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
+            <p className="text-[11px] text-slate-400">
+              {selectText({
+                en: "Optional. Leave blank to hide your bio across all public views.",
+                bn: "ঐচ্ছিক। খালি রাখলে কোথাও বায়ো প্রদর্শিত হবে না।",
+                ur: "اختیاری۔ خالی چھوڑنے پر عوامی مناظر میں بائیو پوشیدہ رہے گا۔",
+              })}
+            </p>
+
+            <div className="flex items-center gap-2">
+              {(Boolean(settingsBio) || bio.trim().length > 0) && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={isSavingBio || (!settingsBio && bio.trim().length === 0)}
+                  onClick={handleRemoveBio}
+                  className="text-xs font-bold border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 gap-1.5"
+                >
+                  <Trash2 size={13} />
+                  <span>{selectText({ en: "Remove Bio", bn: "বায়ো মুছুন", ur: "بائیو ہٹائیں" })}</span>
+                </Button>
+              )}
+
+              <Button
+                type="submit"
+                disabled={
+                  isSavingBio ||
+                  bioWordCount > 20 ||
+                  bio.trim() === (settingsBio || "").trim()
+                }
+                size="sm"
+                className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs shrink-0 gap-1.5"
+              >
+                {isSavingBio ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+                <span>{selectText({ en: "Save Bio", bn: "বায়ো সেভ করুন", ur: "بائیو محفوظ کریں" })}</span>
+              </Button>
+            </div>
+          </div>
+        </form>
       </div>
 
       {/* Account Email Card */}

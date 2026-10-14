@@ -1,3 +1,4 @@
+import React, { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import {
   AlertOctagon,
   ArrowRight,
@@ -22,6 +23,7 @@ import {
   REALITY_ITEMS_UR,
   ROADMAP_CARD_FLOAT_DELAYS,
 } from "../lib/homeStaticData";
+import { TraderBrainEvolutionSection } from "./TraderBrainEvolutionSection";
 
 export interface HomeRoadmapAndShiftCopy {
   shiftEyebrow: string;
@@ -56,6 +58,114 @@ export interface HomeRoadmapAndShiftSectionProps {
   activeModalData: StageDetail | null;
 }
 
+interface RoadmapCardProps {
+  stage: StageDetail;
+  index: number;
+  isActive: boolean;
+  clickPrompt: string;
+  isDuplicate?: boolean;
+  onSelect: (index: number) => void;
+  isRTL: boolean;
+}
+
+function RoadmapCard({
+  stage,
+  index,
+  isActive,
+  clickPrompt,
+  isDuplicate = false,
+  onSelect,
+  isRTL,
+}: RoadmapCardProps) {
+  return (
+    <button
+      type="button"
+      tabIndex={isDuplicate ? -1 : 0}
+      aria-hidden={isDuplicate ? "true" : undefined}
+      onClick={() => onSelect(index)}
+      className={`roadmap-card-interactive group/card relative flex flex-col justify-between h-full min-h-[224px] sm:min-h-[236px] w-[264px] sm:w-[310px] md:w-[330px] lg:w-[340px] shrink-0 rounded-2xl border p-5 sm:p-6 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+        isActive
+          ? "border-[#0d1a2d] bg-[#0d1a2d] text-white shadow-xl shadow-[#0d1a2d]/25 dark:border-sky-400 dark:bg-[#0f1d35] dark:shadow-[0_12px_35px_-8px_rgba(56,189,248,0.25)]"
+          : "border-slate-200/90 bg-white shadow-sm dark:border-slate-800/90 dark:bg-[#0c1527] dark:hover:border-sky-500/50"
+      }`}
+      dir={isRTL ? "rtl" : "ltr"}
+    >
+      {/* Desktop-only subtle inner light sweep across the card border on hover */}
+      <div
+        className="roadmap-card-sweep pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, transparent 50%, rgba(14, 165, 233, 0.04) 100%)",
+        }}
+      />
+
+      {/* Top Header: Badge, Category, Arrow */}
+      <div className="relative z-10 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span
+            className={`font-mono text-xs font-bold px-2 py-0.5 rounded-md transition-colors ${
+              isActive
+                ? "bg-white/10 text-[#38bdf8]"
+                : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 group-hover/card:bg-sky-500/10 group-hover/card:text-sky-400"
+            }`}
+          >
+            {stage.num}
+          </span>
+          <span
+            className={`text-[10px] font-bold uppercase tracking-wider ${
+              isActive ? "text-slate-300" : "text-[#0284c7] dark:text-sky-400"
+            }`}
+          >
+            {stage.category}
+          </span>
+        </div>
+
+        <span
+          className={`roadmap-card-arrow-pill inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-all duration-300 ${
+            isActive
+              ? "bg-[#38bdf8] text-slate-950"
+              : "bg-slate-100 text-slate-500 group-hover/card:bg-[#0284c7] group-hover/card:text-white dark:bg-slate-800 dark:text-slate-400 dark:group-hover/card:bg-sky-400 dark:group-hover/card:text-slate-950 dark:group-hover/card:shadow-[0_0_10px_rgba(56,189,248,0.5)]"
+          }`}
+        >
+          <ArrowRight size={11} className={isRTL ? "rotate-180" : ""} />
+        </span>
+      </div>
+
+      {/* Middle Content: Title & Summary */}
+      <div className="relative z-10 my-4 flex-1">
+        <h3 className="text-base sm:text-lg font-extrabold leading-snug text-slate-900 dark:text-white group-hover/card:text-sky-600 dark:group-hover/card:text-sky-300 transition-colors duration-200">
+          {stage.title}
+        </h3>
+
+        <p
+          className={`mt-2 text-xs line-clamp-2 leading-relaxed ${
+            isActive ? "text-slate-300" : "text-slate-500 dark:text-slate-400"
+          }`}
+        >
+          {stage.summary}
+        </p>
+      </div>
+
+      {/* Footer: Click to explore stage breakdown prompt */}
+      <div className="relative z-10 mt-auto flex items-center gap-1.5 border-t border-slate-100 pt-3 text-[11px] font-semibold dark:border-slate-800/80">
+        <span
+          className={
+            isActive ? "text-[#38bdf8]" : "text-[#0284c7] dark:text-sky-400"
+          }
+        >
+          {clickPrompt}
+        </span>
+        <ChevronRight
+          size={13}
+          className={`roadmap-card-chevron transition-transform duration-300 ease-out ${
+            isActive ? "text-[#38bdf8]" : "text-[#0284c7] dark:text-sky-400"
+          } ${isRTL ? "rotate-180" : ""}`}
+        />
+      </div>
+    </button>
+  );
+}
+
 export function HomeRoadmapAndShiftSection({
   isBn,
   copy,
@@ -66,7 +176,58 @@ export function HomeRoadmapAndShiftSection({
   setSelectedStageModal,
   activeModalData,
 }: HomeRoadmapAndShiftSectionProps) {
-  const { language, selectText } = useLanguage();
+  const { language, selectText, isRTL } = useLanguage();
+  const marqueeRef = useRef<HTMLDivElement>(null);
+  const [isInView, setIsInView] = useState(false);
+  const [isTabVisible, setIsTabVisible] = useState(true);
+  const [isTouchActive, setIsTouchActive] = useState(false);
+  const [isReducedMotion, setIsReducedMotion] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setIsReducedMotion(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsReducedMotion(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const handleVisibility = () => {
+      setIsTabVisible(document.visibilityState === "visible");
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
+
+  useEffect(() => {
+    const el = marqueeRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        setIsInView(entry.isIntersecting);
+      },
+      { threshold: 0.05 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const isPaused = !isInView || !isTabVisible || isTouchActive;
+
+
+  const row1Stages = useMemo(() => stagesData.slice(0, 6), [stagesData]);
+  const row2Stages = useMemo(() => stagesData.slice(6, 12), [stagesData]);
+
+  const handleSelectStage = useCallback(
+    (index: number) => {
+      setActiveStage(index);
+      setSelectedStageModal(index);
+    },
+    [setActiveStage, setSelectedStageModal]
+  );
 
   return (
     <>
@@ -140,11 +301,16 @@ export function HomeRoadmapAndShiftSection({
       </section>
 
       {/* ========================================================================= */}
+      {/* BEGINNER BRAIN -> PROFESSIONAL TRADER BRAIN EVOLUTION SECTION */}
+      {/* ========================================================================= */}
+      <TraderBrainEvolutionSection />
+
+      {/* ========================================================================= */}
       {/* ROADMAP SECTION (12 INTERACTIVE STAGES) */}
       {/* ========================================================================= */}
       <section
         id="roadmap"
-        className="content-auto bg-white py-16 sm:py-24 dark:bg-[#070e1b] lg:py-32 transition-colors"
+        className="content-auto bg-white py-16 sm:py-24 dark:bg-[#070e1b] lg:py-32 transition-colors overflow-hidden"
       >
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
@@ -160,95 +326,133 @@ export function HomeRoadmapAndShiftSection({
               {copy.roadmapDesc}
             </p>
           </div>
-
-          {/* 12 Stages Interactive Grid */}
-          <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {stagesData.map((stage, i) => {
-              const isActive = activeStage === i || selectedStageModal === i;
-              return (
-                <div
-                  key={stage.num}
-                  className="roadmap-card-float flex flex-col h-full"
-                  style={{
-                    animationDelay:
-                      ROADMAP_CARD_FLOAT_DELAYS[i] || `${(i * 0.4).toFixed(1)}s`,
-                  }}
-                >
-                  <button
-                    onClick={() => {
-                      setActiveStage(i);
-                      setSelectedStageModal(i);
-                    }}
-                    className={`group relative h-full w-full rounded-2xl border p-6 text-left transition-all duration-200 hover:-translate-y-1 ${
-                      isActive
-                        ? "border-[#0d1a2d] bg-[#0d1a2d] text-white shadow-xl shadow-[#0d1a2d]/25 dark:border-sky-400 dark:bg-slate-800"
-                        : "border-slate-200 bg-white hover:border-[#0284c7]/50 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900/90 dark:hover:border-sky-500/50"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`font-mono text-xs font-bold px-2 py-0.5 rounded-md ${
-                            isActive
-                              ? "bg-white/10 text-[#38bdf8]"
-                              : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
-                          }`}
-                        >
-                          {stage.num}
-                        </span>
-                        <span
-                          className={`text-[10px] font-bold uppercase tracking-wider ${
-                            isActive ? "text-slate-300" : "text-[#0284c7] dark:text-sky-400"
-                          }`}
-                        >
-                          {stage.category}
-                        </span>
-                      </div>
-
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-all group-hover:translate-x-0.5 ${
-                          isActive
-                            ? "bg-[#38bdf8] text-slate-950"
-                            : "bg-slate-100 text-slate-500 group-hover:bg-[#0284c7] group-hover:text-white dark:bg-slate-800 dark:text-slate-400 dark:group-hover:bg-sky-500 dark:group-hover:text-slate-950"
-                        }`}
-                      >
-                        <ArrowRight size={11} />
-                      </span>
-                    </div>
-
-                    <h3 className="mt-5 text-lg font-extrabold leading-snug dark:text-white">
-                      {stage.title}
-                    </h3>
-
-                    <p
-                      className={`mt-2 text-xs line-clamp-2 leading-relaxed ${
-                        isActive ? "text-slate-300" : "text-slate-500 dark:text-slate-400"
-                      }`}
-                    >
-                      {stage.summary}
-                    </p>
-
-                    <div className="mt-5 flex items-center gap-1.5 border-t border-slate-100 pt-3 text-[11px] font-semibold dark:border-slate-800">
-                      <span
-                        className={
-                          isActive ? "text-[#38bdf8]" : "text-[#0284c7] dark:text-sky-400"
-                        }
-                      >
-                        {copy.clickPrompt}
-                      </span>
-                      <ChevronRight
-                        size={13}
-                        className={
-                          isActive ? "text-[#38bdf8]" : "text-[#0284c7] dark:text-sky-400"
-                        }
-                      />
-                    </div>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
         </div>
+
+        {/* 12 Stages: Reduced-Motion Static Grid vs. Premium Dual-Row Marquee */}
+        {isReducedMotion ? (
+          <div className="mx-auto max-w-7xl px-5 lg:px-8 mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {stagesData.map((stage, i) => (
+              <RoadmapCard
+                key={stage.num}
+                stage={stage}
+                index={i}
+                isActive={activeStage === i || selectedStageModal === i}
+                clickPrompt={copy.clickPrompt}
+                isDuplicate={false}
+                onSelect={handleSelectStage}
+                isRTL={isRTL}
+              />
+            ))}
+          </div>
+        ) : (
+          <div
+            ref={marqueeRef}
+            className="roadmap-marquee-mask relative w-full overflow-hidden mt-10 sm:mt-14 py-4"
+            onTouchStart={() => setIsTouchActive(true)}
+            onTouchEnd={() => setIsTouchActive(false)}
+            onTouchCancel={() => setIsTouchActive(false)}
+            dir="ltr"
+          >
+            {/* ROW 1: Stages 01-06 (Scrolls LEFT) */}
+            <div className="roadmap-marquee-row group/track relative w-full overflow-hidden py-3">
+              <div
+                className={`roadmap-marquee-track-left flex w-max items-stretch ${
+                  isPaused ? "[animation-play-state:paused]" : ""
+                }`}
+                style={{ willChange: "transform" }}
+              >
+                {/* Primary Accessible Set A */}
+                <div className="flex items-stretch gap-4 sm:gap-5 pr-4 sm:pr-5 shrink-0">
+                  {row1Stages.map((stage, i) => (
+                    <RoadmapCard
+                      key={`r1-orig-${stage.num}`}
+                      stage={stage}
+                      index={i}
+                      isActive={activeStage === i || selectedStageModal === i}
+                      clickPrompt={copy.clickPrompt}
+                      isDuplicate={false}
+                      onSelect={handleSelectStage}
+                      isRTL={isRTL}
+                    />
+                  ))}
+                </div>
+
+                {/* Seamless Duplicate Set B for infinite loop */}
+                <div
+                  className="flex items-stretch gap-4 sm:gap-5 pr-4 sm:pr-5 shrink-0"
+                  aria-hidden="true"
+                >
+                  {row1Stages.map((stage, i) => (
+                    <RoadmapCard
+                      key={`r1-dup-${stage.num}`}
+                      stage={stage}
+                      index={i}
+                      isActive={activeStage === i || selectedStageModal === i}
+                      clickPrompt={copy.clickPrompt}
+                      isDuplicate={true}
+                      onSelect={handleSelectStage}
+                      isRTL={isRTL}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* ROW 2: Stages 07-12 (Scrolls RIGHT) */}
+            <div className="roadmap-marquee-row group/track relative w-full overflow-hidden py-3 mt-1 sm:mt-2">
+              <div
+                className={`roadmap-marquee-track-right flex w-max items-stretch ${
+                  isPaused ? "[animation-play-state:paused]" : ""
+                }`}
+                style={{
+                  willChange: "transform",
+                  animationDelay: "-22s",
+                }}
+              >
+                {/* Primary Accessible Set A */}
+                <div className="flex items-stretch gap-4 sm:gap-5 pr-4 sm:pr-5 shrink-0">
+                  {row2Stages.map((stage, i) => {
+                    const origIndex = i + 6;
+                    return (
+                      <RoadmapCard
+                        key={`r2-orig-${stage.num}`}
+                        stage={stage}
+                        index={origIndex}
+                        isActive={activeStage === origIndex || selectedStageModal === origIndex}
+                        clickPrompt={copy.clickPrompt}
+                        isDuplicate={false}
+                        onSelect={handleSelectStage}
+                        isRTL={isRTL}
+                      />
+                    );
+                  })}
+                </div>
+
+                {/* Seamless Duplicate Set B for infinite loop */}
+                <div
+                  className="flex items-stretch gap-4 sm:gap-5 pr-4 sm:pr-5 shrink-0"
+                  aria-hidden="true"
+                >
+                  {row2Stages.map((stage, i) => {
+                    const origIndex = i + 6;
+                    return (
+                      <RoadmapCard
+                        key={`r2-dup-${stage.num}`}
+                        stage={stage}
+                        index={origIndex}
+                        isActive={activeStage === origIndex || selectedStageModal === origIndex}
+                        clickPrompt={copy.clickPrompt}
+                        isDuplicate={true}
+                        onSelect={handleSelectStage}
+                        isRTL={isRTL}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* ========================================================================= */}

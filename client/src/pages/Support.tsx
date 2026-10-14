@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LanguageSelector } from "@/components/LanguageSelector";
+import { TopNavLinks } from "@/components/TopNavLinks";
 import { SupportChat } from "@/components/SupportChat";
 
 export default function SupportPage() {
@@ -22,8 +23,8 @@ export default function SupportPage() {
     >
       {/* Top Navbar */}
       <header className="sticky top-0 z-40 border-b border-slate-800 bg-[#070e1b]/95 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-3">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3 shrink-0">
             <Link href="/" className="flex items-center gap-2.5 group">
               <BrandLogo size={34} />
               <div className="flex flex-col">
@@ -35,7 +36,12 @@ export default function SupportPage() {
             </Link>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          {/* Balanced navigation container */}
+          <div className="hidden md:flex flex-1 items-center justify-center px-2 lg:px-6">
+            <TopNavLinks isBn={isBn} />
+          </div>
+
+          <div className="flex items-center gap-2.5 shrink-0">
             <LanguageSelector variant="compact" />
 
             {user ? (

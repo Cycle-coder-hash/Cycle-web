@@ -31,6 +31,17 @@ export const en: TranslationSchema = {
     hypeHeader: "TRADING HYPE (TRAP)",
     realityHeader: "TRADING REALITY (TRUTH)",
   },
+  brainEvolution: {
+    beginner: "BEGINNER",
+    professional: "PROFESSIONAL",
+    card1: "Learn Fast",
+    card2: "Discipline",
+    card3: "Consistent Work",
+    card4: "Process",
+    card5: "Journal",
+    card6: "Build Edge",
+    card7: "Professional Trader",
+  },
   roadmap: {
     eyebrow: "THE ROADMAP",
     title1: "From beginner",

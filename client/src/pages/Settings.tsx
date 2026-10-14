@@ -97,6 +97,17 @@ export default function Settings() {
     reason?: string;
   }>({ checking: false });
 
+  // Bio State
+  const [bio, setBio] = useState("");
+  const [isSavingBio, setIsSavingBio] = useState(false);
+
+  const countWords = (text: string): number => {
+    const trimmed = text.trim();
+    if (!trimmed) return 0;
+    return trimmed.split(/\s+/).filter(Boolean).length;
+  };
+  const bioWordCount = useMemo(() => countWords(bio), [bio]);
+
   // Avatar State
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatar, setAvatar] = useState<string | null>(null);
@@ -149,12 +160,15 @@ export default function Settings() {
       setName(settingsData.name || "");
       setUsername(settingsData.username || "");
       setAvatar(settingsData.avatar || null);
+      setBio(settingsData.bio || "");
     } else if (user) {
       const userKey = user.openId || user.email || String(user.id);
       const storedName = typeof window !== "undefined" ? localStorage.getItem(`cycle_user_custom_name_${userKey}`) : null;
       const storedAvatar = typeof window !== "undefined" ? localStorage.getItem(`cycle_user_avatar_${userKey}`) : null;
+      const storedBio = typeof window !== "undefined" ? localStorage.getItem(`cycle_user_bio_${userKey}`) : null;
       setName(storedName || user.name || "");
       setAvatar(storedAvatar || (user as any).avatar || null);
+      setBio(storedBio || (user as any).bio || "");
     }
   }, [settingsData, user]);
 
@@ -330,6 +344,115 @@ export default function Settings() {
     }
   };
 
+  // Save Bio
+  const handleSaveBio = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const count = countWords(bio);
+    if (count > 20) {
+      toast.error(
+        selectText({
+          en: "Bio cannot exceed 20 words",
+          bn: "বায়ো সর্বোচ্চ ২০ শব্দের হতে হবে",
+          ur: "بائیو 20 الفاظ سے زیادہ نہیں ہو سکتا",
+        })
+      );
+      return;
+    }
+
+    const cleanBio = bio.trim() || null;
+    setIsSavingBio(true);
+    try {
+      const userKey = user?.openId || user?.email || String(user?.id);
+      if (userKey) {
+        if (cleanBio) {
+          localStorage.setItem(`cycle_user_bio_${userKey}`, cleanBio);
+        } else {
+          localStorage.removeItem(`cycle_user_bio_${userKey}`);
+        }
+      }
+
+      await updateProfileMutation.mutateAsync({ bio: cleanBio });
+
+      await utils.auth.me.invalidate();
+      await utils.auth.getSettings.invalidate();
+      await utils.leaderboard.rankings.invalidate();
+
+      window.dispatchEvent(
+        new CustomEvent("cycle_user_profile_updated", {
+          detail: { userId: userKey, bio: cleanBio },
+        })
+      );
+
+      toast.success(
+        cleanBio
+          ? selectText({
+              en: "Bio updated successfully!",
+              bn: "বায়ো সফলভাবে সেভ হয়েছে!",
+              ur: "بائیو کامیابی سے محفوظ ہو گیا!",
+            })
+          : selectText({
+              en: "Bio removed successfully!",
+              bn: "বায়ো সফলভাবে মুছে ফেলা হয়েছে!",
+              ur: "بائیو کامیابی سے ہٹا دیا گیا!",
+            })
+      );
+    } catch (err: any) {
+      toast.error(
+        err.message ||
+          selectText({
+            en: "Failed to save bio",
+            bn: "বায়ো সেভ করা যায়নি",
+            ur: "بائیو محفوظ کرنے میں ناکامی",
+          })
+      );
+    } finally {
+      setIsSavingBio(false);
+    }
+  };
+
+  // Remove Bio
+  const handleRemoveBio = async () => {
+    setBio("");
+    setIsSavingBio(true);
+    try {
+      const userKey = user?.openId || user?.email || String(user?.id);
+      if (userKey) {
+        localStorage.removeItem(`cycle_user_bio_${userKey}`);
+      }
+
+      await updateProfileMutation.mutateAsync({ bio: null });
+
+      await utils.auth.me.invalidate();
+      await utils.auth.getSettings.invalidate();
+      await utils.leaderboard.rankings.invalidate();
+
+      window.dispatchEvent(
+        new CustomEvent("cycle_user_profile_updated", {
+          detail: { userId: userKey, bio: null },
+        })
+      );
+
+      toast.success(
+        selectText({
+          en: "Bio removed successfully!",
+          bn: "বায়ো সফলভাবে মুছে ফেলা হয়েছে!",
+          ur: "بائیو کامیابی سے ہٹا دیا گیا!",
+        })
+      );
+    } catch (err: any) {
+      toast.error(
+        err.message ||
+          selectText({
+            en: "Failed to remove bio",
+            bn: "বায়ো মোছা যায়নি",
+            ur: "بائیو ہٹانے میں ناکامی",
+          })
+      );
+    } finally {
+      setIsSavingBio(false);
+    }
+  };
+
   // Avatar Upload with Square Crop to 400x400 WebP
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -368,7 +491,7 @@ export default function Settings() {
         setIsUploadingAvatar(true);
         const toastId = toast.loading(isBn ? "ক্লাউডে ছবি আপলোড হচ্ছে..." : "Uploading photo to cloud...");
 
-        uploadImage(dataUrl, `avatar_${userKey}.webp`)
+        uploadImage(dataUrl, `avatar_${userKey}_${Date.now()}.webp`)
           .then(async (cloudUrl) => {
             setAvatar(cloudUrl);
 
@@ -827,6 +950,13 @@ export default function Settings() {
               settingsName={settingsData?.name}
               settingsUsername={settingsData?.username}
               settingsEmail={settingsData?.email}
+              settingsBio={settingsData?.bio}
+              bio={bio}
+              setBio={setBio}
+              bioWordCount={bioWordCount}
+              isSavingBio={isSavingBio}
+              handleSaveBio={handleSaveBio}
+              handleRemoveBio={handleRemoveBio}
               isUploadingAvatar={isUploadingAvatar}
               isRemovingAvatar={isRemovingAvatar}
               fileInputRef={fileInputRef}

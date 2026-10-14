@@ -336,7 +336,7 @@ export function CursorLightTrail() {
     <canvas
       ref={canvasRef}
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 z-[99999] h-full w-full select-none"
+      className="pointer-events-none fixed inset-0 z-[1] h-full w-full select-none"
       style={{
         pointerEvents: "none",
         position: "fixed",
@@ -344,7 +344,7 @@ export function CursorLightTrail() {
         left: 0,
         width: "100vw",
         height: "100vh",
-        zIndex: 99999,
+        zIndex: 1,
       }}
     />
   );

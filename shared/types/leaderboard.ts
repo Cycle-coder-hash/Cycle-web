@@ -4,6 +4,7 @@ export interface LeaderboardTrader {
   openId: string;
   name: string;
   avatar: string | null;
+  bio?: string | null;
   role: string;
   startingBalance: number;
   currentBalance: number;

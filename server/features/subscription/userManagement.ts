@@ -64,6 +64,16 @@ function getStoreKey(userId: number, accessType: AccessType): string {
   return `${userId}:${accessType}`;
 }
 
+export function resetInMemoryManualAccessForTests(userId?: number): void {
+  if (typeof userId === "number") {
+    inMemoryManualAccess.delete(getStoreKey(userId, "course"));
+    inMemoryManualAccess.delete(getStoreKey(userId, "pro"));
+    inMemoryManualAccess.delete(getStoreKey(userId, "premium"));
+  } else {
+    inMemoryManualAccess.clear();
+  }
+}
+
 /**
  * Retrieve manual access record for a specific user and access type.
  */

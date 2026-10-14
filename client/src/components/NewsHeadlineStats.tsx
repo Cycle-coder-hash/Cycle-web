@@ -85,7 +85,7 @@ export function NewsHeadlineStats({ isBn: _isBnProp }: NewsHeadlineStatsProps) {
 
   return (
     // Outer container reserves height to prevent any layout shift during empty phase
-    <div className="relative w-full min-h-[96px] sm:min-h-[82px] lg:min-h-[74px] flex items-center overflow-hidden">
+    <div className="relative w-full min-h-[96px] sm:min-h-[82px] lg:min-h-[74px] flex items-center">
       <div
         className={`w-full relative overflow-hidden rounded-2xl border border-sky-400/30 bg-gradient-to-r from-slate-100/90 via-white/95 to-sky-50/90 px-4 py-3.5 sm:px-6 sm:py-4 backdrop-blur-xl shadow-[0_4px_24px_rgba(14,165,233,0.1)] transition-colors dark:border-cyan-400/25 dark:bg-gradient-to-r dark:from-[#06152b]/95 dark:via-[#091f3d]/90 dark:to-[#06152b]/95 dark:shadow-[0_0_35px_rgba(56,189,248,0.12)] ${panelClass}`}
       >

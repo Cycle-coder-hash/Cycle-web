@@ -309,13 +309,16 @@ export default function Home() {
       {/* HEADER / NAVIGATION BAR */}
       {/* ========================================================================= */}
       <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-200/80 bg-white/85 text-slate-900 backdrop-blur-xl transition-colors dark:border-slate-800/80 dark:bg-[#070e1b]/85 dark:text-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-3 sm:px-5 py-2.5 sm:py-3 lg:px-8">
-          <Link href="/" className="flex items-center gap-1.5 sm:gap-2.5 min-w-0 shrink">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-3 sm:px-5 py-2.5 sm:py-3 lg:px-8">
+          <Link href="/" className="flex items-center gap-1.5 sm:gap-2.5 min-w-0 shrink-0">
             <BrandLogo size={36} className="shrink-0 sm:size-[42px]" />
             <HeaderBrandWordmark className="text-[10px] min-[360px]:text-[11px] sm:text-xs md:text-sm font-extrabold shrink-0" />
           </Link>
 
-          <TopNavLinks isBn={isBn} copy={copy} />
+          {/* Balanced navigation container: centered cleanly between logo and controls without floating too far into the void */}
+          <div className="hidden md:flex flex-1 items-center justify-center px-2 lg:px-6">
+            <TopNavLinks isBn={isBn} copy={copy} />
+          </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {/* Dark / Light Theme Toggle (Visible on md+ screens; also available in mobile dropdown) */}
@@ -416,9 +419,14 @@ export default function Home() {
           <div className="pointer-events-none absolute top-20 right-0 size-[600px] rounded-full bg-sky-300/45 blur-[140px] dark:hidden ambient-blur-blob hidden sm:block" />
           <div className="pointer-events-none absolute bottom-0 left-1/3 size-[400px] rounded-full bg-blue-200/30 blur-[100px] dark:hidden ambient-blur-blob hidden sm:block" />
 
+          {/* Atmospheric cyan diagonal accent behind hero text - stays strictly contained inside hero and behind content */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -left-10 top-1/3 -translate-y-1/2 w-72 sm:w-96 h-[2px] bg-gradient-to-r from-transparent via-cyan-400/35 to-transparent -rotate-12 blur-[1px] opacity-70 z-0 hidden lg:block"
+          />
 
-          <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 lg:grid-cols-[1.08fr_0.92fr] lg:gap-8 lg:px-8">
-            <div className="z-10 flex flex-col justify-center">
+          <div className="relative mx-auto grid max-w-7xl items-center gap-8 px-5 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10 xl:gap-12 lg:px-8">
+            <div className="relative z-20 isolate flex flex-col justify-center">
               <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-sky-200 bg-white/80 px-3.5 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#0284c7] shadow-sm backdrop-blur-md dark:border-sky-500/30 dark:bg-slate-900/80 dark:text-sky-400">
                 <span className="relative flex size-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#0284c7] opacity-75 dark:bg-sky-400" />
@@ -427,7 +435,7 @@ export default function Home() {
                 {copy.heroEyebrow}
               </div>
 
-              <h1 className="max-w-xl whitespace-pre-line text-3xl font-extrabold leading-[1.12] tracking-[-0.03em] text-[#071a36] dark:text-white sm:text-5xl lg:text-[4.2rem]">
+              <h1 className="max-w-xl xl:max-w-2xl whitespace-pre-line text-3xl font-extrabold leading-[1.12] tracking-[-0.03em] text-[#071a36] dark:text-white sm:text-5xl lg:text-[3.8rem] xl:text-[4.2rem]">
                 {copy.heroTitle}
               </h1>
 
@@ -468,28 +476,28 @@ export default function Home() {
                 </a>
               </div>
 
-              <div className="mt-10 flex flex-wrap items-center gap-6 border-t border-slate-200/80 pt-6 text-xs font-bold text-slate-500 dark:border-slate-800 dark:text-slate-400">
+              <div className="relative z-20 mt-10 flex flex-wrap items-center gap-4 sm:gap-6 border-t border-slate-200/80 pt-6 text-xs font-bold text-slate-500 dark:border-slate-800 dark:text-slate-400">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck size={16} className="text-[#0284c7] dark:text-sky-400" />
+                  <ShieldCheck size={16} className="text-[#0284c7] dark:text-sky-400 shrink-0" />
                   <span>{copy.trust1}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Zap size={16} className="text-[#0284c7] dark:text-sky-400" />
+                  <Zap size={16} className="text-[#0284c7] dark:text-sky-400 shrink-0" />
                   <span>{copy.trust2}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Layers size={16} className="text-[#0284c7] dark:text-sky-400" />
+                  <Layers size={16} className="text-[#0284c7] dark:text-sky-400 shrink-0" />
                   <span>{copy.trust3}</span>
                 </div>
               </div>
             </div>
 
-            <div className="z-10 flex w-full items-center justify-center lg:justify-end">
+            <div className="relative z-10 flex w-full items-center justify-center">
               <HeroCandle3D lang={language} />
             </div>
           </div>
 
-          <div className="relative mx-auto mt-16 max-w-7xl border-t border-slate-200/80 px-5 pt-8 dark:border-slate-800 lg:px-8">
+          <div className="relative mx-auto mt-12 sm:mt-16 max-w-7xl border-t border-slate-200/80 px-5 pt-8 dark:border-slate-800 lg:px-8 w-full">
             <NewsHeadlineStats isBn={isBn} />
           </div>
         </section>

@@ -104,6 +104,26 @@ export function useAuth(options?: UseAuthOptions) {
 
     if (meQuery.data) {
       localStorage.setItem("manus-runtime-user-info", JSON.stringify(meQuery.data));
+      const userKey = meQuery.data.openId || meQuery.data.email || String(meQuery.data.id);
+      if (userKey) {
+        if (meQuery.data.name) {
+          localStorage.setItem(`cycle_user_custom_name_${userKey}`, meQuery.data.name);
+        }
+        if (meQuery.data.avatar !== undefined) {
+          if (meQuery.data.avatar) {
+            localStorage.setItem(`cycle_user_avatar_${userKey}`, meQuery.data.avatar);
+          } else {
+            localStorage.removeItem(`cycle_user_avatar_${userKey}`);
+          }
+        }
+        if ((meQuery.data as any).bio !== undefined) {
+          if ((meQuery.data as any).bio) {
+            localStorage.setItem(`cycle_user_bio_${userKey}`, (meQuery.data as any).bio);
+          } else {
+            localStorage.removeItem(`cycle_user_bio_${userKey}`);
+          }
+        }
+      }
     }
     let resolvedUser = meQuery.data ?? null;
     if (!resolvedUser && typeof window !== "undefined") {
@@ -128,10 +148,17 @@ export function useAuth(options?: UseAuthOptions) {
               );
               const payload = JSON.parse(jsonPayload);
               if (payload && (payload.sub || payload.email)) {
+                const userKey = payload.sub || payload.email;
+                const storedName = userKey ? localStorage.getItem(`cycle_user_custom_name_${userKey}`) : null;
+                const storedAvatar = userKey ? localStorage.getItem(`cycle_user_avatar_${userKey}`) : null;
+                const storedBio = userKey ? localStorage.getItem(`cycle_user_bio_${userKey}`) : null;
+                const hasExplicitAvatarKey = userKey && localStorage.getItem(`cycle_user_avatar_${userKey}`) !== null;
+
                 resolvedUser = {
                   id: deriveNumericIdFromOpenId(payload.sub || payload.email),
                   openId: payload.sub,
                   name:
+                    storedName ||
                     payload.user_metadata?.name ||
                     payload.user_metadata?.full_name ||
                     payload.email?.split("@")[0] ||
@@ -142,10 +169,13 @@ export function useAuth(options?: UseAuthOptions) {
                   role: "user",
                   loginMethod: "supabase",
                   avatar:
-                    payload.user_metadata?.avatar_url ||
-                    payload.user_metadata?.avatar ||
-                    payload.user_metadata?.picture ||
-                    null,
+                    hasExplicitAvatarKey
+                      ? storedAvatar
+                      : (payload.user_metadata?.avatar_url ||
+                         payload.user_metadata?.avatar ||
+                         payload.user_metadata?.picture ||
+                         null),
+                  bio: storedBio || null,
                   language: payload.user_metadata?.language || "en",
                   emailVerified: true,
                   createdAt: new Date(),

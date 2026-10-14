@@ -31,6 +31,17 @@ export const ur: TranslationSchema = {
     hypeHeader: "ٹریڈنگ کا فریب (جال)",
     realityHeader: "ٹریڈنگ کی حقیقت (سچ)",
   },
+  brainEvolution: {
+    beginner: "ابتدائی",
+    professional: "پیشہ ور",
+    card1: "تیز رفتاری سے سیکھیں",
+    card2: "نظم و ضبط",
+    card3: "مسلسل محنت",
+    card4: "منظم عمل",
+    card5: "جرنلنگ",
+    card6: "ایج حاصل کریں",
+    card7: "پیشہ ور ٹریڈر",
+  },
   roadmap: {
     eyebrow: "باقاعدہ روڈ میپ",
     title1: "ابتدائی سے",

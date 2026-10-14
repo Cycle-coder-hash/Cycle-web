@@ -273,7 +273,7 @@ export function HeroCandle3D({ lang = "en", className = "" }: HeroCandle3DProps)
       onPointerEnter={handlePointerEnter}
       onPointerLeave={handlePointerLeave}
       onClick={handleTouchToggle}
-      className={`group relative flex w-full flex-col items-center justify-center select-none cursor-pointer gpu-layer touch-pan-y ${className}`}
+      className={`group relative flex w-full max-w-full flex-col items-center justify-center select-none cursor-pointer gpu-layer touch-pan-y overflow-hidden sm:overflow-visible ${className}`}
       style={
         {
           "--rot-x": "-3deg",
