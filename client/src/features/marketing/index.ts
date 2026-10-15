@@ -1,4 +1,4 @@
-export * from "./components/HeroCandle3D";
+export * from "./components/HeroHexagonBackground";
 export * from "./components/JournalAnalyticsShowcase";
 export * from "./components/NewsHeadlineStats";
 export * from "./components/HomePlansSection";

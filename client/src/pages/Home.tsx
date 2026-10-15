@@ -35,7 +35,6 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/BrandLogo";
 import { HeaderBrandWordmark } from "@/components/HeaderBrandWordmark";
-import { HeroCandle3D } from "@/components/HeroCandle3D";
 import { TopNavLinks } from "@/components/TopNavLinks";
 import { NewsHeadlineStats } from "@/components/NewsHeadlineStats";
 import { JournalAnalyticsShowcase } from "@/components/JournalAnalyticsShowcase";
@@ -58,6 +57,7 @@ import {
   HomePlansSection,
   HomeOwnerProfileSection,
   HomeRoadmapAndShiftSection,
+  HeroHexagonBackground,
 } from "@/features/marketing";
 
 export {
@@ -299,6 +299,16 @@ export default function Home() {
     [t, selectText]
   );
 
+  const titleLines = useMemo(
+    () => (copy.heroTitle ? copy.heroTitle.split("\n") : []),
+    [copy.heroTitle]
+  );
+  const hasSubtitleBreak = copy.heroSubtitle && copy.heroSubtitle.includes("\n");
+  const subtitleLines = useMemo(
+    () => (hasSubtitleBreak ? copy.heroSubtitle.split("\n") : []),
+    [copy.heroSubtitle, hasSubtitleBreak]
+  );
+
   return (
     <div
       className={`min-h-screen bg-[#f8fafc] text-[#09111f] selection:bg-[#38bdf8] selection:text-[#09111f] dark:bg-transparent dark:text-slate-100 transition-colors duration-300 ${
@@ -414,84 +424,108 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* HERO PANEL */}
         {/* ========================================================================= */}
-        <section className="relative overflow-hidden bg-gradient-to-b from-[#ffffff] via-[#f0f7ff] to-[#e6f2fe] pt-24 pb-14 sm:pt-28 sm:pb-16 lg:pt-36 lg:pb-24 dark:from-transparent dark:via-transparent dark:to-transparent transition-colors duration-300">
-          <div className="pointer-events-none absolute top-12 -left-20 size-[500px] rounded-full bg-sky-200/40 blur-[120px] dark:hidden ambient-blur-blob hidden sm:block" />
-          <div className="pointer-events-none absolute top-20 right-0 size-[600px] rounded-full bg-sky-300/45 blur-[140px] dark:hidden ambient-blur-blob hidden sm:block" />
-          <div className="pointer-events-none absolute bottom-0 left-1/3 size-[400px] rounded-full bg-blue-200/30 blur-[100px] dark:hidden ambient-blur-blob hidden sm:block" />
+        <section className="relative overflow-hidden bg-[#02060f] pt-24 pb-14 sm:pt-28 sm:pb-16 lg:pt-36 lg:pb-24">
+          {/* Animated Premium Hexagon Honeycomb Background */}
+          <HeroHexagonBackground />
 
-          <div className="relative mx-auto grid max-w-7xl items-center gap-8 px-5 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10 xl:gap-12 lg:px-8">
-            <div className="relative z-20 isolate flex flex-col justify-center">
-              <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-sky-200 bg-white/80 px-3.5 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#0284c7] shadow-sm backdrop-blur-md dark:border-sky-500/30 dark:bg-slate-900/80 dark:text-sky-400">
-                <span className="relative flex size-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#0284c7] opacity-75 dark:bg-sky-400" />
-                  <span className="relative inline-flex size-2 rounded-full bg-[#0284c7] dark:bg-sky-400" />
-                </span>
-                {copy.heroEyebrow}
-              </div>
-
-              <h1 className="max-w-xl xl:max-w-2xl whitespace-pre-line text-3xl font-extrabold leading-[1.12] tracking-[-0.03em] text-[#071a36] dark:text-white sm:text-5xl lg:text-[3.8rem] xl:text-[4.2rem]">
-                {copy.heroTitle}
-              </h1>
-
-              <p
-                className={`mt-6 max-w-lg leading-relaxed whitespace-pre-line ${
-                  isBn
-                    ? "text-base sm:text-lg text-slate-600 dark:text-slate-300"
-                    : "text-xl sm:text-2xl font-bold text-[#0284c7] dark:text-sky-400"
-                }`}
-              >
-                {copy.heroSubtitle}
-              </p>
-
-              <p className="mt-4 max-w-lg text-sm sm:text-base leading-relaxed text-slate-600 dark:text-slate-300 font-medium">
-                {copy.heroBnSub}
-              </p>
-
-              <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 sm:mt-10 w-full sm:w-auto">
-                <a href="#roadmap" className="w-full sm:w-auto">
-                  <Button
-                    size="lg"
-                    className="w-full sm:w-auto h-12 rounded-xl bg-[#081833] px-7 text-base font-bold text-white shadow-lg shadow-[#081833]/25 transition hover:bg-[#0c244b] hover:shadow-xl active:scale-[0.98] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400 dark:shadow-sky-500/20"
-                  >
-                    <Compass size={18} className="mr-2" />
-                    {copy.primaryCta}
-                  </Button>
-                </a>
-
-                <a href="#store" className="w-full sm:w-auto">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="w-full sm:w-auto h-12 rounded-xl border border-slate-300 bg-white/80 px-7 text-base font-bold text-slate-800 shadow-sm backdrop-blur-md transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-100 dark:hover:bg-slate-700 active:scale-[0.98]"
-                  >
-                    <ShoppingBag size={18} className="mr-2 text-[#0284c7] dark:text-sky-400" />
-                    {copy.secondaryCta}
-                  </Button>
-                </a>
-              </div>
-
-              <div className="relative z-20 mt-10 flex flex-wrap items-center gap-4 sm:gap-6 border-t border-slate-200/80 pt-6 text-xs font-bold text-slate-500 dark:border-slate-800 dark:text-slate-400">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck size={16} className="text-[#0284c7] dark:text-sky-400 shrink-0" />
-                  <span>{copy.trust1}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Zap size={16} className="text-[#0284c7] dark:text-sky-400 shrink-0" />
-                  <span>{copy.trust2}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Layers size={16} className="text-[#0284c7] dark:text-sky-400 shrink-0" />
-                  <span>{copy.trust3}</span>
-                </div>
-              </div>
+          <div className="relative z-10 mx-auto max-w-4xl px-5 text-center flex flex-col items-center">
+            {/* a) Badge: CYCLE OF CHART • TRADING REALITY */}
+            <div className="hero-anim-badge mb-6 sm:mb-8 inline-flex items-center gap-2.5 rounded-full border border-cyan-400/30 bg-cyan-950/40 px-4 py-1.5 text-[11px] sm:text-xs font-bold uppercase tracking-[0.16em] text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.15)] backdrop-blur-md">
+              <span className="relative flex size-2">
+                <span className="hero-dot-pulse absolute inline-flex h-full w-full rounded-full bg-cyan-400" />
+                <span className="relative inline-flex size-2 rounded-full bg-cyan-300" />
+              </span>
+              <span>{copy.heroEyebrow}</span>
             </div>
 
-            <div className="relative z-10 flex w-full items-center justify-center">
-              <HeroCandle3D lang={language} />
+            {/* Headings: Tradefxbook-style centered */}
+            <h1 className="flex flex-col items-center text-center font-hero-heading text-[clamp(1.75rem,5.2vw,4.1rem)] font-extrabold uppercase leading-[1.08] tracking-[-0.025em] text-white">
+              {/* b) Headline line 1+2 (white) */}
+              {titleLines.map((line, idx) => (
+                <span key={`title-${idx}`} className="block overflow-hidden py-0.5">
+                  <span
+                    className={`block text-white ${
+                      idx === 0 ? "hero-anim-line-1" : "hero-anim-line-2"
+                    }`}
+                  >
+                    {line}
+                  </span>
+                </span>
+              ))}
+
+              {/* c) Headline line 3+4 (cyan/blue gradient shimmer sweep + drop-shadow) */}
+              {hasSubtitleBreak ? (
+                subtitleLines.map((line, idx) => (
+                  <span key={`sub-${idx}`} className="block overflow-hidden py-0.5 mt-1 sm:mt-1.5">
+                    <span
+                      className={`block hero-gradient-text ${
+                        idx === 0 ? "hero-anim-line-3" : "hero-anim-line-4"
+                      }`}
+                    >
+                      {line}
+                    </span>
+                  </span>
+                ))
+              ) : (
+                <span className="block overflow-hidden py-0.5 mt-3 sm:mt-4 max-w-2xl text-lg sm:text-2xl font-bold leading-relaxed normal-case">
+                  <span className="block hero-gradient-text hero-anim-line-3">
+                    {copy.heroSubtitle}
+                  </span>
+                </span>
+              )}
+            </h1>
+
+            {/* d) Paragraph: Muted light-gray-blue, Inter, max-w ~620px */}
+            <p className="hero-anim-body mt-6 sm:mt-8 max-w-[620px] mx-auto text-base sm:text-[1.05rem] leading-[1.65] font-normal text-slate-300">
+              {copy.heroBnSub}
+            </p>
+
+            {/* e) Buttons: Centered, scale-in, primary glowing pulse, arrow shift on hover */}
+            <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
+              <a href="#roadmap" className="hero-anim-btn-1 w-full sm:w-auto">
+                <Button
+                  size="lg"
+                  className="group relative w-full sm:w-auto h-12 sm:h-13 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-400 px-8 text-base font-bold text-slate-950 shadow-lg shadow-sky-500/25 hero-btn-primary-pulse transition-all duration-200 hover:scale-[1.02] hover:shadow-cyan-400/40 active:scale-[0.98]"
+                >
+                  <Compass size={18} className="mr-2 text-slate-950" />
+                  <span>{copy.primaryCta}</span>
+                  <ArrowRight
+                    size={16}
+                    className="ml-2 transition-transform duration-200 group-hover:translate-x-1"
+                  />
+                </Button>
+              </a>
+
+              <a href="#store" className="hero-anim-btn-2 w-full sm:w-auto">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full sm:w-auto h-12 sm:h-13 rounded-xl border border-slate-700/80 bg-slate-900/60 px-8 text-base font-bold text-slate-200 shadow-sm backdrop-blur-md transition-all duration-200 hover:bg-slate-800/80 hover:text-white hover:border-slate-600 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <ShoppingBag size={18} className="mr-2 text-cyan-400" />
+                  <span>{copy.secondaryCta}</span>
+                </Button>
+              </a>
+            </div>
+
+            {/* Trust Badges Row */}
+            <div className="hero-anim-body mt-10 sm:mt-12 flex flex-wrap items-center justify-center gap-6 sm:gap-8 border-t border-slate-800/70 pt-6 text-xs sm:text-[13px] font-semibold text-slate-400">
+              <div className="flex items-center gap-2">
+                <ShieldCheck size={16} className="text-cyan-400" />
+                <span>{copy.trust1}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Zap size={16} className="text-cyan-400" />
+                <span>{copy.trust2}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Layers size={16} className="text-cyan-400" />
+                <span>{copy.trust3}</span>
+              </div>
             </div>
           </div>
 
-          <div className="relative mx-auto mt-12 sm:mt-16 max-w-7xl border-t border-slate-200/80 px-5 pt-8 dark:border-slate-800 lg:px-8 w-full">
+          <div className="relative z-10 mx-auto mt-14 sm:mt-16 max-w-7xl border-t border-slate-800/80 px-5 pt-8 lg:px-8">
             <NewsHeadlineStats isBn={isBn} />
           </div>
         </section>

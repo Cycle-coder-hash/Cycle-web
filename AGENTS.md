@@ -34,7 +34,7 @@ Read this first. Then read only the feature you are changing. Do NOT scan the wh
 | library (ebooks) | `components/ebook/`, `pages/admin/tabs/EbooksTab.tsx` | `db.ts` | public, admin |
 | owner-profile | `pages/admin/tabs/OwnerProfileTab.tsx` | `db.ts` "OWNER PROFILE" section | public, admin |
 | media | `lib/mediaUpload.ts` | `uploadRoute.ts`, `storage.ts`, `_core/storageProxy.ts` | REST |
-| marketing | `pages/Home.tsx`, `components/{HeroCandle3D,JournalAnalyticsShowcase,NewsHeadlineStats}.tsx` | — | — |
+| marketing | `pages/Home.tsx`, `components/{HeroHexagonBackground,JournalAnalyticsShowcase,NewsHeadlineStats}.tsx` | — | — |
 | admin UI | `pages/admin/**` | `routers.ts` admin, `adminApi.ts` | admin |
 
 Find a section in `server/db.ts` by searching its UPPERCASE header comment instead of reading the file.
