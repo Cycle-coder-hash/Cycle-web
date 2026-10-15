@@ -30,6 +30,8 @@ interface BrainPoint {
   keep: boolean;
   ord: number;
   d?: number;
+  z?: number;
+  top?: boolean;
 }
 
 interface BrainEdge {
@@ -56,6 +58,14 @@ interface Particle {
   k: number;
   u: number;
   sp: number;
+}
+
+interface Pulse {
+  e: number;
+  from: number;
+  u: number;
+  sp: number;
+  hops: number;
 }
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
@@ -185,6 +195,16 @@ function getBrainMesh(): BrainMeshData {
     p.ord = clamp((p.d! / maxd) * 0.85 + rnd() * 0.15, 0, 1);
   });
 
+  /* depth (z) for 3D look, and horizontal cut for split */
+  const rz = mulberry(99);
+  pts.forEach((p) => {
+    const k = Math.sqrt(
+      Math.max(0, 1 - Math.pow((p.x - 190) / 165, 2) - Math.pow((p.y - 130) / 120, 2))
+    );
+    p.z = (rz() * 2 - 1) * (80 * k + 10);
+    p.top = p.y < 150;
+  });
+
   const edges: BrainEdge[] = [];
   for (let i = 0; i < pts.length; i++) {
     for (let j = i + 1; j < pts.length; j++) {
@@ -261,72 +281,6 @@ function drawBeginner(
   }
 }
 
-function drawPro(
-  ctx: CanvasRenderingContext2D,
-  mesh: BrainMeshData,
-  b: BrainTransform,
-  bp: number,
-  t: number
-) {
-  const { pts, edges, vis } = mesh;
-  const s = b.s;
-  const flip = b.flipX ?? false;
-
-  for (let i = 0; i < pts.length; i++) {
-    vis[i] = clamp((bp * 1.3 - pts[i].ord) / 0.3, 0, 1);
-  }
-
-  ctx.lineWidth = 0.9;
-  for (let i = 0; i < edges.length; i++) {
-    const e = edges[i];
-    const A = pts[e.a];
-    const B = pts[e.b];
-    const a = Math.min(vis[e.a], vis[e.b]);
-    const pulse = 0.8 + 0.2 * Math.sin(t * 1.6 - (A.x + B.x) * 0.015);
-    const al = 0.045 + 0.8 * a * pulse;
-    ctx.strokeStyle =
-      a > 0.02 ? `rgba(34,211,238,${al.toFixed(3)})` : 'rgba(60,110,170,.06)';
-
-    const ax = flip ? 400 - A.x : A.x;
-    const bx = flip ? 400 - B.x : B.x;
-
-    ctx.beginPath();
-    ctx.moveTo(b.x + ax * s, b.y + A.y * s);
-    ctx.lineTo(b.x + bx * s, b.y + B.y * s);
-    ctx.stroke();
-  }
-
-  const r = Math.max(1.2, 1.9 * s);
-  for (let i = 0; i < pts.length; i++) {
-    const p = pts[i];
-    const a = vis[i];
-    const pulse = 0.8 + 0.2 * Math.sin(t * 1.6 - p.x * 0.03);
-    const px = flip ? 400 - p.x : p.x;
-    const X = b.x + px * s;
-    const Y = b.y + p.y * s;
-
-    if (a < 0.02) {
-      ctx.fillStyle = 'rgba(60,110,170,.12)';
-      ctx.beginPath();
-      ctx.arc(X, Y, r * 0.7, 0, 6.283);
-      ctx.fill();
-      continue;
-    }
-
-    const edge = a < 0.95;
-    ctx.fillStyle = edge
-      ? `rgba(210,250,255,${(0.9 * a).toFixed(3)})`
-      : `rgba(120,230,255,${(0.95 * pulse).toFixed(3)})`;
-    ctx.beginPath();
-    ctx.arc(X, Y, edge ? r * 1.25 : r, 0, 6.283);
-    ctx.fill();
-
-    ctx.fillStyle = `rgba(34,211,238,${(0.14 * a * pulse).toFixed(3)})`;
-    ctx.beginPath();
-    ctx.arc(X, Y, r * 3.4, 0, 6.283);
-    ctx.fill();
-  }
-}
 
 function catmull(P: { x: number; y: number }[], seg: number) {
   const out: { x: number; y: number }[] = [];
@@ -387,6 +341,9 @@ export const TraderBrainEvolutionSection: React.FC = () => {
   const cardElsRef = useRef<(HTMLDivElement | null)[]>([]);
   const lbRef = useRef<HTMLDivElement>(null);
   const lpRef = useRef<HTMLDivElement>(null);
+  const mindRef = useRef<HTMLDivElement>(null);
+  const mhRef = useRef<HTMLParagraphElement>(null);
+  const lisRef = useRef<(HTMLLIElement | null)[]>([]);
 
   // Translations
   const beginnerLabel = t('brainEvolution.beginner', 'BEGINNER');
@@ -433,6 +390,21 @@ export const TraderBrainEvolutionSection: React.FC = () => {
     if (!ctx) return;
 
     const mesh = getBrainMesh();
+    const ppts = mesh.pts;
+    const pedges = mesh.edges;
+    const padj: number[][] = ppts.map(() => []);
+    pedges.forEach((e, i) => {
+      padj[e.a].push(i);
+      padj[e.b].push(i);
+    });
+
+    const flash = new Float32Array(ppts.length);
+    const px = new Float32Array(ppts.length);
+    const py = new Float32Array(ppts.length);
+    const pd = new Float32Array(ppts.length);
+    const pvis = new Float32Array(ppts.length);
+    const pulses: Pulse[] = [];
+
     const SEG = 26;
     const th: number[] = [];
     for (let i = 0; i < 7; i++) th.push(0.05 + i * (0.86 / 6));
@@ -456,6 +428,257 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       typeof window !== 'undefined' &&
       window.matchMedia &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function spawnPulse() {
+      for (let tries = 0; tries < 14; tries++) {
+        const i = (Math.random() * ppts.length) | 0;
+        if (pvis[i] < 0.85 || !padj[i].length) continue;
+        const ei = padj[i][(Math.random() * padj[i].length) | 0];
+        const e = pedges[ei];
+        if (Math.min(pvis[e.a], pvis[e.b]) < 0.85) continue;
+        pulses.push({
+          e: ei,
+          from: i,
+          u: 0,
+          sp: 2 + Math.random() * 2,
+          hops: 5 + ((Math.random() * 8) | 0),
+        });
+        return;
+      }
+    }
+
+    function drawPro(
+      b: BrainTransform,
+      bp: number,
+      t: number,
+      dt: number,
+      oe: number,
+      G: number
+    ) {
+      if (!ctx) return;
+      const s = b.s;
+      let i: number;
+      for (i = 0; i < ppts.length; i++) {
+        pvis[i] = clamp((bp * 1.3 - ppts[i].ord) / 0.3, 0, 1);
+      }
+
+      /* slow 3D sway: rotate around the vertical axis with perspective */
+      const ang = reduce ? 0 : 0.34 * Math.sin(t * 0.32);
+      const ca = Math.cos(ang);
+      const sa = Math.sin(ang);
+      const bob = reduce ? 0 : Math.sin(t * 0.8) * 2;
+
+      for (i = 0; i < ppts.length; i++) {
+        const p = ppts[i];
+        const dx = b.flipX ? 190 - p.x : p.x - 190;
+        const pz = p.z || 0;
+        const zr = -dx * sa + pz * ca;
+        const xr = dx * ca + pz * sa;
+        const f = 1 / (1 - zr / 520);
+        px[i] = b.x + (190 + xr * f) * s;
+        py[i] = b.y + (150 + (p.y - 150) * f + bob) * s + (p.top ? -0.65 : 0.35) * G * oe;
+        pd[i] = clamp(0.5 + zr / 170, 0, 1);
+        flash[i] = Math.max(0, flash[i] - dt * 2.2);
+      }
+
+      /* soft glow behind the brain, grows as it is built */
+      const gx = b.x + 190 * s;
+      const gy = b.y + 140 * s;
+      const gr = ctx.createRadialGradient(gx, gy, 10 * s, gx, gy, 230 * s);
+      gr.addColorStop(0, 'rgba(40,226,220,' + (0.07 + 0.07 * bp).toFixed(3) + ')');
+      gr.addColorStop(1, 'rgba(34,211,238,0)');
+      ctx.fillStyle = gr;
+      ctx.fillRect(b.x - 60 * s, b.y - 60 * s, 520 * s, 420 * s);
+
+      if (oe > 0.01) {
+        const cy = b.y + 150 * s - 0.15 * G * oe;
+        const g2 = ctx.createRadialGradient(gx, cy, 4, gx, cy, 170 * s);
+        g2.addColorStop(0, 'rgba(34,211,238,' + (0.16 * oe).toFixed(3) + ')');
+        g2.addColorStop(1, 'rgba(34,211,238,0)');
+        ctx.fillStyle = g2;
+        ctx.fillRect(gx - 200 * s, cy - 130 * s, 400 * s, 260 * s);
+      }
+
+      ctx.lineWidth = 1.15;
+      for (i = 0; i < pedges.length; i++) {
+        const e = pedges[i];
+        const a = Math.min(pvis[e.a], pvis[e.b]);
+        const d = (pd[e.a] + pd[e.b]) / 2;
+        const pulse = 0.8 + 0.2 * Math.sin(t * 1.6 - (ppts[e.a].x + ppts[e.b].x) * 0.015);
+        const al =
+          (0.045 + 0.8 * a * pulse) *
+          (0.45 + 0.55 * d) *
+          (1 - 0.5 * oe) *
+          (ppts[e.a].top !== ppts[e.b].top ? 1 - oe : 1);
+        ctx.strokeStyle =
+          a > 0.02 ? 'rgba(40,226,220,' + al.toFixed(3) + ')' : 'rgba(60,110,170,.06)';
+        ctx.beginPath();
+        ctx.moveTo(px[e.a], py[e.a]);
+        ctx.lineTo(px[e.b], py[e.b]);
+        ctx.stroke();
+      }
+
+      const r = Math.max(1.8, 2.7 * s);
+      ctx.globalAlpha = 1 - 0.5 * oe;
+      for (i = 0; i < ppts.length; i++) {
+        const av = pvis[i];
+        const pl = 0.8 + 0.2 * Math.sin(t * 1.6 - ppts[i].x * 0.03);
+        const X = px[i];
+        const Y = py[i];
+        const rr = r * (0.75 + 0.5 * pd[i]);
+        if (av < 0.02) {
+          ctx.fillStyle = 'rgba(60,110,170,.12)';
+          ctx.beginPath();
+          ctx.arc(X, Y, rr * 0.7, 0, 6.283);
+          ctx.fill();
+          continue;
+        }
+        const edge = av < 0.95;
+        ctx.fillStyle = edge
+          ? 'rgba(210,250,255,' + (0.9 * av).toFixed(3) + ')'
+          : 'rgba(100,245,232,' + ((0.55 + 0.4 * pd[i]) * pl).toFixed(3) + ')';
+        ctx.beginPath();
+        ctx.arc(X, Y, edge ? rr * 1.9 : rr, 0, 6.283);
+        ctx.fill();
+
+        ctx.fillStyle = 'rgba(40,226,220,' + (0.14 * av * pl * (0.5 + 0.5 * pd[i])).toFixed(3) + ')';
+        ctx.beginPath();
+        ctx.arc(X, Y, rr * (edge ? 5.2 : 3.4), 0, 6.283);
+        ctx.fill();
+
+        if (flash[i] > 0.02) {
+          ctx.fillStyle = 'rgba(190,250,255,' + (0.2 * flash[i]).toFixed(3) + ')';
+          ctx.beginPath();
+          ctx.arc(X, Y, rr * (2.4 + 2.6 * flash[i]), 0, 6.283);
+          ctx.fill();
+        }
+      }
+      ctx.globalAlpha = 1;
+
+      /* neuron signals: small glowing lights hop from neuron to neuron along the links */
+      const mobile = isMobileRef.current;
+      const want = Math.round((mobile ? 7 : 14) * clamp((bp - 0.12) / 0.6, 0, 1));
+      if (!reduce && dt > 0 && pulses.length < want && Math.random() < dt * 12) spawnPulse();
+      for (i = pulses.length - 1; i >= 0; i--) {
+        const q = pulses[i];
+        let pe = pedges[q.e];
+        if (oe > 0.05 && ppts[pe.a].top !== ppts[pe.b].top) {
+          pulses.splice(i, 1);
+          continue;
+        }
+        q.u += q.sp * dt;
+        if (q.u >= 1) {
+          const to = pe.a === q.from ? pe.b : pe.a;
+          flash[to] = 1;
+          q.hops--;
+          let nx = -1;
+          const list = padj[to];
+          const off = (Math.random() * list.length) | 0;
+          for (let k = 0; k < list.length && q.hops > 0; k++) {
+            const ci = list[(off + k) % list.length];
+            if (ci === q.e) continue;
+            const ce = pedges[ci];
+            if (Math.min(pvis[ce.a], pvis[ce.b]) < 0.85) continue;
+            nx = ci;
+            break;
+          }
+          if (nx < 0) {
+            pulses.splice(i, 1);
+            continue;
+          }
+          q.from = to;
+          q.e = nx;
+          q.u -= 1;
+          pe = pedges[nx];
+        }
+        const A = q.from;
+        const B = pe.a === A ? pe.b : pe.a;
+        const u0 = Math.max(0, q.u - 0.45);
+        const ux = px[A] + (px[B] - px[A]) * q.u;
+        const uy = py[A] + (py[B] - py[A]) * q.u;
+        const tx = px[A] + (px[B] - px[A]) * u0;
+        const ty = py[A] + (py[B] - py[A]) * u0;
+        const fa = Math.min(1, q.hops / 2 + 0.2);
+
+        ctx.lineWidth = 1.6;
+        ctx.strokeStyle = 'rgba(200,250,255,' + (0.6 * fa).toFixed(3) + ')';
+        ctx.beginPath();
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(ux, uy);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(40,226,220,' + (0.3 * fa).toFixed(3) + ')';
+        ctx.beginPath();
+        ctx.arc(ux, uy, Math.max(4, 5.5 * s), 0, 6.283);
+        ctx.fill();
+
+        ctx.fillStyle = 'rgba(235,253,255,' + fa.toFixed(3) + ')';
+        ctx.beginPath();
+        ctx.arc(ux, uy, Math.max(1.4, 2 * s), 0, 6.283);
+        ctx.fill();
+      }
+    }
+
+    /* hover (mouse) or tap (touch) on the finished Professional brain: it opens and the mindset text appears from inside */
+    const mind = mindRef.current;
+    const mhEl = mhRef.current;
+    const lis = lisRef.current;
+    let G = 112;
+    let openT = 0;
+    let openS = 0;
+    let lastO = -1;
+
+    function inBrain(x: number, y: number, pad: number) {
+      if (!brainP || !stage) return false;
+      const r = stage.getBoundingClientRect();
+      const lx = x - r.left;
+      const ly = y - r.top;
+      const b = brainP;
+      const s = b.s;
+      return (
+        lx > b.x + 30 * s - pad &&
+        lx < b.x + 350 * s + pad &&
+        ly > b.y + 20 * s - pad &&
+        ly < b.y + 290 * s + pad
+      );
+    }
+
+    function brainReady() {
+      return pSRef.current >= th[6] - 0.01;
+    }
+
+    const onPointerMoveWindow = (e: PointerEvent) => {
+      if (e.pointerType === 'touch') return;
+      openT = brainReady() && inBrain(e.clientX, e.clientY, openT ? 60 : 0) ? 1 : 0;
+    };
+
+    const onPointerDownStage = (e: PointerEvent) => {
+      if (e.pointerType === 'mouse') return;
+      openT = brainReady() && inBrain(e.clientX, e.clientY, 0) ? (openT ? 0 : 1) : 0;
+    };
+
+    const onMouseLeaveDoc = () => {
+      openT = 0;
+    };
+
+    window.addEventListener('pointermove', onPointerMoveWindow, { passive: true });
+    stage.addEventListener('pointerdown', onPointerDownStage);
+    document.documentElement.addEventListener('mouseleave', onMouseLeaveDoc);
+
+    function updateMind(oe: number) {
+      if (Math.abs(oe - lastO) < 0.002) return;
+      lastO = oe;
+      if (!mind || !mhEl) return;
+      mind.style.setProperty('--o', oe.toFixed(3));
+      mhEl.style.opacity = clamp((oe - 0.2) / 0.3, 0, 1).toString();
+      lis.forEach((li, idx) => {
+        if (!li) return;
+        const o = clamp((oe - 0.3 - idx * 0.1) / 0.3, 0, 1);
+        li.style.opacity = o.toString();
+        const transX = isRTL ? (12 * (1 - o)).toFixed(1) : (-12 * (1 - o)).toFixed(1);
+        li.style.transform = `translateX(${transX}px)`;
+      });
+    }
 
     function layout() {
       if (!stage || !cv) return;
@@ -626,6 +849,14 @@ export const TraderBrainEvolutionSection: React.FC = () => {
           sp: 0.06 + Math.random() * 0.07,
         });
       }
+
+      G = mobile ? 104 : 112;
+      if (mind) {
+        mind.style.left = brainP.x + 190 * brainP.s + 'px';
+        mind.style.top = brainP.y + 150 * brainP.s - 0.15 * G + 'px';
+        mind.style.fontSize = clamp(brainP.s * 16, 12, 15) + 'px';
+      }
+      lastO = -1;
     }
 
     function scrollP() {
@@ -748,6 +979,11 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       const litF = litFRef.current;
       const bp = clamp((pS - 0.04) / 0.88, 0, 1);
 
+      if (pS < th[6] - 0.02) openT = 0;
+      openS += (openT - openS) * (1 - Math.exp(-dt * (reduce ? 60 : 7)));
+      const oe = openS * openS * (3 - 2 * openS);
+      updateMind(oe);
+
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, W, H);
       ctx.globalCompositeOperation = 'lighter';
@@ -755,7 +991,7 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       ctx.lineJoin = 'round';
 
       drawBeginner(ctx, mesh, brainB, T);
-      drawPro(ctx, mesh, brainP, bp, T);
+      drawPro(brainP, bp, T, reduce ? 0 : dt, oe, G);
 
       const litIdx = Math.floor(litF * (N - 1));
 
@@ -829,6 +1065,9 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       cancelAnimationFrame(animId);
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', layout);
+      window.removeEventListener('pointermove', onPointerMoveWindow);
+      stage.removeEventListener('pointerdown', onPointerDownStage);
+      document.documentElement.removeEventListener('mouseleave', onMouseLeaveDoc);
       if (!reduce) {
         window.removeEventListener('pointermove', onPointerMove);
       }
@@ -972,6 +1211,56 @@ export const TraderBrainEvolutionSection: React.FC = () => {
         #journey .lbl.p {
           color: #22d3ee;
         }
+        #journey .mind {
+          --o: 0;
+          position: absolute;
+          transform: translate(-50%, -50%);
+          pointer-events: none;
+          opacity: var(--o);
+          clip-path: inset(calc(50% * (1 - var(--o))) - 10px);
+          width: max-content;
+          white-space: nowrap;
+          z-index: 10;
+        }
+        #journey .mh {
+          margin: 0 0 8px;
+          font-family: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+          font-weight: 500;
+          font-size: 0.74em;
+          line-height: 1;
+          letter-spacing: 0.24em;
+          color: #22d3ee;
+          opacity: 0;
+          text-align: center;
+        }
+        #journey .mind ul {
+          list-style: none;
+          margin: 0;
+          padding: 0;
+          display: grid;
+          gap: 3px;
+        }
+        #journey .mind li {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-weight: 600;
+          line-height: 1.35;
+          color: #e6f1ff;
+          opacity: 0;
+        }
+        #journey .mind li::before {
+          content: "";
+          flex: none;
+          width: 7px;
+          height: 8px;
+          background: #22d3ee;
+          clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+        }
+        #journey .mind[dir="rtl"] li {
+          flex-direction: row-reverse;
+          justify-content: flex-start;
+        }
         @media (max-width: 759px) {
           #journey {
             height: auto;
@@ -1039,6 +1328,48 @@ export const TraderBrainEvolutionSection: React.FC = () => {
           </div>
           <div ref={lpRef} className="lbl p" id="lp">
             {proLabel}
+          </div>
+
+          {/* Professional Mindset Text (Revealed from split brain on hover/tap) */}
+          <div
+            ref={mindRef}
+            className="mind"
+            id="mind"
+            dir={isRTL ? 'rtl' : 'ltr'}
+          >
+            <p ref={mhRef} className="mh">
+              {t('brainEvolution.mindsetTitle', 'PROFESSIONAL MINDSET')}
+            </p>
+            <ul>
+              <li
+                ref={(el) => {
+                  lisRef.current[0] = el;
+                }}
+              >
+                {t('brainEvolution.mindset1', 'Education > Hype')}
+              </li>
+              <li
+                ref={(el) => {
+                  lisRef.current[1] = el;
+                }}
+              >
+                {t('brainEvolution.mindset2', 'Skill > Signal')}
+              </li>
+              <li
+                ref={(el) => {
+                  lisRef.current[2] = el;
+                }}
+              >
+                {t('brainEvolution.mindset3', 'Process > Profit')}
+              </li>
+              <li
+                ref={(el) => {
+                  lisRef.current[3] = el;
+                }}
+              >
+                {t('brainEvolution.mindset4', 'Understanding > Deposit')}
+              </li>
+            </ul>
           </div>
         </div>
       </section>

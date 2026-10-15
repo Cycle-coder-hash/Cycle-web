@@ -419,12 +419,6 @@ export default function Home() {
           <div className="pointer-events-none absolute top-20 right-0 size-[600px] rounded-full bg-sky-300/45 blur-[140px] dark:hidden ambient-blur-blob hidden sm:block" />
           <div className="pointer-events-none absolute bottom-0 left-1/3 size-[400px] rounded-full bg-blue-200/30 blur-[100px] dark:hidden ambient-blur-blob hidden sm:block" />
 
-          {/* Atmospheric cyan diagonal accent behind hero text - stays strictly contained inside hero and behind content */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -left-10 top-1/3 -translate-y-1/2 w-72 sm:w-96 h-[2px] bg-gradient-to-r from-transparent via-cyan-400/35 to-transparent -rotate-12 blur-[1px] opacity-70 z-0 hidden lg:block"
-          />
-
           <div className="relative mx-auto grid max-w-7xl items-center gap-8 px-5 lg:grid-cols-[1.1fr_0.9fr] lg:gap-10 xl:gap-12 lg:px-8">
             <div className="relative z-20 isolate flex flex-col justify-center">
               <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-sky-200 bg-white/80 px-3.5 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#0284c7] shadow-sm backdrop-blur-md dark:border-sky-500/30 dark:bg-slate-900/80 dark:text-sky-400">

@@ -41,6 +41,11 @@ export const bn: TranslationSchema = {
     card5: "জার্নাল",
     card6: "এজ তৈরি",
     card7: "প্রফেশনাল ট্রেডার",
+    mindsetTitle: "প্রফেশনাল মাইন্ডসেট",
+    mindset1: "শিক্ষা > হাইপ",
+    mindset2: "দক্ষতা > সিগন্যাল",
+    mindset3: "প্রসেস > প্রফিট",
+    mindset4: "বোঝাপড়া > ডিপোজিট",
   },
   roadmap: {
     eyebrow: "দ্য রোডম্যাপ",
