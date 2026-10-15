@@ -341,9 +341,7 @@ export const TraderBrainEvolutionSection: React.FC = () => {
   const cardElsRef = useRef<(HTMLDivElement | null)[]>([]);
   const lbRef = useRef<HTMLDivElement>(null);
   const lpRef = useRef<HTMLDivElement>(null);
-  const mindRef = useRef<HTMLDivElement>(null);
-  const mhRef = useRef<HTMLParagraphElement>(null);
-  const lisRef = useRef<(HTMLLIElement | null)[]>([]);
+  const bpmRef = useRef<HTMLDivElement>(null);
 
   // Translations
   const beginnerLabel = t('brainEvolution.beginner', 'BEGINNER');
@@ -451,9 +449,7 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       b: BrainTransform,
       bp: number,
       t: number,
-      dt: number,
-      oe: number,
-      G: number
+      dt: number
     ) {
       if (!ctx) return;
       const s = b.s;
@@ -476,7 +472,7 @@ export const TraderBrainEvolutionSection: React.FC = () => {
         const xr = dx * ca + pz * sa;
         const f = 1 / (1 - zr / 520);
         px[i] = b.x + (190 + xr * f) * s;
-        py[i] = b.y + (150 + (p.y - 150) * f + bob) * s + (p.top ? -0.65 : 0.35) * G * oe;
+        py[i] = b.y + (150 + (p.y - 150) * f + bob) * s;
         pd[i] = clamp(0.5 + zr / 170, 0, 1);
         flash[i] = Math.max(0, flash[i] - dt * 2.2);
       }
@@ -490,26 +486,13 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       ctx.fillStyle = gr;
       ctx.fillRect(b.x - 60 * s, b.y - 60 * s, 520 * s, 420 * s);
 
-      if (oe > 0.01) {
-        const cy = b.y + 150 * s - 0.15 * G * oe;
-        const g2 = ctx.createRadialGradient(gx, cy, 4, gx, cy, 170 * s);
-        g2.addColorStop(0, 'rgba(34,211,238,' + (0.16 * oe).toFixed(3) + ')');
-        g2.addColorStop(1, 'rgba(34,211,238,0)');
-        ctx.fillStyle = g2;
-        ctx.fillRect(gx - 200 * s, cy - 130 * s, 400 * s, 260 * s);
-      }
-
       ctx.lineWidth = 1.15;
       for (i = 0; i < pedges.length; i++) {
         const e = pedges[i];
         const a = Math.min(pvis[e.a], pvis[e.b]);
         const d = (pd[e.a] + pd[e.b]) / 2;
         const pulse = 0.8 + 0.2 * Math.sin(t * 1.6 - (ppts[e.a].x + ppts[e.b].x) * 0.015);
-        const al =
-          (0.045 + 0.8 * a * pulse) *
-          (0.45 + 0.55 * d) *
-          (1 - 0.5 * oe) *
-          (ppts[e.a].top !== ppts[e.b].top ? 1 - oe : 1);
+        const al = (0.045 + 0.8 * a * pulse) * (0.45 + 0.55 * d);
         ctx.strokeStyle =
           a > 0.02 ? 'rgba(40,226,220,' + al.toFixed(3) + ')' : 'rgba(60,110,170,.06)';
         ctx.beginPath();
@@ -519,7 +502,7 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       }
 
       const r = Math.max(1.8, 2.7 * s);
-      ctx.globalAlpha = 1 - 0.5 * oe;
+      ctx.globalAlpha = 1;
       for (i = 0; i < ppts.length; i++) {
         const av = pvis[i];
         const pl = 0.8 + 0.2 * Math.sin(t * 1.6 - ppts[i].x * 0.03);
@@ -562,10 +545,6 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       for (i = pulses.length - 1; i >= 0; i--) {
         const q = pulses[i];
         let pe = pedges[q.e];
-        if (oe > 0.05 && ppts[pe.a].top !== ppts[pe.b].top) {
-          pulses.splice(i, 1);
-          continue;
-        }
         q.u += q.sp * dt;
         if (q.u >= 1) {
           const to = pe.a === q.from ? pe.b : pe.a;
@@ -619,67 +598,6 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       }
     }
 
-    /* hover (mouse) or tap (touch) on the finished Professional brain: it opens and the mindset text appears from inside */
-    const mind = mindRef.current;
-    const mhEl = mhRef.current;
-    const lis = lisRef.current;
-    let G = 112;
-    let openT = 0;
-    let openS = 0;
-    let lastO = -1;
-
-    function inBrain(x: number, y: number, pad: number) {
-      if (!brainP || !stage) return false;
-      const r = stage.getBoundingClientRect();
-      const lx = x - r.left;
-      const ly = y - r.top;
-      const b = brainP;
-      const s = b.s;
-      return (
-        lx > b.x + 30 * s - pad &&
-        lx < b.x + 350 * s + pad &&
-        ly > b.y + 20 * s - pad &&
-        ly < b.y + 290 * s + pad
-      );
-    }
-
-    function brainReady() {
-      return pSRef.current >= th[6] - 0.01;
-    }
-
-    const onPointerMoveWindow = (e: PointerEvent) => {
-      if (e.pointerType === 'touch') return;
-      openT = brainReady() && inBrain(e.clientX, e.clientY, openT ? 60 : 0) ? 1 : 0;
-    };
-
-    const onPointerDownStage = (e: PointerEvent) => {
-      if (e.pointerType === 'mouse') return;
-      openT = brainReady() && inBrain(e.clientX, e.clientY, 0) ? (openT ? 0 : 1) : 0;
-    };
-
-    const onMouseLeaveDoc = () => {
-      openT = 0;
-    };
-
-    window.addEventListener('pointermove', onPointerMoveWindow, { passive: true });
-    stage.addEventListener('pointerdown', onPointerDownStage);
-    document.documentElement.addEventListener('mouseleave', onMouseLeaveDoc);
-
-    function updateMind(oe: number) {
-      if (Math.abs(oe - lastO) < 0.002) return;
-      lastO = oe;
-      if (!mind || !mhEl) return;
-      mind.style.setProperty('--o', oe.toFixed(3));
-      mhEl.style.opacity = clamp((oe - 0.2) / 0.3, 0, 1).toString();
-      lis.forEach((li, idx) => {
-        if (!li) return;
-        const o = clamp((oe - 0.3 - idx * 0.1) / 0.3, 0, 1);
-        li.style.opacity = o.toString();
-        const transX = isRTL ? (12 * (1 - o)).toFixed(1) : (-12 * (1 - o)).toFixed(1);
-        li.style.transform = `translateX(${transX}px)`;
-      });
-    }
-
     function layout() {
       if (!stage || !cv) return;
       const vw = document.documentElement.clientWidth || window.innerWidth;
@@ -700,7 +618,7 @@ export const TraderBrainEvolutionSection: React.FC = () => {
         const y0 = 22;
         const cs = y0 + bh + 84;
         const pb = cs + 6 * gap + ch / 2 + 46;
-        H = pb + bh + 64;
+        H = pb + bh + 104;
         W = vw;
         stage.style.height = `${H}px`;
         brainB = { x: (W - bw) / 2, y: y0, s: bw / 400, flipX: false };
@@ -717,11 +635,16 @@ export const TraderBrainEvolutionSection: React.FC = () => {
 
         if (lbRef.current) {
           lbRef.current.style.left = `${W / 2}px`;
-          lbRef.current.style.top = `${y0 + bh + 8}px`;
+          lbRef.current.style.top = `${y0 + bh + 22}px`;
+        }
+        const bpmY = pb + 303 * brainP.s + 26;
+        if (bpmRef.current) {
+          bpmRef.current.style.left = `${W / 2}px`;
+          bpmRef.current.style.top = `${bpmY}px`;
         }
         if (lpRef.current) {
           lpRef.current.style.left = `${W / 2}px`;
-          lpRef.current.style.top = `${pb + bh + 8}px`;
+          lpRef.current.style.top = `${bpmY + 28}px`;
         }
       } else {
         stage.style.height = '';
@@ -752,13 +675,20 @@ export const TraderBrainEvolutionSection: React.FC = () => {
           cc.forEach((c) => P.push(c));
           P.push({ x: W - m - bw * 0.9, y: by + bh * 0.56 });
 
+          const proCenterX = W - m - bw / 2;
+          const bpmY = by + 303 * brainP.s + 26;
+          if (bpmRef.current) {
+            bpmRef.current.style.left = `${proCenterX}px`;
+            bpmRef.current.style.top = `${bpmY}px`;
+          }
+          const labelY = bpmY + 28;
           if (lbRef.current) {
             lbRef.current.style.left = `${m + bw / 2}px`;
-            lbRef.current.style.top = `${by + bh + 10}px`;
+            lbRef.current.style.top = `${labelY}px`;
           }
           if (lpRef.current) {
-            lpRef.current.style.left = `${W - m - bw / 2}px`;
-            lpRef.current.style.top = `${by + bh + 10}px`;
+            lpRef.current.style.left = `${proCenterX}px`;
+            lpRef.current.style.top = `${labelY}px`;
           }
         } else {
           // RTL Mirror: Beginner on Right, flows Left to Professional
@@ -776,13 +706,20 @@ export const TraderBrainEvolutionSection: React.FC = () => {
           cc.forEach((c) => P.push(c));
           P.push({ x: W - (W - m - bw * 0.9), y: by + bh * 0.56 });
 
+          const proCenterX = m + bw / 2;
+          const bpmY = by + 303 * brainP.s + 26;
+          if (bpmRef.current) {
+            bpmRef.current.style.left = `${proCenterX}px`;
+            bpmRef.current.style.top = `${bpmY}px`;
+          }
+          const labelY = bpmY + 28;
           if (lbRef.current) {
             lbRef.current.style.left = `${W - (m + bw / 2)}px`;
-            lbRef.current.style.top = `${by + bh + 10}px`;
+            lbRef.current.style.top = `${labelY}px`;
           }
           if (lpRef.current) {
-            lpRef.current.style.left = `${m + bw / 2}px`;
-            lpRef.current.style.top = `${by + bh + 10}px`;
+            lpRef.current.style.left = `${proCenterX}px`;
+            lpRef.current.style.top = `${labelY}px`;
           }
         }
       }
@@ -849,14 +786,6 @@ export const TraderBrainEvolutionSection: React.FC = () => {
           sp: 0.06 + Math.random() * 0.07,
         });
       }
-
-      G = mobile ? 104 : 112;
-      if (mind) {
-        mind.style.left = brainP.x + 190 * brainP.s + 'px';
-        mind.style.top = brainP.y + 150 * brainP.s - 0.15 * G + 'px';
-        mind.style.fontSize = clamp(brainP.s * 16, 12, 15) + 'px';
-      }
-      lastO = -1;
     }
 
     function scrollP() {
@@ -979,10 +908,10 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       const litF = litFRef.current;
       const bp = clamp((pS - 0.04) / 0.88, 0, 1);
 
-      if (pS < th[6] - 0.02) openT = 0;
-      openS += (openT - openS) * (1 - Math.exp(-dt * (reduce ? 60 : 7)));
-      const oe = openS * openS * (3 - 2 * openS);
-      updateMind(oe);
+      const proBuilt = pS >= th[6] - 0.004;
+      if (bpmRef.current) {
+        bpmRef.current.classList.toggle('on', reduce || proBuilt);
+      }
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, W, H);
@@ -991,7 +920,7 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       ctx.lineJoin = 'round';
 
       drawBeginner(ctx, mesh, brainB, T);
-      drawPro(brainP, bp, T, reduce ? 0 : dt, oe, G);
+      drawPro(brainP, bp, T, reduce ? 0 : dt);
 
       const litIdx = Math.floor(litF * (N - 1));
 
@@ -1065,9 +994,6 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       cancelAnimationFrame(animId);
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', layout);
-      window.removeEventListener('pointermove', onPointerMoveWindow);
-      stage.removeEventListener('pointerdown', onPointerDownStage);
-      document.documentElement.removeEventListener('mouseleave', onMouseLeaveDoc);
       if (!reduce) {
         window.removeEventListener('pointermove', onPointerMove);
       }
@@ -1211,55 +1137,27 @@ export const TraderBrainEvolutionSection: React.FC = () => {
         #journey .lbl.p {
           color: #22d3ee;
         }
-        #journey .mind {
-          --o: 0;
+        #journey .bpm {
           position: absolute;
-          transform: translate(-50%, -50%);
-          pointer-events: none;
-          opacity: var(--o);
-          clip-path: inset(calc(50% * (1 - var(--o))) - 10px);
-          width: max-content;
+          transform: translateX(-50%);
           white-space: nowrap;
+          font-family: inherit;
+          font-weight: 600;
+          font-size: 17px;
+          line-height: 1.2;
+          letter-spacing: 0.06em;
+          color: #e6f1ff;
+          text-shadow: 0 0 12px rgba(34, 211, 238, 0.45), 0 0 2px rgba(34, 211, 238, 0.8);
+          opacity: 0;
+          transition: opacity 0.5s ease;
+          pointer-events: none;
           z-index: 10;
         }
-        #journey .mh {
-          margin: 0 0 8px;
-          font-family: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
-          font-weight: 500;
-          font-size: 0.74em;
-          line-height: 1;
-          letter-spacing: 0.24em;
-          color: #22d3ee;
-          opacity: 0;
-          text-align: center;
+        #journey .bpm[dir="rtl"] {
+          letter-spacing: normal;
         }
-        #journey .mind ul {
-          list-style: none;
-          margin: 0;
-          padding: 0;
-          display: grid;
-          gap: 3px;
-        }
-        #journey .mind li {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          font-weight: 600;
-          line-height: 1.35;
-          color: #e6f1ff;
-          opacity: 0;
-        }
-        #journey .mind li::before {
-          content: "";
-          flex: none;
-          width: 7px;
-          height: 8px;
-          background: #22d3ee;
-          clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
-        }
-        #journey .mind[dir="rtl"] li {
-          flex-direction: row-reverse;
-          justify-content: flex-start;
+        #journey .bpm.on {
+          opacity: 1;
         }
         @media (max-width: 759px) {
           #journey {
@@ -1268,6 +1166,9 @@ export const TraderBrainEvolutionSection: React.FC = () => {
           #journey .stage {
             position: relative;
             height: auto;
+          }
+          #journey .bpm {
+            font-size: 14.5px;
           }
         }
         @media (hover: none), (pointer: coarse) {
@@ -1281,6 +1182,10 @@ export const TraderBrainEvolutionSection: React.FC = () => {
           }
           #journey .mv {
             animation: none;
+          }
+          #journey .bpm {
+            transition: none;
+            opacity: 1;
           }
         }
       `}</style>
@@ -1330,46 +1235,14 @@ export const TraderBrainEvolutionSection: React.FC = () => {
             {proLabel}
           </div>
 
-          {/* Professional Mindset Text (Revealed from split brain on hover/tap) */}
+          {/* Bulletproof Mindset */}
           <div
-            ref={mindRef}
-            className="mind"
-            id="mind"
+            ref={bpmRef}
+            className="bpm"
+            id="bpm"
             dir={isRTL ? 'rtl' : 'ltr'}
           >
-            <p ref={mhRef} className="mh">
-              {t('brainEvolution.mindsetTitle', 'PROFESSIONAL MINDSET')}
-            </p>
-            <ul>
-              <li
-                ref={(el) => {
-                  lisRef.current[0] = el;
-                }}
-              >
-                {t('brainEvolution.mindset1', 'Education > Hype')}
-              </li>
-              <li
-                ref={(el) => {
-                  lisRef.current[1] = el;
-                }}
-              >
-                {t('brainEvolution.mindset2', 'Skill > Signal')}
-              </li>
-              <li
-                ref={(el) => {
-                  lisRef.current[2] = el;
-                }}
-              >
-                {t('brainEvolution.mindset3', 'Process > Profit')}
-              </li>
-              <li
-                ref={(el) => {
-                  lisRef.current[3] = el;
-                }}
-              >
-                {t('brainEvolution.mindset4', 'Understanding > Deposit')}
-              </li>
-            </ul>
+            {t('brainEvolution.bulletproofMindset', 'Bulletproof Mindset')}
           </div>
         </div>
       </section>

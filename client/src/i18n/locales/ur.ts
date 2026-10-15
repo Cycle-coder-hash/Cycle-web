@@ -41,11 +41,7 @@ export const ur: TranslationSchema = {
     card5: "جرنلنگ",
     card6: "ایج حاصل کریں",
     card7: "پیشہ ور ٹریڈر",
-    mindsetTitle: "پیشہ ورانہ ذہنیت",
-    mindset1: "تعلیم > فریب",
-    mindset2: "مہارت > سگنل",
-    mindset3: "منظم عمل > منافع",
-    mindset4: "سمجھ بوجھ > ڈپازٹ",
+    bulletproofMindset: "بلٹ پروف مائنڈ سیٹ",
   },
   roadmap: {
     eyebrow: "باقاعدہ روڈ میپ",

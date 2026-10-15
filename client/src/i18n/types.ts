@@ -156,11 +156,7 @@ export interface TranslationSchema {
     card5: string;
     card6: string;
     card7: string;
-    mindsetTitle?: string;
-    mindset1?: string;
-    mindset2?: string;
-    mindset3?: string;
-    mindset4?: string;
+    bulletproofMindset?: string;
   };
   roadmap: {
     eyebrow: string;
