@@ -59,6 +59,12 @@
   }
 }
 
+@property --a {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
 /* Animations */
 @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
 @keyframes float-subtle { 0%,100% { transform:translateY(0) rotate(0deg); } 50% { transform:translateY(-12px) rotate(1deg); } }
