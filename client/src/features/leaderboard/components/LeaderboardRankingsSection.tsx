@@ -123,21 +123,21 @@ export function LeaderboardRankingsSection({
                 <div
                   key={trader.userId}
                   onClick={() => onSelectTrader(trader)}
-                  className={`relative cursor-pointer rounded-3xl border ${borderColor} ${glowBg} p-6 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl ${orderClass} ${
+                  className={`relative cursor-pointer rounded-2xl sm:rounded-3xl border ${borderColor} ${glowBg} p-4 sm:p-6 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl ${orderClass} ${
                     isChampion ? "md:-translate-y-3 z-20" : "z-10"
                   }`}
                 >
                   {/* Rank Badge at top */}
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                    <div className={`flex items-center gap-1.5 rounded-full px-4 py-1 text-xs font-black uppercase tracking-wider ${badgeColor}`}>
-                      {isChampion ? <Crown size={14} className="fill-slate-950" /> : <Medal size={14} />}
+                    <div className={`flex items-center gap-1.5 rounded-full px-3 sm:px-4 py-0.5 sm:py-1 text-[11px] sm:text-xs font-black uppercase tracking-wider ${badgeColor}`}>
+                      {isChampion ? <Crown size={13} className="fill-slate-950 sm:size-3.5" /> : <Medal size={13} className="sm:size-3.5" />}
                       <span dir="ltr">{label}</span>
                     </div>
                   </div>
 
-                  <div className="pt-3 text-center space-y-3">
+                  <div className="pt-2 sm:pt-3 text-center space-y-2.5 sm:space-y-3">
                     {/* Profile Photo */}
-                    <div className="relative mx-auto size-20 rounded-full overflow-hidden border-2 border-white/80 dark:border-slate-700 shadow-lg bg-slate-800 flex items-center justify-center text-xl font-black text-white">
+                    <div className="relative mx-auto size-14 sm:size-20 rounded-full overflow-hidden border-2 border-white/80 dark:border-slate-700 shadow-lg bg-slate-800 flex items-center justify-center text-lg sm:text-xl font-black text-white">
                       {trader.avatar ? (
                         <img src={trader.avatar} alt={trader.name} className="size-full object-cover" />
                       ) : (
@@ -147,121 +147,121 @@ export function LeaderboardRankingsSection({
 
                     {/* Name */}
                     <div>
-                      <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center justify-center gap-1.5">
+                      <h3 className="text-sm sm:text-lg font-black text-slate-900 dark:text-white flex items-center justify-center gap-1.5">
                         <span>{trader.name}</span>
-                        <CheckCircle2 size={16} className="text-sky-400 shrink-0" />
+                        <CheckCircle2 size={15} className="text-sky-400 shrink-0 sm:size-4" />
                       </h3>
                       {trader.bio && (
-                        <p className="text-xs text-slate-600 dark:text-slate-300 italic line-clamp-2 mt-1 px-2 leading-relaxed" title={trader.bio}>
+                        <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 italic line-clamp-2 mt-0.5 sm:mt-1 px-2 leading-relaxed" title={trader.bio}>
                           "{trader.bio}"
                         </p>
                       )}
-                      <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mt-0.5" dir="ltr">
+                      <div className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 mt-0.5" dir="ltr">
                         {trader.bestPair}
                       </div>
                     </div>
 
                     {/* Overall Composite Score (Whole Number / 100) */}
-                    <div className="rounded-2xl border border-slate-200/80 bg-white/80 p-3 dark:border-slate-800/80 dark:bg-[#071124]/90 shadow-inner">
-                      <div className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <div className="rounded-xl sm:rounded-2xl border border-slate-200/80 bg-white/80 p-2 sm:p-3 dark:border-slate-800/80 dark:bg-[#071124]/90 shadow-inner">
+                      <div className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                         {selectText({
                           en: "Overall Score",
                           bn: "সামগ্রিক স্কোর",
                           ur: "مجموعی اسکور",
                         })}
                       </div>
-                      <div className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-emerald-400" dir="ltr">
-                        {Math.round(trader.overallScore)} <span className="text-xs font-bold text-slate-400">/ 100</span>
+                      <div className="text-xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-cyan-300 to-emerald-400" dir="ltr">
+                        {Math.round(trader.overallScore)} <span className="text-[11px] sm:text-xs font-bold text-slate-400">/ 100</span>
                       </div>
                     </div>
 
                     {/* Key Performance Metrics Grid */}
-                    <div className="grid grid-cols-2 gap-2 text-left pt-1">
+                    <div className="grid grid-cols-2 gap-1.5 sm:gap-2 text-left pt-1">
                       {/* Rule Adherence */}
-                      <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
-                        <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                      <div className="rounded-lg sm:rounded-xl border border-slate-200/60 bg-slate-50/70 p-2 sm:p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
+                        <div className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-slate-400">
                           {selectText({
                             en: "Rule Adherence",
                             bn: "রিস্ক মেনে চলা",
                             ur: "قواعد کی پابندی",
                           })}
                         </div>
-                        <div className="text-sm font-extrabold text-sky-600 dark:text-sky-400" dir="ltr">
+                        <div className="text-xs sm:text-sm font-extrabold text-sky-600 dark:text-sky-400" dir="ltr">
                           {trader.ruleComplianceRate}%
                         </div>
                       </div>
 
                       {/* Discipline Routine */}
-                      <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
-                        <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                      <div className="rounded-lg sm:rounded-xl border border-slate-200/60 bg-slate-50/70 p-2 sm:p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
+                        <div className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-slate-400">
                           {selectText({
                             en: "Discipline",
                             bn: "ডিসিপ্লিন রুটিন",
                             ur: "ڈسپلن",
                           })}
                         </div>
-                        <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400" dir="ltr">
+                        <div className="text-xs sm:text-sm font-extrabold text-emerald-600 dark:text-emerald-400" dir="ltr">
                           {trader.disciplineScore}%
                         </div>
                       </div>
 
                       {/* Consistency */}
-                      <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
-                        <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                      <div className="rounded-lg sm:rounded-xl border border-slate-200/60 bg-slate-50/70 p-2 sm:p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
+                        <div className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-slate-400">
                           {selectText({
                             en: "Consistency",
                             bn: "ধারাবাহিকতা",
                             ur: "تسلسل",
                           })}
                         </div>
-                        <div className="text-sm font-extrabold text-purple-600 dark:text-purple-400" dir="ltr">
+                        <div className="text-xs sm:text-sm font-extrabold text-purple-600 dark:text-purple-400" dir="ltr">
                           {trader.consistencyScore}%
                         </div>
-                        <div className="text-[10px] text-slate-400" dir="ltr">{trader.currentStreak}d streak</div>
+                        <div className="text-[9px] sm:text-[10px] text-slate-400" dir="ltr">{trader.currentStreak}d streak</div>
                       </div>
 
                       {/* Win Rate */}
-                      <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
-                        <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                      <div className="rounded-lg sm:rounded-xl border border-slate-200/60 bg-slate-50/70 p-2 sm:p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
+                        <div className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-slate-400">
                           {selectText({
                             en: "Win Rate",
                             bn: "উইন রেট",
                             ur: "Win Rate",
                           })}
                         </div>
-                        <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400" dir="ltr">
+                        <div className="text-xs sm:text-sm font-extrabold text-emerald-600 dark:text-emerald-400" dir="ltr">
                           {trader.winRate}%
                         </div>
-                        <div className="text-[10px] text-slate-400" dir="ltr">
+                        <div className="text-[9px] sm:text-[10px] text-slate-400" dir="ltr">
                           {trader.winningTrades}W / {trader.losingTrades}L
                         </div>
                       </div>
 
                       {/* Total Trades */}
-                      <div className="rounded-xl border border-slate-200/60 bg-slate-50/70 p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
-                        <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                      <div className="rounded-lg sm:rounded-xl border border-slate-200/60 bg-slate-50/70 p-2 sm:p-2.5 dark:border-slate-800/60 dark:bg-slate-900/40">
+                        <div className="text-[9px] sm:text-[10px] font-bold text-slate-500 dark:text-slate-400">
                           {selectText({
                             en: "Total Trades",
                             bn: "মোট ট্রেড",
                             ur: "کل ٹریڈز",
                           })}
                         </div>
-                        <div className="text-sm font-extrabold text-slate-800 dark:text-slate-200" dir="ltr">
+                        <div className="text-xs sm:text-sm font-extrabold text-slate-800 dark:text-slate-200" dir="ltr">
                           {trader.totalTrades}
                         </div>
                       </div>
 
                       {/* Profit (Rendered ONLY if positive) */}
                       {hasPositiveProfit ? (
-                        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-2.5 dark:border-emerald-500/30 dark:bg-emerald-500/10">
-                          <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                        <div className="rounded-lg sm:rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-2 sm:p-2.5 dark:border-emerald-500/30 dark:bg-emerald-500/10">
+                          <div className="text-[9px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
                             {selectText({
                               en: "Profit",
                               bn: "প্রফিট",
                               ur: "منافع",
                             })}
                           </div>
-                          <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400" dir="ltr">
+                          <div className="text-xs sm:text-sm font-extrabold text-emerald-600 dark:text-emerald-400" dir="ltr">
                             +${trader.totalPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </div>
                         </div>
@@ -271,7 +271,7 @@ export function LeaderboardRankingsSection({
                     {/* Breakdown Action */}
                     <button
                       type="button"
-                      className="w-full mt-2 rounded-xl py-2 text-xs font-extrabold text-sky-500 hover:text-sky-400 hover:bg-sky-500/10 transition flex items-center justify-center gap-1.5"
+                      className="w-full mt-1.5 sm:mt-2 rounded-lg sm:rounded-xl py-1.5 sm:py-2 text-[11px] sm:text-xs font-extrabold text-sky-500 hover:text-sky-400 hover:bg-sky-500/10 transition flex items-center justify-center gap-1.5"
                     >
                       <span>
                         {selectText({
@@ -280,7 +280,7 @@ export function LeaderboardRankingsSection({
                           ur: "تفصیلات دیکھیں",
                         })}
                       </span>
-                      <ChevronRight size={14} className={isRTL ? "rotate-180" : ""} />
+                      <ChevronRight size={13} className={`${isRTL ? "rotate-180" : ""} sm:size-3.5`} />
                     </button>
                   </div>
                 </div>
@@ -498,19 +498,19 @@ export function LeaderboardRankingsSection({
           </div>
 
           {/* Mobile Card List for #4 to #30 */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:hidden">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 lg:hidden">
             {restRankings.map((t) => (
               <div
                 key={t.userId}
                 onClick={() => onSelectTrader(t)}
-                className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-[#070e1b] space-y-3 cursor-pointer hover:border-sky-500/40 transition"
+                className="rounded-xl sm:rounded-2xl border border-slate-200 bg-white p-3 sm:p-4 dark:border-slate-800 dark:bg-[#070e1b] space-y-2.5 sm:space-y-3 cursor-pointer hover:border-sky-500/40 transition"
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <span className="inline-flex size-7 items-center justify-center rounded-lg bg-slate-100 font-mono text-xs font-black text-slate-700 dark:bg-slate-800 dark:text-slate-300" dir="ltr">
+                  <div className="flex items-center gap-2 sm:gap-2.5">
+                    <span className="inline-flex size-6 sm:size-7 items-center justify-center rounded-lg bg-slate-100 font-mono text-[11px] sm:text-xs font-black text-slate-700 dark:bg-slate-800 dark:text-slate-300" dir="ltr">
                       #{t.rank}
                     </span>
-                    <div className="size-8 rounded-full overflow-hidden bg-slate-800 flex items-center justify-center font-bold text-white text-xs">
+                    <div className="size-7 sm:size-8 rounded-full overflow-hidden bg-slate-800 flex items-center justify-center font-bold text-white text-[11px] sm:text-xs">
                       {t.avatar ? (
                         <img src={t.avatar} alt={t.name} className="size-full object-cover" />
                       ) : (
@@ -539,7 +539,7 @@ export function LeaderboardRankingsSection({
                 </div>
 
                 {/* Metrics grid */}
-                <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-100 dark:border-slate-800/80">
+                <div className="grid grid-cols-2 gap-1.5 sm:gap-2 text-[11px] sm:text-xs pt-1 border-t border-slate-100 dark:border-slate-800/80">
                   <div className="flex justify-between">
                     <span className="text-slate-400">
                       {selectText({
@@ -611,10 +611,10 @@ export function TraderPerformanceModal({
   if (!selectedTrader) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
       <div
         dir={isRTL ? "rtl" : "ltr"}
-        className={`relative w-full max-w-2xl overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 dark:border-slate-800 dark:bg-[#070e1b] shadow-2xl max-h-[90vh] overflow-y-auto space-y-6 ${
+        className={`relative w-full max-w-2xl overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-8 dark:border-slate-800 dark:bg-[#070e1b] shadow-2xl max-h-[90vh] overflow-y-auto space-y-4 sm:space-y-6 ${
           isUr ? "font-urdu" : ""
         }`}
       >
@@ -622,7 +622,7 @@ export function TraderPerformanceModal({
         <button
           type="button"
           onClick={onClose}
-          className={`absolute top-5 ${isRTL ? "left-5" : "right-5"} rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white transition`}
+          className={`absolute top-4 sm:top-5 ${isRTL ? "left-4 sm:left-5" : "right-4 sm:right-5"} rounded-full p-1.5 sm:p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white transition`}
         >
           <X size={20} />
         </button>

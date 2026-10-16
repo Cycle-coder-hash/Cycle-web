@@ -610,15 +610,15 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       const cc: { x: number; y: number }[] = [];
 
       if (mobile) {
-        const bw = Math.min(300, vw * 0.78);
+        const bw = Math.min(260, vw * 0.72);
         const bh = bw * 0.75;
-        const gap = 92;
-        cw = Math.min(140, vw * 0.36);
+        const gap = 68;
+        cw = Math.min(124, vw * 0.32);
         ch = cw * 0.56;
-        const y0 = 22;
-        const cs = y0 + bh + 84;
-        const pb = cs + 6 * gap + ch / 2 + 46;
-        H = pb + bh + 104;
+        const y0 = 16;
+        const cs = y0 + bh + 64;
+        const pb = cs + 6 * gap + ch / 2 + 36;
+        H = pb + bh + 84;
         W = vw;
         stage.style.height = `${H}px`;
         brainB = { x: (W - bw) / 2, y: y0, s: bw / 400, flipX: false };

@@ -173,21 +173,21 @@ export function SupportChat({ inline = false }: SupportChatProps) {
 
   if (!user && !authLoading) {
     return (
-      <div className="w-full rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-500 ring-1 ring-sky-500/20 mb-4">
-          <Headphones size={28} />
+      <div className="w-full rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-5 sm:p-8 text-center shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <div className="mx-auto flex size-12 sm:size-14 items-center justify-center rounded-xl sm:rounded-2xl bg-sky-500/10 text-sky-500 ring-1 ring-sky-500/20 mb-3 sm:mb-4">
+          <Headphones size={24} className="sm:size-7" />
         </div>
-        <h2 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+        <h2 className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
           {isBn ? "সরাসরি সাপোর্ট চ্যাট" : "Direct Support Chat"}
         </h2>
-        <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
+        <p className="mt-1.5 sm:mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
           {isBn
             ? "আমাদের সাপোর্ট টিমের সাথে সরাসরি যোগাযোগ করতে অনুগ্রহ করে লগইন করুন।"
             : "Sign in to connect directly with Cycle of Chart administration. Your conversation history is saved permanently."}
         </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
+        <div className="mt-4 sm:mt-6 flex flex-wrap justify-center gap-3">
           <Link href="/login">
-            <Button className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-black px-6">
+            <Button className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-black px-5 sm:px-6 h-9 sm:h-10 text-xs sm:text-sm">
               {isBn ? "লগইন করুন" : "Sign In"}
             </Button>
           </Link>
@@ -198,30 +198,30 @@ export function SupportChat({ inline = false }: SupportChatProps) {
 
   return (
     <div
-      className={`flex flex-col rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 overflow-hidden ${
-        inline ? "min-h-[580px] sm:min-h-[640px]" : "min-h-[640px] flex-1"
+      className={`flex flex-col rounded-2xl sm:rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 overflow-hidden ${
+        inline ? "min-h-[480px] sm:min-h-[640px]" : "min-h-[520px] sm:min-h-[640px] flex-1"
       }`}
     >
       {/* Workspace Header */}
-      <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/70 px-5 py-4 dark:border-slate-800 dark:bg-slate-950/60 backdrop-blur-sm">
-        <div className="flex items-center gap-3.5">
+      <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/70 px-3.5 sm:px-5 py-3 sm:py-4 dark:border-slate-800 dark:bg-slate-950/60 backdrop-blur-sm">
+        <div className="flex items-center gap-2.5 sm:gap-3.5">
           <div className="relative">
-            <div className="flex size-11 items-center justify-center rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-500 dark:text-sky-400 font-black shadow-inner">
-              <Headphones size={22} />
+            <div className="flex size-9 sm:size-11 items-center justify-center rounded-xl sm:rounded-2xl bg-sky-500/10 border border-sky-500/20 text-sky-500 dark:text-sky-400 font-black shadow-inner">
+              <Headphones size={18} className="sm:size-[22px]" />
             </div>
-            <span className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-950" />
+            <span className="absolute -bottom-0.5 -right-0.5 size-2.5 sm:size-3 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-950" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-extrabold text-sm sm:text-base tracking-tight text-slate-900 dark:text-white">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <h3 className="font-extrabold text-xs sm:text-base tracking-tight text-slate-900 dark:text-white">
                 {isBn ? "Cycle of Chart সাপোর্ট টিম" : "Cycle Support Team"}
               </h3>
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
                 <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 {isBn ? "অনলাইন" : "Active 24/7"}
               </span>
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
+            <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1">
               {isBn
                 ? "অ্যাডমিন সরাসরি এই চ্যাটে রিপ্লাই দেন • স্থায়ী মেসেজ রেকর্ড"
                 : "Official admin replies directly in this thread • Permanent record"}
@@ -256,29 +256,29 @@ export function SupportChat({ inline = false }: SupportChatProps) {
       </div>
 
       {/* Message Thread Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-slate-50/40 dark:bg-[#070e1b]/40 min-h-[360px] max-h-[580px]">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-4 bg-slate-50/40 dark:bg-[#070e1b]/40 min-h-[300px] sm:min-h-[360px] max-h-[520px] sm:max-h-[580px]">
         {isLoadingConversation ? (
-          <div className="flex h-full flex-col items-center justify-center gap-3 text-slate-400 py-20">
-            <Loader2 size={28} className="animate-spin text-sky-500" />
-            <span className="text-xs font-bold tracking-wider uppercase">
+          <div className="flex h-full flex-col items-center justify-center gap-3 text-slate-400 py-14 sm:py-20">
+            <Loader2 size={24} className="sm:size-7 animate-spin text-sky-500" />
+            <span className="text-[11px] sm:text-xs font-bold tracking-wider uppercase">
               {isBn ? "মেসেজ হিস্ট্রি লোড হচ্ছে..." : "Loading conversation..."}
             </span>
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center text-center py-16 px-4">
-            <div className="flex size-14 items-center justify-center rounded-3xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sky-500 mb-4 shadow-sm">
-              <MessageSquare size={26} />
+          <div className="flex h-full flex-col items-center justify-center text-center py-10 sm:py-16 px-3 sm:px-4">
+            <div className="flex size-11 sm:size-14 items-center justify-center rounded-2xl sm:rounded-3xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sky-500 mb-3 sm:mb-4 shadow-sm">
+              <MessageSquare size={22} className="sm:size-[26px]" />
             </div>
-            <h4 className="text-base font-extrabold text-slate-900 dark:text-white">
+            <h4 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
               {isBn ? "সরাসরি মেসেজ পাঠান" : "Need help? Send us a message"}
             </h4>
-            <p className="mt-1.5 max-w-sm text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+            <p className="mt-1 sm:mt-1.5 max-w-sm text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
               {isBn
                 ? "পেমেন্ট ভেরিফিকেশন, কোর্স অ্যাক্সেস বা যেকোনো সমস্যায় সরাসরি মেসেজ পাঠান। আমাদের টিম সর্বদা প্রস্তুত।"
                 : "Ask any question about orders, study materials, or access. All admin replies are delivered directly here."}
             </p>
 
-            <div className="mt-6 flex flex-wrap justify-center gap-2 max-w-md">
+            <div className="mt-4 sm:mt-6 flex flex-wrap justify-center gap-1.5 sm:gap-2 max-w-md">
               {[
                 isBn ? "কোর্স অ্যাক্সেস সংক্রান্ত প্রশ্ন" : "Question about course access",
                 isBn ? "পেমেন্ট ভেরিফিকেশন স্ট্যাটাস" : "Payment verification status",
@@ -287,7 +287,7 @@ export function SupportChat({ inline = false }: SupportChatProps) {
                 <button
                   key={i}
                   onClick={() => setMessageText(promptText)}
-                  className="rounded-full border border-slate-200 bg-white dark:border-slate-700/80 dark:bg-slate-800/60 px-3.5 py-1.5 text-xs text-slate-600 dark:text-slate-300 hover:border-sky-500 hover:text-sky-600 dark:hover:text-white transition shadow-2xs"
+                  className="rounded-full border border-slate-200 bg-white dark:border-slate-700/80 dark:bg-slate-800/60 px-3 py-1 sm:px-3.5 sm:py-1.5 text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 hover:border-sky-500 hover:text-sky-600 dark:hover:text-white transition shadow-2xs"
                 >
                   {promptText}
                 </button>
@@ -296,10 +296,10 @@ export function SupportChat({ inline = false }: SupportChatProps) {
           </div>
         ) : (
           groupedMessages.map((group) => (
-            <div key={group.dateKey} className="space-y-4">
+            <div key={group.dateKey} className="space-y-3 sm:space-y-4">
               {/* Date Separator */}
-              <div className="flex items-center justify-center my-2">
-                <span className="rounded-full bg-slate-200/70 border border-slate-300/50 px-3 py-0.5 text-[10px] font-bold text-slate-600 tracking-wider dark:bg-slate-800/80 dark:border-slate-700/50 dark:text-slate-400">
+              <div className="flex items-center justify-center my-1.5 sm:my-2">
+                <span className="rounded-full bg-slate-200/70 border border-slate-300/50 px-2.5 sm:px-3 py-0.5 text-[9px] sm:text-[10px] font-bold text-slate-600 tracking-wider dark:bg-slate-800/80 dark:border-slate-700/50 dark:text-slate-400">
                   {formatDateHeader(group.messages[0].createdAt)}
                 </span>
               </div>
@@ -310,28 +310,28 @@ export function SupportChat({ inline = false }: SupportChatProps) {
                 return (
                   <div
                     key={msg.id}
-                    className={`flex items-end gap-2.5 ${
+                    className={`flex items-end gap-2 sm:gap-2.5 ${
                       isCustomer ? "justify-end" : "justify-start"
                     }`}
                   >
                     {!isCustomer && (
                       <div
-                        className="size-8 rounded-full bg-sky-500/15 border border-sky-400/30 flex items-center justify-center text-sky-500 shrink-0 mb-1 shadow-sm"
+                        className="size-7 sm:size-8 rounded-full bg-sky-500/15 border border-sky-400/30 flex items-center justify-center text-sky-500 shrink-0 mb-1 shadow-sm"
                         title="Support Specialist / Cycle Admin"
                       >
-                        <ShieldCheck size={16} />
+                        <ShieldCheck size={14} className="sm:size-4" />
                       </div>
                     )}
 
                     <div
-                      className={`group relative max-w-[85%] sm:max-w-[75%] rounded-2xl px-4 py-2.5 shadow-sm transition-all ${
+                      className={`group relative max-w-[88%] sm:max-w-[75%] rounded-xl sm:rounded-2xl px-3 py-2 sm:px-4 sm:py-2.5 shadow-sm transition-all ${
                         isCustomer
                           ? "bg-gradient-to-r from-sky-600 to-sky-500 text-white rounded-br-xs"
                           : "bg-white border border-slate-200/80 text-slate-900 dark:bg-slate-800/90 dark:border-slate-700/70 dark:text-slate-100 rounded-bl-xs"
                       }`}
                     >
                       {!isCustomer && (
-                        <div className="text-[10px] font-black uppercase tracking-wider text-sky-500 dark:text-sky-400 mb-1 flex items-center gap-1.5">
+                        <div className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-sky-500 dark:text-sky-400 mb-0.5 sm:mb-1 flex items-center gap-1.5">
                           <span className="size-1.5 rounded-full bg-sky-500" />
                           <span>{isBn ? "সাপোর্ট স্পেশালিস্ট" : "Support Specialist"}</span>
                         </div>
@@ -342,7 +342,7 @@ export function SupportChat({ inline = false }: SupportChatProps) {
                       </p>
 
                       <div
-                        className={`mt-1.5 flex items-center justify-end gap-1 text-[10px] font-mono ${
+                        className={`mt-1 sm:mt-1.5 flex items-center justify-end gap-1 text-[9px] sm:text-[10px] font-mono ${
                           isCustomer
                             ? "text-sky-100/80"
                             : "text-slate-400 dark:text-slate-400"
@@ -352,9 +352,9 @@ export function SupportChat({ inline = false }: SupportChatProps) {
                         {isCustomer && (
                           <span title={msg.readAt ? "Seen by Admin" : "Sent"}>
                             {msg.readAt ? (
-                              <CheckCheck size={13} className="text-white" />
+                              <CheckCheck size={12} className="sm:size-[13px] text-white" />
                             ) : (
-                              <Check size={13} className="text-sky-200" />
+                              <Check size={12} className="sm:size-[13px] text-sky-200" />
                             )}
                           </span>
                         )}
@@ -370,8 +370,8 @@ export function SupportChat({ inline = false }: SupportChatProps) {
       </div>
 
       {/* Bottom Area: Message Input */}
-      <div className="border-t border-slate-100 bg-white p-3 sm:p-4 dark:border-slate-800 dark:bg-slate-950/80">
-        <form onSubmit={handleSendMessage} className="space-y-2">
+      <div className="border-t border-slate-100 bg-white p-2.5 sm:p-4 dark:border-slate-800 dark:bg-slate-950/80">
+        <form onSubmit={handleSendMessage} className="space-y-1.5 sm:space-y-2">
           <div className="flex items-center gap-2">
             <textarea
               ref={textareaRef}
@@ -384,24 +384,24 @@ export function SupportChat({ inline = false }: SupportChatProps) {
                   ? "আপনার মেসেজ লিখুন... (Enter চাপুন পাঠাতে)"
                   : "Type your message here... (Press Enter to send)"
               }
-              className="flex-1 min-h-[46px] max-h-[140px] resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs sm:text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-sky-500 focus:bg-white focus:ring-1 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-900/90 dark:text-white dark:placeholder-slate-500 dark:focus:bg-slate-900 transition"
+              className="flex-1 min-h-[42px] sm:min-h-[46px] max-h-[140px] resize-none rounded-xl sm:rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 sm:px-4 sm:py-3 text-xs sm:text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-sky-500 focus:bg-white focus:ring-1 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-900/90 dark:text-white dark:placeholder-slate-500 dark:focus:bg-slate-900 transition"
             />
 
             <Button
               type="submit"
               disabled={!messageText.trim() || sendMessageMutation.isPending}
-              className="size-11 rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold shrink-0 disabled:opacity-40 transition-all shadow-sm"
+              className="size-10 sm:size-11 rounded-xl sm:rounded-2xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold shrink-0 disabled:opacity-40 transition-all shadow-sm"
             >
               {sendMessageMutation.isPending ? (
-                <Loader2 size={18} className="animate-spin" />
+                <Loader2 size={16} className="sm:size-[18px] animate-spin" />
               ) : (
-                <Send size={18} />
+                <Send size={16} className="sm:size-[18px]" />
               )}
             </Button>
           </div>
 
-          <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500 px-1">
-            <span>
+          <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 px-1">
+            <span className="truncate">
               {isBn
                 ? "১-অন-১ ডেডিকেটেড সাপোর্ট • সব মেসেজ সুরক্ষিতভাবে সেভ থাকে"
                 : "Permanent 1-on-1 support • All messages secured & archived"}

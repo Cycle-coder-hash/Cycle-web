@@ -268,9 +268,9 @@ export function DailyDisciplineMaster({
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* HEADER BANNER */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-4">
         <div>
           <div className="flex items-center gap-2">
             <span className="font-mono text-[10px] font-extrabold uppercase tracking-widest text-[#0284c7] dark:text-sky-400">
@@ -283,10 +283,10 @@ export function DailyDisciplineMaster({
             </span>
           </div>
 
-          <h1 className="mt-1 text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+          <h1 className="mt-1 text-xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
             {isBn ? "ডেইলি ডিসিপ্লিন ও রুটিন সিস্টেম" : "Daily Trader Discipline System"}
           </h1>
-          <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
             {isBn
               ? "একজন প্রফেশনাল ট্রেডারের প্রতিদিনের শিডিউল, শারীরিক রুটিন, জার্নালিং এবং চার্ট অ্যানালাইসিস ম্যানেজমেন্ট।"
               : "Master the daily loop of professional trading: Routine Execution → Physical Stamina → Mindset Reflection → Chart Study."}
@@ -296,7 +296,7 @@ export function DailyDisciplineMaster({
 
       {/* INTERNAL NAVIGATION TABS BAR */}
       <div className="overflow-x-auto pb-1 -mx-2 px-2 scrollbar-none">
-        <div className="flex items-center gap-1.5 min-w-max p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800">
+        <div className="flex items-center gap-1 sm:gap-1.5 min-w-max p-1 sm:p-1.5 rounded-xl sm:rounded-2xl bg-slate-100 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800">
           {disciplineNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -304,13 +304,13 @@ export function DailyDisciplineMaster({
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id as any)}
-                className={`flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-extrabold transition-all duration-200 ${
+                className={`flex items-center gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-[11px] sm:text-xs font-extrabold transition-all duration-200 ${
                   isActive
                     ? "bg-[#081833] text-white shadow-md dark:bg-sky-500 dark:text-slate-950"
                     : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/60"
                 }`}
               >
-                <Icon size={15} />
+                <Icon className="size-3.5 sm:size-4" />
                 <span>{isBn ? item.labelBn : item.labelEn}</span>
               </button>
             );

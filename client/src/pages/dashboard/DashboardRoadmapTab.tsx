@@ -34,14 +34,14 @@ export function DashboardRoadmapTab({
 
   return (
     <div
-      className={`space-y-6 animate-in fade-in duration-300 ${
+      className={`space-y-4 sm:space-y-6 animate-in fade-in duration-300 ${
         isBn ? "font-bangla" : isUr ? "font-urdu" : ""
       }`}
       dir={isRTL ? "rtl" : "ltr"}
     >
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+      <div className="flex flex-col justify-between gap-3 sm:gap-4 sm:flex-row sm:items-center">
         <div>
-          <h2 className="text-2xl font-extrabold tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">
             {selectText({
               en: "12-Stage Institutional Roadmap",
               bn: "১২-স্টেজ ট্রেডিং রিয়েলিটি রোডম্যাপ",
@@ -56,12 +56,12 @@ export function DashboardRoadmapTab({
             })}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {(["all", "completed", "todo"] as const).map((f) => (
             <button
               key={f}
               onClick={() => onSetRoadmapFilter(f)}
-              className={`rounded-xl px-3 py-1.5 text-xs font-bold capitalize transition cursor-pointer ${
+              className={`rounded-lg sm:rounded-xl px-2.5 py-1 sm:px-3 sm:py-1.5 text-[11px] sm:text-xs font-bold capitalize transition cursor-pointer ${
                 roadmapFilter === f
                   ? "bg-[#081833] text-white dark:bg-sky-500 dark:text-slate-950"
                   : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
@@ -78,7 +78,7 @@ export function DashboardRoadmapTab({
       </div>
 
       {/* 12 Stages Cards Grid */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
         {dashboardStages
           .filter((stg) => {
             const isDone = Boolean(progress?.some((p) => p.lessonId === stg.stageNumber && p.completed));
@@ -92,7 +92,7 @@ export function DashboardRoadmapTab({
               <div
                 key={stg.stageNumber}
                 onClick={() => onSelectRoadmapStage(stg)}
-                className={`group relative flex cursor-pointer flex-col justify-between rounded-3xl border p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl ${
+                className={`group relative flex cursor-pointer flex-col justify-between rounded-2xl sm:rounded-3xl border p-4 sm:p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl ${
                   isDone
                     ? "border-emerald-300 bg-emerald-50/40 dark:border-emerald-900/50 dark:bg-emerald-950/20"
                     : "border-slate-200 bg-white hover:border-[#0284c7]/50 dark:border-slate-800 dark:bg-slate-900"
@@ -101,7 +101,7 @@ export function DashboardRoadmapTab({
                 <div>
                   <div className="flex items-center justify-between">
                     <span
-                      className={`font-mono text-xs font-bold px-2 py-0.5 rounded-lg ${
+                      className={`font-mono text-[11px] sm:text-xs font-bold px-2 py-0.5 rounded-lg ${
                         isDone
                           ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400"
                           : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
@@ -113,21 +113,21 @@ export function DashboardRoadmapTab({
                         ? `مرحلہ ${String(stg.stageNumber).padStart(2, "0")}`
                         : `Stage ${String(stg.stageNumber).padStart(2, "0")}`}
                     </span>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#0284c7] dark:text-sky-400">
+                    <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#0284c7] dark:text-sky-400">
                       {stg.category}
                     </span>
                   </div>
 
-                  <h3 className="mt-4 text-base font-extrabold group-hover:text-[#0284c7] dark:group-hover:text-sky-400 transition-colors">
+                  <h3 className="mt-3 sm:mt-4 text-sm sm:text-base font-extrabold group-hover:text-[#0284c7] dark:group-hover:text-sky-400 transition-colors">
                     {stg.title}
                   </h3>
-                  <p className="mt-2 text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                  <p className="mt-1.5 sm:mt-2 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
                     {stg.summary}
                   </p>
                 </div>
 
-                <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-800">
-                  <span className="text-xs font-bold text-[#0284c7] dark:text-sky-400 flex items-center gap-1">
+                <div className="mt-4 sm:mt-6 flex items-center justify-between border-t border-slate-100 pt-3 sm:pt-4 dark:border-slate-800">
+                  <span className="text-[11px] sm:text-xs font-bold text-[#0284c7] dark:text-sky-400 flex items-center gap-1">
                     <span>{selectText({ en: "View Rules & Notes", bn: "বিস্তারিত দেখুন", ur: "قواعد و نوٹس دیکھیں" })}</span>
                     <ChevronRight size={13} className={isRTL ? "rotate-180" : ""} />
                   </span>
@@ -148,7 +148,7 @@ export function DashboardRoadmapTab({
                         : selectText({ en: "Mark as completed", bn: "সম্পন্ন হিসেবে চিহ্নিত করুন", ur: "مکمل کے طور پر نشان زد کریں" })
                     }
                   >
-                    <Check size={14} />
+                    <Check size={13} className="sm:size-[14px]" />
                   </button>
                 </div>
               </div>

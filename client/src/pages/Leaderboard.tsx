@@ -550,13 +550,13 @@ export default function Leaderboard() {
       {/* ========================================================================= */}
       {/* MAIN CONTAINER */}
       {/* ========================================================================= */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-10">
+      <main className="mx-auto max-w-7xl px-4 py-5 sm:py-8 sm:px-6 lg:px-8 space-y-6 sm:space-y-10">
         {/* ======================================================================= */}
         {/* HERO SECTION & SCORING PHILOSOPHY */}
         {/* ======================================================================= */}
         <section
           ref={heroSectionRef}
-          className="relative overflow-hidden rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white/90 to-slate-50/90 p-6 sm:p-10 dark:border-slate-800/80 dark:from-[#081326]/90 dark:to-[#050b17]/95 backdrop-blur-md shadow-xl"
+          className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-slate-200/80 bg-gradient-to-b from-white/90 to-slate-50/90 p-4 sm:p-10 dark:border-slate-800/80 dark:from-[#081326]/90 dark:to-[#050b17]/95 backdrop-blur-md shadow-xl"
         >
           <div className="absolute top-0 right-0 -mr-20 -mt-20 w-80 h-80 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-blue-600/10 blur-3xl pointer-events-none" />
@@ -567,10 +567,10 @@ export default function Leaderboard() {
           {/* TASK 1(b): Interactive cursor-follow spark trail canvas (on hover/mouse-move) */}
           <HeroSparkleCanvas containerRef={heroSectionRef} />
 
-          <div className="relative z-10 space-y-5">
-            <div className="max-w-3xl space-y-4">
+          <div className="relative z-10 space-y-4 sm:space-y-5">
+            <div className="max-w-3xl space-y-3 sm:space-y-4">
               {/* TASK 2: BADGE WITH LOOPING LIGHT-SWEEP AND SOFT PULSING GLOW RING */}
-              <div className="relative inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 leaderboard-badge-glow overflow-hidden select-none">
+              <div className="relative inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 sm:px-3 py-1 text-[11px] sm:text-xs font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 leaderboard-badge-glow overflow-hidden select-none">
                 <div
                   className="pointer-events-none absolute -inset-y-2 -left-2 w-1/2 bg-gradient-to-r from-transparent via-amber-200/40 dark:via-amber-100/40 to-transparent leaderboard-badge-shine"
                   aria-hidden="true"
@@ -585,7 +585,7 @@ export default function Leaderboard() {
                 </span>
               </div>
 
-              <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+              <h1 className="text-xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
                 {selectText({
                   en: (
                     <>
@@ -614,7 +614,7 @@ export default function Leaderboard() {
                 })}
               </h1>
 
-              <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+              <p className="text-xs sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
                 {selectText({
                   en: "The Cycle of Chart Global Leaderboard is not dictated by raw profit alone. Real rankings are computed from verified trader adherence, daily discipline habits, consistency streaks, and risk management quality.",
                   bn: "সাইকেল অব চার্ট লিডারবোর্ড শুধুমাত্র লাভের অঙ্কে নির্ধারণ করা হয় না। ট্রেডিং রুলস অনুসরণ, দৈনিক ডিসিপ্লিন রুটিন, ধারাবাহিক জার্নালিং এবং সুশৃঙ্খল রিস্ক ম্যানেজমেন্টের ওপর ভিত্তি করে অল-টাইম স্কোর নির্ণয় করা হয়।",
@@ -625,11 +625,11 @@ export default function Leaderboard() {
 
             {/* TASK 5: CONTINUOUS SCROLLING STAT BOXES TICKER (EDUCATE.IO STYLE) */}
             {isReducedMotion ? (
-              <div className="pt-2 grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-center max-w-3xl">
+              <div className="pt-2 grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-2.5 text-center max-w-3xl">
                 {STAT_PILLARS.map((pillar, idx) => (
                   <div
                     key={pillar.id}
-                    className={`rounded-xl border p-2.5 transition-colors ${pillar.baseColor} ${pillar.hoverClasses} ${
+                    className={`rounded-xl border p-2 sm:p-2.5 transition-colors ${pillar.baseColor} ${pillar.hoverClasses} ${
                       idx === 4 ? "col-span-2 sm:col-span-1" : ""
                     }`}
                   >
@@ -640,7 +640,7 @@ export default function Leaderboard() {
                         ur: pillar.titleUr,
                       })}
                     </div>
-                    <div className="text-base font-extrabold text-slate-900 dark:text-white" dir="ltr">
+                    <div className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white" dir="ltr">
                       {pillar.weight}
                     </div>
                     <div className="text-[10px] text-slate-500 dark:text-slate-400">
@@ -655,25 +655,25 @@ export default function Leaderboard() {
               </div>
             ) : (
               <div className="relative pt-1 w-full max-w-4xl overflow-hidden stat-ticker-mask" dir="ltr">
-                <div className="stat-ticker-track py-3">
+                <div className="stat-ticker-track py-2 sm:py-3">
                   {/* Set 1 (5 cards) */}
-                  <div className="flex shrink-0 items-center gap-3 pr-3">
+                  <div className="flex shrink-0 items-center gap-2 sm:gap-3 pr-2 sm:pr-3">
                     {STAT_PILLARS.map((pillar) => (
                       <div
                         key={`set1-${pillar.id}`}
-                        className={`w-[170px] sm:w-[195px] shrink-0 text-center rounded-xl border p-2.5 transition-all duration-300 ease-out cursor-default hover:-translate-y-1 ${pillar.baseColor} ${pillar.hoverClasses}`}
+                        className={`w-[145px] sm:w-[195px] shrink-0 text-center rounded-xl border p-2 sm:p-2.5 transition-all duration-300 ease-out cursor-default hover:-translate-y-1 ${pillar.baseColor} ${pillar.hoverClasses}`}
                       >
-                        <div className="text-[10px] font-bold uppercase tracking-wider">
+                        <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
                           {selectText({
                             en: pillar.titleEn,
                             bn: pillar.titleBn,
                             ur: pillar.titleUr,
                           })}
                         </div>
-                        <div className="text-base font-extrabold text-slate-900 dark:text-white">
+                        <div className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
                           {pillar.weight}
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                        <div className="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400">
                           {selectText({
                             en: pillar.subEn,
                             bn: pillar.subBn,
@@ -685,23 +685,23 @@ export default function Leaderboard() {
                   </div>
 
                   {/* Set 2 (Identical duplicate of 5 cards for seamless 10-card 50% loop) */}
-                  <div aria-hidden="true" className="flex shrink-0 items-center gap-3 pr-3">
+                  <div aria-hidden="true" className="flex shrink-0 items-center gap-2 sm:gap-3 pr-2 sm:pr-3">
                     {STAT_PILLARS.map((pillar) => (
                       <div
                         key={`set2-${pillar.id}`}
-                        className={`w-[170px] sm:w-[195px] shrink-0 text-center rounded-xl border p-2.5 transition-all duration-300 ease-out cursor-default hover:-translate-y-1 ${pillar.baseColor} ${pillar.hoverClasses}`}
+                        className={`w-[145px] sm:w-[195px] shrink-0 text-center rounded-xl border p-2 sm:p-2.5 transition-all duration-300 ease-out cursor-default hover:-translate-y-1 ${pillar.baseColor} ${pillar.hoverClasses}`}
                       >
-                        <div className="text-[10px] font-bold uppercase tracking-wider">
+                        <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">
                           {selectText({
                             en: pillar.titleEn,
                             bn: pillar.titleBn,
                             ur: pillar.titleUr,
                           })}
                         </div>
-                        <div className="text-base font-extrabold text-slate-900 dark:text-white">
+                        <div className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
                           {pillar.weight}
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                        <div className="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400">
                           {selectText({
                             en: pillar.subEn,
                             bn: pillar.subBn,
@@ -720,8 +720,8 @@ export default function Leaderboard() {
         {/* ======================================================================= */}
         {/* ALL-TIME BADGE & SEARCH BAR */}
         {/* ======================================================================= */}
-        <section className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-          <div className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-black text-slate-700 dark:border-slate-800 dark:bg-[#070e1b] dark:text-slate-300 shadow-sm">
+        <section className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 rounded-xl sm:rounded-2xl border border-slate-200 bg-white px-3 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-xs font-black text-slate-700 dark:border-slate-800 dark:bg-[#070e1b] dark:text-slate-300 shadow-sm">
             <Trophy size={14} className="text-amber-500" />
             <span>
               {selectText({
@@ -734,7 +734,7 @@ export default function Leaderboard() {
 
           {/* Search Box */}
           <div className="relative sm:w-72">
-            <Search size={16} className={`absolute ${isRTL ? "right-3.5" : "left-3.5"} top-1/2 -translate-y-1/2 text-slate-400`} />
+            <Search size={15} className={`absolute ${isRTL ? "right-3.5" : "left-3.5"} top-1/2 -translate-y-1/2 text-slate-400 sm:size-4`} />
             <input
               type="text"
               placeholder={selectText({
@@ -744,7 +744,7 @@ export default function Leaderboard() {
               })}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full rounded-2xl border border-slate-200 bg-white py-2 ${isRTL ? "pr-9 pl-4" : "pl-9 pr-4"} text-xs font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-500 dark:border-slate-800 dark:bg-[#070e1b] dark:text-white dark:focus:border-sky-500`}
+              className={`w-full rounded-xl sm:rounded-2xl border border-slate-200 bg-white py-1.5 sm:py-2 ${isRTL ? "pr-9 pl-3.5" : "pl-9 pr-3.5"} text-xs font-medium text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-500 dark:border-slate-800 dark:bg-[#070e1b] dark:text-white dark:focus:border-sky-500`}
             />
           </div>
         </section>

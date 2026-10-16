@@ -54,14 +54,14 @@ export function JournalTradesTableSection({
 }: JournalTradesTableSectionProps) {
   return (
     /* TRADE HISTORY AUDIT TABLE & FILTERS */
-    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex flex-col gap-4 border-b border-slate-100 pb-5 dark:border-slate-800">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-3.5 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <div className="flex flex-col gap-3 sm:gap-4 border-b border-slate-100 pb-3.5 sm:pb-5 dark:border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3">
           <div>
-            <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+            <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
               {isBn ? "ট্রেড হিস্ট্রি ও বিশদ অডিট টেবিল" : "Trade Execution History & Audit Log"}
             </h3>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5">
               {isBn
                 ? `মোট ${filteredTrades.length} টি ট্রেড পাওয়া গেছে (সম্পূর্ণ ২১টি ফিল্ড সংরক্ষিত)`
                 : `Showing ${filteredTrades.length} verified trade records with full 21-point parameter tracking`}
@@ -71,7 +71,7 @@ export function JournalTradesTableSection({
           <Button
             onClick={onOpenNewTrade}
             size="sm"
-            className="rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 font-bold text-white text-xs gap-1.5 self-start sm:self-center"
+            className="rounded-lg sm:rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 font-bold text-white text-xs gap-1.5 self-start sm:self-center h-8 sm:h-9 px-3 sm:px-4"
           >
             <Plus className="h-3.5 w-3.5" />
             {isBn ? "ট্রেড লগ করুন" : "Log Trade"}
@@ -79,7 +79,7 @@ export function JournalTradesTableSection({
         </div>
 
         {/* Search and Filters row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-2.5 pt-1 sm:pt-2">
           {/* Search */}
           <div className="relative sm:col-span-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
@@ -88,7 +88,7 @@ export function JournalTradesTableSection({
               placeholder={isBn ? "পেয়ার, নোট বা লার্নিং লিখে সার্চ করুন..." : "Search pair, notes, tags, direction..."}
               value={searchTerm}
               onChange={(e) => onSearchTermChange(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/80 pl-9 pr-3 py-2 text-xs font-medium outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+              className="w-full rounded-lg sm:rounded-xl border border-slate-200 bg-slate-50/80 pl-8 sm:pl-9 pr-3 py-1.5 sm:py-2 text-xs font-medium outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
             />
           </div>
 
@@ -97,7 +97,7 @@ export function JournalTradesTableSection({
             <select
               value={resultFilter}
               onChange={(e) => onResultFilterChange(e.target.value as "all" | "win" | "loss" | "be")}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2 text-xs font-bold outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+              className="w-full rounded-lg sm:rounded-xl border border-slate-200 bg-slate-50/80 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs font-bold outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
             >
               <option value="all">All Outcomes</option>
               <option value="win">Wins Only (লাভ)</option>
@@ -111,7 +111,7 @@ export function JournalTradesTableSection({
             <select
               value={rankFilter}
               onChange={(e) => onRankFilterChange(e.target.value as "all" | "A+" | "A" | "A-")}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2 text-xs font-bold outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+              className="w-full rounded-lg sm:rounded-xl border border-slate-200 bg-slate-50/80 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs font-bold outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
             >
               <option value="all">All Ranks (A+, A, A-)</option>
               <option value="A+">A+ Setups Only</option>
@@ -125,7 +125,7 @@ export function JournalTradesTableSection({
             <select
               value={ruleFilter}
               onChange={(e) => onRuleFilterChange(e.target.value as "all" | "followed" | "broken")}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2 text-xs font-bold outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+              className="w-full rounded-lg sm:rounded-xl border border-slate-200 bg-slate-50/80 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs font-bold outline-none focus:border-cyan-500 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
             >
               <option value="all">All Discipline States</option>
               <option value="followed">Rules Followed (100%)</option>

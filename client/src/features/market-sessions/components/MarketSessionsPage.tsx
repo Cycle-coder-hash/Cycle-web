@@ -108,10 +108,10 @@ export function MarketSessionsPage() {
         </div>
 
         {/* Live Clock & Time Zone Controls */}
-        <div className="flex items-center gap-3 shrink-0 flex-wrap sm:flex-nowrap">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0 flex-wrap sm:flex-nowrap">
           {/* User Live Clock Badge */}
           <div
-            className="flex items-center gap-3 rounded-2xl border border-cyan-500/30 bg-cyan-500/5 dark:bg-cyan-500/10 px-4 py-2"
+            className="flex items-center gap-2 sm:gap-3 rounded-xl sm:rounded-2xl border border-cyan-500/30 bg-cyan-500/5 dark:bg-cyan-500/10 px-3 py-1.5 sm:px-4 sm:py-2"
             dir="ltr"
           >
             <div className="flex size-2 relative">
@@ -119,10 +119,10 @@ export function MarketSessionsPage() {
               <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
             </div>
             <div>
-              <div className="text-[10px] font-mono font-bold text-slate-400">
+              <div className="text-[9px] sm:text-[10px] font-mono font-bold text-slate-400">
                 {liveClockDate} · {cleanZoneName}
               </div>
-              <div className="text-lg sm:text-xl font-black font-mono tracking-wider text-slate-900 dark:text-cyan-400">
+              <div className="text-base sm:text-xl font-black font-mono tracking-wider text-slate-900 dark:text-cyan-400">
                 {liveClockTime}
               </div>
             </div>
@@ -132,10 +132,10 @@ export function MarketSessionsPage() {
           <button
             type="button"
             onClick={() => setIsTimezoneModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 hover:bg-slate-50 dark:hover:bg-slate-800 px-4 py-3 text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors shadow-xs cursor-pointer"
+            className="inline-flex items-center gap-1.5 sm:gap-2 rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 hover:bg-slate-50 dark:hover:bg-slate-800 px-3 py-2 sm:px-4 sm:py-3 text-[11px] sm:text-xs font-bold text-slate-700 dark:text-slate-200 transition-colors shadow-xs cursor-pointer"
             title={selectText({ en: "Change reference time zone", bn: "টাইমজোন পরিবর্তন করুন", ur: "ٹائم زون تبدیل کریں" })}
           >
-            <Globe size={16} className="text-sky-500" />
+            <Globe size={15} className="text-sky-500 sm:size-4" />
             <span>
               {selectText({
                 en: isAutoTimezone ? "Auto (device)" : cleanZoneName,
@@ -149,8 +149,8 @@ export function MarketSessionsPage() {
 
       {/* 2. Weekend Closed Banner (DST-Aware Friday 17:00 NY to Sunday 17:00 NY) */}
       {weekendState.isClosed && (
-        <div className="flex items-center gap-3.5 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-800 dark:text-amber-300 shadow-xs">
-          <AlertTriangle size={20} className="text-amber-500 shrink-0" />
+        <div className="flex items-center gap-3 rounded-xl sm:rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3 sm:p-4 text-amber-800 dark:text-amber-300 shadow-xs">
+          <AlertTriangle size={18} className="text-amber-500 shrink-0 sm:size-5" />
           <div className="text-xs sm:text-sm font-bold">
             {selectText({
               en: `Market closed for the weekend. Reopens in ${weekendState.reopenCountdownFormatted}`,
@@ -165,7 +165,7 @@ export function MarketSessionsPage() {
       <MarketActivityIndicator level={activityLevel} activeCount={activeSessionsCount} />
 
       {/* 4. Four Session Cards (Sydney, Tokyo, London, New York) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-5">
         {sessions.map((session, index) => (
           <SessionCard
             key={session.config.id}
@@ -185,8 +185,8 @@ export function MarketSessionsPage() {
       />
 
       {/* 6. Disclaimer Note (Bottom of page, below timeline legend) */}
-      <div className="flex items-start gap-3 rounded-2xl border border-slate-200/70 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40 p-4 text-xs text-slate-500 dark:text-slate-400">
-        <Info size={16} className="text-slate-400 shrink-0 mt-0.5" />
+      <div className="flex items-start gap-2.5 sm:gap-3 rounded-xl sm:rounded-2xl border border-slate-200/70 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40 p-3 sm:p-4 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
+        <Info size={15} className="text-slate-400 shrink-0 mt-0.5 sm:size-4" />
         <p className="leading-relaxed">
           {selectText({
             en: "Session hours shown are typical market conventions in each city's local time. Actual liquidity and broker hours may vary. This is educational information only, not trading advice.",

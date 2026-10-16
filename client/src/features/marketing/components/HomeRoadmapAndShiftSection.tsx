@@ -83,7 +83,7 @@ function RoadmapCard({
       tabIndex={isDuplicate ? -1 : 0}
       aria-hidden={isDuplicate ? "true" : undefined}
       onClick={() => onSelect(index)}
-      className={`roadmap-card-interactive group/card relative flex flex-col justify-between h-full min-h-[224px] sm:min-h-[236px] w-[264px] sm:w-[310px] md:w-[330px] lg:w-[340px] shrink-0 rounded-2xl border p-5 sm:p-6 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+      className={`roadmap-card-interactive group/card relative flex flex-col justify-between h-full min-h-[190px] sm:min-h-[236px] w-[235px] sm:w-[310px] md:w-[330px] lg:w-[340px] shrink-0 rounded-xl sm:rounded-2xl border p-3.5 sm:p-6 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
         isActive
           ? "border-[#0d1a2d] bg-[#0d1a2d] text-white shadow-xl shadow-[#0d1a2d]/25 dark:border-sky-400 dark:bg-[#0f1d35] dark:shadow-[0_12px_35px_-8px_rgba(56,189,248,0.25)]"
           : "border-slate-200/90 bg-white shadow-sm dark:border-slate-800/90 dark:bg-[#0c1527] dark:hover:border-sky-500/50"
@@ -92,7 +92,7 @@ function RoadmapCard({
     >
       {/* Desktop-only subtle inner light sweep across the card border on hover */}
       <div
-        className="roadmap-card-sweep pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-500"
+        className="roadmap-card-sweep pointer-events-none absolute inset-0 rounded-xl sm:rounded-2xl opacity-0 transition-opacity duration-500"
         style={{
           background:
             "linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, transparent 50%, rgba(14, 165, 233, 0.04) 100%)",
@@ -101,9 +101,9 @@ function RoadmapCard({
 
       {/* Top Header: Badge, Category, Arrow */}
       <div className="relative z-10 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <span
-            className={`font-mono text-xs font-bold px-2 py-0.5 rounded-md transition-colors ${
+            className={`font-mono text-[11px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-md transition-colors ${
               isActive
                 ? "bg-white/10 text-[#38bdf8]"
                 : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 group-hover/card:bg-sky-500/10 group-hover/card:text-sky-400"
@@ -112,7 +112,7 @@ function RoadmapCard({
             {stage.num}
           </span>
           <span
-            className={`text-[10px] font-bold uppercase tracking-wider ${
+            className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider ${
               isActive ? "text-slate-300" : "text-[#0284c7] dark:text-sky-400"
             }`}
           >
@@ -121,24 +121,24 @@ function RoadmapCard({
         </div>
 
         <span
-          className={`roadmap-card-arrow-pill inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold transition-all duration-300 ${
+          className={`roadmap-card-arrow-pill inline-flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-0.5 text-[9px] sm:text-[10px] font-bold transition-all duration-300 ${
             isActive
               ? "bg-[#38bdf8] text-slate-950"
               : "bg-slate-100 text-slate-500 group-hover/card:bg-[#0284c7] group-hover/card:text-white dark:bg-slate-800 dark:text-slate-400 dark:group-hover/card:bg-sky-400 dark:group-hover/card:text-slate-950 dark:group-hover/card:shadow-[0_0_10px_rgba(56,189,248,0.5)]"
           }`}
         >
-          <ArrowRight size={11} className={isRTL ? "rotate-180" : ""} />
+          <ArrowRight size={10} className={`sm:size-[11px] ${isRTL ? "rotate-180" : ""}`} />
         </span>
       </div>
 
       {/* Middle Content: Title & Summary */}
-      <div className="relative z-10 my-4 flex-1">
-        <h3 className="text-base sm:text-lg font-extrabold leading-snug text-slate-900 dark:text-white group-hover/card:text-sky-600 dark:group-hover/card:text-sky-300 transition-colors duration-200">
+      <div className="relative z-10 my-2.5 sm:my-4 flex-1">
+        <h3 className="text-sm sm:text-lg font-extrabold leading-snug text-slate-900 dark:text-white group-hover/card:text-sky-600 dark:group-hover/card:text-sky-300 transition-colors duration-200">
           {stage.title}
         </h3>
 
         <p
-          className={`mt-2 text-xs line-clamp-2 leading-relaxed ${
+          className={`mt-1.5 sm:mt-2 text-[11px] sm:text-xs line-clamp-2 leading-relaxed ${
             isActive ? "text-slate-300" : "text-slate-500 dark:text-slate-400"
           }`}
         >
@@ -147,7 +147,7 @@ function RoadmapCard({
       </div>
 
       {/* Footer: Click to explore stage breakdown prompt */}
-      <div className="relative z-10 mt-auto flex items-center gap-1.5 border-t border-slate-100 pt-3 text-[11px] font-semibold dark:border-slate-800/80">
+      <div className="relative z-10 mt-auto flex items-center gap-1.5 border-t border-slate-100 pt-2.5 sm:pt-3 text-[10px] sm:text-[11px] font-semibold dark:border-slate-800/80">
         <span
           className={
             isActive ? "text-[#38bdf8]" : "text-[#0284c7] dark:text-sky-400"
@@ -156,8 +156,8 @@ function RoadmapCard({
           {clickPrompt}
         </span>
         <ChevronRight
-          size={13}
-          className={`roadmap-card-chevron transition-transform duration-300 ease-out ${
+          size={12}
+          className={`roadmap-card-chevron transition-transform duration-300 ease-out sm:size-[13px] ${
             isActive ? "text-[#38bdf8]" : "text-[#0284c7] dark:text-sky-400"
           } ${isRTL ? "rotate-180" : ""}`}
         />
@@ -234,33 +234,33 @@ export function HomeRoadmapAndShiftSection({
       {/* ========================================================================= */}
       {/* THE SHIFT SECTION */}
       {/* ========================================================================= */}
-      <section className="content-auto bg-[#f1f5f9] py-16 sm:py-20 dark:bg-[#070e1b] lg:py-28 transition-colors">
-        <div className="mx-auto grid max-w-7xl gap-16 px-5 lg:grid-cols-[.8fr_1.2fr] lg:px-8">
+      <section className="content-auto bg-[#f1f5f9] py-10 sm:py-20 lg:py-28 dark:bg-[#070e1b] transition-colors">
+        <div className="mx-auto grid max-w-7xl gap-8 sm:gap-16 px-4 sm:px-5 lg:grid-cols-[.8fr_1.2fr] lg:px-8">
           <div>
             <p className="eyebrow">{copy.shiftEyebrow}</p>
-            <h2 className="mt-4 text-4xl font-extrabold leading-tight tracking-[-.03em] text-slate-900 dark:text-white sm:text-5xl">
+            <h2 className="mt-2 sm:mt-4 text-2xl sm:text-4xl lg:text-5xl font-extrabold leading-tight tracking-[-.03em] text-slate-900 dark:text-white">
               {copy.shiftTitle1}
               <br />
               <span className="text-[#51708f] dark:text-sky-400">{copy.shiftTitle2}</span>
             </h2>
-            <p className="mt-6 max-w-md leading-relaxed text-slate-600 dark:text-slate-300 text-base">
+            <p className="mt-3 sm:mt-6 max-w-md leading-relaxed text-slate-600 dark:text-slate-300 text-sm sm:text-base">
               {copy.shiftDesc}
             </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="relative rounded-3xl border border-rose-200 bg-white p-7 shadow-sm dark:border-rose-900/40 dark:bg-slate-900/90">
+          <div className="grid gap-3.5 sm:gap-4 sm:grid-cols-2">
+            <div className="relative rounded-2xl sm:rounded-3xl border border-rose-200 bg-white p-4 sm:p-6 lg:p-7 shadow-sm dark:border-rose-900/40 dark:bg-slate-900/90">
               <AnimatedCardBorder color="red" />
               <div className="flex items-center justify-between">
-                <div className="text-xs font-extrabold uppercase tracking-[.18em] text-rose-600 dark:text-rose-400">
+                <div className="text-[11px] sm:text-xs font-extrabold uppercase tracking-[.18em] text-rose-600 dark:text-rose-400">
                   {copy.hypeHeader}
                 </div>
-                <AlertOctagon size={16} className="text-rose-500" />
+                <AlertOctagon size={15} className="text-rose-500 sm:size-4" />
               </div>
-              <div className="mt-7 space-y-4 text-sm text-slate-600 dark:text-slate-400">
+              <div className="mt-4 sm:mt-7 space-y-2.5 sm:space-y-4 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                 {HYPE_ITEMS_EN.map((_, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <span className="grid size-6 place-items-center rounded-full bg-rose-50 text-[10px] font-bold text-rose-600 dark:bg-rose-950/60 dark:text-rose-400">
+                  <div key={i} className="flex items-center gap-2.5 sm:gap-3">
+                    <span className="grid size-5 sm:size-6 place-items-center rounded-full bg-rose-50 text-[9px] sm:text-[10px] font-bold text-rose-600 dark:bg-rose-950/60 dark:text-rose-400 shrink-0">
                       {language === "bn"
                         ? String(i + 1).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[+d])
                         : String(i + 1).padStart(2, "0")}
@@ -273,18 +273,18 @@ export function HomeRoadmapAndShiftSection({
               </div>
             </div>
 
-            <div className="relative rounded-3xl bg-[#0d1a2d] p-7 text-white shadow-xl shadow-[#0d1a2d]/25 dark:bg-slate-800 dark:shadow-slate-950/50 border border-slate-700/50">
+            <div className="relative rounded-2xl sm:rounded-3xl bg-[#0d1a2d] p-4 sm:p-6 lg:p-7 text-white shadow-xl shadow-[#0d1a2d]/25 dark:bg-slate-800 dark:shadow-slate-950/50 border border-slate-700/50">
               <AnimatedCardBorder color="green" />
               <div className="flex items-center justify-between">
-                <div className="text-xs font-extrabold uppercase tracking-[.18em] text-[#38bdf8]">
+                <div className="text-[11px] sm:text-xs font-extrabold uppercase tracking-[.18em] text-[#38bdf8]">
                   {copy.realityHeader}
                 </div>
-                <ShieldCheck size={16} className="text-[#38bdf8]" />
+                <ShieldCheck size={15} className="text-[#38bdf8] sm:size-4" />
               </div>
-              <div className="mt-7 space-y-4 text-sm text-slate-300">
+              <div className="mt-4 sm:mt-7 space-y-2.5 sm:space-y-4 text-xs sm:text-sm text-slate-300">
                 {REALITY_ITEMS_EN.map((_, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <span className="grid size-6 place-items-center rounded-full bg-white/10 text-[10px] font-bold text-[#38bdf8]">
+                  <div key={i} className="flex items-center gap-2.5 sm:gap-3">
+                    <span className="grid size-5 sm:size-6 place-items-center rounded-full bg-white/10 text-[9px] sm:text-[10px] font-bold text-[#38bdf8] shrink-0">
                       {language === "bn"
                         ? String(i + 1).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[+d])
                         : String(i + 1).padStart(2, "0")}
@@ -310,19 +310,19 @@ export function HomeRoadmapAndShiftSection({
       {/* ========================================================================= */}
       <section
         id="roadmap"
-        className="content-auto bg-white py-16 sm:py-24 dark:bg-[#070e1b] lg:py-32 transition-colors overflow-hidden"
+        className="content-auto bg-white py-10 sm:py-24 dark:bg-[#070e1b] lg:py-32 transition-colors overflow-hidden"
       >
-        <div className="mx-auto max-w-7xl px-5 lg:px-8">
-          <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
+        <div className="mx-auto max-w-7xl px-4 sm:px-5 lg:px-8">
+          <div className="flex flex-col justify-between gap-4 sm:gap-6 sm:flex-row sm:items-end">
             <div>
               <p className="eyebrow">{copy.roadmapEyebrow}</p>
-              <h2 className="mt-4 text-4xl font-extrabold tracking-[-.03em] text-slate-900 dark:text-white sm:text-5xl">
+              <h2 className="mt-2 sm:mt-4 text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-[-.03em] text-slate-900 dark:text-white">
                 {copy.roadmapTitle1}
                 <br />
                 <span className="text-[#51708f] dark:text-sky-400">{copy.roadmapTitle2}</span>
               </h2>
             </div>
-            <p className="max-w-md text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+            <p className="max-w-md text-xs sm:text-sm leading-relaxed text-slate-500 dark:text-slate-400">
               {copy.roadmapDesc}
             </p>
           </div>
@@ -464,18 +464,18 @@ export function HomeRoadmapAndShiftSection({
           onClick={() => setSelectedStageModal(null)}
         >
           <div
-            className={`relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-2xl dark:border-slate-800 dark:bg-slate-900 transition-all duration-300 scale-100 animate-in zoom-in-95 ${
+            className={`relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-8 shadow-2xl dark:border-slate-800 dark:bg-slate-900 transition-all duration-300 scale-100 animate-in zoom-in-95 ${
               language === "bn" ? "font-bangla" : language === "ur" ? "font-urdu" : ""
             }`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Top Bar with Stage Badge & Close Button */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
-              <div className="flex items-center gap-2.5">
-                <span className="flex size-7 items-center justify-center rounded-xl bg-[#0284c7]/15 font-mono text-xs font-bold text-[#0284c7] dark:bg-sky-500/20 dark:text-sky-400">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 sm:pb-4 dark:border-slate-800">
+              <div className="flex items-center gap-2 sm:gap-2.5">
+                <span className="flex size-6 sm:size-7 items-center justify-center rounded-lg sm:rounded-xl bg-[#0284c7]/15 font-mono text-xs font-bold text-[#0284c7] dark:bg-sky-500/20 dark:text-sky-400">
                   {activeModalData.num}
                 </span>
-                <span className="text-xs font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+                <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400">
                   {copy.modalStageOf} {activeModalData.num} {copy.modalOutOf} •{" "}
                   {activeModalData.category}
                 </span>
@@ -483,21 +483,21 @@ export function HomeRoadmapAndShiftSection({
 
               <button
                 onClick={() => setSelectedStageModal(null)}
-                className="flex size-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-white"
+                className="flex size-7 sm:size-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-900 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-white"
                 title={copy.modalClose}
               >
-                <X size={16} />
+                <X size={15} className="sm:size-4" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="mt-5 space-y-6">
+            <div className="mt-4 sm:mt-5 space-y-4 sm:space-y-6">
               {/* Title & Core Overview */}
               <div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                <h2 className="text-xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                   {activeModalData.title}
                 </h2>
-                <p className="mt-3 text-sm sm:text-base leading-relaxed text-slate-600 dark:text-slate-300 whitespace-pre-line">
+                <p className="mt-2 sm:mt-3 text-xs sm:text-base leading-relaxed text-slate-600 dark:text-slate-300 whitespace-pre-line">
                   {activeModalData.summary}
                 </p>
               </div>

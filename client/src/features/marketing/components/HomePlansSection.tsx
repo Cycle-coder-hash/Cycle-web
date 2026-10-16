@@ -109,23 +109,23 @@ export function HomePlansSection({
       {/* ========================================================================= */}
       {/* PLANS FOR EVERY TRADER */}
       {/* ========================================================================= */}
-      <section id="plans" className="content-auto bg-[#f8fafc] dark:bg-slate-900/40 py-16 sm:py-24 border-t border-slate-200/60 dark:border-slate-800/80 transition-colors">
-        <div className="mx-auto max-w-7xl px-5 lg:px-8">
+      <section id="plans" className="content-auto bg-[#f8fafc] dark:bg-slate-900/40 py-10 sm:py-24 border-t border-slate-200/60 dark:border-slate-800/80 transition-colors">
+        <div className="mx-auto max-w-7xl px-4 sm:px-5 lg:px-8">
           <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-[#0284c7]/10 text-[#0284c7] dark:bg-sky-500/20 dark:text-sky-400 border border-sky-500/30">
-              <Sparkles size={14} />
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold bg-[#0284c7]/10 text-[#0284c7] dark:bg-sky-500/20 dark:text-sky-400 border border-sky-500/30">
+              <Sparkles size={13} className="sm:size-3.5" />
               <span className="uppercase tracking-widest">
                 {selectText({ en: "Plans For Every Trader", bn: "ট্রেডার অ্যাক্সেস প্ল্যান", ur: "ہر ٹریڈر کے لیے منصوبے" })}
               </span>
             </div>
-            <h2 className="mt-4 text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
+            <h2 className="mt-2.5 sm:mt-4 text-2xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
               {selectText({
                 en: "Transparent Trader Access. No Hidden Deductions.",
                 bn: "স্বচ্ছ মাসিক অ্যাক্সেস। কোনো লুকানো চার্জ নেই।",
                 ur: "شفاف ماہانہ رسائی۔ کوئی پوشیدہ کٹوتی نہیں۔",
               })}
             </h2>
-            <p className="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+            <p className="mt-2 sm:mt-3 text-xs sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
               {selectText({
                 en: "Claim your 20-day Free Trial whenever you are ready, or upgrade to Pro or Premium for unlimited trade logging, dedicated journal books, video uploads, daily workout routines, and direct institutional mentorship.",
                 bn: "আপনার সুবিধামতো ২০ দিনের ফ্রি ট্রায়াল ক্লেইম করে শুরু করুন অথবা সম্পূর্ণ আনলিমিটেড ট্রেড, একাধিক জার্নাল বুক, ভিডিও সেভিং এবং ১-অন-১ প্রাতিষ্ঠানিক মেন্টরশিপের জন্য প্রো বা প্রিমিয়ামে আপগ্রেড করুন।",
@@ -135,27 +135,27 @@ export function HomePlansSection({
           </div>
 
           {/* Pricing Cards Grid */}
-          <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8 items-stretch max-w-7xl mx-auto">
+          <div className="mt-6 sm:mt-12 grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8 items-stretch max-w-7xl mx-auto">
             {/* CARD 1: FREE TRIAL */}
-            <div className="relative flex flex-col justify-between rounded-3xl border border-slate-200 bg-white p-7 shadow-sm transition hover:shadow-lg dark:border-slate-800 dark:bg-[#0b162a]">
+            <div className="relative flex flex-col justify-between rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 lg:p-7 shadow-sm transition hover:shadow-lg dark:border-slate-800 dark:bg-[#0b162a]">
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                  <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                     {selectText({ en: "Free Plan", bn: "ফ্রি প্ল্যান", ur: "مفت پلان" })}
                   </span>
-                  <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-[11px] font-bold text-cyan-700 dark:text-cyan-300 border border-cyan-500/30">
+                  <span className="rounded-full bg-cyan-500/15 px-2.5 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold text-cyan-700 dark:text-cyan-300 border border-cyan-500/30">
                     {selectText({ en: "20-DAY FREE TRIAL", bn: "২০ দিনের ফ্রি ট্রায়াল", ur: "20 دن کا مفت ٹرائل" })}
                   </span>
                 </div>
-                <div className="mt-4 flex items-baseline flex-wrap gap-1.5">
-                  <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
+                <div className="mt-3 sm:mt-4 flex items-baseline flex-wrap gap-1 sm:gap-1.5">
+                  <span className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white">
                     {formatPrice({ bdt: freeTrialBdt, usd: freeTrialUsd, fallback: "0" })}
                   </span>
                   <span className="text-xs text-slate-500 dark:text-slate-400 font-medium ml-1">
                     {selectText({ en: "/ 20 days", bn: "/ ২০ দিন", ur: "/ 20 دن" })}
                   </span>
                 </div>
-                <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                <p className="mt-1.5 sm:mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   {selectText({
                     en: "Starts only when you click Claim Free Plan. Your 20-day countdown begins at the exact moment of confirmation.",
                     bn: "শুধুমাত্র ‘Claim Free Plan’-এ ক্লিক করে নিশ্চিত করলেই আপনার ২০ দিনের ট্রায়াল শুরু হবে।",
@@ -163,13 +163,13 @@ export function HomePlansSection({
                   })}
                 </p>
 
-                <div className="mt-6 border-t border-slate-200/80 pt-5 dark:border-slate-800/80">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                <div className="mt-4 sm:mt-6 border-t border-slate-200/80 pt-3.5 sm:pt-5 dark:border-slate-800/80">
+                  <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 sm:mb-3">
                     {selectText({ en: "Included Features", bn: "সুবিধাসমূহ", ur: "شامل خصوصیات" })}
                   </div>
-                  <ul className="space-y-2.5 text-xs text-slate-700 dark:text-slate-300">
-                    <li className="flex items-center gap-2.5">
-                      <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                  <ul className="space-y-2 sm:space-y-2.5 text-xs text-slate-700 dark:text-slate-300">
+                    <li className="flex items-center gap-2 sm:gap-2.5">
+                      <CheckCircle2 size={15} className="text-emerald-500 shrink-0 sm:size-4" />
                       <span>
                         <strong className="text-slate-900 dark:text-white">
                           {selectText({ en: "1 Journal Book", bn: "১টি জার্নাল বুক", ur: "1 جرنل بک" })}
@@ -177,8 +177,8 @@ export function HomePlansSection({
                         {selectText({ en: "max", bn: "সর্বোচ্চ", ur: "تک" })}
                       </span>
                     </li>
-                    <li className="flex items-center gap-2.5">
-                      <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                    <li className="flex items-center gap-2 sm:gap-2.5">
+                      <CheckCircle2 size={15} className="text-emerald-500 shrink-0 sm:size-4" />
                       <span>
                         <strong className="text-slate-900 dark:text-white">
                           {selectText({ en: "Unlimited Trades", bn: "আনলিমিটেড ট্রেড", ur: "لامحدود ٹریڈز" })}
@@ -186,20 +186,20 @@ export function HomePlansSection({
                         {selectText({ en: "during 20 days", bn: "২০ দিনের মধ্যে", ur: "20 دنوں میں" })}
                       </span>
                     </li>
-                    <li className="flex items-center gap-2.5">
-                      <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                    <li className="flex items-center gap-2 sm:gap-2.5">
+                      <CheckCircle2 size={15} className="text-emerald-500 shrink-0 sm:size-4" />
                       <span>
                         {selectText({ en: "Private Trader Notebook & Journal Analytics", bn: "প্রাইভেট নোটবুক ও জার্নাল অ্যানালিটিক্স", ur: "پرائیویٹ نوٹ بک اور جرنل اینالیٹکس" })}
                       </span>
                     </li>
-                    <li className="flex items-center gap-2.5 text-slate-400 dark:text-slate-500">
-                      <LockKeyhole size={15} className="shrink-0" />
+                    <li className="flex items-center gap-2 sm:gap-2.5 text-slate-400 dark:text-slate-500">
+                      <LockKeyhole size={14} className="shrink-0 sm:size-[15px]" />
                       <span>
                         {selectText({ en: "Video saving locked", bn: "ভিডিও সেভিং লকড", ur: "ویڈیو محفوظ کرنا مقفل" })}
                       </span>
                     </li>
-                    <li className="flex items-center gap-2.5 text-slate-400 dark:text-slate-500">
-                      <LockKeyhole size={15} className="shrink-0" />
+                    <li className="flex items-center gap-2 sm:gap-2.5 text-slate-400 dark:text-slate-500">
+                      <LockKeyhole size={14} className="shrink-0 sm:size-[15px]" />
                       <span>
                         {selectText({ en: "Workout Routine & Community locked", bn: "ওয়ার্কআউট রুটিন ও কমিউনিটি লকড", ur: "ورزش معمول اور کمیونٹی مقفل" })}
                       </span>
@@ -208,12 +208,12 @@ export function HomePlansSection({
                 </div>
               </div>
 
-              <div className="mt-8 space-y-2.5">
+              <div className="mt-5 sm:mt-8 space-y-2 sm:space-y-2.5">
                 {isTrialUnclaimed && (
                   <Button
                     type="button"
                     onClick={handleClaimFreePlanClick}
-                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs h-10 shadow-lg shadow-cyan-500/25"
+                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs h-9 sm:h-10 shadow-lg shadow-cyan-500/25"
                   >
                     <Sparkles size={14} className="mr-1.5" />
                     Claim Free Plan
@@ -223,7 +223,7 @@ export function HomePlansSection({
                   <Link href="/dashboard" className="block w-full">
                     <Button
                       type="button"
-                      className="w-full bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 font-black text-xs h-10"
+                      className="w-full bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 font-black text-xs h-9 sm:h-10"
                     >
                       <Clock size={14} className="mr-1.5" />
                       {selectText({
@@ -244,7 +244,7 @@ export function HomePlansSection({
                       })}
                     </div>
                     <Link href="/checkout?plan=pro" className="block w-full">
-                      <Button className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-xs h-10">
+                      <Button className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-xs h-9 sm:h-10">
                         {selectText({ en: "Upgrade to Pro", bn: "প্রো-তে আপগ্রেড করুন", ur: "پرو میں اپ گریڈ کریں" })}
                       </Button>
                     </Link>
@@ -254,7 +254,7 @@ export function HomePlansSection({
                   <Link href="/dashboard" className="block w-full">
                     <Button
                       type="button"
-                      className="w-full bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-black text-xs h-10"
+                      className="w-full bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-black text-xs h-9 sm:h-10"
                     >
                       <CheckCircle2 size={14} className="mr-1.5" />
                       {selectText({
@@ -267,7 +267,7 @@ export function HomePlansSection({
                 )}
                 <Button
                   variant="outline"
-                  className="w-full text-xs font-bold border-slate-200 text-slate-800 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                  className="w-full text-xs font-bold border-slate-200 text-slate-800 hover:bg-slate-100 hover:text-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 h-9 sm:h-10"
                   onClick={() => setSelectedPlanModal("free")}
                 >
                   {selectText({ en: "View Details", bn: "বিস্তারিত দেখুন", ur: "تفصیلات دیکھیں" })}
@@ -276,7 +276,7 @@ export function HomePlansSection({
             </div>
 
             {/* CARD 2: PRO PLAN (MOST POPULAR) */}
-            <div className="relative flex flex-col justify-between rounded-3xl border-2 border-sky-500 bg-white p-7 shadow-xl shadow-sky-500/10 dark:border-sky-500 dark:bg-[#0c182e] ring-2 ring-sky-500/20">
+            <div className="relative flex flex-col justify-between rounded-2xl sm:rounded-3xl border-2 border-sky-500 bg-white p-4 sm:p-6 lg:p-7 shadow-xl shadow-sky-500/10 dark:border-sky-500 dark:bg-[#0c182e] ring-2 ring-sky-500/20">
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-sky-500 to-blue-600 px-4 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-md">
                 {selectText({ en: "★ MOST POPULAR ★", bn: "★ সবচেয়ে জনপ্রিয় ★", ur: "★ سب سے مقبول ★" })}
               </div>
@@ -290,17 +290,17 @@ export function HomePlansSection({
                     {selectText({ en: "+5 BONUS DAYS IN TRIAL", bn: "+৫ বোনাস দিন ট্রায়ালে", ur: "آزمائش میں +5 اضافی دن" })}
                   </span>
                 </div>
-                <div className="mt-4 flex flex-col gap-0.5" dir="ltr">
-                  <div className="flex items-baseline flex-wrap gap-1.5">
-                    <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
+                <div className="mt-3 sm:mt-4 flex flex-col gap-0.5" dir="ltr">
+                  <div className="flex items-baseline flex-wrap gap-1 sm:gap-1.5">
+                    <span className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white">
                       ৳{formatBdt(proBdt, false, "599")} BDT
                     </span>
                     <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                       / month
                     </span>
                   </div>
-                  <div className="flex items-baseline flex-wrap gap-1.5">
-                    <span className="text-xl sm:text-2xl font-bold text-sky-600 dark:text-sky-400">
+                  <div className="flex items-baseline flex-wrap gap-1 sm:gap-1.5">
+                    <span className="text-lg sm:text-2xl font-bold text-sky-600 dark:text-sky-400">
                       ${formatUsd(proUsd, false, "4.99")} USD
                     </span>
                     <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
@@ -308,7 +308,7 @@ export function HomePlansSection({
                     </span>
                   </div>
                 </div>
-                <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                <p className="mt-1.5 sm:mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   {selectText({
                     en: "Manual monthly renewal. Upgrading during trial adds +5 Bonus Days (35 days total first period).",
                     bn: "ম্যানুয়াল মাসিক নবায়ন। ট্রায়াল চলাকালে নিলে পাবেন অতিরিক্ত ৫ বোনাস দিন (মোট ৩৫ দিন)।",
@@ -316,46 +316,46 @@ export function HomePlansSection({
                   })}
                 </p>
 
-                <div className="mt-6 border-t border-slate-200/80 pt-5 dark:border-slate-800/80">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-sky-600 dark:text-sky-500 mb-3">
+                <div className="mt-4 sm:mt-6 border-t border-slate-200/80 pt-3.5 sm:pt-5 dark:border-slate-800/80">
+                  <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-sky-600 dark:text-sky-500 mb-2 sm:mb-3">
                     {selectText({ en: "Pro Features", bn: "প্রো সুবিধাসমূহ", ur: "پرو خصوصیات" })}
                   </div>
-                  <ul className="space-y-2.5 text-xs text-slate-700 dark:text-slate-300">
-                    <li className="flex items-center gap-2.5 font-semibold text-slate-900 dark:text-white">
-                      <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
+                  <ul className="space-y-2 sm:space-y-2.5 text-xs text-slate-700 dark:text-slate-300">
+                    <li className="flex items-center gap-2 sm:gap-2.5 font-semibold text-slate-900 dark:text-white">
+                      <CheckCircle2 size={15} className="text-sky-500 shrink-0 sm:size-4" />
                       <span><strong>{selectText({ en: "Up to 5 Dedicated Journal Books", bn: "সর্বোচ্চ ৫টি ডেডিকেটেড জার্নাল বুক", ur: "5 تک مخصوص جرনল بکس" })}</strong></span>
                     </li>
-                    <li className="flex items-center gap-2.5 font-semibold text-slate-900 dark:text-white">
-                      <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
+                    <li className="flex items-center gap-2 sm:gap-2.5 font-semibold text-slate-900 dark:text-white">
+                      <CheckCircle2 size={15} className="text-sky-500 shrink-0 sm:size-4" />
                       <span><strong>{selectText({ en: "Unlimited Trade Entries", bn: "আনলিমিটেড ট্রেড এন্ট্রি", ur: "لامحدود ٹریড اندراجات" })}</strong></span>
                     </li>
-                    <li className="flex items-center gap-2.5">
-                      <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
-                      <span><strong className="text-slate-900 dark:text-white">{selectText({ en: "30 Trade Videos / mo", bn: "প্রতি মাসে ৩০টি ট্রেড ভিডিও", ur: "ماہانہ 30 ٹریড ویڈیوز" })}</strong> {selectText({ en: "(restored on delete)", bn: "(ডিলিট করলে রিস্টোর হয়)", ur: "(ڈیলিট پر کوٹہ بحال)" })}</span>
+                    <li className="flex items-center gap-2 sm:gap-2.5">
+                      <CheckCircle2 size={15} className="text-sky-500 shrink-0 sm:size-4" />
+                      <span><strong className="text-slate-900 dark:text-white">{selectText({ en: "30 Trade Videos / mo", bn: "প্রতি মাসে ৩০টি ট্রেড ভিডিও", ur: "ماہانہ 30 ٹریড ویڈیوز" })}</strong> {selectText({ en: "(restored on delete)", bn: "(ডিলিট করলে রিস্টোর হয়)", ur: "(ڈیلیٹ پر کوٹہ بحال)" })}</span>
                     </li>
-                    <li className="flex items-center gap-2.5">
-                      <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
+                    <li className="flex items-center gap-2 sm:gap-2.5">
+                      <CheckCircle2 size={15} className="text-sky-500 shrink-0 sm:size-4" />
                       <span><strong className="text-slate-900 dark:text-white">{selectText({ en: "10 Notebook Pages & 5 Videos / mo", bn: "১০টি নোটবুক পেজ এবং ৫টি ভিডিও / মাস", ur: "10 نوٹ بک صفحات اور 5 ویڈیوز / ماہ" })}</strong></span>
                     </li>
-                    <li className="flex items-center gap-2.5">
-                      <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
+                    <li className="flex items-center gap-2 sm:gap-2.5">
+                      <CheckCircle2 size={15} className="text-sky-500 shrink-0 sm:size-4" />
                       <span><strong className="text-slate-900 dark:text-white">{selectText({ en: "Full Workout Routine Access", bn: "সম্পূর্ণ ওয়ার্কআউট রুটিন এক্সেস", ur: "ورزش کے معمولات تک رسائی" })}</strong></span>
                     </li>
-                    <li className="flex items-center gap-2.5">
-                      <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
+                    <li className="flex items-center gap-2 sm:gap-2.5">
+                      <CheckCircle2 size={15} className="text-sky-500 shrink-0 sm:size-4" />
                       <span><strong className="text-slate-900 dark:text-white">{selectText({ en: "Full Community Chat Access", bn: "সম্পূর্ণ কমিউনিটি চ্যাট এক্সেস", ur: "کمیونٹی چیٹ تک رسائی" })}</strong></span>
                     </li>
-                    <li className="flex items-center gap-2.5">
-                      <CheckCircle2 size={16} className="text-sky-500 shrink-0" />
+                    <li className="flex items-center gap-2 sm:gap-2.5">
+                      <CheckCircle2 size={15} className="text-sky-500 shrink-0 sm:size-4" />
                       <span><strong className="text-slate-900 dark:text-white">{selectText({ en: "Global Leaderboard Eligible", bn: "গ্লোবাল লিডারবোর্ডের জন্য যোগ্য", ur: "عالمی لیڈر بورڈ کے اہل" })}</strong> ({selectText({ en: "verified", bn: "ভেরিফায়েড", ur: "تصدیق شدہ" })})</span>
                     </li>
                   </ul>
                 </div>
               </div>
 
-              <div className="mt-8 space-y-2.5">
+              <div className="mt-5 sm:mt-8 space-y-2 sm:space-y-2.5">
                 <Link href="/checkout?plan=pro" className="block w-full">
-                  <Button className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-xs h-10 shadow-lg shadow-sky-500/25">
+                  <Button className="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-xs h-9 sm:h-10 shadow-lg shadow-sky-500/25">
                     {selectText({
                       en: `Get Pro — ৳${formatBdt(proBdt, false, "599")} BDT / $${formatUsd(proUsd, false, "4.99")} USD / mo`,
                       bn: `প্রো কিনুন — ৳${formatBdt(proBdt, true, "599")} BDT / $${formatUsd(proUsd, true, "4.99")} USD / মাস`,
@@ -365,7 +365,7 @@ export function HomePlansSection({
                 </Link>
                 <Button
                   variant="outline"
-                  className="w-full text-xs font-bold border-sky-500/40 dark:border-sky-500/30 text-sky-700 dark:text-sky-300 hover:bg-sky-500/10 hover:text-sky-800 dark:hover:text-sky-200"
+                  className="w-full text-xs font-bold border-sky-500/40 dark:border-sky-500/30 text-sky-700 dark:text-sky-300 hover:bg-sky-500/10 hover:text-sky-800 dark:hover:text-sky-200 h-9 sm:h-10"
                   onClick={() => setSelectedPlanModal("pro")}
                 >
                   {selectText({ en: "View Details", bn: "বিস্তারিত দেখুন", ur: "تفصیلات دیکھیں" })}
@@ -374,28 +374,28 @@ export function HomePlansSection({
             </div>
 
             {/* CARD 3: PREMIUM PLAN */}
-            <div className="relative flex flex-col justify-between rounded-3xl border border-amber-500/50 bg-white bg-gradient-to-b from-amber-500/[0.06] via-amber-500/[0.02] to-transparent p-7 shadow-sm transition hover:shadow-lg dark:border-amber-500/40 dark:bg-[#0c1524] dark:from-amber-500/[0.04] dark:via-transparent dark:to-transparent">
+            <div className="relative flex flex-col justify-between rounded-2xl sm:rounded-3xl border border-amber-500/50 bg-white bg-gradient-to-b from-amber-500/[0.06] via-amber-500/[0.02] to-transparent p-4 sm:p-6 lg:p-7 shadow-sm transition hover:shadow-lg dark:border-amber-500/40 dark:bg-[#0c1524] dark:from-amber-500/[0.04] dark:via-transparent dark:to-transparent">
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500 flex items-center gap-1.5">
-                    <Crown size={15} />
+                  <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500 flex items-center gap-1.5">
+                    <Crown size={14} className="sm:size-[15px]" />
                     {selectText({ en: "Premium Plan", bn: "প্রিমিয়াম প্ল্যান", ur: "پریمیم پلان" })}
                   </span>
-                  <span className="rounded-full bg-amber-500/15 px-3 py-1 text-[11px] font-bold text-amber-700 dark:text-amber-300 border border-amber-500/40 dark:border-amber-500/30">
+                  <span className="rounded-full bg-amber-500/15 px-2.5 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-bold text-amber-700 dark:text-amber-300 border border-amber-500/40 dark:border-amber-500/30">
                     {selectText({ en: "INSTITUTIONAL", bn: "ইন্সটিটিউশনাল", ur: "ادارہ جاتی" })}
                   </span>
                 </div>
-                <div className="mt-4 flex flex-col gap-0.5" dir="ltr">
-                  <div className="flex items-baseline flex-wrap gap-1.5">
-                    <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
+                <div className="mt-3 sm:mt-4 flex flex-col gap-0.5" dir="ltr">
+                  <div className="flex items-baseline flex-wrap gap-1 sm:gap-1.5">
+                    <span className="text-2xl sm:text-4xl font-black text-slate-900 dark:text-white">
                       ৳{formatBdt(premiumBdt, false, "999")} BDT
                     </span>
                     <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
                       / month
                     </span>
                   </div>
-                  <div className="flex items-baseline flex-wrap gap-1.5">
-                    <span className="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400">
+                  <div className="flex items-baseline flex-wrap gap-1 sm:gap-1.5">
+                    <span className="text-lg sm:text-2xl font-bold text-amber-600 dark:text-amber-400">
                       ${formatUsd(premiumUsd, false, "9.99")} USD
                     </span>
                     <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
@@ -403,7 +403,7 @@ export function HomePlansSection({
                     </span>
                   </div>
                 </div>
-                <p className="mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                <p className="mt-1.5 sm:mt-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   {selectText({
                     en: "The ultimate institutional trader suite with 1-on-1 mentorship and direct private chat with the founder.",
                     bn: "সর্বোচ্চ প্রাতিষ্ঠানিক সুযোগ-সুবিধা। মেন্টরদের সরাসরি গাইডেন্স ও ফাউন্ডারের সাথে ওয়ান-টু-ওয়ান চ্যাট।",
@@ -411,50 +411,50 @@ export function HomePlansSection({
                   })}
                 </p>
 
-                <div className="mt-6 border-t border-slate-200/80 pt-5 dark:border-slate-800/80">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500 mb-3">
+                <div className="mt-4 sm:mt-6 border-t border-slate-200/80 pt-3.5 sm:pt-5 dark:border-slate-800/80">
+                  <div className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500 mb-2 sm:mb-3">
                     {selectText({ en: "Premium Exclusive", bn: "প্রিমিয়াম সুবিধাসমূহ", ur: "خصوصی پریمیم سہولیات" })}
                   </div>
-                  <ul className="space-y-2.5 text-xs text-slate-700 dark:text-slate-300">
-                    <li className="flex items-center gap-2.5 font-semibold text-slate-900 dark:text-white">
-                      <CheckCircle2 size={16} className="text-amber-600 dark:text-amber-500 shrink-0" />
+                  <ul className="space-y-2 sm:space-y-2.5 text-xs text-slate-700 dark:text-slate-300">
+                    <li className="flex items-center gap-2 sm:gap-2.5 font-semibold text-slate-900 dark:text-white">
+                      <CheckCircle2 size={15} className="text-amber-600 dark:text-amber-500 shrink-0 sm:size-4" />
                       <span><strong>{selectText({ en: "Unlimited Journal Books", bn: "আনলিমিটেড জার্নাল বুক", ur: "لامحدود جرنل بکس" })}</strong></span>
                     </li>
-                    <li className="flex items-center gap-2.5 font-semibold text-slate-900 dark:text-white">
-                      <CheckCircle2 size={16} className="text-amber-600 dark:text-amber-500 shrink-0" />
+                    <li className="flex items-center gap-2 sm:gap-2.5 font-semibold text-slate-900 dark:text-white">
+                      <CheckCircle2 size={15} className="text-amber-600 dark:text-amber-500 shrink-0 sm:size-4" />
                       <span><strong>{selectText({ en: "Unlimited Log New Trade entries", bn: "আনলিমিটেড ট্রেড লগ করার সুবিধা", ur: "لامحدود نئی ٹریডز درج کرنے کی سہولت" })}</strong></span>
                     </li>
-                    <li className="flex items-center gap-2.5 font-semibold text-slate-900 dark:text-white">
-                      <CheckCircle2 size={16} className="text-amber-600 dark:text-amber-500 shrink-0" />
+                    <li className="flex items-center gap-2 sm:gap-2.5 font-semibold text-slate-900 dark:text-white">
+                      <CheckCircle2 size={15} className="text-amber-600 dark:text-amber-500 shrink-0 sm:size-4" />
                       <span><strong>{selectText({ en: "Unlimited Video Saving & Notebook Pages", bn: "আনলিমিটেড ভিডিও সেভিং ও নোটবুক পেজ", ur: "لامحدود ویڈیوز اور نوٹ بک صفحات" })}</strong></span>
                     </li>
-                    <li className="flex items-center gap-2.5">
-                      <CheckCircle2 size={16} className="text-amber-600 dark:text-amber-500 shrink-0" />
+                    <li className="flex items-center gap-2 sm:gap-2.5">
+                      <CheckCircle2 size={15} className="text-amber-600 dark:text-amber-500 shrink-0 sm:size-4" />
                       <span>{selectText({ en: "Workout Routine & Community Chat", bn: "ওয়ার্কআউট রুটিন ও কমিউনিটি চ্যাট", ur: "ورزش معمول اور کمیونٹی چیٹ" })}</span>
                     </li>
-                    <li className="flex items-center gap-2.5">
-                      <CheckCircle2 size={16} className="text-amber-600 dark:text-amber-500 shrink-0" />
+                    <li className="flex items-center gap-2 sm:gap-2.5">
+                      <CheckCircle2 size={15} className="text-amber-600 dark:text-amber-500 shrink-0 sm:size-4" />
                       <span><strong className="text-slate-900 dark:text-white">{selectText({ en: "Global Leaderboard Eligible", bn: "গ্লোবাল লিডারবোর্ডের জন্য যোগ্য", ur: "عالمی لیڈر بورڈ کے اہل" })}</strong> ({selectText({ en: "verified", bn: "ভেরিফায়েড", ur: "تصدیق شدہ" })})</span>
                     </li>
-                    <li className="flex items-center gap-2.5 font-bold text-amber-600 dark:text-amber-500">
-                      <Crown size={15} className="shrink-0" />
+                    <li className="flex items-center gap-2 sm:gap-2.5 font-bold text-amber-600 dark:text-amber-500">
+                      <Crown size={14} className="shrink-0 sm:size-[15px]" />
                       <span><strong>{selectText({ en: "Direct 1-on-1 Mentor Support", bn: "সরাসরি ১-অন-১ মেন্টর সাপোর্ট", ur: "براہ راست 1-آن-1 رہنمائی" })}</strong></span>
                     </li>
-                    <li className="flex items-center gap-2.5 font-bold text-amber-600 dark:text-amber-500">
-                      <Crown size={15} className="shrink-0" />
+                    <li className="flex items-center gap-2 sm:gap-2.5 font-bold text-amber-600 dark:text-amber-500">
+                      <Crown size={14} className="shrink-0 sm:size-[15px]" />
                       <span><strong>{selectText({ en: "Direct Owner Personal Chat Access", bn: "ফাউন্ডারের সাথে সরাসরি পার্সোনাল চ্যাট এক্সেস", ur: "بانی کے ساتھ براہ راست ذاتی چیٹ" })}</strong></span>
                     </li>
                     <li className="flex items-center gap-2.5">
-                      <CheckCircle2 size={16} className="text-amber-600 dark:text-amber-500 shrink-0" />
+                      <CheckCircle2 size={15} className="text-amber-600 dark:text-amber-500 shrink-0 sm:size-4" />
                       <span>{selectText({ en: "Pro Remaining Days Paused & Preserved", bn: "প্রো-র অবশিষ্ট দিনগুলো সুরক্ষিত ও পজ থাকবে", ur: "پرو کے باقی ماندہ دن محفوظ اور روک دیے جائیں گے" })}</span>
                     </li>
                   </ul>
                 </div>
               </div>
 
-              <div className="mt-8 space-y-2.5">
+              <div className="mt-5 sm:mt-8 space-y-2 sm:space-y-2.5">
                 <Link href="/checkout?plan=premium" className="block w-full">
-                  <Button className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black font-bold text-xs h-10 shadow-lg shadow-amber-500/25">
+                  <Button className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black font-bold text-xs h-9 sm:h-10 shadow-lg shadow-amber-500/25">
                     {selectText({
                       en: `Get Premium — ৳${formatBdt(premiumBdt, false, "999")} BDT / $${formatUsd(premiumUsd, false, "9.99")} USD / mo`,
                       bn: `প্রিমিয়াম কিনুন — ৳${formatBdt(premiumBdt, true, "999")} BDT / $${formatUsd(premiumUsd, true, "9.99")} USD / মাস`,
@@ -464,7 +464,7 @@ export function HomePlansSection({
                 </Link>
                 <Button
                   variant="outline"
-                  className="w-full text-xs font-bold border-amber-500/40 dark:border-amber-500/30 text-amber-700 dark:text-amber-300 hover:bg-amber-500/10 hover:text-amber-800 dark:hover:text-amber-200"
+                  className="w-full text-xs font-bold border-amber-500/40 dark:border-amber-500/30 text-amber-700 dark:text-amber-300 hover:bg-amber-500/10 hover:text-amber-800 dark:hover:text-amber-200 h-9 sm:h-10"
                   onClick={() => setSelectedPlanModal("premium")}
                 >
                   {selectText({ en: "View Details", bn: "বিস্তারিত দেখুন", ur: "تفصیلات دیکھیں" })}
@@ -482,13 +482,13 @@ export function HomePlansSection({
           onClick={() => setSelectedPlanModal(null)}
         >
           <div
-            className={`relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-2xl dark:border-slate-800 dark:bg-slate-900 transition-all duration-300 scale-100 animate-in zoom-in-95 ${
+            className={`relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-8 shadow-2xl dark:border-slate-800 dark:bg-slate-900 transition-all duration-300 scale-100 animate-in zoom-in-95 ${
               language === "bn" ? "font-bangla" : language === "ur" ? "font-urdu" : ""
             }`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Top Bar with Plan Badge & Close Button */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 sm:pb-4 dark:border-slate-800">
               <div className="flex items-center gap-2.5">
                 <span className="flex size-7 items-center justify-center rounded-xl bg-sky-500/20 font-mono text-xs font-bold text-sky-500">
                   <Sparkles size={14} />

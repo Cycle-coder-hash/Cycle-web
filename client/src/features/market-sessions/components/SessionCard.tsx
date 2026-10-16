@@ -89,7 +89,7 @@ export function SessionCard({ session, index, isWeekendClosed }: SessionCardProp
           transition: tiltStyle.transition,
         } as React.CSSProperties
       }
-      className={`session-card-animate relative rounded-2xl p-5 sm:p-6 transition-all duration-300 border ${
+      className={`session-card-animate relative rounded-xl sm:rounded-2xl p-3.5 sm:p-6 transition-all duration-300 border ${
         isOpen
           ? "session-card-open-border shadow-xl border-transparent bg-white/95 dark:bg-[#0b172a]/95 text-slate-900 dark:text-white"
           : isWeekendClosed || session.status === "closed"
@@ -99,16 +99,16 @@ export function SessionCard({ session, index, isWeekendClosed }: SessionCardProp
     >
       {/* Glare overlay for 3D tilt */}
       <div
-        className="pointer-events-none absolute inset-0 rounded-2xl opacity-60 mix-blend-overlay transition-opacity"
+        className="pointer-events-none absolute inset-0 rounded-xl sm:rounded-2xl opacity-60 mix-blend-overlay transition-opacity"
         style={{ background: tiltStyle.glareBg }}
       />
 
       {/* Header: City & Status Badge */}
-      <div className="flex items-start justify-between gap-3 relative z-10">
+      <div className="flex items-start justify-between gap-1.5 sm:gap-3 relative z-10">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <span
-              className="size-2.5 rounded-full shrink-0 relative"
+              className="size-2 sm:size-2.5 rounded-full shrink-0 relative"
               style={{ backgroundColor: cityColor }}
             >
               {isOpen && (
@@ -118,11 +118,11 @@ export function SessionCard({ session, index, isWeekendClosed }: SessionCardProp
                 />
               )}
             </span>
-            <h3 className="text-lg sm:text-xl font-black tracking-tight text-slate-900 dark:text-white">
+            <h3 className="text-sm sm:text-xl font-black tracking-tight text-slate-900 dark:text-white truncate">
               {session.config.city}
             </h3>
           </div>
-          <p className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-[10px] sm:text-xs font-mono font-bold text-slate-500 dark:text-slate-400 mt-0.5">
             {session.zoneLabel}
           </p>
         </div>
@@ -130,17 +130,17 @@ export function SessionCard({ session, index, isWeekendClosed }: SessionCardProp
         {/* Status Badge */}
         <div className="shrink-0">
           {isOpen ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-3 py-1 text-xs font-extrabold text-emerald-600 dark:text-emerald-400 shadow-xs">
+            <span className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-extrabold text-emerald-600 dark:text-emerald-400 shadow-xs">
               <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
               <span>{selectText({ en: "Open", bn: "খোলা", ur: "کھلا ہے" })}</span>
             </span>
           ) : isOpeningSoon ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 px-3 py-1 text-xs font-extrabold text-amber-600 dark:text-amber-400">
+            <span className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 sm:px-3 sm:py-1 text-[10px] sm:text-xs font-extrabold text-amber-600 dark:text-amber-400">
               <span className="size-1.5 rounded-full bg-amber-500 animate-ping" />
-              <span>{selectText({ en: "Opening soon", bn: "শীঘ্রই খুলবে", ur: "جلد کھلنے والا" })}</span>
+              <span>{selectText({ en: "Soon", bn: "শীঘ্রই", ur: "جلد" })}</span>
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 px-2.5 py-0.5 text-xs font-bold text-slate-500 dark:text-slate-400">
+            <span className="inline-flex items-center gap-1 sm:gap-1.5 rounded-full bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 px-2 py-0.5 sm:px-2.5 sm:py-0.5 text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400">
               <span>{selectText({ en: "Closed", bn: "বন্ধ", ur: "بند" })}</span>
             </span>
           )}
@@ -148,15 +148,15 @@ export function SessionCard({ session, index, isWeekendClosed }: SessionCardProp
       </div>
 
       {/* Countdown Area */}
-      <div className="my-5 relative z-10">
-        <div className="text-[11px] uppercase tracking-wider font-extrabold text-slate-400 dark:text-slate-400">
+      <div className="my-2.5 sm:my-5 relative z-10">
+        <div className="text-[9px] sm:text-[11px] uppercase tracking-wider font-extrabold text-slate-400 dark:text-slate-400">
           {isOpen
             ? selectText({ en: "closes in", bn: "বন্ধ হতে বাকি", ur: "بند ہونے میں باقی" })
             : selectText({ en: "opens in", bn: "খুলতে বাকি", ur: "کھلنے میں باقی" })}
         </div>
-        <div className="overflow-hidden h-10 mt-0.5 flex items-baseline gap-2">
+        <div className="overflow-hidden h-7 sm:h-10 mt-0.5 flex items-baseline gap-2">
           <div
-            className={`text-3xl font-black font-mono tracking-tight text-slate-900 dark:text-white ${
+            className={`text-lg sm:text-3xl font-black font-mono tracking-tight text-slate-900 dark:text-white ${
               isRolling ? "countdown-rolling" : ""
             }`}
           >
@@ -165,7 +165,7 @@ export function SessionCard({ session, index, isWeekendClosed }: SessionCardProp
         </div>
 
         {/* Progress Bar (Visible for Open Sessions) */}
-        <div className="mt-2 h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800/80 overflow-hidden">
+        <div className="mt-1.5 sm:mt-2 h-1 sm:h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800/80 overflow-hidden">
           <div
             className="h-full rounded-full transition-all duration-500"
             style={{
@@ -178,20 +178,20 @@ export function SessionCard({ session, index, isWeekendClosed }: SessionCardProp
       </div>
 
       {/* Session Hours Breakdown */}
-      <div className="space-y-2 border-t border-slate-100 dark:border-slate-800/70 pt-3.5 text-xs relative z-10">
-        <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-          <span className="font-medium flex items-center gap-1.5">
-            <Clock size={12} className="text-slate-400" />
-            <span>{selectText({ en: "Your time:", bn: "আপনার সময়:", ur: "آپ کا وقت:" })}</span>
+      <div className="space-y-1 sm:space-y-2 border-t border-slate-100 dark:border-slate-800/70 pt-2.5 sm:pt-3.5 text-[10px] sm:text-xs relative z-10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between text-slate-500 dark:text-slate-400 gap-0.5 sm:gap-0">
+          <span className="font-medium flex items-center gap-1">
+            <Clock size={11} className="text-slate-400 sm:size-3" />
+            <span>{selectText({ en: "You:", bn: "আপনার:", ur: "آپ کا:" })}</span>
           </span>
           <span className="font-mono font-bold text-slate-900 dark:text-slate-200" dir="ltr">
             {session.userHoursFormatted}
           </span>
         </div>
 
-        <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between text-slate-500 dark:text-slate-400 gap-0.5 sm:gap-0">
           <span className="font-medium">
-            {selectText({ en: "City local:", bn: "শহরের সময়:", ur: "شہر کا وقت:" })}
+            {selectText({ en: "City:", bn: "শহর:", ur: "شہر:" })}
           </span>
           <span className="font-mono text-slate-600 dark:text-slate-400" dir="ltr">
             {session.localHoursFormatted}
@@ -201,8 +201,8 @@ export function SessionCard({ session, index, isWeekendClosed }: SessionCardProp
 
       {/* Upcoming Clock Change Notice (Within next 7 days) */}
       {session.upcomingClockChange && (
-        <div className="mt-3.5 flex items-start gap-2 rounded-xl bg-amber-500/10 border border-amber-500/20 p-2.5 text-[11px] text-amber-700 dark:text-amber-300 relative z-10">
-          <AlertCircle size={14} className="shrink-0 mt-0.5 text-amber-500" />
+        <div className="mt-2.5 sm:mt-3.5 flex items-start gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl bg-amber-500/10 border border-amber-500/20 p-2 sm:p-2.5 text-[10px] sm:text-[11px] text-amber-700 dark:text-amber-300 relative z-10">
+          <AlertCircle size={13} className="shrink-0 mt-0.5 text-amber-500 sm:size-3.5" />
           <span>
             {selectText({
               en: `Clocks change on ${session.upcomingClockChange.dateStr}. Session time shifts by ${session.upcomingClockChange.hoursShift} hour.`,

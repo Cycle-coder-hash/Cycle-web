@@ -131,24 +131,24 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
   return (
     <div
       dir={isRTL ? "rtl" : "ltr"}
-      className={`space-y-8 animate-in fade-in duration-300 ${isUr ? "font-urdu" : ""}`}
+      className={`space-y-5 sm:space-y-8 animate-in fade-in duration-300 ${isUr ? "font-urdu" : ""}`}
     >
       {/* Tool Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 border-b border-slate-200/80 pb-4 sm:pb-6 dark:border-slate-800">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/25">
-              <Calculator size={20} />
+            <div className="flex size-9 sm:size-10 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-tr from-sky-500 to-blue-600 text-white shadow-md shadow-sky-500/25">
+              <Calculator size={18} className="sm:size-5" />
             </div>
             <div>
-              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+              <h2 className="text-lg sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
                 {selectText({
                   en: "Position Size & Risk Calculator",
                   bn: "পজিশন সাইজ ও রিস্ক ক্যালকুলেটর",
                   ur: "پوزیشن سائز اور رسک کیلکولیٹر",
                 })}
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
                 {selectText({
                   en: "Calculate precise lot sizing, cash at risk, and contract units to protect your trading capital.",
                   bn: "ক্যান্ডেল রেঞ্জ থিওরি (CRT) নীতি অনুযায়ী সঠিক লট সাইজ ও ক্যাপিটাল রিস্ক নির্ধারণ করুন।",
@@ -165,7 +165,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
             variant="outline"
             size="sm"
             onClick={handleReset}
-            className="gap-1.5 text-xs font-bold border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50"
+            className="gap-1.5 text-xs font-bold border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50 h-8 sm:h-9 px-3"
           >
             <RotateCcw size={13} />
             <span>
@@ -180,15 +180,15 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
       </div>
 
       {/* Main 2-Column Responsive Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-start">
         {/* Left Column: Inputs Form */}
-        <div className="lg:col-span-6 space-y-6">
+        <div className="lg:col-span-6 space-y-4 sm:space-y-6">
           <form
             onSubmit={handleCalculate}
             noValidate
-            className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-sm dark:border-slate-800 dark:bg-[#070e1b] space-y-5"
+            className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-7 shadow-sm dark:border-slate-800 dark:bg-[#070e1b] space-y-4 sm:space-y-5"
           >
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 sm:pb-3 dark:border-slate-800">
               <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-2">
                 <Layers size={14} className="text-sky-500" />
                 {selectText({
@@ -204,7 +204,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
 
             {/* Validation Error Banner */}
             {Object.keys(validationErrors).length > 0 && (
-              <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-600 dark:text-rose-400 space-y-1">
+              <div className="rounded-xl sm:rounded-2xl border border-rose-500/30 bg-rose-500/10 p-3 sm:p-4 text-xs text-rose-600 dark:text-rose-400 space-y-1">
                 <div className="flex items-center gap-2 font-bold">
                   <AlertCircle size={15} />
                   <span>
@@ -235,7 +235,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
               <select
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value)}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs sm:text-sm font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+                className="w-full rounded-xl sm:rounded-2xl border border-slate-200 bg-slate-50 p-2.5 sm:p-3 text-xs sm:text-sm font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
               >
                 <optgroup label="👑 CRT Core & Commodities">
                   <option value="XAU/USD">XAU/USD — Gold Spot (100 oz)</option>
@@ -268,7 +268,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
               </select>
 
               {/* Pip Definition Context Card */}
-              <div className="mt-2 flex items-start gap-2 rounded-xl bg-slate-50 p-2.5 text-[11px] text-slate-500 dark:bg-slate-900/60 dark:text-slate-400 border border-slate-100 dark:border-slate-800/80">
+              <div className="mt-1.5 sm:mt-2 flex items-start gap-2 rounded-lg sm:rounded-xl bg-slate-50 p-2 sm:p-2.5 text-[10px] sm:text-[11px] text-slate-500 dark:bg-slate-900/60 dark:text-slate-400 border border-slate-100 dark:border-slate-800/80">
                 <Info size={14} className="text-sky-500 shrink-0 mt-0.5" />
                 <span>{activeInstrument.pipDefinition}</span>
               </div>
@@ -276,7 +276,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
 
             {/* 2. Account Balance */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center justify-between mb-1 sm:mb-1.5">
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
                   {selectText({
                     en: "Account Balance ($ USD)",
@@ -288,7 +288,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                   <button
                     type="button"
                     onClick={() => setBalance(String(initialBalance))}
-                    className="text-[11px] font-bold text-sky-500 hover:underline"
+                    className="text-[10px] sm:text-[11px] font-bold text-sky-500 hover:underline"
                   >
                     {selectText({
                       en: `Use Journal Balance ($${initialBalance.toLocaleString()})`,
@@ -311,7 +311,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                   dir="ltr"
                   value={balance}
                   onChange={(e) => setBalance(e.target.value)}
-                  className={`w-full rounded-2xl border bg-slate-50 py-3 pl-8 pr-4 text-sm font-extrabold text-slate-900 outline-none transition dark:bg-slate-900 dark:text-white ${
+                  className={`w-full rounded-xl sm:rounded-2xl border bg-slate-50 py-2.5 sm:py-3 pl-8 pr-4 text-xs sm:text-sm font-extrabold text-slate-900 outline-none transition dark:bg-slate-900 dark:text-white ${
                     validationErrors.accountBalance
                       ? "border-rose-500 focus:border-rose-500"
                       : "border-slate-200 focus:border-sky-500 dark:border-slate-800"
@@ -327,7 +327,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
 
             {/* 3. Risk Percentage with Quick Presets */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center justify-between mb-1 sm:mb-1.5">
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
                   {selectText({
                     en: "Risk Percentage (%)",
@@ -335,7 +335,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                     ur: "رسک کا تناسب (%)",
                   })}
                 </label>
-                <span className="text-[11px] font-extrabold text-sky-500 dark:text-sky-400">
+                <span className="text-[10px] sm:text-[11px] font-extrabold text-sky-500 dark:text-sky-400">
                   <span dir="ltr">${previewRiskAmount.toFixed(2)} USD</span>{" "}
                   {selectText({
                     en: "at risk",
@@ -346,7 +346,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
               </div>
 
               {/* Quick Select Pill Buttons */}
-              <div className="grid grid-cols-5 gap-2 mb-2" dir="ltr">
+              <div className="grid grid-cols-5 gap-1.5 sm:gap-2 mb-2" dir="ltr">
                 {QUICK_RISK_PRESETS.map((preset) => {
                   const isActive = parseNumericField(riskPercent) === preset;
                   return (
@@ -354,7 +354,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                       key={preset}
                       type="button"
                       onClick={() => handlePresetRisk(preset)}
-                      className={`py-2 rounded-xl text-xs font-extrabold transition-all border ${
+                      className={`py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-extrabold transition-all border ${
                         isActive
                           ? "bg-sky-500 text-slate-950 border-sky-400 shadow-sm shadow-sky-500/30"
                           : "bg-slate-100/80 text-slate-600 border-slate-200/80 hover:bg-slate-200 dark:bg-slate-900 dark:text-slate-400 dark:border-slate-800 dark:hover:bg-slate-800"
@@ -378,13 +378,13 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                   dir="ltr"
                   value={riskPercent}
                   onChange={(e) => setRiskPercent(e.target.value)}
-                  className={`w-full rounded-2xl border bg-slate-50 py-3 pl-4 pr-9 text-sm font-extrabold text-slate-900 outline-none transition dark:bg-slate-900 dark:text-white ${
+                  className={`w-full rounded-xl sm:rounded-2xl border bg-slate-50 py-2.5 sm:py-3 pl-4 pr-9 text-xs sm:text-sm font-extrabold text-slate-900 outline-none transition dark:bg-slate-900 dark:text-white ${
                     validationErrors.riskPercent
                       ? "border-rose-500 focus:border-rose-500"
                       : "border-slate-200 focus:border-sky-500 dark:border-slate-800"
                   }`}
                 />
-                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-extrabold text-slate-400">
+                <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs sm:text-sm font-extrabold text-slate-400">
                   %
                 </span>
               </div>
@@ -397,7 +397,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
 
             {/* 4. Stop Loss Distance in Pips */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center justify-between mb-1 sm:mb-1.5">
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
                   {selectText({
                     en: "Stop Loss Distance (Pips / Points)",
@@ -405,7 +405,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                     ur: "Stop Loss فاصلہ (Pips / Points)",
                   })}
                 </label>
-                <span className="text-[11px] text-slate-400">
+                <span className="text-[10px] sm:text-[11px] text-slate-400">
                   {isPointsInstrument ? "Points" : "Pips"}
                 </span>
               </div>
@@ -418,7 +418,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                 dir="ltr"
                 value={stopLossPips}
                 onChange={(e) => setStopLossPips(e.target.value)}
-                className={`w-full rounded-2xl border bg-slate-50 p-3 text-sm font-extrabold text-slate-900 outline-none transition dark:bg-slate-900 dark:text-white ${
+                className={`w-full rounded-xl sm:rounded-2xl border bg-slate-50 p-2.5 sm:p-3 text-xs sm:text-sm font-extrabold text-slate-900 outline-none transition dark:bg-slate-900 dark:text-white ${
                   validationErrors.stopLossPips
                     ? "border-rose-500 focus:border-rose-500"
                     : "border-slate-200 focus:border-sky-500 dark:border-slate-800"
@@ -434,9 +434,9 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
             {/* Primary Action Button */}
             <Button
               type="submit"
-              className="w-full h-12 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 text-slate-950 font-black text-sm shadow-lg shadow-sky-500/25 hover:from-sky-400 hover:to-blue-500 transition-all gap-2"
+              className="w-full h-10 sm:h-12 rounded-xl sm:rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 text-slate-950 font-black text-xs sm:text-sm shadow-lg shadow-sky-500/25 hover:from-sky-400 hover:to-blue-500 transition-all gap-2"
             >
-              <Calculator size={18} />
+              <Calculator size={16} className="sm:size-[18px]" />
               <span>
                 {selectText({
                   en: "Calculate Position Size",
@@ -449,13 +449,13 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
         </div>
 
         {/* Right Column: Calculation Results Display */}
-        <div className="lg:col-span-6 space-y-6">
+        <div className="lg:col-span-6 space-y-4 sm:space-y-6">
           {/* Hero Lot Size Card with Animated RGB Glow */}
-          <div className="relative rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-xl dark:border-slate-800 dark:bg-[#070e1b] overflow-hidden">
+          <div className="relative rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-7 shadow-xl dark:border-slate-800 dark:bg-[#070e1b] overflow-hidden">
             <AnimatedRgbBorder />
             <div className="absolute top-0 right-0 w-64 h-64 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="relative z-10 space-y-6">
+            <div className="relative z-10 space-y-4 sm:space-y-6">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-[#38bdf8] flex items-center gap-1.5">
                   <Sparkles size={14} className="text-[#38bdf8]" />
@@ -465,27 +465,27 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                     ur: "تجویز کردہ لاٹ سائز",
                   })}
                 </span>
-                <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-400 border border-emerald-500/30">
+                <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-[10px] sm:text-[11px] font-extrabold text-emerald-400 border border-emerald-500/30">
                   {activeInstrument.symbol}
                 </span>
               </div>
 
               {/* Main Prominent Lot Display */}
-              <div className="rounded-2xl border border-sky-500/20 bg-gradient-to-br from-[#091830] to-[#061122] p-6 text-center space-y-1 shadow-inner">
-                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+              <div className="rounded-xl sm:rounded-2xl border border-sky-500/20 bg-gradient-to-br from-[#091830] to-[#061122] p-4 sm:p-6 text-center space-y-1 shadow-inner">
+                <div className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-widest">
                   {selectText({
                     en: "Standard Lot Size",
                     bn: "স্ট্যান্ডার্ড লট সাইজ",
                     ur: "اسٹینڈرڈ لاٹ سائز",
                   })}
                 </div>
-                <div className="text-4xl sm:text-5xl font-black text-white tracking-tight text-glow-cyan" dir="ltr">
+                <div className="text-3xl sm:text-5xl font-black text-white tracking-tight text-glow-cyan" dir="ltr">
                   {calculationResult.isValid
                     ? calculationResult.standardLots.toFixed(lotDecimals)
                     : "0.00"}{" "}
-                  <span className="text-base sm:text-lg font-bold text-sky-400">Lots</span>
+                  <span className="text-sm sm:text-lg font-bold text-sky-400">Lots</span>
                 </div>
-                <div className="text-xs font-semibold text-slate-300 pt-1">
+                <div className="text-xs font-semibold text-slate-300 pt-0.5 sm:pt-1">
                   {selectText({
                     en: "Max Capital At Risk: ",
                     bn: "সর্বোচ্চ ক্যাপিটাল ঝুঁকি: ",
@@ -500,7 +500,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                 </div>
                 {calculationResult.isValid &&
                   Math.abs(calculationResult.actualRiskAmount - calculationResult.riskAmount) >= 0.01 && (
-                    <div className="text-[11px] text-sky-400/90">
+                    <div className="text-[10px] sm:text-[11px] text-sky-400/90">
                       {selectText({
                         en: `Actual SL Risk at ${calculationResult.standardLots.toFixed(lotDecimals)} Lots: $${calculationResult.actualRiskAmount.toFixed(2)} USD`,
                         bn: `সঠিক লট অনুযায়ী প্রকৃত এসএল ঝুঁকি: $${calculationResult.actualRiskAmount.toFixed(2)} USD`,
@@ -515,7 +515,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                 (!calculationResult.isValid && calculationResult.errorMessage)) && (
                 <div
                   role="alert"
-                  className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-3.5 text-xs text-amber-600 dark:text-amber-300 flex items-start gap-2.5"
+                  className="rounded-xl sm:rounded-2xl border border-amber-500/40 bg-amber-500/10 p-3 sm:p-3.5 text-xs text-amber-600 dark:text-amber-300 flex items-start gap-2 sm:gap-2.5"
                 >
                   <AlertCircle size={16} className="shrink-0 mt-0.5 text-amber-500" />
                   <div className="space-y-1">
@@ -536,9 +536,9 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
               )}
 
               {/* Secondary Metrics Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 text-xs">
                 {/* Mini Lots */}
-                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
+                <div className="rounded-xl sm:rounded-2xl border border-slate-200/80 bg-slate-50/70 p-2.5 sm:p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
                   <div className="text-[10px] font-bold text-slate-400 uppercase">
                     {selectText({
                       en: "Mini Lots",
@@ -546,14 +546,14 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                       ur: "منی لاٹس",
                     })}
                   </div>
-                  <div className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5" dir="ltr">
+                  <div className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white mt-0.5" dir="ltr">
                     {calculationResult.isValid ? calculationResult.miniLots.toFixed(2) : "0.00"}
                   </div>
                   <div className="text-[10px] text-slate-400" dir="ltr">0.1x Lot</div>
                 </div>
 
                 {/* Micro Lots */}
-                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
+                <div className="rounded-xl sm:rounded-2xl border border-slate-200/80 bg-slate-50/70 p-2.5 sm:p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
                   <div className="text-[10px] font-bold text-slate-400 uppercase">
                     {selectText({
                       en: "Micro Lots",
@@ -561,14 +561,14 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                       ur: "مائیکرو لاٹس",
                     })}
                   </div>
-                  <div className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5" dir="ltr">
+                  <div className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white mt-0.5" dir="ltr">
                     {calculationResult.isValid ? calculationResult.microLots.toFixed(2) : "0.00"}
                   </div>
                   <div className="text-[10px] text-slate-400" dir="ltr">0.01x Lot</div>
                 </div>
 
                 {/* Total Units / Contract Quantity */}
-                <div className="col-span-2 sm:col-span-1 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
+                <div className="col-span-2 sm:col-span-1 rounded-xl sm:rounded-2xl border border-slate-200/80 bg-slate-50/70 p-2.5 sm:p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
                   <div className="text-[10px] font-bold text-slate-400 uppercase">
                     {selectText({
                       en: "Total Volume",
@@ -576,7 +576,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                       ur: "کل والیوم / یونٹس",
                     })}
                   </div>
-                  <div className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5 truncate" dir="ltr">
+                  <div className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white mt-0.5 truncate" dir="ltr">
                     {calculationResult.isValid
                       ? `${calculationResult.contractUnits.toLocaleString()} ${calculationResult.unitName}`
                       : `0 ${calculationResult.unitName}`}
@@ -585,7 +585,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                 </div>
 
                 {/* Pip Value */}
-                <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
+                <div className="rounded-xl sm:rounded-2xl border border-slate-200/80 bg-slate-50/70 p-2.5 sm:p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
                   <div className="text-[10px] font-bold text-slate-400 uppercase">
                     {selectText({
                       en: "Pip Value / Lot",
@@ -593,7 +593,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                       ur: "پپ ویلیو / لاٹ",
                     })}
                   </div>
-                  <div className="text-sm font-extrabold text-slate-900 dark:text-white mt-0.5" dir="ltr">
+                  <div className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white mt-0.5" dir="ltr">
                     ${calculationResult.pipValuePerLot.toFixed(2)}
                   </div>
                   <div className="text-[10px] text-slate-400">
@@ -602,7 +602,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                 </div>
 
                 {/* Balance After Loss */}
-                <div className="col-span-2 rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
+                <div className="col-span-2 rounded-xl sm:rounded-2xl border border-slate-200/80 bg-slate-50/70 p-2.5 sm:p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
                   <div className="text-[10px] font-bold text-slate-400 uppercase">
                     {selectText({
                       en: "Balance After Stop Loss",
@@ -610,7 +610,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                       ur: "اسٹاپ لاس کے بعد باقی بیلنس",
                     })}
                   </div>
-                  <div className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5" dir="ltr">
+                  <div className="text-xs sm:text-sm font-extrabold text-emerald-600 dark:text-emerald-400 mt-0.5" dir="ltr">
                     $
                     {calculationResult.isValid
                       ? calculationResult.balanceAfterLoss.toLocaleString(undefined, {
@@ -634,8 +634,8 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
 
           {/* Risk-to-Reward Scenario Targets */}
           {calculationResult.isValid && calculationResult.riskRewardTargets.length > 0 && (
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-[#070e1b] space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+            <div className="rounded-2xl sm:rounded-3xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm dark:border-slate-800 dark:bg-[#070e1b] space-y-3 sm:space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 sm:pb-3 dark:border-slate-800">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
                   <Target size={15} className="text-amber-500" />
                   {selectText({
@@ -644,21 +644,21 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                     ur: "رسک ٹو ریوارڈ پروجیکشنز (R:R)",
                   })}
                 </span>
-                <span className="text-[11px] font-bold text-slate-400">
+                <span className="text-[10px] sm:text-[11px] font-bold text-slate-400">
                   SL: {calculationResult.instrument.symbol}
                 </span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5" dir="ltr">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5" dir="ltr">
                 {calculationResult.riskRewardTargets.map((target) => (
                   <div
                     key={target.ratio}
-                    className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-900/60 text-center space-y-1"
+                    className="rounded-xl sm:rounded-2xl border border-slate-200/80 bg-slate-50/70 p-2 sm:p-3 dark:border-slate-800 dark:bg-slate-900/60 text-center space-y-1"
                   >
                     <div className="text-[10px] font-black uppercase text-sky-500 dark:text-sky-400">
                       {target.ratio} R:R
                     </div>
-                    <div className="text-sm font-black text-slate-900 dark:text-white">
+                    <div className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
                       +$
                       {Number.isInteger(target.profitAmount)
                         ? target.profitAmount.toFixed(0)
@@ -674,7 +674,7 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
           )}
 
           {/* Institutional CRT Risk Management Card */}
-          <div className="rounded-3xl border border-sky-500/20 bg-sky-500/5 p-5 text-xs text-slate-600 dark:text-slate-300 space-y-2">
+          <div className="rounded-2xl sm:rounded-3xl border border-sky-500/20 bg-sky-500/5 p-3.5 sm:p-5 text-xs text-slate-600 dark:text-slate-300 space-y-2">
             <div className="flex items-center gap-2 font-black text-sky-600 dark:text-sky-400 text-xs uppercase tracking-wider">
               <ShieldCheck size={16} />
               <span>
@@ -685,11 +685,11 @@ export const PositionSizeCalculator: React.FC<PositionSizeCalculatorProps> = ({
                 })}
               </span>
             </div>
-            <p className="leading-relaxed text-[11px]">
+            <p className="leading-relaxed text-[10px] sm:text-[11px]">
               {selectText({
                 en: "Professional institutional traders prioritize capital preservation over speculative returns. Never allocate more than 1%–2% of total equity to any single execution.",
                 bn: "একজন প্রাতিষ্ঠানিক ট্রেডারের প্রথম লক্ষ্য লাভ নয়, মূলধন রক্ষা করা। কোনো একক সেটআপে কখনোই ১% থেকে ২% এর বেশি রিস্ক নেওয়া উচিত নয়।",
-                ur: "پیشہ ور ادارہ جاتی ٹریڈرز غیر یقینی منافع کے مقابلے میں سرمائے کے تحفظ کو ترجیح دیتے ہیں۔ کبھی بھی کسی ایک ٹریڈ پر اپنے کل سرمائے کا 1% سے 2% سے زیادہ رسک نہ لیں۔",
+                ur: "پیشہ ور ادارہ جاتی ٹریڈرز غیر یقینی منافع کے مقابلے میں سرمائے کے تحفظ کو ترجیح دیتے ہیں۔ کبھی بھی کسی ایک ٹریড پر اپنے کل سرمائے کا 1% سے 2% سے زیادہ رسک نہ لیں۔",
               })}
             </p>
           </div>

@@ -136,62 +136,62 @@ export function HomeOwnerProfileSection({
   return (
     <section
       id="owner-profile"
-      className="relative py-16 sm:py-24 text-slate-900 dark:text-white border-t border-slate-200/70 dark:border-slate-800/80 bg-slate-50/50 dark:bg-[#070e1b] overflow-hidden"
+      className="relative py-10 sm:py-24 text-slate-900 dark:text-white border-t border-slate-200/70 dark:border-slate-800/80 bg-slate-50/50 dark:bg-[#070e1b] overflow-hidden"
     >
       {/* Subtle atmospheric ambient glow */}
       <div className="absolute top-1/2 left-1/4 -translate-y-1/2 -translate-x-1/2 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none dark:hidden" />
       <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl pointer-events-none dark:hidden" />
 
-      <div className="relative mx-auto max-w-7xl px-5 lg:px-8 z-10">
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-5 lg:px-8 z-10">
         {/* Section Header */}
-        <div className="mb-10 sm:mb-12 text-center max-w-3xl mx-auto">
-          <p className="text-xs font-extrabold uppercase tracking-[.2em] text-[#0284c7] dark:text-[#38bdf8]">
+        <div className="mb-6 sm:mb-12 text-center max-w-3xl mx-auto">
+          <p className="text-[11px] sm:text-xs font-extrabold uppercase tracking-[.2em] text-[#0284c7] dark:text-[#38bdf8]">
             {copy.ownerEyebrow}
           </p>
-          <h2 className="mt-2 text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+          <h2 className="mt-1.5 sm:mt-2 text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             {copy.ownerTitle}
           </h2>
-          <p className="mt-2 text-sm sm:text-base text-slate-600 dark:text-slate-400">
+          <p className="mt-1.5 sm:mt-2 text-xs sm:text-base text-slate-600 dark:text-slate-400">
             {copy.ownerDesc}
           </p>
         </div>
 
         {/* Profile Card */}
         {ownerProfile && (
-          <div className="relative rounded-3xl border border-slate-200/90 bg-white/85 p-6 sm:p-10 lg:p-12 backdrop-blur-md shadow-xl dark:border-slate-800/90 dark:bg-[#0b162a]/80 dark:shadow-2xl dark:shadow-sky-950/30 transition-all">
+          <div className="relative rounded-2xl sm:rounded-3xl border border-slate-200/90 bg-white/85 p-4 sm:p-10 lg:p-12 backdrop-blur-md shadow-xl dark:border-slate-800/90 dark:bg-[#0b162a]/80 dark:shadow-2xl dark:shadow-sky-950/30 transition-all">
             <AnimatedRgbBorder />
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 xl:gap-10 items-center relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 lg:gap-8 xl:gap-10 items-center relative z-10">
               {/* Left Column: Profile 1 */}
               <div className="lg:col-span-3 flex flex-col items-center text-center">
                 <div className="relative group">
                   {/* Ambient Glow */}
-                  <div className="absolute -inset-1 rounded-[28px] bg-gradient-to-r from-sky-500 via-cyan-400 to-blue-600 opacity-60 blur-md group-hover:opacity-85 transition duration-500" />
+                  <div className="absolute -inset-1 rounded-[22px] sm:rounded-[28px] bg-gradient-to-r from-sky-500 via-cyan-400 to-blue-600 opacity-60 blur-md group-hover:opacity-85 transition duration-500" />
 
                   {/* Photo Container */}
-                  <div className="relative w-44 h-44 sm:w-52 sm:h-52 lg:w-40 lg:h-40 xl:w-48 xl:h-48 rounded-[24px] overflow-hidden p-1 bg-gradient-to-tr from-sky-500 via-cyan-400 to-blue-600 shadow-xl shadow-sky-500/20">
+                  <div className="relative w-32 h-32 sm:w-52 sm:h-52 lg:w-40 lg:h-40 xl:w-48 xl:h-48 rounded-[20px] sm:rounded-[24px] overflow-hidden p-1 bg-gradient-to-tr from-sky-500 via-cyan-400 to-blue-600 shadow-xl shadow-sky-500/20">
                     <img
                       src={ownerProfile.photoUrl}
                       alt={ownerProfile.name}
-                      className="w-full h-full object-cover object-top rounded-[20px] transition-transform duration-500 group-hover:scale-105"
+                      className="w-full h-full object-cover object-top rounded-[16px] sm:rounded-[20px] transition-transform duration-500 group-hover:scale-105"
                       loading="lazy"
                     />
                   </div>
                 </div>
 
-                <h3 className="mt-5 text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                <h3 className="mt-3.5 sm:mt-5 text-xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
                   {ownerProfile.name}
                 </h3>
 
-                <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-sky-500/10 text-sky-600 dark:bg-sky-400/15 dark:text-sky-300 border border-sky-500/20">
-                  <ShieldCheck size={14} className="text-sky-500 shrink-0" />
+                <div className="mt-1.5 sm:mt-2 inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold bg-sky-500/10 text-sky-600 dark:bg-sky-400/15 dark:text-sky-300 border border-sky-500/20">
+                  <ShieldCheck size={13} className="text-sky-500 shrink-0 sm:size-3.5" />
                   <span>{isBn && ownerProfile.roleBn ? ownerProfile.roleBn : ownerProfile.role}</span>
                 </div>
               </div>
 
               {/* Center Column: Description / Content & Credentials */}
-              <div className="lg:col-span-6 space-y-6 text-center">
+              <div className="lg:col-span-6 space-y-4 sm:space-y-6 text-center">
                 {/* Bio Text */}
-                <div className="space-y-4 text-sm sm:text-base leading-relaxed text-slate-700 dark:text-slate-300">
+                <div className="space-y-2.5 sm:space-y-4 text-xs sm:text-base leading-relaxed text-slate-700 dark:text-slate-300">
                   <p className="font-medium whitespace-pre-line">
                     {isBn && ownerProfile.bioBn
                       ? ownerProfile.bioBn
@@ -265,7 +265,7 @@ export function HomeOwnerProfileSection({
                   if (socials.length === 0) return null;
 
                   return (
-                    <div className="flex items-center justify-center gap-2.5 sm:gap-3 py-1">
+                    <div className="flex items-center justify-center gap-2 sm:gap-3 py-0.5 sm:py-1">
                       {socials.map((item) => {
                         const Icon = item.icon;
                         return (
@@ -274,7 +274,7 @@ export function HomeOwnerProfileSection({
                             href={item.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className={`flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-2xl bg-slate-100/90 text-slate-600 dark:bg-slate-800/90 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60 shadow-sm transition-all hover:scale-105 active:scale-95 ${item.hoverColor}`}
+                            className={`flex h-9 w-9 min-h-[36px] min-w-[36px] sm:h-11 sm:w-11 sm:min-h-[44px] sm:min-w-[44px] items-center justify-center rounded-xl sm:rounded-2xl bg-slate-100/90 text-slate-600 dark:bg-slate-800/90 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60 shadow-sm transition-all hover:scale-105 active:scale-95 ${item.hoverColor}`}
                             title={item.label}
                             aria-label={item.label}
                           >
@@ -322,16 +322,16 @@ export function HomeOwnerProfileSection({
                   if (activeCards.length === 1) {
                     const card = activeCards[0];
                     return (
-                      <div className="flex justify-center pt-2">
-                        <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-3.5 dark:border-slate-800 dark:bg-slate-900/70">
-                          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${card.iconBg}`}>
-                            {renderOwnerStatIcon(card.icon, "size-5")}
+                      <div className="flex justify-center pt-1.5 sm:pt-2">
+                        <div className="flex items-center gap-2.5 sm:gap-3 rounded-xl sm:rounded-2xl border border-slate-200/80 bg-slate-50/80 p-2.5 sm:p-3.5 dark:border-slate-800 dark:bg-slate-900/70">
+                          <div className={`flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl ${card.iconBg}`}>
+                            {renderOwnerStatIcon(card.icon, "size-4 sm:size-5")}
                           </div>
                           <div className="min-w-0 text-left">
-                            <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                            <div className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400">
                               {card.label}
                             </div>
-                            <div className="text-sm font-black text-slate-900 dark:text-white truncate">
+                            <div className="text-xs sm:text-sm font-black text-slate-900 dark:text-white truncate">
                               {card.value}
                             </div>
                           </div>
@@ -342,20 +342,22 @@ export function HomeOwnerProfileSection({
 
                   return (
                     <div
-                      className={`grid grid-cols-1 ${
+                      className={`grid grid-cols-2 ${
                         activeCards.length === 2 ? "sm:grid-cols-2" : "sm:grid-cols-3"
-                      } gap-3 pt-2`}
+                      } gap-2 sm:gap-3 pt-1.5 sm:pt-2`}
                     >
-                      {activeCards.map((card) => (
+                      {activeCards.map((card, idx) => (
                         <div
                           key={card.key}
-                          className="flex items-center gap-2.5 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-3 dark:border-slate-800 dark:bg-slate-900/70 text-left"
+                          className={`flex items-center gap-2 sm:gap-2.5 rounded-xl sm:rounded-2xl border border-slate-200/80 bg-slate-50/80 p-2 sm:p-3 dark:border-slate-800 dark:bg-slate-900/70 text-left ${
+                            idx === 2 && activeCards.length === 3 ? "col-span-2 sm:col-span-1" : ""
+                          }`}
                         >
-                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${card.iconBg}`}>
-                            {renderOwnerStatIcon(card.icon, "size-4 sm:size-5")}
+                          <div className={`flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg sm:rounded-xl ${card.iconBg}`}>
+                            {renderOwnerStatIcon(card.icon, "size-3.5 sm:size-5")}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">
+                            <div className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">
                               {card.label}
                             </div>
                             <div className="text-xs sm:text-sm font-black text-slate-900 dark:text-white truncate">
@@ -383,25 +385,25 @@ export function HomeOwnerProfileSection({
                   <div className="lg:col-span-3 flex flex-col items-center text-center">
                     <div className="relative group">
                       {/* Ambient Glow */}
-                      <div className="absolute -inset-1 rounded-[28px] bg-gradient-to-r from-sky-500 via-cyan-400 to-blue-600 opacity-60 blur-md group-hover:opacity-85 transition duration-500" />
+                      <div className="absolute -inset-1 rounded-[22px] sm:rounded-[28px] bg-gradient-to-r from-sky-500 via-cyan-400 to-blue-600 opacity-60 blur-md group-hover:opacity-85 transition duration-500" />
 
                       {/* Photo Container */}
-                      <div className="relative w-44 h-44 sm:w-52 sm:h-52 lg:w-40 lg:h-40 xl:w-48 xl:h-48 rounded-[24px] overflow-hidden p-1 bg-gradient-to-tr from-sky-500 via-cyan-400 to-blue-600 shadow-xl shadow-sky-500/20">
+                      <div className="relative w-32 h-32 sm:w-52 sm:h-52 lg:w-40 lg:h-40 xl:w-48 xl:h-48 rounded-[20px] sm:rounded-[24px] overflow-hidden p-1 bg-gradient-to-tr from-sky-500 via-cyan-400 to-blue-600 shadow-xl shadow-sky-500/20">
                         <img
                           src={p2Photo}
                           alt={p2Name}
-                          className="w-full h-full object-cover object-top rounded-[20px] transition-transform duration-500 group-hover:scale-105"
+                          className="w-full h-full object-cover object-top rounded-[16px] sm:rounded-[20px] transition-transform duration-500 group-hover:scale-105"
                           loading="lazy"
                         />
                       </div>
                     </div>
 
-                    <h3 className="mt-5 text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                    <h3 className="mt-3.5 sm:mt-5 text-xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
                       {p2Name}
                     </h3>
 
-                    <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-sky-500/10 text-sky-600 dark:bg-sky-400/15 dark:text-sky-300 border border-sky-500/20">
-                      <ShieldCheck size={14} className="text-sky-500 shrink-0" />
+                    <div className="mt-1.5 sm:mt-2 inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold bg-sky-500/10 text-sky-600 dark:bg-sky-400/15 dark:text-sky-300 border border-sky-500/20">
+                      <ShieldCheck size={13} className="text-sky-500 shrink-0 sm:size-3.5" />
                       <span>{p2Role}</span>
                     </div>
                   </div>

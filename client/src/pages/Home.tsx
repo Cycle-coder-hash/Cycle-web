@@ -424,13 +424,13 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* HERO PANEL */}
         {/* ========================================================================= */}
-        <section className="relative overflow-hidden bg-[#02060f] pt-24 pb-14 sm:pt-28 sm:pb-16 lg:pt-36 lg:pb-24">
+        <section className="relative overflow-hidden bg-[#02060f] pt-20 pb-10 sm:pt-28 sm:pb-16 lg:pt-36 lg:pb-24">
           {/* Animated Premium Hexagon Honeycomb Background */}
           <HeroHexagonBackground />
 
-          <div className="relative z-10 mx-auto max-w-4xl px-5 text-center flex flex-col items-center">
+          <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-5 text-center flex flex-col items-center">
             {/* a) Badge: CYCLE OF CHART • TRADING REALITY */}
-            <div className="hero-anim-badge mb-6 sm:mb-8 inline-flex items-center gap-2.5 rounded-full border border-cyan-400/30 bg-cyan-950/40 px-4 py-1.5 text-[11px] sm:text-xs font-bold uppercase tracking-[0.16em] text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.15)] backdrop-blur-md">
+            <div className="hero-anim-badge mb-4 sm:mb-6 lg:mb-8 inline-flex items-center gap-2 sm:gap-2.5 rounded-full border border-cyan-400/30 bg-cyan-950/40 px-3.5 sm:px-4 py-1 sm:py-1.5 text-[10px] sm:text-xs font-bold uppercase tracking-[0.14em] sm:tracking-[0.16em] text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.15)] backdrop-blur-md">
               <span className="relative flex size-2">
                 <span className="hero-dot-pulse absolute inline-flex h-full w-full rounded-full bg-cyan-400" />
                 <span className="relative inline-flex size-2 rounded-full bg-cyan-300" />
@@ -439,7 +439,7 @@ export default function Home() {
             </div>
 
             {/* Headings: Tradefxbook-style centered */}
-            <h1 className="flex flex-col items-center text-center font-hero-heading text-[clamp(1.75rem,5.2vw,4.1rem)] font-extrabold uppercase leading-[1.08] tracking-[-0.025em] text-white">
+            <h1 className="flex flex-col items-center text-center font-hero-heading text-[clamp(1.65rem,5.2vw,4.1rem)] font-extrabold uppercase leading-[1.08] tracking-[-0.025em] text-white">
               {/* b) Headline line 1+2 (white) */}
               {titleLines.map((line, idx) => (
                 <span key={`title-${idx}`} className="block overflow-hidden py-0.5">
@@ -456,7 +456,7 @@ export default function Home() {
               {/* c) Headline line 3+4 (cyan/blue gradient shimmer sweep + drop-shadow) */}
               {hasSubtitleBreak ? (
                 subtitleLines.map((line, idx) => (
-                  <span key={`sub-${idx}`} className="block overflow-hidden py-0.5 mt-1 sm:mt-1.5">
+                  <span key={`sub-${idx}`} className="block overflow-hidden py-0.5 mt-0.5 sm:mt-1.5">
                     <span
                       className={`block hero-gradient-text ${
                         idx === 0 ? "hero-anim-line-3" : "hero-anim-line-4"
@@ -467,7 +467,7 @@ export default function Home() {
                   </span>
                 ))
               ) : (
-                <span className="block overflow-hidden py-0.5 mt-3 sm:mt-4 max-w-2xl text-lg sm:text-2xl font-bold leading-relaxed normal-case">
+                <span className="block overflow-hidden py-0.5 mt-2 sm:mt-4 max-w-2xl text-base sm:text-2xl font-bold leading-relaxed normal-case">
                   <span className="block hero-gradient-text hero-anim-line-3">
                     {copy.heroSubtitle}
                   </span>
@@ -476,18 +476,18 @@ export default function Home() {
             </h1>
 
             {/* d) Paragraph: Muted light-gray-blue, Inter, max-w ~620px */}
-            <p className="hero-anim-body mt-6 sm:mt-8 max-w-[620px] mx-auto text-base sm:text-[1.05rem] leading-[1.65] font-normal text-slate-300">
+            <p className="hero-anim-body mt-4 sm:mt-6 lg:mt-8 max-w-[620px] mx-auto text-sm sm:text-[1.05rem] leading-[1.6] sm:leading-[1.65] font-normal text-slate-300">
               {copy.heroBnSub}
             </p>
 
             {/* e) Buttons: Centered, scale-in, primary glowing pulse, arrow shift on hover */}
-            <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
+            <div className="mt-6 sm:mt-8 lg:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto">
               <a href="#roadmap" className="hero-anim-btn-1 w-full sm:w-auto">
                 <Button
                   size="lg"
-                  className="group relative w-full sm:w-auto h-12 sm:h-13 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-400 px-8 text-base font-bold text-slate-950 shadow-lg shadow-sky-500/25 hero-btn-primary-pulse transition-all duration-200 hover:scale-[1.02] hover:shadow-cyan-400/40 active:scale-[0.98]"
+                  className="group relative w-full sm:w-auto h-11 sm:h-12 lg:h-13 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-400 px-5 sm:px-8 text-sm sm:text-base font-bold text-slate-950 shadow-lg shadow-sky-500/25 hero-btn-primary-pulse transition-all duration-200 hover:scale-[1.02] hover:shadow-cyan-400/40 active:scale-[0.98]"
                 >
-                  <Compass size={18} className="mr-2 text-slate-950" />
+                  <Compass size={17} className="mr-2 text-slate-950" />
                   <span>{copy.primaryCta}</span>
                   <ArrowRight
                     size={16}
@@ -500,32 +500,32 @@ export default function Home() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="w-full sm:w-auto h-12 sm:h-13 rounded-xl border border-slate-700/80 bg-slate-900/60 px-8 text-base font-bold text-slate-200 shadow-sm backdrop-blur-md transition-all duration-200 hover:bg-slate-800/80 hover:text-white hover:border-slate-600 hover:scale-[1.02] active:scale-[0.98]"
+                  className="w-full sm:w-auto h-11 sm:h-12 lg:h-13 rounded-xl border border-slate-700/80 bg-slate-900/60 px-5 sm:px-8 text-sm sm:text-base font-bold text-slate-200 shadow-sm backdrop-blur-md transition-all duration-200 hover:bg-slate-800/80 hover:text-white hover:border-slate-600 hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  <ShoppingBag size={18} className="mr-2 text-cyan-400" />
+                  <ShoppingBag size={17} className="mr-2 text-cyan-400" />
                   <span>{copy.secondaryCta}</span>
                 </Button>
               </a>
             </div>
 
             {/* Trust Badges Row */}
-            <div className="hero-anim-body mt-10 sm:mt-12 flex flex-wrap items-center justify-center gap-6 sm:gap-8 border-t border-slate-800/70 pt-6 text-xs sm:text-[13px] font-semibold text-slate-400">
-              <div className="flex items-center gap-2">
-                <ShieldCheck size={16} className="text-cyan-400" />
+            <div className="hero-anim-body mt-7 sm:mt-10 lg:mt-12 flex flex-wrap items-center justify-center gap-4 sm:gap-6 lg:gap-8 border-t border-slate-800/70 pt-4 sm:pt-6 text-[11px] sm:text-[13px] font-semibold text-slate-400">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <ShieldCheck size={15} className="text-cyan-400" />
                 <span>{copy.trust1}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Zap size={16} className="text-cyan-400" />
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Zap size={15} className="text-cyan-400" />
                 <span>{copy.trust2}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Layers size={16} className="text-cyan-400" />
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Layers size={15} className="text-cyan-400" />
                 <span>{copy.trust3}</span>
               </div>
             </div>
           </div>
 
-          <div className="relative z-10 mx-auto mt-14 sm:mt-16 max-w-7xl border-t border-slate-800/80 px-5 pt-8 lg:px-8">
+          <div className="relative z-10 mx-auto mt-8 sm:mt-12 lg:mt-16 max-w-7xl border-t border-slate-800/80 px-3 sm:px-5 lg:px-8 pt-5 sm:pt-8">
             <NewsHeadlineStats isBn={isBn} />
           </div>
         </section>
@@ -549,30 +549,30 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* STORE & PRODUCTS SECTION */}
         {/* ========================================================================= */}
-        <section id="store" className="content-auto bg-[#f8fafc] py-16 sm:py-24 dark:bg-[#070e1b] transition-colors">
+        <section id="store" className="content-auto bg-[#f8fafc] py-10 sm:py-16 lg:py-24 dark:bg-[#070e1b] transition-colors">
 
-          <div className="mx-auto max-w-7xl px-5 lg:px-8">
-            <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+          <div className="mx-auto max-w-7xl px-4 sm:px-5 lg:px-8">
+            <div className="flex flex-col justify-between gap-3 sm:gap-5 sm:flex-row sm:items-end">
               <div>
                 <p className="eyebrow">{copy.storeEyebrow}</p>
-                <h2 className="mt-4 text-4xl font-extrabold tracking-[-.03em] text-slate-900 dark:text-white whitespace-pre-line leading-tight">
+                <h2 className="mt-2 sm:mt-4 text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-[-.03em] text-slate-900 dark:text-white whitespace-pre-line leading-tight">
                   {copy.storeTitle}
                 </h2>
               </div>
             </div>
 
             {/* PRICING & PAYMENT INFORMATION NOTICE */}
-            <div className="mt-8 rounded-2xl border border-sky-500/30 bg-sky-500/[0.04] p-5 sm:p-6 dark:border-sky-500/20 dark:bg-[#0c182c]/80 shadow-xs">
-              <div className="flex items-center gap-2.5 pb-2.5 border-b border-sky-500/15">
-                <div className="flex h-7 px-2 items-center justify-center rounded-lg bg-sky-500/15 text-sky-500 border border-sky-500/25 shrink-0">
-                  <Sparkles size={14} />
+            <div className="mt-5 sm:mt-8 rounded-xl sm:rounded-2xl border border-sky-500/30 bg-sky-500/[0.04] p-3.5 sm:p-5 lg:p-6 dark:border-sky-500/20 dark:bg-[#0c182c]/80 shadow-xs">
+              <div className="flex items-center gap-2 sm:gap-2.5 pb-2 sm:pb-2.5 border-b border-sky-500/15">
+                <div className="flex h-6 sm:h-7 px-1.5 sm:px-2 items-center justify-center rounded-lg bg-sky-500/15 text-sky-500 border border-sky-500/25 shrink-0">
+                  <Sparkles size={13} className="sm:size-3.5" />
                 </div>
-                <h3 className="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                <h3 className="text-[11px] sm:text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white">
                   PRICING &amp; PAYMENT INFORMATION
                 </h3>
               </div>
 
-              <div className="mt-3 space-y-1.5 text-xs sm:text-sm">
+              <div className="mt-2.5 sm:mt-3 space-y-1 sm:space-y-1.5 text-xs sm:text-sm">
                 <p className="text-slate-700 dark:text-slate-300">
                   <strong className="text-slate-900 dark:text-white font-extrabold">Bangladesh:</strong> BDT prices apply when paying in Bangladeshi Taka (৳).
                 </p>
@@ -581,12 +581,12 @@ export default function Home() {
                 </p>
               </div>
 
-              <p className="mt-3 text-xs font-medium text-slate-500 dark:text-slate-400">
+              <p className="mt-2 sm:mt-3 text-[11px] sm:text-xs font-medium text-slate-500 dark:text-slate-400">
                 Please select the appropriate currency and payment method at checkout.
               </p>
             </div>
 
-            <div ref={pricingRef} className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8 items-stretch max-w-7xl mx-auto">
+            <div ref={pricingRef} className="mt-6 sm:mt-10 grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8 items-stretch max-w-7xl mx-auto">
               {storeBundles.map((item: any, i: number) => {
                 const isPopular = item.highlight || i === 1;
                 const topRibbonText = selectText({
@@ -625,7 +625,7 @@ export default function Home() {
                   >
                     <div
                       onClick={handleCardClick}
-                      className={`group relative flex flex-col justify-between rounded-3xl p-7 transition-all duration-300 ease-out cursor-pointer hover:-translate-y-3 hover:scale-[1.03] active:scale-[0.99] h-full ${
+                      className={`group relative flex flex-col justify-between rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-7 transition-all duration-300 ease-out cursor-pointer hover:-translate-y-3 hover:scale-[1.03] active:scale-[0.99] h-full ${
                         isPopular
                           ? "bg-[#0d1a2d] text-white border-2 border-[#38bdf8] shadow-2xl shadow-sky-500/20 dark:bg-slate-800 dark:border-sky-400 dark:shadow-sky-950/60 lg:-translate-y-2 hover:border-sky-300"
                           : "border border-slate-200 bg-white text-slate-900 shadow-lg shadow-slate-200/50 hover:border-sky-400/80 hover:shadow-2xl hover:shadow-sky-500/10 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:shadow-none dark:hover:border-sky-500/50"
@@ -633,17 +633,17 @@ export default function Home() {
                     >
                     {/* Top Popular Glow Ribbon */}
                     {isPopular && (
-                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 px-4 py-1 text-[11px] font-black uppercase tracking-wider text-slate-950 shadow-md">
+                      <div className="absolute -top-3 sm:-top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-sky-400 to-emerald-400 px-3 sm:px-4 py-0.5 sm:py-1 text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-slate-950 shadow-md">
                         {topRibbonText}
                       </div>
                     )}
 
                     <div>
                       {/* Card Header Badge & Icon */}
-                      <div className="flex items-center justify-between pt-1">
+                      <div className="flex items-center justify-between pt-0.5 sm:pt-1">
                         {item.badgeEn ? (
                           <span
-                            className={`rounded-full px-3 py-1 text-[10px] font-extrabold uppercase tracking-[.16em] ${
+                            className={`rounded-full px-2.5 sm:px-3 py-0.5 sm:py-1 text-[9px] sm:text-[10px] font-extrabold uppercase tracking-[.14em] sm:tracking-[.16em] ${
                               isPopular
                                 ? "bg-white/15 text-[#38bdf8]"
                                 : "bg-[#eef3f6] text-slate-600 dark:bg-slate-800 dark:text-slate-400"
@@ -655,22 +655,22 @@ export default function Home() {
                           <span />
                         )}
                         <Sparkles
-                          size={18}
-                          className={`transition-transform duration-300 group-hover:rotate-12 group-hover:scale-125 ${
+                          size={16}
+                          className={`transition-transform duration-300 group-hover:rotate-12 group-hover:scale-125 sm:size-[18px] ${
                             isPopular ? "text-[#38bdf8]" : "text-slate-400 group-hover:text-sky-500"
                           }`}
                         />
                       </div>
 
                       {/* Title */}
-                      <h3 className="mt-6 text-2xl font-extrabold tracking-tight">
+                      <h3 className="mt-3 sm:mt-6 text-lg sm:text-2xl font-extrabold tracking-tight">
                         {selectText({ en: item.titleEn, bn: item.titleBn, ur: item.titleUr || item.titleEn })}
                       </h3>
 
                       {/* Description */}
                       {Boolean(selectText({ en: item.descriptionEn, bn: item.descriptionBn, ur: item.descriptionUr })) && (
                         <p
-                          className={`mt-2.5 text-xs sm:text-sm leading-relaxed ${
+                          className={`mt-1.5 sm:mt-2.5 text-xs sm:text-sm leading-relaxed ${
                             isPopular ? "text-slate-300" : "text-slate-500 dark:text-slate-400"
                           }`}
                         >
@@ -679,12 +679,12 @@ export default function Home() {
                       )}
 
                       {/* Included Features Checklist */}
-                      <div className="mt-6 space-y-2.5 border-t border-dashed border-slate-200/60 pt-5 dark:border-slate-700/60">
+                      <div className="mt-4 sm:mt-6 space-y-1.5 sm:space-y-2.5 border-t border-dashed border-slate-200/60 pt-3.5 sm:pt-5 dark:border-slate-700/60">
                         {features.map((feat: string, fIdx: number) => (
                           <div key={fIdx} className="flex items-start gap-2 text-xs sm:text-sm">
                             <CheckCircle2
-                              size={15}
-                              className={`mt-0.5 shrink-0 ${
+                              size={14}
+                              className={`mt-0.5 shrink-0 sm:size-[15px] ${
                                 isPopular ? "text-[#38bdf8]" : "text-emerald-500 dark:text-emerald-400"
                               }`}
                             />
@@ -701,29 +701,29 @@ export default function Home() {
                     </div>
 
                     {/* Pricing & CTA Button */}
-                    <div className="mt-8 border-t border-slate-100 pt-5 dark:border-slate-800">
-                      <div className="mb-4">
+                    <div className="mt-5 sm:mt-8 border-t border-slate-100 pt-3.5 sm:pt-5 dark:border-slate-800">
+                      <div className="mb-3 sm:mb-4">
                         {isFreePackage ? (
                           <div className="flex flex-col gap-0.5" dir="ltr">
-                            <span className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
+                            <span className="text-2xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
                               ৳0 BDT
                             </span>
-                            <span className="text-xl sm:text-2xl font-bold text-slate-500 dark:text-slate-400">
+                            <span className="text-lg sm:text-2xl font-bold text-slate-500 dark:text-slate-400">
                               $0 USD
                             </span>
                           </div>
                         ) : (
                           <div className="flex flex-col gap-0.5" dir="ltr">
                             {item.originalPrice && (
-                              <span className="text-sm sm:text-base font-bold line-through text-slate-400 dark:text-slate-500">
+                              <span className="text-xs sm:text-base font-bold line-through text-slate-400 dark:text-slate-500">
                                 ৳{formatBdt(item.originalPrice, false, "5550")} BDT
                               </span>
                             )}
-                            <span className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
+                            <span className="text-2xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
                               ৳{formatBdt(item.price, false, item.id === 2 ? "2499" : "4999")} BDT
                             </span>
                             <span
-                              className={`text-xl sm:text-2xl font-bold ${
+                              className={`text-lg sm:text-2xl font-bold ${
                                 isPopular
                                   ? "text-[#38bdf8]"
                                   : "text-sky-600 dark:text-sky-400"
@@ -738,7 +738,7 @@ export default function Home() {
                       <Link href={`/checkout?bundle=${item.id}`} className="block w-full">
                         <Button
                           size="lg"
-                          className={`group/btn w-full gap-2 rounded-2xl font-extrabold text-sm shadow-md transition-all duration-200 active:scale-[0.98] ${
+                          className={`group/btn w-full h-10 sm:h-12 gap-2 rounded-xl sm:rounded-2xl font-extrabold text-xs sm:text-sm shadow-md transition-all duration-200 active:scale-[0.98] ${
                             isPopular
                               ? "bg-[#38bdf8] text-slate-950 hover:bg-[#7dd3fc] hover:shadow-lg hover:shadow-sky-500/25"
                               : "bg-[#0d1a2d] text-white hover:bg-[#17365b] dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400"
@@ -746,8 +746,8 @@ export default function Home() {
                         >
                           <span>{copy.viewBundle}</span>
                           <ArrowRight
-                            size={16}
-                            className="transition-transform duration-200 group-hover/btn:translate-x-1"
+                            size={15}
+                            className="transition-transform duration-200 group-hover/btn:translate-x-1 sm:size-4"
                           />
                         </Button>
                       </Link>
@@ -770,19 +770,19 @@ export default function Home() {
         {/* ========================================================================= */}
         {/* CALL TO ACTION BOTTOM BANNER */}
         {/* ========================================================================= */}
-        <section className="bg-gradient-to-r from-[#071a36] via-[#0d2a52] to-[#0a1e3d] py-20 text-white dark:bg-[#070e1b] dark:from-[#070e1b] dark:via-[#070e1b] dark:to-[#070e1b]">
-          <div className="mx-auto flex max-w-7xl flex-col justify-between gap-8 px-5 sm:flex-row sm:items-center lg:px-8">
+        <section className="bg-gradient-to-r from-[#071a36] via-[#0d2a52] to-[#0a1e3d] py-12 sm:py-20 text-white dark:bg-[#070e1b] dark:from-[#070e1b] dark:via-[#070e1b] dark:to-[#070e1b]">
+          <div className="mx-auto flex max-w-7xl flex-col justify-between gap-5 sm:gap-8 px-4 sm:px-5 sm:flex-row sm:items-center lg:px-8">
             <div>
-              <p className="text-xs font-extrabold uppercase tracking-[.2em] text-[#38bdf8]">
+              <p className="text-[11px] sm:text-xs font-extrabold uppercase tracking-[.2em] text-[#38bdf8]">
                 {copy.ctaEyebrow}
               </p>
-              <h2 className="mt-4 max-w-2xl text-4xl font-extrabold leading-tight tracking-[-.03em] sm:text-5xl whitespace-pre-line">
+              <h2 className="mt-2 sm:mt-4 max-w-2xl text-2xl sm:text-4xl lg:text-5xl font-extrabold leading-tight tracking-[-.03em] whitespace-pre-line">
                 {copy.ctaTitle}
               </h2>
             </div>
             <a href="#roadmap">
-              <Button size="lg" className="w-fit bg-[#38bdf8] font-bold text-[#08111f] hover:bg-[#7dd3fc]">
-                {copy.ctaButton} <ArrowRight size={17} className="ml-1" />
+              <Button size="lg" className="w-fit h-10 sm:h-12 rounded-xl bg-[#38bdf8] font-bold text-xs sm:text-sm text-[#08111f] hover:bg-[#7dd3fc]">
+                {copy.ctaButton} <ArrowRight size={15} className="ml-1 sm:size-[17px]" />
               </Button>
             </a>
           </div>
@@ -793,49 +793,49 @@ export default function Home() {
         {/* ========================================================================= */}
         <section
           id="trading-platforms"
-          className="relative py-14 sm:py-16 text-slate-900 dark:text-white border-t border-slate-200/70 dark:border-slate-800/80 bg-slate-100/50 dark:bg-[#070e1b]"
+          className="relative py-10 sm:py-16 text-slate-900 dark:text-white border-t border-slate-200/70 dark:border-slate-800/80 bg-slate-100/50 dark:bg-[#070e1b]"
         >
-          <div className="mx-auto max-w-7xl px-5 lg:px-8">
-            <div className="mb-8">
-              <p className="text-xs font-extrabold uppercase tracking-[.2em] text-[#0284c7] dark:text-[#38bdf8]">
+          <div className="mx-auto max-w-7xl px-4 sm:px-5 lg:px-8">
+            <div className="mb-5 sm:mb-8">
+              <p className="text-[11px] sm:text-xs font-extrabold uppercase tracking-[.2em] text-[#0284c7] dark:text-[#38bdf8]">
                 {copy.platformsEyebrow}
               </p>
-              <h2 className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+              <h2 className="mt-1.5 sm:mt-2 text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                 {copy.platformsTitle}
               </h2>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
+              <p className="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
                 {copy.platformsDesc}
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
               {TRADING_PLATFORMS.map((platform) => (
                 <a
                   key={platform.id}
                   href={platform.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative flex flex-col justify-between rounded-2xl border border-slate-200/90 bg-white/85 p-5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-sky-500/50 hover:shadow-lg hover:shadow-sky-500/10 dark:border-slate-800/90 dark:bg-slate-900/60 dark:hover:border-sky-400/50 dark:hover:bg-slate-900/90"
+                  className="group relative flex flex-col justify-between rounded-xl sm:rounded-2xl border border-slate-200/90 bg-white/85 p-3.5 sm:p-5 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-sky-500/50 hover:shadow-lg hover:shadow-sky-500/10 dark:border-slate-800/90 dark:bg-slate-900/60 dark:hover:border-sky-400/50 dark:hover:bg-slate-900/90"
                 >
                   <div>
                     <div className="flex items-center justify-between">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl shadow-md transition-transform duration-300 group-hover:scale-105">
+                      <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg sm:rounded-xl shadow-md transition-transform duration-300 group-hover:scale-105">
                         {platform.icon}
                       </div>
-                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition-colors group-hover:bg-sky-500/10 group-hover:text-sky-600 dark:bg-slate-800/80 dark:text-slate-500 dark:group-hover:text-sky-400">
-                        <ExternalLink className="h-4 w-4" />
+                      <span className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-slate-100 text-slate-400 transition-colors group-hover:bg-sky-500/10 group-hover:text-sky-600 dark:bg-slate-800/80 dark:text-slate-500 dark:group-hover:text-sky-400">
+                        <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                       </span>
                     </div>
 
-                    <h3 className="mt-4 text-base sm:text-lg font-bold text-slate-900 transition-colors group-hover:text-sky-600 dark:text-white dark:group-hover:text-sky-400">
+                    <h3 className="mt-3 sm:mt-4 text-sm sm:text-base lg:text-lg font-bold text-slate-900 transition-colors group-hover:text-sky-600 dark:text-white dark:group-hover:text-sky-400">
                       {platform.name}
                     </h3>
-                    <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                    <p className="mt-1 text-[11px] sm:text-xs leading-relaxed text-slate-500 dark:text-slate-400">
                       {selectText({ en: platform.descEn, bn: platform.descBn, ur: platform.descUr })}
                     </p>
                   </div>
 
-                  <div className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4 text-xs dark:border-slate-800/80">
+                  <div className="mt-3.5 sm:mt-5 flex items-center justify-between border-t border-slate-100 pt-2.5 sm:pt-4 text-[11px] sm:text-xs dark:border-slate-800/80">
                     <span className="font-medium text-slate-500 dark:text-slate-400">
                       {platform.devices}
                     </span>

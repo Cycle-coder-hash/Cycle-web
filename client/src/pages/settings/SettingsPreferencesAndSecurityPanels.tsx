@@ -118,10 +118,10 @@ export function SettingsPreferencesAndSecurityPanels({
       {/* 2. APPEARANCE SECTION */}
       {/* ========================================================================= */}
       {activeTab === "appearance" && (
-        <div className="space-y-6">
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0a192f] p-6 shadow-xs space-y-6">
+        <div className="space-y-4 sm:space-y-6">
+          <div className="rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0a192f] p-4 sm:p-6 shadow-xs space-y-4 sm:space-y-6">
             <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Palette size={18} className="text-sky-500" />
                 <span>
                   {selectText({
@@ -131,7 +131,7 @@ export function SettingsPreferencesAndSecurityPanels({
                   })}
                 </span>
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {selectText({
                   en: "Select your preferred visual theme. Dark mode is the recommended institutional standard.",
                   bn: "আপনার পছন্দ অনুযায়ী ডার্ক মোড বা লাইট মোড নির্বাচন করুন। ডার্ক মোড স্ট্যান্ডার্ড রাখা হয়েছে।",
@@ -141,7 +141,7 @@ export function SettingsPreferencesAndSecurityPanels({
             </div>
 
             {/* Theme Selection Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {/* Dark Mode Card */}
               <div
                 onClick={() => {
@@ -155,35 +155,35 @@ export function SettingsPreferencesAndSecurityPanels({
                     })
                   );
                 }}
-                className={`cursor-pointer rounded-2xl border-2 p-5 transition-all duration-200 relative ${
+                className={`cursor-pointer rounded-xl sm:rounded-2xl border-2 p-3.5 sm:p-5 transition-all duration-200 relative ${
                   theme === "dark"
                     ? "border-sky-500 bg-sky-500/10 shadow-md ring-2 ring-sky-500/20"
                     : "border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700 bg-white dark:bg-slate-900/40"
                 }`}
               >
                 {theme === "dark" && (
-                  <div className="absolute top-4 right-4 rounded-full bg-sky-500 p-1 text-slate-950">
+                  <div className="absolute top-3.5 sm:top-4 right-3.5 sm:right-4 rounded-full bg-sky-500 p-1 text-slate-950">
                     <Check size={12} className="stroke-[3]" />
                   </div>
                 )}
-                <div className="size-10 rounded-xl bg-slate-950 border border-slate-800 text-yellow-400 flex items-center justify-center mb-4">
-                  <Moon size={20} />
+                <div className="size-8 sm:size-10 rounded-lg sm:rounded-xl bg-slate-950 border border-slate-800 text-yellow-400 flex items-center justify-center mb-2.5 sm:mb-4">
+                  <Moon size={18} className="sm:size-5" />
                 </div>
-                <div className="font-extrabold text-sm text-slate-900 dark:text-white">
+                <div className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white">
                   {selectText({
                     en: "Dark Navy Theme (Default)",
                     bn: "ডার্ক মোড (ডিফল্ট)",
                     ur: "ڈارک نیوی تھیم (طے شدہ)",
                   })}
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                   {selectText({
                     en: "Institutional deep blue-black interface built for low glare during night sessions and CRT markups.",
                     bn: "দীর্ঘ সময় চার্ট অ্যানালাইসিস ও পড়াশোনায় চোখের ক্লান্তি দূর করতে ডিপ ব্লু-ব্ল্যাক নান্দনিক ইন্টারফেস।",
                     ur: "رات کے سیشنز اور مارک اپس کے دوران آنکھوں کی حفاظت کے لیے گہرا نیلا انٹرفیس۔",
                   })}
                 </p>
-                <div className="mt-4 flex items-center gap-1.5 text-[10px] font-mono font-bold text-sky-600 dark:text-sky-400">
+                <div className="mt-3 sm:mt-4 flex items-center gap-1.5 text-[9px] sm:text-[10px] font-mono font-bold text-sky-600 dark:text-sky-400">
                   <Sparkles size={11} />
                   <span>Institutional Standard</span>
                 </div>
@@ -202,35 +202,35 @@ export function SettingsPreferencesAndSecurityPanels({
                     })
                   );
                 }}
-                className={`cursor-pointer rounded-2xl border-2 p-5 transition-all duration-200 relative ${
+                className={`cursor-pointer rounded-xl sm:rounded-2xl border-2 p-3.5 sm:p-5 transition-all duration-200 relative ${
                   theme === "light"
                     ? "border-sky-500 bg-sky-500/10 shadow-md ring-2 ring-sky-500/20"
                     : "border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-700 bg-white dark:bg-slate-900/40"
                 }`}
               >
                 {theme === "light" && (
-                  <div className="absolute top-4 right-4 rounded-full bg-sky-500 p-1 text-white">
+                  <div className="absolute top-3.5 sm:top-4 right-3.5 sm:right-4 rounded-full bg-sky-500 p-1 text-white">
                     <Check size={12} className="stroke-[3]" />
                   </div>
                 )}
-                <div className="size-10 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-4">
-                  <Sun size={20} />
+                <div className="size-8 sm:size-10 rounded-lg sm:rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-2.5 sm:mb-4">
+                  <Sun size={18} className="sm:size-5" />
                 </div>
-                <div className="font-extrabold text-sm text-slate-900 dark:text-white">
+                <div className="font-extrabold text-xs sm:text-sm text-slate-900 dark:text-white">
                   {selectText({
                     en: "Light Clean Theme",
                     bn: "লাইট মোড",
                     ur: "لائٹ کلین تھیم",
                   })}
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
                   {selectText({
                     en: "High-contrast daylight theme for reading trading notes and curriculum articles.",
                     bn: "উজ্জ্বল আলোর পরিবেশে হাই কন্ট্রাস্ট পঠন ও নোট লেখার জন্য উপযুক্ত।",
                     ur: "دن کی روشنی میں پڑھنے اور نوٹس لکھنے کے لیے ہائی کنٹراسٹ تھیم۔",
                   })}
                 </p>
-                <div className="mt-4 flex items-center gap-1.5 text-[10px] font-mono font-bold text-slate-500">
+                <div className="mt-3 sm:mt-4 flex items-center gap-1.5 text-[9px] sm:text-[10px] font-mono font-bold text-slate-500">
                   <Laptop size={11} />
                   <span>High Ambient Light</span>
                 </div>
@@ -244,11 +244,11 @@ export function SettingsPreferencesAndSecurityPanels({
       {/* 3. LANGUAGE & REGION SECTION */}
       {/* ========================================================================= */}
       {activeTab === "region" && (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Multi-Language Selector Card */}
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0a192f] p-6 shadow-xs space-y-4">
+          <div className="rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0a192f] p-4 sm:p-6 shadow-xs space-y-3 sm:space-y-4">
             <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Globe size={18} className="text-sky-500" />
                 <span>
                   {selectText({
@@ -258,7 +258,7 @@ export function SettingsPreferencesAndSecurityPanels({
                   })}
                 </span>
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {selectText({
                   en: "Active multi-language system supporting Bangla, English, and Urdu with immediate site-wide translation.",
                   bn: "সম্পূর্ণ কার্যকরী মাল্টি-ল্যাঙ্গুয়েজ সিস্টেম (বাংলা, English, اردو)। যেকোনো ভাষা নির্বাচন করলেই পুরো ওয়েবসাইট সেই ভাষায় পরিবর্তিত হবে।",
@@ -267,7 +267,7 @@ export function SettingsPreferencesAndSecurityPanels({
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-2.5">
               {allOptions.map((opt) => {
                 const isSelected = currentOption.id === opt.id;
                 return (
@@ -279,19 +279,19 @@ export function SettingsPreferencesAndSecurityPanels({
                       onUpdatePreferences({ language: opt.langCode });
                       toast.success(`${opt.countryName}: ${opt.nativeName || opt.langName}`);
                     }}
-                    className={`flex items-center justify-between p-3 rounded-xl border text-left transition-all ${
+                    className={`flex items-center justify-between p-2.5 sm:p-3 rounded-lg sm:rounded-xl border text-left transition-all ${
                       isSelected
                         ? "border-sky-500 bg-sky-500/10 font-bold dark:bg-sky-500/15"
                         : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40"
                     }`}
                   >
-                    <div className="flex items-center gap-2.5 truncate">
-                      <span className="text-lg shrink-0">{opt.flag}</span>
+                    <div className="flex items-center gap-2 sm:gap-2.5 truncate">
+                      <span className="text-base sm:text-lg shrink-0">{opt.flag}</span>
                       <div className="truncate">
-                        <div className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                        <div className="text-[11px] sm:text-xs font-bold text-slate-900 dark:text-white truncate">
                           {opt.nativeName}
                         </div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
+                        <div className="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 truncate">
                           {opt.langName} · {opt.countryName}
                         </div>
                       </div>
@@ -306,10 +306,10 @@ export function SettingsPreferencesAndSecurityPanels({
           </div>
 
           {/* Time Zone Card with Live Clock */}
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0a192f] p-6 shadow-xs space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800/80">
+          <div className="rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0a192f] p-4 sm:p-6 shadow-xs space-y-3 sm:space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 sm:pb-3 border-b border-slate-100 dark:border-slate-800/80">
               <div>
-                <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <Clock size={18} className="text-sky-500" />
                   <span>
                     {selectText({
@@ -319,7 +319,7 @@ export function SettingsPreferencesAndSecurityPanels({
                     })}
                   </span>
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   {selectText({
                     en: "Set your reference timezone for trade logging, session times, and daily discipline resets.",
                     bn: "আপনার সুবিধাজনক মার্কেট সেশন অনুযায়ী টাইমজোন নির্ধারণ করুন।",
@@ -329,15 +329,15 @@ export function SettingsPreferencesAndSecurityPanels({
               </div>
 
               {/* Live Digital Clock Badge */}
-              <div className="rounded-xl border border-sky-500/30 bg-sky-500/10 px-3.5 py-1.5 flex items-center gap-2">
+              <div className="rounded-lg sm:rounded-xl border border-sky-500/30 bg-sky-500/10 px-2.5 sm:px-3.5 py-1 sm:py-1.5 flex items-center gap-2 w-fit">
                 <div className="size-2 rounded-full bg-emerald-500 animate-ping" />
-                <div dir="ltr" className="text-xs font-mono font-extrabold text-sky-600 dark:text-sky-400 tracking-wider">
+                <div dir="ltr" className="text-[11px] sm:text-xs font-mono font-extrabold text-sky-600 dark:text-sky-400 tracking-wider">
                   {liveClock || "Calculating..."}
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
               {/* Auto (Device) Option */}
               <div
                 onClick={() => {
@@ -346,11 +346,11 @@ export function SettingsPreferencesAndSecurityPanels({
                     selectText({
                       en: `Timezone set to Auto (Device: ${deviceTimezone || "System"})`,
                       bn: `টাইমজোন অটো ডিভাইসে সেট হয়েছে (${deviceTimezone || ""})`,
-                      ur: `ٹائم زون خودکار ڈیوائস پر سیٹ ہو گیا (${deviceTimezone || ""})`,
+                      ur: `ٹائم زون خودکار ڈیوائس پر سیٹ ہو گیا (${deviceTimezone || ""})`,
                     })
                   );
                 }}
-                className={`cursor-pointer rounded-xl border p-3.5 transition-all ${
+                className={`cursor-pointer rounded-lg sm:rounded-xl border p-3 sm:p-3.5 transition-all ${
                   isAutoTimezone
                     ? "border-sky-500 bg-sky-500/10 shadow-xs"
                     : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40"
@@ -392,7 +392,7 @@ export function SettingsPreferencesAndSecurityPanels({
                         })
                       );
                     }}
-                    className={`cursor-pointer rounded-xl border p-3.5 transition-all ${
+                    className={`cursor-pointer rounded-lg sm:rounded-xl border p-3 sm:p-3.5 transition-all ${
                       isSelected
                         ? "border-sky-500 bg-sky-500/10 shadow-xs"
                         : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40"
@@ -419,9 +419,9 @@ export function SettingsPreferencesAndSecurityPanels({
           </div>
 
           {/* Display Currency Card */}
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0a192f] p-6 shadow-xs space-y-4">
+          <div className="rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0a192f] p-4 sm:p-6 shadow-xs space-y-3 sm:space-y-4">
             <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Coins size={18} className="text-amber-500" />
                 <span>
                   {selectText({
@@ -431,7 +431,7 @@ export function SettingsPreferencesAndSecurityPanels({
                   })}
                 </span>
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {selectText({
                   en: "Select your preferred currency symbol for store packages and account figures.",
                   bn: "স্টোর ও সাধারণ মূল্যের জন্য আপনার পছন্দের মুদ্রা প্রতীক বেছে নিন।",
@@ -440,7 +440,7 @@ export function SettingsPreferencesAndSecurityPanels({
               </p>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
               {allCurrencies.map((c) => {
                 const isSelected = currency === c.code;
                 return (
@@ -456,20 +456,20 @@ export function SettingsPreferencesAndSecurityPanels({
                         })
                       );
                     }}
-                    className={`cursor-pointer rounded-xl border p-4 text-center transition-all ${
+                    className={`cursor-pointer rounded-lg sm:rounded-xl border p-3 sm:p-4 text-center transition-all ${
                       isSelected
                         ? "border-amber-500 bg-amber-500/10 shadow-xs ring-1 ring-amber-500/20"
                         : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-900/40"
                     }`}
                   >
-                    <span className="text-2xl">{c.flag}</span>
-                    <div dir="ltr" className="text-base font-black font-mono mt-1 text-slate-900 dark:text-white">
+                    <span className="text-xl sm:text-2xl">{c.flag}</span>
+                    <div dir="ltr" className="text-sm sm:text-base font-black font-mono mt-1 text-slate-900 dark:text-white">
                       {c.symbol}
                     </div>
-                    <div className="text-xs font-bold text-slate-600 dark:text-slate-400 mt-0.5">
+                    <div className="text-[11px] sm:text-xs font-bold text-slate-600 dark:text-slate-400 mt-0.5">
                       {c.code}
                     </div>
-                    <div className="text-[10px] text-slate-500 truncate mt-1">
+                    <div className="text-[9px] sm:text-[10px] text-slate-500 truncate mt-1">
                       {c.name}
                     </div>
                   </div>
@@ -484,11 +484,11 @@ export function SettingsPreferencesAndSecurityPanels({
       {/* 4. SECURITY & SESSIONS SECTION */}
       {/* ========================================================================= */}
       {activeTab === "security" && (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Change Password Card */}
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0a192f] p-6 shadow-xs space-y-6">
+          <div className="rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0a192f] p-4 sm:p-6 shadow-xs space-y-4 sm:space-y-6">
             <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Lock size={18} className="text-sky-500" />
                 <span>
                   {selectText({
@@ -498,7 +498,7 @@ export function SettingsPreferencesAndSecurityPanels({
                   })}
                 </span>
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {selectText({
                   en: "Ensure your account is protected with a strong, distinct password.",
                   bn: "আপনার অ্যাকাউন্টের নিরাপত্তা নিশ্চিত করতে নিয়মিত পাসওয়ার্ড আপডেট করুন।",
@@ -507,10 +507,10 @@ export function SettingsPreferencesAndSecurityPanels({
               </p>
             </div>
 
-            <form onSubmit={handleChangePassword} className="space-y-4 max-w-lg">
+            <form onSubmit={handleChangePassword} className="space-y-3 sm:space-y-4 max-w-lg">
               {/* Current Password */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                <label className="block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
                   {selectText({
                     en: "Current Password",
                     bn: "বর্তমান পাসওয়ার্ড",
@@ -524,7 +524,7 @@ export function SettingsPreferencesAndSecurityPanels({
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="pr-10 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 font-mono"
+                    className="pr-10 h-9 sm:h-10 text-xs sm:text-sm bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 font-mono"
                   />
                   <button
                     type="button"
@@ -539,7 +539,7 @@ export function SettingsPreferencesAndSecurityPanels({
 
               {/* New Password */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                <label className="block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
                   {selectText({
                     en: "New Password",
                     bn: "নতুন পাসওয়ার্ড",
@@ -554,7 +554,7 @@ export function SettingsPreferencesAndSecurityPanels({
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="••••••••"
                     minLength={6}
-                    className="pr-10 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 font-mono"
+                    className="pr-10 h-9 sm:h-10 text-xs sm:text-sm bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 font-mono"
                   />
                   <button
                     type="button"
@@ -565,7 +565,7 @@ export function SettingsPreferencesAndSecurityPanels({
                     {showNewPw ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[10px] sm:text-[11px] text-slate-400">
                   {selectText({
                     en: "Minimum 6 characters.",
                     bn: "কমপক্ষে ৬ অক্ষরের শক্তিশালী পাসওয়ার্ড দিন।",
@@ -576,7 +576,7 @@ export function SettingsPreferencesAndSecurityPanels({
 
               {/* Confirm New Password */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                <label className="block text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
                   {selectText({
                     en: "Confirm New Password",
                     bn: "নতুন পাসওয়ার্ড নিশ্চিত করুন",
@@ -591,7 +591,7 @@ export function SettingsPreferencesAndSecurityPanels({
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"
                     minLength={6}
-                    className="pr-10 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 font-mono"
+                    className="pr-10 h-9 sm:h-10 text-xs sm:text-sm bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 font-mono"
                   />
                   <button
                     type="button"
@@ -607,7 +607,7 @@ export function SettingsPreferencesAndSecurityPanels({
               <Button
                 type="submit"
                 disabled={isChangingPassword || !currentPassword || !newPassword || !confirmPassword}
-                className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs gap-1.5 mt-2"
+                className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs gap-1.5 mt-1 sm:mt-2 h-9 sm:h-10"
               >
                 {isChangingPassword ? <Loader2 size={14} className="animate-spin" /> : <Lock size={14} />}
                 <span>
@@ -622,10 +622,10 @@ export function SettingsPreferencesAndSecurityPanels({
           </div>
 
           {/* Logout From All Devices Card */}
-          <div className="rounded-2xl border border-rose-200 dark:border-rose-900/40 bg-white dark:bg-[#0a192f] p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-rose-100 dark:border-rose-900/30">
+          <div className="rounded-xl sm:rounded-2xl border border-rose-200 dark:border-rose-900/40 bg-white dark:bg-[#0a192f] p-4 sm:p-6 shadow-xs space-y-3 sm:space-y-4">
+            <div className="flex items-center justify-between pb-2.5 sm:pb-3 border-b border-rose-100 dark:border-rose-900/30">
               <div>
-                <h2 className="text-base font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
+                <h2 className="text-sm sm:text-base font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
                   <LogOut size={18} />
                   <span>
                     {selectText({
@@ -635,7 +635,7 @@ export function SettingsPreferencesAndSecurityPanels({
                     })}
                   </span>
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   {selectText({
                     en: "Terminate and invalidate all active sessions across any phones, tablets, or other browsers.",
                     bn: "আপনার অ্যাকাউন্ট অন্য কোনো ব্রাউজার বা ডিভাইসে খোলা থাকলে সব সেশন তাৎক্ষণিক বাতিল হবে।",
@@ -645,7 +645,7 @@ export function SettingsPreferencesAndSecurityPanels({
               </div>
             </div>
 
-            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               {selectText({
                 en: "If you logged in from a shared computer or suspect unauthorized session access, clicking below instantly revokes all authentication tokens and forces a clean sign-in.",
                 bn: "আপনি যদি অন্য কোনো পাবলিক কম্পিউটার বা ডিভাইসে লগইন করে ভুলে গিয়ে থাকেন, এই বোতামে ক্লিক করলে সমস্ত সক্রিয় অথেনটিকেশন টোকেন ইনভ্যালিড হয়ে যাবে এবং নতুন করে পাসওয়ার্ড দিয়ে প্রবেশ করতে হবে।",
@@ -657,7 +657,7 @@ export function SettingsPreferencesAndSecurityPanels({
               <Button
                 type="button"
                 onClick={() => setShowLogoutAllModal(true)}
-                className="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs gap-2"
+                className="bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs gap-2 h-9 sm:h-10"
               >
                 <LogOut size={14} />
                 <span>
@@ -677,18 +677,18 @@ export function SettingsPreferencesAndSecurityPanels({
       {/* 5. SUPPORT & HELP CENTER SECTION */}
       {/* ========================================================================= */}
       {activeTab === "support" && (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Contact Support Card */}
-          <div className="rounded-2xl border border-sky-500/30 bg-gradient-to-br from-sky-500/10 via-[#0a192f] to-[#070e1b] p-6 shadow-md space-y-4">
+          <div className="rounded-xl sm:rounded-2xl border border-sky-500/30 bg-gradient-to-br from-sky-500/10 via-[#0a192f] to-[#070e1b] p-4 sm:p-6 shadow-md space-y-3 sm:space-y-4">
             <div className="flex items-center justify-between">
-              <span className="rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30 px-3 py-0.5 text-[10px] font-extrabold uppercase tracking-wider">
+              <span className="rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30 px-2.5 sm:px-3 py-0.5 text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider">
                 {selectText({
                   en: "Direct Admin Desk",
                   bn: "১-অন-১ অফিসিয়াল সাপোর্ট",
                   ur: "براہ راست ایڈمن ڈیسک",
                 })}
               </span>
-              <span className="text-[11px] font-mono text-emerald-400 flex items-center gap-1.5">
+              <span className="text-[10px] sm:text-[11px] font-mono text-emerald-400 flex items-center gap-1.5">
                 <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
                 {selectText({
                   en: "Desk Active 24/7",
@@ -699,14 +699,14 @@ export function SettingsPreferencesAndSecurityPanels({
             </div>
 
             <div>
-              <h2 className="text-lg font-extrabold text-white">
+              <h2 className="text-base sm:text-lg font-extrabold text-white">
                 {selectText({
                   en: "Contact Official Mentor Support",
                   bn: "অ্যাডমিন ও মেন্টরের সাথে সরাসরি চ্যাট",
                   ur: "آفیشل مینٹور سپورٹ سے رابطہ",
                 })}
               </h2>
-              <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+              <p className="text-[11px] sm:text-xs text-slate-300 mt-1 leading-relaxed">
                 {selectText({
                   en: "Connect directly with platform administrators and institutional mentors for payment approvals, curriculum queries, and technical assistance.",
                   bn: "কোর্স এনরোলমেন্ট, পেমেন্ট ভেরিফিকেশন, কিংবা চার্ট সম্পর্কিত যেকোনো সমস্যায় সরাসরি অ্যাডমিনের সাথে ১-অন-১ মেসেজিং সিস্টেমে যোগাযোগ করুন।",
@@ -715,9 +715,9 @@ export function SettingsPreferencesAndSecurityPanels({
               </p>
             </div>
 
-            <div className="pt-2">
+            <div className="pt-1 sm:pt-2">
               <Link href="/support">
-                <Button className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs gap-2 shadow-lg shadow-sky-500/20">
+                <Button className="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs gap-2 shadow-lg shadow-sky-500/20 h-9 sm:h-10">
                   <MessageSquare size={15} />
                   <span>
                     {selectText({
@@ -732,9 +732,9 @@ export function SettingsPreferencesAndSecurityPanels({
           </div>
 
           {/* Help Resources Grid */}
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0a192f] p-6 shadow-xs space-y-4">
+          <div className="rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0a192f] p-4 sm:p-6 shadow-xs space-y-3 sm:space-y-4">
             <div>
-              <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <HelpCircle size={18} className="text-sky-500" />
                 <span>
                   {selectText({
@@ -744,7 +744,7 @@ export function SettingsPreferencesAndSecurityPanels({
                   })}
                 </span>
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {selectText({
                   en: "Quick access to verified study materials, roadmap stages, and official documentation.",
                   bn: "ক্যান্ডেল রেঞ্জ থিওরি (CRT) ও প্রাতিষ্ঠানিক রোডম্যাপ বিষয়ক প্রয়োজনীয় লিঙ্কসমূহ।",
@@ -753,13 +753,13 @@ export function SettingsPreferencesAndSecurityPanels({
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 pt-1 sm:pt-2">
               {/* Roadmap Link */}
               <Link href="/dashboard?tab=roadmap">
-                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-sky-500/50 bg-slate-50/50 dark:bg-slate-900/40 transition-all cursor-pointer group">
+                <div className="p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-sky-500/50 bg-slate-50/50 dark:bg-slate-900/40 transition-all cursor-pointer group">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <Layers size={18} className="text-sky-500 group-hover:scale-110 transition-transform" />
+                    <div className="flex items-center gap-2 sm:gap-2.5">
+                      <Layers size={16} className="sm:size-[18px] text-sky-500 group-hover:scale-110 transition-transform" />
                       <span className="text-xs font-bold text-slate-900 dark:text-white">
                         {selectText({
                           en: "12-Stage Institutional Roadmap",
@@ -770,7 +770,7 @@ export function SettingsPreferencesAndSecurityPanels({
                     </div>
                     <ExternalLink size={14} className="text-slate-400 group-hover:text-sky-400" />
                   </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">
+                  <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-1 sm:mt-1.5">
                     {selectText({
                       en: "Step-by-step framework from foundation to algorithmic execution.",
                       bn: "ফাউন্ডেশন থেকে অ্যাডভান্সড CRT মাস্টারি পর্যন্ত ধাপে ধাপে গাইড।",
@@ -782,10 +782,10 @@ export function SettingsPreferencesAndSecurityPanels({
 
               {/* PDF Library Link */}
               <Link href="/dashboard?tab=library">
-                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-sky-500/50 bg-slate-50/50 dark:bg-slate-900/40 transition-all cursor-pointer group">
+                <div className="p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-sky-500/50 bg-slate-50/50 dark:bg-slate-900/40 transition-all cursor-pointer group">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <BookOpen size={18} className="text-emerald-500 group-hover:scale-110 transition-transform" />
+                    <div className="flex items-center gap-2 sm:gap-2.5">
+                      <BookOpen size={16} className="sm:size-[18px] text-emerald-500 group-hover:scale-110 transition-transform" />
                       <span className="text-xs font-bold text-slate-900 dark:text-white">
                         {selectText({
                           en: "Institutional PDF Library",
@@ -796,7 +796,7 @@ export function SettingsPreferencesAndSecurityPanels({
                     </div>
                     <ExternalLink size={14} className="text-slate-400 group-hover:text-emerald-400" />
                   </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">
+                  <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-1 sm:mt-1.5">
                     {selectText({
                       en: "Downloadable cheat sheets, risk management templates, and CRT rules.",
                       bn: "প্রিন্টযোগ্য রেফারেন্স পিডিএফ ও ডাউনলোড গাইড।",
@@ -813,12 +813,12 @@ export function SettingsPreferencesAndSecurityPanels({
       {/* Confirmation Modal: Logout From All Devices */}
       {showLogoutAllModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0a192f] p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center gap-3 text-rose-500">
-              <div className="rounded-full bg-rose-500/15 p-2.5">
-                <AlertTriangle size={24} />
+          <div className="w-full max-w-md rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0a192f] p-4 sm:p-6 shadow-2xl space-y-3 sm:space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center gap-2.5 sm:gap-3 text-rose-500">
+              <div className="rounded-full bg-rose-500/15 p-2 sm:p-2.5">
+                <AlertTriangle size={20} className="sm:size-6" />
               </div>
-              <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+              <h3 className="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white">
                 {selectText({
                   en: "Confirm Global Sign-out?",
                   bn: "আপনি কি নিশ্চিত?",
@@ -827,7 +827,7 @@ export function SettingsPreferencesAndSecurityPanels({
               </h3>
             </div>
 
-            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+            <p className="text-[11px] sm:text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               {selectText({
                 en: "This action will terminate all active login sessions on all devices and browsers immediately. You will be redirected to the login page.",
                 bn: "এটি আপনার সমস্ত সক্রিয় মোবাইল ফোন, ল্যাপটপ এবং ব্রাউজারের সেশন স্থায়ীভাবে বন্ধ করে দেবে। আপনাকে আবার লগইন পেজে নিয়ে যাওয়া হবে।",
@@ -835,7 +835,7 @@ export function SettingsPreferencesAndSecurityPanels({
               })}
             </p>
 
-            <div className="flex items-center justify-end gap-2.5 pt-2">
+            <div className="flex items-center justify-end gap-2 sm:gap-2.5 pt-1 sm:pt-2">
               <Button
                 type="button"
                 variant="outline"

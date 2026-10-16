@@ -833,10 +833,10 @@ export default function Settings() {
       </header>
 
       {/* Main Settings Body */}
-      <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8">
+      <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-5 sm:py-8">
         {/* Page Title & Breadcrumb */}
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
+        <div className="mb-5 sm:mb-8">
+          <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white flex flex-wrap items-center gap-2 sm:gap-3">
             <span>
               {selectText({
                 en: "Trader Account Settings",
@@ -844,11 +844,11 @@ export default function Settings() {
                 ur: "ٹریڈر اکاؤنٹ ترتیبات",
               })}
             </span>
-            <span className="rounded-full bg-sky-500/10 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/30 px-2.5 py-0.5 text-xs font-mono font-bold uppercase tracking-wider">
+            <span className="rounded-full bg-sky-500/10 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/30 px-2 sm:px-2.5 py-0.5 text-[10px] sm:text-xs font-mono font-bold uppercase tracking-wider">
               {user.role === "admin" ? "Admin" : "Verified Student"}
             </span>
           </h1>
-          <p className="mt-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1 sm:mt-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
             {selectText({
               en: "Manage your personal profile, security credentials, appearance, and regional trading environment.",
               bn: "আপনার প্রোফাইল, সিকিউরিটি, ভাষা, টাইমজোন ও ডিসপ্লে প্রেফারেন্স নিয়ন্ত্রণ করুন।",
@@ -858,7 +858,7 @@ export default function Settings() {
         </div>
 
         {/* Mobile Horizontal Tabs */}
-        <div className="lg:hidden mb-6 flex gap-1.5 overflow-x-auto pb-2 border-b border-slate-200 dark:border-slate-800 touch-pan-x">
+        <div className="lg:hidden mb-4 sm:mb-6 flex gap-1.5 overflow-x-auto pb-2 border-b border-slate-200 dark:border-slate-800 touch-pan-x">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -866,13 +866,13 @@ export default function Settings() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`whitespace-nowrap flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition shrink-0 ${
+                className={`whitespace-nowrap flex items-center gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl px-3 py-1.5 sm:px-3.5 sm:py-2 text-[11px] sm:text-xs font-bold transition shrink-0 ${
                   isActive
                     ? "bg-[#081833] text-white shadow-md dark:bg-sky-500 dark:text-slate-950"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-900/60 dark:text-slate-400 dark:hover:bg-slate-850"
                 }`}
               >
-                <Icon size={14} />
+                <Icon size={13} className="sm:size-[14px]" />
                 <span>{selectText({ en: tab.labelEn, bn: tab.labelBn, ur: tab.labelUr })}</span>
               </button>
             );
@@ -880,7 +880,7 @@ export default function Settings() {
         </div>
 
         {/* Layout Grid: Desktop Sidebar Navigation + Content Area */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 items-start">
           {/* Desktop Left Navigation Sidebar */}
           <aside className="hidden lg:block lg:col-span-4 sticky top-24 space-y-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-[#0a192f]/70 p-3 shadow-xs">
             <div className="px-3 py-2 text-[11px] font-black uppercase tracking-wider text-slate-400">
@@ -938,7 +938,7 @@ export default function Settings() {
           </aside>
 
           {/* Right Main Settings Content Panels */}
-          <div className="lg:col-span-8 space-y-8">
+          <div className="lg:col-span-8 space-y-5 sm:space-y-8">
             <SettingsAccountProfilePanel
               activeTab={activeTab}
               isBn={isBn}
