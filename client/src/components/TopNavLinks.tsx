@@ -91,16 +91,16 @@ export function TopNavLinks({
 
   const pillBase = mobile ? mobilePillBase : desktopPillBase;
 
-  // Inactive default style
+  // Inactive default style (using theme tokens)
   const inactiveSkyStyle =
-    "border-transparent text-slate-600 hover:text-sky-600 hover:bg-slate-100 hover:border-slate-200/80 dark:text-slate-300 dark:hover:text-sky-300 dark:hover:bg-slate-800/70 dark:hover:border-slate-700/60 dark:hover:shadow-[0_0_12px_rgba(56,189,248,0.12)]";
+    "border-transparent text-[var(--muted)] hover:text-[var(--fg)] hover:bg-[rgba(37,99,235,0.06)] hover:border-[rgba(37,99,235,0.12)] dark:hover:text-sky-300 dark:hover:bg-slate-800/70 dark:hover:border-slate-700/60 dark:hover:shadow-[0_0_12px_rgba(56,189,248,0.12)]";
 
   const inactiveAmberStyle =
-    "border-transparent text-slate-600 hover:text-amber-600 hover:bg-slate-100 hover:border-slate-200/80 dark:text-slate-300 dark:hover:text-amber-300 dark:hover:bg-slate-800/70 dark:hover:border-slate-700/60 dark:hover:shadow-[0_0_12px_rgba(245,158,11,0.12)]";
+    "border-transparent text-[var(--muted)] hover:text-amber-600 hover:bg-[rgba(245,158,11,0.06)] hover:border-[rgba(245,158,11,0.12)] dark:hover:text-amber-300 dark:hover:bg-slate-800/70 dark:hover:border-slate-700/60 dark:hover:shadow-[0_0_12px_rgba(245,158,11,0.12)]";
 
   // Active state style
   const activeSkyStyle =
-    "border-sky-500/35 bg-sky-500/10 text-sky-700 dark:border-sky-400/40 dark:bg-sky-400/15 dark:text-sky-300 font-bold shadow-xs dark:shadow-[0_0_12px_rgba(56,189,248,0.2)]";
+    "border-[rgba(37,99,235,0.25)] bg-[rgba(37,99,235,0.08)] text-[#1d4ed8] dark:border-sky-400/40 dark:bg-sky-400/15 dark:text-sky-300 font-bold shadow-xs dark:shadow-[0_0_12px_rgba(56,189,248,0.2)]";
 
   const activeAmberStyle =
     "border-amber-500/40 bg-amber-500/10 text-amber-700 dark:border-amber-400/45 dark:bg-amber-400/15 dark:text-amber-300 font-bold shadow-xs dark:shadow-[0_0_12px_rgba(245,158,11,0.2)]";

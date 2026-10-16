@@ -1,525 +1,416 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 
 interface HeroHexagonBackgroundProps {
   className?: string;
 }
 
-interface GlowingCell {
-  col: number;
-  row: number;
+interface GlowCell {
   cx: number;
   cy: number;
-  baseRadius: number;
-  duration: number; // in ms
-  elapsed: number;
-  delay: number;
-  colorType: "cyan" | "blue" | "highlight";
-  maxAlpha: number;
+  fall: number;
+  life: number;
+  age: number;
+  isCyan: boolean;
 }
 
 interface StarMark {
   x: number;
   y: number;
-  size: number;
-  baseOpacity: number;
+  arm: number;
   speed: number;
   phase: number;
 }
 
-// Pointy-top regular hexagon drawer
-function tracePointyHex(
+const HEX_R = 32;
+const HEX_W = Math.sqrt(3) * HEX_R;
+const ROW_STEP = 1.5 * HEX_R;
+
+function tracePointyHexSubpath(
   ctx: CanvasRenderingContext2D,
   cx: number,
   cy: number,
   r: number
 ) {
-  const w = Math.sqrt(3) * r;
-  ctx.beginPath();
+  const halfW = (Math.sqrt(3) * r) / 2;
+  const halfR = r / 2;
   ctx.moveTo(cx, cy - r);
-  ctx.lineTo(cx + w / 2, cy - r / 2);
-  ctx.lineTo(cx + w / 2, cy + r / 2);
+  ctx.lineTo(cx + halfW, cy - halfR);
+  ctx.lineTo(cx + halfW, cy + halfR);
   ctx.lineTo(cx, cy + r);
-  ctx.lineTo(cx - w / 2, cy + r / 2);
-  ctx.lineTo(cx - w / 2, cy - r / 2);
+  ctx.lineTo(cx - halfW, cy + halfR);
+  ctx.lineTo(cx - halfW, cy - halfR);
   ctx.closePath();
 }
 
 export function HeroHexagonBackground({ className = "" }: HeroHexagonBackgroundProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const staticCanvasRef = useRef<HTMLCanvasElement>(null);
-  const animCanvasRef = useRef<HTMLCanvasElement>(null);
-
-  const [isDesktop, setIsDesktop] = useState(false);
-  const mousePosRef = useRef<{ x: number; y: number; active: boolean }>({
-    x: -9999,
-    y: -9999,
-    active: false,
-  });
+  const bgRef = useRef<HTMLDivElement>(null);
+  const baseCanvasRef = useRef<HTMLCanvasElement>(null);
+  const hiCanvasRef = useRef<HTMLCanvasElement>(null);
+  const fxCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    // Check if desktop & pointer fine
-    const checkDesktop = () => {
-      const isFine = window.matchMedia("(pointer: fine)").matches;
-      const isWide = window.innerWidth >= 700;
-      setIsDesktop(isFine && isWide);
-    };
-    checkDesktop();
-    window.addEventListener("resize", checkDesktop);
-    return () => window.removeEventListener("resize", checkDesktop);
-  }, []);
+    const bgEl = bgRef.current;
+    const baseCanvas = baseCanvasRef.current;
+    const hiCanvas = hiCanvasRef.current;
+    const fxCanvas = fxCanvasRef.current;
+    if (!bgEl || !baseCanvas || !hiCanvas || !fxCanvas) return;
 
-  useEffect(() => {
-    const container = containerRef.current;
-    const staticCanvas = staticCanvasRef.current;
-    const animCanvas = animCanvasRef.current;
-    if (!container || !staticCanvas || !animCanvas) return;
+    const heroEl = bgEl.parentElement || bgEl;
 
-    let animFrameId: number;
-    let isIntersecting = true;
-    let isDocumentVisible = !document.hidden;
-
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    const HEX_RADIUS = 32;
-    const HEX_W = Math.sqrt(3) * HEX_RADIUS;
-    const HEX_DY = 1.5 * HEX_RADIUS;
+    let rafId = 0;
+    let running = false;
+    let isOffscreen = false;
+    let isTabHidden = document.hidden;
+    const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let prefersReducedMotion = reducedMotionQuery.matches;
 
     let width = 0;
     let height = 0;
     let dpr = 1;
-
-    // Grid tracking
-    let gridCells: { col: number; row: number; cx: number; cy: number; maskFactor: number }[] = [];
-    let glowingCells: GlowingCell[] = [];
+    let cells: GlowCell[] = [];
     let stars: StarMark[] = [];
 
-    // Radial mask factor calculation (ellipse centered at 50% X, 38% Y)
-    const getMaskFactor = (x: number, y: number, w: number, h: number) => {
-      const centerX = w * 0.5;
-      const centerY = h * 0.38;
-      const rx = w * 0.62;
-      const ry = h * 0.58;
-      const dx = (x - centerX) / (rx || 1);
-      const dy = (y - centerY) / (ry || 1);
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist <= 0.28) return 1;
-      if (dist >= 1.0) return 0;
-      const t = (dist - 0.28) / (1.0 - 0.28);
-      return Math.max(0, 1 - (t * t * (3 - 2 * t)));
+    const isTouchOrNarrow = () =>
+      window.innerWidth < 700 ||
+      window.matchMedia("(hover: none), (pointer: coarse)").matches;
+
+    const spawnCell = (randomInitialAge: boolean): GlowCell => {
+      const cols = Math.max(1, Math.ceil(width / HEX_W) + 1);
+      const topRows = Math.max(1, Math.min(10, Math.ceil(height / ROW_STEP) + 1));
+
+      const r = Math.floor(Math.random() * topRows);
+      const c = Math.floor(Math.random() * cols);
+      const cx = c * HEX_W + (r & 1 ? HEX_W * 0.5 : 0);
+      const cy = r * ROW_STEP;
+      const dx = (cx - width * 0.5) / (width * 0.5 || 1);
+      const dy = (cy - height * 0.38) / (height * 0.5 || 1);
+      const fall = Math.max(0, 1 - Math.hypot(dx, dy));
+
+      const life = 3.2 + Math.random() * 2.8; // 3.2–6.0s
+      const age = randomInitialAge ? Math.random() * life : 0;
+      const isCyan = Math.random() < 0.7; // 70% cyan, 30% blue
+
+      return { cx, cy, fall, life, age, isCyan };
     };
 
-    // Initialize or resize static and animated canvases
-    const handleResize = () => {
-      if (!container || !staticCanvas || !animCanvas) return;
-      const rect = container.getBoundingClientRect();
-      width = Math.ceil(rect.width);
-      height = Math.ceil(rect.height);
-      if (width === 0 || height === 0) return;
+    const drawStaticGrid = (
+      canvas: HTMLCanvasElement,
+      strokeStyle: string
+    ) => {
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
 
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, width, height);
+      ctx.strokeStyle = strokeStyle;
+      ctx.lineWidth = 1;
+
+      const cols = Math.ceil(width / HEX_W) + 2;
+      const rows = Math.ceil(height / ROW_STEP) + 2;
+
+      ctx.beginPath();
+      for (let r = -1; r < rows; r++) {
+        const ox = r & 1 ? HEX_W * 0.5 : 0;
+        const cy = r * ROW_STEP;
+        for (let c = -1; c < cols; c++) {
+          const cx = c * HEX_W + ox;
+          tracePointyHexSubpath(ctx, cx, cy, HEX_R);
+        }
+      }
+      ctx.stroke();
+    };
+
+    const readThemeTokens = () => {
+      const isDark = document.documentElement.classList.contains("dark");
+      const cs = getComputedStyle(document.documentElement);
+      const hexBase =
+        cs.getPropertyValue("--hex-base").trim() ||
+        (isDark ? "rgba(120,170,255,0.10)" : "rgba(37,99,235,0.15)");
+      const hexHi =
+        cs.getPropertyValue("--hex-hi").trim() ||
+        (isDark ? "rgba(34,211,238,0.55)" : "rgba(2,132,199,0.60)");
+      const cellCyan =
+        cs.getPropertyValue("--hex-cell-cyan").trim() ||
+        (isDark ? "34, 211, 238" : "14, 165, 233");
+      const cellBlue =
+        cs.getPropertyValue("--hex-cell-blue").trim() ||
+        (isDark ? "59, 130, 246" : "37, 99, 235");
+      const alphaMultStr = cs.getPropertyValue("--hex-cell-alpha-mult").trim();
+      const alphaMult = alphaMultStr
+        ? parseFloat(alphaMultStr)
+        : isDark
+        ? 1.6
+        : 1.15;
+      const starRgb =
+        cs.getPropertyValue("--hex-star").trim() ||
+        (isDark ? "165, 243, 252" : "37, 99, 235");
+
+      return { hexBase, hexHi, cellCyan, cellBlue, alphaMult, starRgb };
+    };
+
+    let themeTokens = readThemeTokens();
+
+    const drawFxFrame = (nowMs: number, dtSec: number) => {
+      const ctx = fxCanvas.getContext("2d");
+      if (!ctx || width === 0 || height === 0) return;
+
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, width, height);
+
+      // 1) GLOW CELLS
+      for (let i = 0; i < cells.length; i++) {
+        let cell = cells[i];
+        cell.age += dtSec;
+        if (cell.age >= cell.life) {
+          cells[i] = spawnCell(false);
+          cell = cells[i];
+        }
+        const k = Math.min(1, Math.max(0, cell.age / cell.life));
+        const s = Math.sin(k * Math.PI);
+        const alpha = s * s * 0.22 * cell.fall * themeTokens.alphaMult;
+        if (alpha > 0.002) {
+          ctx.beginPath();
+          tracePointyHexSubpath(ctx, cell.cx, cell.cy, HEX_R - 1);
+          ctx.fillStyle = cell.isCyan
+            ? `rgba(${themeTokens.cellCyan},${alpha})`
+            : `rgba(${themeTokens.cellBlue},${alpha})`;
+          ctx.fill();
+        }
+      }
+
+      // 2) STARS ("+" marks)
+      const t = nowMs * 0.001;
+      ctx.lineWidth = 1;
+      for (let i = 0; i < stars.length; i++) {
+        const st = stars[i];
+        const a = 0.15 + 0.55 * (0.5 + 0.5 * Math.sin(t * st.speed + st.phase));
+        ctx.strokeStyle = `rgba(${themeTokens.starRgb},${a})`;
+        ctx.beginPath();
+        ctx.moveTo(st.x - st.arm, st.y);
+        ctx.lineTo(st.x + st.arm, st.y);
+        ctx.moveTo(st.x, st.y - st.arm);
+        ctx.lineTo(st.x, st.y + st.arm);
+        ctx.stroke();
+      }
+    };
+
+    const setupScene = () => {
+      const rect = bgEl.getBoundingClientRect();
+      width = Math.max(1, Math.ceil(rect.width));
+      height = Math.max(1, Math.ceil(rect.height));
       dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-      staticCanvas.width = width * dpr;
-      staticCanvas.height = height * dpr;
-      staticCanvas.style.width = `${width}px`;
-      staticCanvas.style.height = `${height}px`;
+      // Re-read tokens in case theme changed
+      themeTokens = readThemeTokens();
 
-      animCanvas.width = width * dpr;
-      animCanvas.height = height * dpr;
-      animCanvas.style.width = `${width}px`;
-      animCanvas.style.height = `${height}px`;
+      // c) HONEYCOMB LINES (static canvas)
+      drawStaticGrid(baseCanvas, themeTokens.hexBase);
 
-      // 1. Calculate Grid
-      gridCells = [];
-      const cols = Math.ceil(width / HEX_W) + 2;
-      const rows = Math.ceil(height / HEX_DY) + 2;
-
-      for (let r = -1; r <= rows; r++) {
-        const xOffset = r % 2 === 0 ? 0 : HEX_W / 2;
-        for (let c = -1; c <= cols; c++) {
-          const cx = c * HEX_W + xOffset;
-          const cy = r * HEX_DY;
-          const mask = getMaskFactor(cx, cy, width, height);
-          if (mask > 0.05) {
-            gridCells.push({ col: c, row: r, cx, cy, maskFactor: mask });
-          }
-        }
+      // d) HONEYCOMB HIGHLIGHT (desktop only)
+      if (!isTouchOrNarrow()) {
+        drawStaticGrid(hiCanvas, themeTokens.hexHi);
+      } else {
+        hiCanvas.width = 1;
+        hiCanvas.height = 1;
+        heroEl.classList.remove("is-hovering");
       }
 
-      // 2. Draw Static Honeycomb Lines
-      const sCtx = staticCanvas.getContext("2d");
-      if (sCtx) {
-        sCtx.save();
-        sCtx.scale(dpr, dpr);
-        sCtx.clearRect(0, 0, width, height);
+      // e) FX CANVAS dimensions & pools
+      fxCanvas.width = Math.round(width * dpr);
+      fxCanvas.height = Math.round(height * dpr);
+      fxCanvas.style.width = `${width}px`;
+      fxCanvas.style.height = `${height}px`;
 
-        // Draw honeycomb lines
-        sCtx.lineWidth = 1;
-        sCtx.strokeStyle = "rgba(224, 242, 254, 0.09)"; // ~10% opacity blue-white
+      const isMobile = width <= 640;
+      const cellCount = isMobile ? 6 : 14;
+      const starCount = isMobile ? 14 : 34;
 
-        for (let r = -1; r <= rows; r++) {
-          const xOffset = r % 2 === 0 ? 0 : HEX_W / 2;
-          for (let c = -1; c <= cols; c++) {
-            const cx = c * HEX_W + xOffset;
-            const cy = r * HEX_DY;
-            tracePointyHex(sCtx, cx, cy, HEX_RADIUS);
-            sCtx.stroke();
-          }
-        }
-
-        // Apply radial mask to dissolve toward edges and bottom
-        sCtx.globalCompositeOperation = "destination-in";
-        const centerX = width * 0.5;
-        const centerY = height * 0.38;
-        const maxRadius = Math.max(width, height) * 0.68;
-        const radialMask = sCtx.createRadialGradient(
-          centerX,
-          centerY,
-          0,
-          centerX,
-          centerY,
-          maxRadius
-        );
-        radialMask.addColorStop(0, "rgba(0, 0, 0, 1)");
-        radialMask.addColorStop(0.35, "rgba(0, 0, 0, 0.95)");
-        radialMask.addColorStop(0.7, "rgba(0, 0, 0, 0.25)");
-        radialMask.addColorStop(1, "rgba(0, 0, 0, 0)");
-
-        sCtx.fillStyle = radialMask;
-        sCtx.fillRect(0, 0, width, height);
-        sCtx.restore();
+      cells = [];
+      for (let i = 0; i < cellCount; i++) {
+        cells.push(spawnCell(true));
       }
 
-      // 3. Setup Glowing Cells Pool
-      const isMobileScreen = width < 700;
-      const targetCellCount = isMobileScreen ? 6 : 14;
-      glowingCells = [];
-
-      const createCell = (initialDelay = 0): GlowingCell | null => {
-        if (!gridCells.length) return null;
-        // Bias cell selection towards cells with higher maskFactor (nearer center)
-        const samplePool = gridCells.filter((c) => c.maskFactor > 0.2);
-        if (!samplePool.length) return null;
-        const chosen = samplePool[Math.floor(Math.random() * samplePool.length)];
-
-        const colors: ("cyan" | "blue" | "highlight")[] = ["cyan", "cyan", "blue", "highlight"];
-        const colorType = colors[Math.floor(Math.random() * colors.length)];
-        const duration = 3200 + Math.random() * 2800; // 3.2s – 6s
-
-        return {
-          col: chosen.col,
-          row: chosen.row,
-          cx: chosen.cx,
-          cy: chosen.cy,
-          baseRadius: HEX_RADIUS,
-          duration,
-          elapsed: 0,
-          delay: initialDelay,
-          colorType,
-          maxAlpha: 0.16 + chosen.maskFactor * 0.18,
-        };
-      };
-
-      for (let i = 0; i < targetCellCount; i++) {
-        const cell = createCell(Math.random() * 3000);
-        if (cell) glowingCells.push(cell);
-      }
-
-      // 4. Setup Twinkling Stars Pool (~34 desktop, ~14 mobile)
-      const targetStarCount = isMobileScreen ? 14 : 34;
       stars = [];
-      for (let i = 0; i < targetStarCount; i++) {
+      for (let i = 0; i < starCount; i++) {
         stars.push({
-          x: width * 0.1 + Math.random() * (width * 0.8),
-          y: height * 0.08 + Math.random() * (height * 0.72),
-          size: 3 + Math.random() * 3,
-          baseOpacity: 0.2 + Math.random() * 0.55,
-          speed: 1.2 + Math.random() * 1.6,
+          x: Math.random() * width,
+          y: Math.random() * height,
+          arm: 2 + Math.random() * 2, // 2–4px
+          speed: 0.6 + Math.random() * 1.4, // 0.6–2.0
           phase: Math.random() * Math.PI * 2,
         });
       }
+
+      if (prefersReducedMotion) {
+        drawFxFrame(1500, 0);
+      }
     };
 
-    handleResize();
+    let lastTime = performance.now();
 
-    let resizeTimer: any;
-    const onWindowResize = () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(handleResize, 100);
+    const loop = (now: number) => {
+      if (!running) return;
+      const dtSec = Math.min(0.1, Math.max(0, (now - lastTime) * 0.001));
+      lastTime = now;
+      drawFxFrame(now, dtSec);
+      rafId = requestAnimationFrame(loop);
     };
-    window.addEventListener("resize", onWindowResize);
 
-    // Mouse Spotlight Tracking (Desktop only)
+    const updateLoopState = () => {
+      const shouldRun = !prefersReducedMotion && !isOffscreen && !isTabHidden;
+      if (shouldRun && !running) {
+        running = true;
+        lastTime = performance.now();
+        rafId = requestAnimationFrame(loop);
+      } else if (!shouldRun && running) {
+        running = false;
+        cancelAnimationFrame(rafId);
+      }
+    };
+
+    setupScene();
+    updateLoopState();
+
+    // Resize handling
+    let resizeTimer: ReturnType<typeof setTimeout> | null = null;
+    const onResize = () => {
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        setupScene();
+        updateLoopState();
+      }, 80);
+    };
+    window.addEventListener("resize", onResize, { passive: true });
+
+    // Mouse spotlight tracking on parent .hero (desktop only, >=700px and non-touch)
+    const onMouseEnter = (e: MouseEvent) => {
+      if (isTouchOrNarrow()) return;
+      const rect = heroEl.getBoundingClientRect();
+      heroEl.style.setProperty("--mx", `${e.clientX - rect.left}px`);
+      heroEl.style.setProperty("--my", `${e.clientY - rect.top}px`);
+      heroEl.classList.add("is-hovering");
+    };
+
     const onMouseMove = (e: MouseEvent) => {
-      if (window.innerWidth < 700) return;
-      const rect = container.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      mousePosRef.current = { x, y, active: true };
+      if (isTouchOrNarrow()) return;
+      const rect = heroEl.getBoundingClientRect();
+      heroEl.style.setProperty("--mx", `${e.clientX - rect.left}px`);
+      heroEl.style.setProperty("--my", `${e.clientY - rect.top}px`);
+      if (!heroEl.classList.contains("is-hovering")) {
+        heroEl.classList.add("is-hovering");
+      }
     };
 
     const onMouseLeave = () => {
-      mousePosRef.current.active = false;
+      heroEl.classList.remove("is-hovering");
     };
 
-    container.addEventListener("mousemove", onMouseMove, { passive: true });
-    container.addEventListener("mouseleave", onMouseLeave, { passive: true });
+    heroEl.addEventListener("mouseenter", onMouseEnter, { passive: true });
+    heroEl.addEventListener("mousemove", onMouseMove, { passive: true });
+    heroEl.addEventListener("mouseleave", onMouseLeave, { passive: true });
 
-    // IntersectionObserver to pause loop when scrolled out of view
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        isIntersecting = entry?.isIntersecting ?? true;
-        if (isIntersecting && isDocumentVisible && !prefersReducedMotion) {
-          lastTime = performance.now();
-          animFrameId = requestAnimationFrame(renderLoop);
-        }
-      },
-      { threshold: 0.05 }
-    );
-    observer.observe(container);
+    // Pause when hero is off-screen
+    let io: IntersectionObserver | null = null;
+    if (typeof IntersectionObserver !== "undefined") {
+      io = new IntersectionObserver(
+        (entries) => {
+          const entry = entries[0];
+          if (!entry) return;
+          isOffscreen = !entry.isIntersecting;
+          updateLoopState();
+        },
+        { threshold: 0.01 }
+      );
+      io.observe(heroEl);
+    }
 
-    // Page Visibility change
+    // Pause when tab is hidden
     const onVisibilityChange = () => {
-      isDocumentVisible = !document.hidden;
-      if (isDocumentVisible && isIntersecting && !prefersReducedMotion) {
-        lastTime = performance.now();
-        animFrameId = requestAnimationFrame(renderLoop);
-      }
+      isTabHidden = document.hidden;
+      updateLoopState();
     };
     document.addEventListener("visibilitychange", onVisibilityChange);
 
-    // Animated Loop
-    let lastTime = performance.now();
-
-    const renderLoop = (now: number) => {
-      if (!isIntersecting || !isDocumentVisible) return;
-      const delta = Math.min(now - lastTime, 100);
-      lastTime = now;
-
-      const aCtx = animCanvas.getContext("2d");
-      if (aCtx && width > 0 && height > 0) {
-        aCtx.save();
-        aCtx.scale(dpr, dpr);
-        aCtx.clearRect(0, 0, width, height);
-
-        // 1. Draw Desktop Mouse Spotlight Hexagons
-        const mouse = mousePosRef.current;
-        if (mouse.active && window.innerWidth >= 700 && !prefersReducedMotion) {
-          const SPOTLIGHT_RADIUS = 220;
-          const mx = mouse.x;
-          const my = mouse.y;
-
-          aCtx.save();
-          aCtx.beginPath();
-          aCtx.arc(mx, my, SPOTLIGHT_RADIUS, 0, Math.PI * 2);
-          aCtx.clip();
-
-          // Stroke hexagons inside spotlight with brighter cyan glow
-          aCtx.lineWidth = 1.25;
-          aCtx.strokeStyle = "rgba(34, 211, 238, 0.38)";
-
-          const minC = Math.floor((mx - SPOTLIGHT_RADIUS) / HEX_W) - 1;
-          const maxC = Math.ceil((mx + SPOTLIGHT_RADIUS) / HEX_W) + 1;
-          const minR = Math.floor((my - SPOTLIGHT_RADIUS) / HEX_DY) - 1;
-          const maxR = Math.ceil((my + SPOTLIGHT_RADIUS) / HEX_DY) + 1;
-
-          for (let r = minR; r <= maxR; r++) {
-            const xOffset = r % 2 === 0 ? 0 : HEX_W / 2;
-            for (let c = minC; c <= maxC; c++) {
-              const cx = c * HEX_W + xOffset;
-              const cy = r * HEX_DY;
-              tracePointyHex(aCtx, cx, cy, HEX_RADIUS);
-              aCtx.stroke();
-            }
-          }
-
-          // Soft spotlight glow radial tint
-          const spotGrad = aCtx.createRadialGradient(mx, my, 0, mx, my, SPOTLIGHT_RADIUS);
-          spotGrad.addColorStop(0, "rgba(34, 211, 238, 0.08)");
-          spotGrad.addColorStop(0.5, "rgba(6, 182, 212, 0.03)");
-          spotGrad.addColorStop(1, "rgba(6, 182, 212, 0)");
-          aCtx.fillStyle = spotGrad;
-          aCtx.fillRect(mx - SPOTLIGHT_RADIUS, my - SPOTLIGHT_RADIUS, SPOTLIGHT_RADIUS * 2, SPOTLIGHT_RADIUS * 2);
-
-          aCtx.restore();
-        }
-
-        // 2. Draw Glowing Cells (Smooth Sine Fade in/out)
-        for (let i = 0; i < glowingCells.length; i++) {
-          const cell = glowingCells[i];
-
-          if (cell.delay > 0) {
-            cell.delay -= delta;
-            continue;
-          }
-
-          cell.elapsed += delta;
-          const progress = Math.min(1, cell.elapsed / cell.duration);
-
-          // Sine curve for smooth fade in and fade out
-          const alphaFactor = Math.sin(progress * Math.PI);
-          const currentAlpha = alphaFactor * cell.maxAlpha;
-
-          if (currentAlpha > 0.005) {
-            let fillColor = "rgba(34, 211, 238, "; // cyan
-            let strokeColor = "rgba(103, 232, 249, ";
-            if (cell.colorType === "blue") {
-              fillColor = "rgba(59, 130, 246, ";
-              strokeColor = "rgba(147, 197, 253, ";
-            } else if (cell.colorType === "highlight") {
-              fillColor = "rgba(56, 189, 248, ";
-              strokeColor = "rgba(224, 242, 254, ";
-            }
-
-            tracePointyHex(aCtx, cell.cx, cell.cy, cell.baseRadius - 0.5);
-            aCtx.fillStyle = `${fillColor}${currentAlpha})`;
-            aCtx.fill();
-
-            aCtx.lineWidth = 1;
-            aCtx.strokeStyle = `${strokeColor}${currentAlpha * 1.5})`;
-            aCtx.stroke();
-          }
-
-          // When cell animation completes, re-seed with a new cell
-          if (progress >= 1) {
-            if (gridCells.length) {
-              const samplePool = gridCells.filter((c) => c.maskFactor > 0.2);
-              const chosen = samplePool[Math.floor(Math.random() * samplePool.length)] || gridCells[0];
-              const colors: ("cyan" | "blue" | "highlight")[] = ["cyan", "cyan", "blue", "highlight"];
-              cell.col = chosen.col;
-              cell.row = chosen.row;
-              cell.cx = chosen.cx;
-              cell.cy = chosen.cy;
-              cell.elapsed = 0;
-              cell.delay = 400 + Math.random() * 2000;
-              cell.duration = 3200 + Math.random() * 2800;
-              cell.colorType = colors[Math.floor(Math.random() * colors.length)];
-              cell.maxAlpha = 0.16 + chosen.maskFactor * 0.18;
-            }
-          }
-        }
-
-        // 3. Draw Twinkling Plus / Star Marks
-        const timeSec = now / 1000;
-        for (let i = 0; i < stars.length; i++) {
-          const star = stars[i];
-          const pulse = (Math.sin(timeSec * star.speed + star.phase) + 1) / 2; // 0 to 1
-          const opacity = star.baseOpacity * (0.3 + 0.7 * pulse);
-
-          if (opacity > 0.05) {
-            aCtx.strokeStyle = `rgba(186, 230, 253, ${opacity})`;
-            aCtx.lineWidth = 1;
-
-            const half = star.size / 2;
-            aCtx.beginPath();
-            // Horizontal bar
-            aCtx.moveTo(star.x - half, star.y);
-            aCtx.lineTo(star.x + half, star.y);
-            // Vertical bar
-            aCtx.moveTo(star.x, star.y - half);
-            aCtx.lineTo(star.x, star.y + half);
-            aCtx.stroke();
-
-            // Center glow pixel
-            if (pulse > 0.6) {
-              aCtx.fillStyle = `rgba(224, 242, 254, ${opacity * 1.2})`;
-              aCtx.fillRect(star.x - 0.75, star.y - 0.75, 1.5, 1.5);
-            }
-          }
-        }
-
-        aCtx.restore();
-      }
-
-      if (!prefersReducedMotion) {
-        animFrameId = requestAnimationFrame(renderLoop);
+    // Reduced motion listener
+    const onReducedMotionChange = (e: MediaQueryListEvent) => {
+      prefersReducedMotion = e.matches;
+      if (prefersReducedMotion) {
+        updateLoopState();
+        drawFxFrame(1500, 0);
+      } else {
+        updateLoopState();
       }
     };
+    reducedMotionQuery.addEventListener?.("change", onReducedMotionChange);
 
-    if (!prefersReducedMotion) {
-      animFrameId = requestAnimationFrame(renderLoop);
-    } else {
-      // For reduced motion, render a single resting static frame with a couple subtle cells
-      renderLoop(performance.now());
+    // Watch for theme changes (html.dark toggle) and redraw immediately without page reload
+    let themeObserver: MutationObserver | null = null;
+    if (typeof MutationObserver !== "undefined") {
+      themeObserver = new MutationObserver((mutations) => {
+        for (const m of mutations) {
+          if (m.attributeName === "class") {
+            themeTokens = readThemeTokens();
+            drawStaticGrid(baseCanvas, themeTokens.hexBase);
+            if (!isTouchOrNarrow()) {
+              drawStaticGrid(hiCanvas, themeTokens.hexHi);
+            }
+            if (prefersReducedMotion) {
+              drawFxFrame(1500, 0);
+            }
+            break;
+          }
+        }
+      });
+      themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
     }
 
     return () => {
-      cancelAnimationFrame(animFrameId);
-      clearTimeout(resizeTimer);
-      window.removeEventListener("resize", onWindowResize);
+      running = false;
+      cancelAnimationFrame(rafId);
+      if (resizeTimer) clearTimeout(resizeTimer);
+      window.removeEventListener("resize", onResize);
+      heroEl.removeEventListener("mouseenter", onMouseEnter);
+      heroEl.removeEventListener("mousemove", onMouseMove);
+      heroEl.removeEventListener("mouseleave", onMouseLeave);
       document.removeEventListener("visibilitychange", onVisibilityChange);
-      observer.disconnect();
-      if (container) {
-        container.removeEventListener("mousemove", onMouseMove);
-        container.removeEventListener("mouseleave", onMouseLeave);
-      }
+      reducedMotionQuery.removeEventListener?.("change", onReducedMotionChange);
+      io?.disconnect();
+      themeObserver?.disconnect();
     };
   }, []);
 
   return (
     <div
-      ref={containerRef}
+      ref={bgRef}
       aria-hidden="true"
-      className={`pointer-events-none absolute inset-0 overflow-hidden select-none z-0 ${className}`}
-      style={{
-        background: "radial-gradient(circle at 50% 38%, #06122a 0%, #030a17 55%, #02060f 100%)",
-      }}
+      className={`hero-bg ${className}`.trim()}
     >
-      {/* Static Honeycomb Line Grid Canvas */}
-      <canvas
-        ref={staticCanvasRef}
-        className="pointer-events-none absolute inset-0 block h-full w-full opacity-90"
-      />
+      {/* a) Light beams (.beam.b1 and .beam.b2) */}
+      <div className="beam b1" />
+      <div className="beam b2" />
 
-      {/* Animated Glowing Cells & Twinkling Stars Canvas */}
-      <canvas
-        ref={animCanvasRef}
-        className="pointer-events-none absolute inset-0 block h-full w-full"
-      />
+      {/* b) Breathing glow (.glow) */}
+      <div className="glow" />
 
-      {/* Soft Radial Breathing Blue/Cyan Glow behind Headline */}
-      <div
-        className="pointer-events-none absolute top-[38%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[720px] max-w-[90vw] h-[440px] rounded-full blur-[110px] hero-glow-breathe opacity-80"
-        style={{
-          background:
-            "radial-gradient(ellipse at center, rgba(34, 211, 238, 0.16) 0%, rgba(37, 99, 235, 0.11) 45%, transparent 75%)",
-        }}
-      />
+      {/* c) HONEYCOMB LINES (static canvas, redraw only on resize) */}
+      <canvas ref={baseCanvasRef} className="hex-base-canvas" />
 
-      {/* Two low-opacity blurred diagonal light beams (desktop only) */}
-      <div
-        className="pointer-events-none absolute -top-40 left-[-10%] w-[580px] h-[900px] rounded-full blur-[90px] hero-beam-left opacity-30 hidden md:block"
-        style={{
-          background:
-            "linear-gradient(135deg, rgba(34, 211, 238, 0.08) 0%, rgba(6, 182, 212, 0.03) 50%, transparent 80%)",
-          transform: "rotate(-25deg)",
-        }}
-      />
-      <div
-        className="pointer-events-none absolute -top-40 right-[-10%] w-[580px] h-[900px] rounded-full blur-[90px] hero-beam-right opacity-30 hidden md:block"
-        style={{
-          background:
-            "linear-gradient(225deg, rgba(59, 130, 246, 0.08) 0%, rgba(37, 99, 235, 0.03) 50%, transparent 80%)",
-          transform: "rotate(25deg)",
-        }}
-      />
+      {/* d) HONEYCOMB HIGHLIGHT (desktop only, masked by 220px circle at --mx --my) */}
+      <canvas ref={hiCanvasRef} className="hex-hi-canvas" />
 
-      {/* Outer Vignette (dark edges) */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse 90% 85% at 50% 40%, transparent 45%, rgba(2, 6, 15, 0.65) 80%, #02060f 100%)",
-        }}
-      />
+      {/* e) FX CANVAS (subtle center-falloff glow cells + twinkling "+" stars) */}
+      <canvas ref={fxCanvasRef} className="hex-fx-canvas" />
 
-      {/* Bottom seamless fade into next section */}
-      <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-36"
-        style={{
-          background: "linear-gradient(to bottom, transparent 0%, rgba(2, 6, 15, 0.75) 50%, #02060f 100%)",
-        }}
-      />
+      {/* f) Vignette & bottom fade (.vignette) */}
+      <div className="vignette" />
     </div>
   );
 }

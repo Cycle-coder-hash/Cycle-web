@@ -346,6 +346,7 @@ export const TraderBrainEvolutionSection: React.FC = () => {
   // Translations
   const beginnerLabel = t('brainEvolution.beginner', 'BEGINNER');
   const proLabel = t('brainEvolution.professional', 'PROFESSIONAL');
+  const bpmLabel = t('brainEvolution.bulletproofMindset', 'Bulletproof Mindset');
 
   const getCardTitle = useCallback(
     (card: CardDef) => {
@@ -367,11 +368,11 @@ export const TraderBrainEvolutionSection: React.FC = () => {
   // Card click handler: smoothly scroll to the clicked card's threshold
   const handleCardClick = useCallback((idx: number) => {
     const thVal = 0.05 + idx * (0.86 / 6);
-    if (journeyRef.current && !isMobileRef.current) {
+    if (journeyRef.current) {
       const r = journeyRef.current.getBoundingClientRect();
       const vh = window.innerHeight;
       const targetScrollY =
-        window.scrollY + r.top + thVal * ((r.height - vh) * 0.86);
+        window.scrollY + r.top + thVal * Math.max(1, (r.height - vh) * 0.86);
       window.scrollTo({ top: targetScrollY, behavior: 'smooth' });
     } else {
       pTRef.current = thVal;
@@ -540,7 +541,7 @@ export const TraderBrainEvolutionSection: React.FC = () => {
 
       /* neuron signals: small glowing lights hop from neuron to neuron along the links */
       const mobile = isMobileRef.current;
-      const want = Math.round((mobile ? 7 : 14) * clamp((bp - 0.12) / 0.6, 0, 1));
+      const want = Math.round((mobile ? 9 : 14) * clamp((bp - 0.12) / 0.6, 0, 1));
       if (!reduce && dt > 0 && pulses.length < want && Math.random() < dt * 12) spawnPulse();
       for (i = pulses.length - 1; i >= 0; i--) {
         const q = pulses[i];
@@ -609,119 +610,134 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       const P: { x: number; y: number }[] = [];
       const cc: { x: number; y: number }[] = [];
 
-      if (mobile) {
-        const bw = Math.min(260, vw * 0.72);
-        const bh = bw * 0.75;
-        const gap = 68;
-        cw = Math.min(124, vw * 0.32);
-        ch = cw * 0.56;
-        const y0 = 16;
-        const cs = y0 + bh + 64;
-        const pb = cs + 6 * gap + ch / 2 + 36;
-        H = pb + bh + 84;
-        W = vw;
-        stage.style.height = `${H}px`;
-        brainB = { x: (W - bw) / 2, y: y0, s: bw / 400, flipX: false };
-        brainP = { x: (W - bw) / 2, y: pb, s: bw / 400, flipX: false };
+      stage.style.height = '';
+      W = stage.clientWidth || vw;
+      H = stage.clientHeight || vh;
+
+      const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+      // Smooth continuous scaling across 360px -> 390px -> 1000px+ (no visual jump at 760px)
+      const t0 = clamp((W - 360) / (390 - 360), 0, 1);
+      const t1 = clamp((W - 390) / (1000 - 390), 0, 1);
+
+      // Side margin: ~6px at 360, 8px at 390, smoothly scaling to desktop 3%
+      const m =
+        W >= 1000
+          ? Math.max(16, W * 0.03)
+          : W >= 390
+            ? lerp(8, Math.max(16, W * 0.03), t1)
+            : lerp(6, 8, t0);
+
+      // Brain width: reduced first on very narrow screens (52px at 360), 62px at 390, up to 380px on desktop
+      const bw =
+        W >= 1000
+          ? Math.min(W * 0.24, 380)
+          : W >= 390
+            ? lerp(62, 200, t1)
+            : lerp(52, 62, t0);
+      const bh = bw * 0.75;
+
+      // Card zone [xs, xe]: at W=390 -> m=8, bw=62, gapX=12 => xs=82, xe=308
+      const gapX =
+        W >= 1000 ? 64 : W >= 390 ? lerp(12, 64, t1) : lerp(10, 12, t0);
+      const xs = m + bw + gapX;
+      const xe = W - m - bw - gapX;
+      const sp = (xe - xs) / 6;
+
+      // Card width: ~70px at 390px (height = width * 0.56), scaling up to 152px on desktop
+      const cwFactor = W >= 1000 ? 1.7 : lerp(1.86, 1.7, t1);
+      cw = clamp(sp * cwFactor, 68, 152);
+      ch = cw * 0.56;
+
+      // Card 7 scale: 10% larger on mobile (1.10), scaling to 18% larger on desktop (1.18)
+      const k7 = W >= 1000 ? 1.18 : lerp(1.1, 1.18, t1);
+
+      // Zigzag amplitude: ~34px at 390px, scaling up to 92px on desktop (capped for short landscape screens)
+      const amp =
+        W >= 1000
+          ? Math.min(92, H * 0.13)
+          : Math.min(lerp(34, 92, t1), Math.max(28, H * 0.125));
+
+      // Vertically center in the sticky stage while guaranteeing clearance below the fixed header
+      const headerClearance = (mobile ? 58 : 68) + amp + (ch * k7) / 2 + 10;
+      const cy = Math.max(H / 2 - 6, headerClearance);
+
+      // On narrow viewports, shift brains slightly into the pocket below upper-row Cards 01 & 07
+      // so neither brain touches Card 01/07 above or Card 02/06 beside it
+      const by = cy - bh / 2 + (1 - t1) * 18;
+
+      if (!isRTL) {
+        brainB = { x: m, y: by, s: bw / 400, flipX: false };
+        brainP = { x: W - m - bw, y: by, s: bw / 400, flipX: false };
 
         for (let i = 0; i < 7; i++) {
-          const zigzagX = isRTL ? (i % 2 ? 0.31 : 0.69) : i % 2 ? 0.69 : 0.31;
-          cc.push({ x: W * zigzagX, y: cs + i * gap });
+          cc.push({ x: xs + sp * i, y: cy + (i % 2 ? 1 : -1) * amp });
         }
 
-        P.push({ x: W / 2, y: y0 + bh * 0.93 });
+        P.push({ x: m + bw * 0.9, y: by + bh * 0.62 });
         cc.forEach((c) => P.push(c));
-        P.push({ x: W / 2, y: pb + bh * 0.1 });
-
-        if (lbRef.current) {
-          lbRef.current.style.left = `${W / 2}px`;
-          lbRef.current.style.top = `${y0 + bh + 22}px`;
-        }
-        const bpmY = pb + 303 * brainP.s + 26;
-        if (bpmRef.current) {
-          bpmRef.current.style.left = `${W / 2}px`;
-          bpmRef.current.style.top = `${bpmY}px`;
-        }
-        if (lpRef.current) {
-          lpRef.current.style.left = `${W / 2}px`;
-          lpRef.current.style.top = `${bpmY + 28}px`;
-        }
+        P.push({ x: W - m - bw * 0.9, y: by + bh * 0.56 });
       } else {
-        stage.style.height = '';
-        W = stage.clientWidth || vw;
-        H = stage.clientHeight || vh;
-        const m = Math.max(16, W * 0.03);
-        const bw = Math.min(W * (W < 1000 ? 0.2 : 0.24), 380);
-        const bh = bw * 0.75;
-        const by = H / 2 - bh / 2 - 6;
+        // RTL Mirror: Beginner on Right, flows Left to Professional
+        brainB = { x: W - m - bw, y: by, s: bw / 400, flipX: true };
+        brainP = { x: m, y: by, s: bw / 400, flipX: true };
 
-        const xs = m + bw + 64;
-        const xe = W - m - bw - 64;
-        const sp = (xe - xs) / 6;
-        const amp = Math.min(92, H * 0.13);
-
-        cw = clamp(sp * 1.7, 96, 152);
-        ch = cw * 0.56;
-
-        if (!isRTL) {
-          brainB = { x: m, y: by, s: bw / 400, flipX: false };
-          brainP = { x: W - m - bw, y: by, s: bw / 400, flipX: false };
-
-          for (let i = 0; i < 7; i++) {
-            cc.push({ x: xs + sp * i, y: H / 2 - 6 + (i % 2 ? 1 : -1) * amp });
-          }
-
-          P.push({ x: m + bw * 0.9, y: by + bh * 0.62 });
-          cc.forEach((c) => P.push(c));
-          P.push({ x: W - m - bw * 0.9, y: by + bh * 0.56 });
-
-          const proCenterX = W - m - bw / 2;
-          const bpmY = by + 303 * brainP.s + 26;
-          if (bpmRef.current) {
-            bpmRef.current.style.left = `${proCenterX}px`;
-            bpmRef.current.style.top = `${bpmY}px`;
-          }
-          const labelY = bpmY + 28;
-          if (lbRef.current) {
-            lbRef.current.style.left = `${m + bw / 2}px`;
-            lbRef.current.style.top = `${labelY}px`;
-          }
-          if (lpRef.current) {
-            lpRef.current.style.left = `${proCenterX}px`;
-            lpRef.current.style.top = `${labelY}px`;
-          }
-        } else {
-          // RTL Mirror: Beginner on Right, flows Left to Professional
-          brainB = { x: W - m - bw, y: by, s: bw / 400, flipX: true };
-          brainP = { x: m, y: by, s: bw / 400, flipX: true };
-
-          for (let i = 0; i < 7; i++) {
-            cc.push({
-              x: W - (xs + sp * i),
-              y: H / 2 - 6 + (i % 2 ? 1 : -1) * amp,
-            });
-          }
-
-          P.push({ x: W - (m + bw * 0.9), y: by + bh * 0.62 });
-          cc.forEach((c) => P.push(c));
-          P.push({ x: W - (W - m - bw * 0.9), y: by + bh * 0.56 });
-
-          const proCenterX = m + bw / 2;
-          const bpmY = by + 303 * brainP.s + 26;
-          if (bpmRef.current) {
-            bpmRef.current.style.left = `${proCenterX}px`;
-            bpmRef.current.style.top = `${bpmY}px`;
-          }
-          const labelY = bpmY + 28;
-          if (lbRef.current) {
-            lbRef.current.style.left = `${W - (m + bw / 2)}px`;
-            lbRef.current.style.top = `${labelY}px`;
-          }
-          if (lpRef.current) {
-            lpRef.current.style.left = `${proCenterX}px`;
-            lpRef.current.style.top = `${labelY}px`;
-          }
+        for (let i = 0; i < 7; i++) {
+          cc.push({
+            x: W - (xs + sp * i),
+            y: cy + (i % 2 ? 1 : -1) * amp,
+          });
         }
+
+        P.push({ x: W - (m + bw * 0.9), y: by + bh * 0.62 });
+        cc.forEach((c) => P.push(c));
+        P.push({ x: W - (W - m - bw * 0.9), y: by + bh * 0.56 });
+      }
+
+      // Position and scale "Bulletproof Mindset" and BEGINNER / PROFESSIONAL labels
+      // keeping them clear of the brains, clear of the lower-row cards, and inside [m, W - m]
+      const begCenterX = !isRTL ? m + bw / 2 : W - (m + bw / 2);
+      const proCenterX = !isRTL ? W - m - bw / 2 : m + bw / 2;
+      const brainBottom = by + 303 * brainP.s;
+      const lowerCardBottom = cy + amp + ch / 2;
+
+      const bpmY =
+        W >= 1000
+          ? brainBottom + 26
+          : Math.max(
+              brainBottom + lerp(14, 26, t1),
+              lowerCardBottom + lerp(12, 18, t1)
+            );
+      const labelY = bpmY + lerp(18, 28, t1);
+
+      const bpmFontSize = lerp(11.5, 17, t1);
+      const lblFontSize = lerp(10, 11, t1);
+      const isLatinLabel = /^[A-Za-z\s]+$/.test(beginnerLabel);
+      const lblSpacing = isLatinLabel ? `${lerp(0.18, 0.34, t1).toFixed(2)}em` : 'normal';
+
+      const clampLabelX = (el: HTMLElement, targetX: number) => {
+        const halfW = (el.offsetWidth || 0) / 2;
+        if (halfW <= 0) return targetX;
+        const minX = m + halfW;
+        const maxX = W - m - halfW;
+        return minX <= maxX ? clamp(targetX, minX, maxX) : W / 2;
+      };
+
+      if (bpmRef.current) {
+        bpmRef.current.style.fontSize = `${bpmFontSize.toFixed(1)}px`;
+        bpmRef.current.style.top = `${bpmY}px`;
+        bpmRef.current.style.left = `${clampLabelX(bpmRef.current, proCenterX)}px`;
+      }
+      if (lbRef.current) {
+        lbRef.current.style.fontSize = `${lblFontSize.toFixed(1)}px`;
+        lbRef.current.style.letterSpacing = lblSpacing;
+        lbRef.current.style.top = `${labelY}px`;
+        lbRef.current.style.left = `${clampLabelX(lbRef.current, begCenterX)}px`;
+      }
+      if (lpRef.current) {
+        lpRef.current.style.fontSize = `${lblFontSize.toFixed(1)}px`;
+        lpRef.current.style.letterSpacing = lblSpacing;
+        lpRef.current.style.top = `${labelY}px`;
+        lpRef.current.style.left = `${clampLabelX(lpRef.current, proCenterX)}px`;
       }
 
       cv.width = Math.round(W * dpr);
@@ -732,12 +748,16 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       cc.forEach((c, i) => {
         const el = cardElsRef.current[i];
         if (!el) return;
-        const k = i === 6 ? 1.18 : 1;
+        const k = i === 6 ? k7 : 1;
         el.style.left = `${c.x}px`;
         el.style.top = `${c.y}px`;
         el.style.width = `${cw * k}px`;
         el.style.height = `${ch * k}px`;
-        el.style.fontSize = `${Math.max(10, Math.round(cw * 0.092 * k))}px`;
+        const titleFs =
+          W < 760
+            ? clamp(cw * 0.132 * k, 9, 10)
+            : Math.max(10, Math.round(cw * 0.092 * k));
+        el.style.fontSize = `${titleFs.toFixed(1)}px`;
       });
 
       path = catmull(P, SEG);
@@ -789,14 +809,10 @@ export const TraderBrainEvolutionSection: React.FC = () => {
     }
 
     function scrollP() {
-      if (!journey || !stage) return 0;
+      if (!journey) return 0;
       const vh = window.innerHeight;
-      if (!isMobileRef.current) {
-        const r = journey.getBoundingClientRect();
-        return clamp(-r.top / ((r.height - vh) * 0.86), 0, 1);
-      }
-      const sr = stage.getBoundingClientRect();
-      return clamp((0.75 * vh - sr.top) / (sr.height - 0.1 * vh), 0, 1);
+      const r = journey.getBoundingClientRect();
+      return clamp(-r.top / Math.max(1, (r.height - vh) * 0.86), 0, 1);
     }
 
     function onScroll() {
@@ -1000,11 +1016,11 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       ro?.disconnect();
       io?.disconnect();
     };
-  }, [isRTL]);
+  }, [isRTL, beginnerLabel, proLabel, bpmLabel]);
 
   return (
     <>
-      {/* Component-scoped CSS exactly matching the approved reference demo */}
+      {/* Component-scoped CSS matching the approved reference demo */}
       <style>{`
         #journey {
           position: relative;
@@ -1076,7 +1092,7 @@ export const TraderBrainEvolutionSection: React.FC = () => {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 4px;
+          gap: clamp(2px, 0.28em, 4px);
           text-align: center;
           clip-path: polygon(14% 0, 86% 0, 100% 50%, 86% 100%, 14% 100%, 0 50%);
           background: conic-gradient(from var(--a), rgba(80,140,210,0.32), rgba(80,140,210,0.32));
@@ -1106,7 +1122,7 @@ export const TraderBrainEvolutionSection: React.FC = () => {
         #journey .n {
           font-family: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
           font-weight: 500;
-          font-size: 0.72em;
+          font-size: clamp(7px, 0.72em, 11px);
           line-height: 1;
           letter-spacing: 0.2em;
           color: #22d3ee;
@@ -1115,8 +1131,8 @@ export const TraderBrainEvolutionSection: React.FC = () => {
         #journey .t {
           font-family: inherit;
           font-weight: 600;
-          line-height: 1.15;
-          padding: 0 12%;
+          line-height: 1.12;
+          padding: 0 7%;
           text-wrap: balance;
           color: #e6f1ff;
           word-break: normal;
@@ -1136,6 +1152,10 @@ export const TraderBrainEvolutionSection: React.FC = () => {
         }
         #journey .lbl.p {
           color: #22d3ee;
+        }
+        #journey .lbl[dir="rtl"] {
+          font-family: inherit;
+          letter-spacing: normal;
         }
         #journey .bpm {
           position: absolute;
@@ -1161,19 +1181,7 @@ export const TraderBrainEvolutionSection: React.FC = () => {
         }
         @media (max-width: 759px) {
           #journey {
-            height: auto;
-          }
-          #journey .stage {
-            position: relative;
-            height: auto;
-          }
-          #journey .bpm {
-            font-size: 14.5px;
-          }
-        }
-        @media (hover: none), (pointer: coarse) {
-          #journey .mv {
-            animation: none;
+            height: 320vh;
           }
         }
         @media (prefers-reduced-motion: reduce) {
@@ -1228,10 +1236,10 @@ export const TraderBrainEvolutionSection: React.FC = () => {
           </div>
 
           {/* Brain Labels */}
-          <div ref={lbRef} className="lbl" id="lb">
+          <div ref={lbRef} className="lbl" id="lb" dir={isRTL ? 'rtl' : 'ltr'}>
             {beginnerLabel}
           </div>
-          <div ref={lpRef} className="lbl p" id="lp">
+          <div ref={lpRef} className="lbl p" id="lp" dir={isRTL ? 'rtl' : 'ltr'}>
             {proLabel}
           </div>
 

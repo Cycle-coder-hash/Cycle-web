@@ -23,7 +23,6 @@ import {
   REALITY_ITEMS_UR,
   ROADMAP_CARD_FLOAT_DELAYS,
 } from "../lib/homeStaticData";
-import { TraderBrainEvolutionSection } from "./TraderBrainEvolutionSection";
 
 export interface HomeRoadmapAndShiftCopy {
   shiftEyebrow: string;
@@ -85,7 +84,7 @@ function RoadmapCard({
       onClick={() => onSelect(index)}
       className={`roadmap-card-interactive group/card relative flex flex-col justify-between h-full min-h-[190px] sm:min-h-[236px] w-[235px] sm:w-[310px] md:w-[330px] lg:w-[340px] shrink-0 rounded-xl sm:rounded-2xl border p-3.5 sm:p-6 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
         isActive
-          ? "border-[#0d1a2d] bg-[#0d1a2d] text-white shadow-xl shadow-[#0d1a2d]/25 dark:border-sky-400 dark:bg-[#0f1d35] dark:shadow-[0_12px_35px_-8px_rgba(56,189,248,0.25)]"
+          ? "border-[#2563eb] bg-[#2563eb] text-white shadow-xl shadow-blue-500/20 dark:border-sky-400 dark:bg-[#0f1d35] dark:shadow-[0_12px_35px_-8px_rgba(56,189,248,0.25)]"
           : "border-slate-200/90 bg-white shadow-sm dark:border-slate-800/90 dark:bg-[#0c1527] dark:hover:border-sky-500/50"
       }`}
       dir={isRTL ? "rtl" : "ltr"}
@@ -105,7 +104,7 @@ function RoadmapCard({
           <span
             className={`font-mono text-[11px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-md transition-colors ${
               isActive
-                ? "bg-white/10 text-[#38bdf8]"
+                ? "bg-white/20 text-white dark:bg-white/10 dark:text-[#38bdf8]"
                 : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 group-hover/card:bg-sky-500/10 group-hover/card:text-sky-400"
             }`}
           >
@@ -113,7 +112,7 @@ function RoadmapCard({
           </span>
           <span
             className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider ${
-              isActive ? "text-slate-300" : "text-[#0284c7] dark:text-sky-400"
+              isActive ? "text-blue-100 dark:text-slate-300" : "text-[#0284c7] dark:text-sky-400"
             }`}
           >
             {stage.category}
@@ -123,7 +122,7 @@ function RoadmapCard({
         <span
           className={`roadmap-card-arrow-pill inline-flex items-center gap-1 rounded-full px-2 sm:px-2.5 py-0.5 text-[9px] sm:text-[10px] font-bold transition-all duration-300 ${
             isActive
-              ? "bg-[#38bdf8] text-slate-950"
+              ? "bg-white text-[#2563eb] dark:bg-[#38bdf8] dark:text-slate-950"
               : "bg-slate-100 text-slate-500 group-hover/card:bg-[#0284c7] group-hover/card:text-white dark:bg-slate-800 dark:text-slate-400 dark:group-hover/card:bg-sky-400 dark:group-hover/card:text-slate-950 dark:group-hover/card:shadow-[0_0_10px_rgba(56,189,248,0.5)]"
           }`}
         >
@@ -133,13 +132,17 @@ function RoadmapCard({
 
       {/* Middle Content: Title & Summary */}
       <div className="relative z-10 my-2.5 sm:my-4 flex-1">
-        <h3 className="text-sm sm:text-lg font-extrabold leading-snug text-slate-900 dark:text-white group-hover/card:text-sky-600 dark:group-hover/card:text-sky-300 transition-colors duration-200">
+        <h3 className={`text-sm sm:text-lg font-extrabold leading-snug transition-colors duration-200 ${
+          isActive
+            ? "text-white dark:text-white"
+            : "text-slate-900 dark:text-white group-hover/card:text-sky-600 dark:group-hover/card:text-sky-300"
+        }`}>
           {stage.title}
         </h3>
 
         <p
           className={`mt-1.5 sm:mt-2 text-[11px] sm:text-xs line-clamp-2 leading-relaxed ${
-            isActive ? "text-slate-300" : "text-slate-500 dark:text-slate-400"
+            isActive ? "text-blue-50 dark:text-slate-300" : "text-slate-500 dark:text-slate-400"
           }`}
         >
           {stage.summary}
@@ -147,10 +150,10 @@ function RoadmapCard({
       </div>
 
       {/* Footer: Click to explore stage breakdown prompt */}
-      <div className="relative z-10 mt-auto flex items-center gap-1.5 border-t border-slate-100 pt-2.5 sm:pt-3 text-[10px] sm:text-[11px] font-semibold dark:border-slate-800/80">
+      <div className="relative z-10 mt-auto flex items-center gap-1.5 border-t border-slate-100/30 pt-2.5 sm:pt-3 text-[10px] sm:text-[11px] font-semibold dark:border-slate-800/80">
         <span
           className={
-            isActive ? "text-[#38bdf8]" : "text-[#0284c7] dark:text-sky-400"
+            isActive ? "text-white dark:text-[#38bdf8]" : "text-[#0284c7] dark:text-sky-400"
           }
         >
           {clickPrompt}
@@ -158,7 +161,7 @@ function RoadmapCard({
         <ChevronRight
           size={12}
           className={`roadmap-card-chevron transition-transform duration-300 ease-out sm:size-[13px] ${
-            isActive ? "text-[#38bdf8]" : "text-[#0284c7] dark:text-sky-400"
+            isActive ? "text-white dark:text-[#38bdf8]" : "text-[#0284c7] dark:text-sky-400"
           } ${isRTL ? "rotate-180" : ""}`}
         />
       </div>
@@ -234,7 +237,7 @@ export function HomeRoadmapAndShiftSection({
       {/* ========================================================================= */}
       {/* THE SHIFT SECTION */}
       {/* ========================================================================= */}
-      <section className="content-auto bg-[#f1f5f9] py-10 sm:py-20 lg:py-28 dark:bg-[#070e1b] transition-colors">
+      <section className="content-auto bg-[#eef4fd] py-10 sm:py-20 lg:py-28 dark:bg-[#070e1b] transition-colors">
         <div className="mx-auto grid max-w-7xl gap-8 sm:gap-16 px-4 sm:px-5 lg:grid-cols-[.8fr_1.2fr] lg:px-8">
           <div>
             <p className="eyebrow">{copy.shiftEyebrow}</p>
@@ -273,18 +276,18 @@ export function HomeRoadmapAndShiftSection({
               </div>
             </div>
 
-            <div className="relative rounded-2xl sm:rounded-3xl bg-[#0d1a2d] p-4 sm:p-6 lg:p-7 text-white shadow-xl shadow-[#0d1a2d]/25 dark:bg-slate-800 dark:shadow-slate-950/50 border border-slate-700/50">
+            <div className="relative rounded-2xl sm:rounded-3xl bg-white border-2 border-[#2563eb]/40 text-slate-900 shadow-xl shadow-blue-500/10 dark:bg-slate-800 dark:text-white dark:border-slate-700/50 p-4 sm:p-6 lg:p-7">
               <AnimatedCardBorder color="green" />
               <div className="flex items-center justify-between">
-                <div className="text-[11px] sm:text-xs font-extrabold uppercase tracking-[.18em] text-[#38bdf8]">
+                <div className="text-[11px] sm:text-xs font-extrabold uppercase tracking-[.18em] text-[#0284c7] dark:text-[#38bdf8]">
                   {copy.realityHeader}
                 </div>
-                <ShieldCheck size={15} className="text-[#38bdf8] sm:size-4" />
+                <ShieldCheck size={15} className="text-[#0284c7] dark:text-[#38bdf8] sm:size-4" />
               </div>
-              <div className="mt-4 sm:mt-7 space-y-2.5 sm:space-y-4 text-xs sm:text-sm text-slate-300">
+              <div className="mt-4 sm:mt-7 space-y-2.5 sm:space-y-4 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
                 {REALITY_ITEMS_EN.map((_, i) => (
                   <div key={i} className="flex items-center gap-2.5 sm:gap-3">
-                    <span className="grid size-5 sm:size-6 place-items-center rounded-full bg-white/10 text-[9px] sm:text-[10px] font-bold text-[#38bdf8] shrink-0">
+                    <span className="grid size-5 sm:size-6 place-items-center rounded-full bg-blue-500/10 text-[9px] sm:text-[10px] font-bold text-[#0284c7] dark:bg-white/10 dark:text-[#38bdf8] shrink-0">
                       {language === "bn"
                         ? String(i + 1).replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[+d])
                         : String(i + 1).padStart(2, "0")}
@@ -299,11 +302,6 @@ export function HomeRoadmapAndShiftSection({
           </div>
         </div>
       </section>
-
-      {/* ========================================================================= */}
-      {/* BEGINNER BRAIN -> PROFESSIONAL TRADER BRAIN EVOLUTION SECTION */}
-      {/* ========================================================================= */}
-      <TraderBrainEvolutionSection />
 
       {/* ========================================================================= */}
       {/* ROADMAP SECTION (12 INTERACTIVE STAGES) */}
@@ -563,13 +561,13 @@ export function HomeRoadmapAndShiftSection({
 
               {/* Institutional Edge Note */}
               {Boolean(activeModalData.edge) && (
-                <div className="flex items-start gap-3 rounded-2xl bg-[#0d1a2d] p-4 text-white dark:bg-slate-800">
-                  <ShieldCheck size={18} className="mt-0.5 shrink-0 text-[#38bdf8]" />
+                <div className="flex items-start gap-3 rounded-2xl border border-blue-500/20 bg-blue-50/70 p-4 text-slate-900 dark:border-transparent dark:bg-slate-800 dark:text-white">
+                  <ShieldCheck size={18} className="mt-0.5 shrink-0 text-[#0284c7] dark:text-[#38bdf8]" />
                   <div>
-                    <div className="text-[11px] font-bold uppercase tracking-widest text-[#38bdf8]">
+                    <div className="text-[11px] font-bold uppercase tracking-widest text-[#0284c7] dark:text-[#38bdf8]">
                       {copy.modalEdge}
                     </div>
-                    <p className="mt-1 text-xs sm:text-sm leading-relaxed text-slate-300">
+                    <p className="mt-1 text-xs sm:text-sm leading-relaxed text-slate-700 dark:text-slate-300">
                       {activeModalData.edge}
                     </p>
                   </div>

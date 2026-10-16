@@ -240,7 +240,7 @@ export function CursorLightTrail() {
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
 
-        // PASS 1: Outer glowing neon aura
+        // PASS 1: Outer glowing neon aura (subtle luminous gradient)
         for (let i = 0; i < points.length - 1; i++) {
           const p1 = points[i];
           const p2 = points[i + 1];
@@ -251,22 +251,22 @@ export function CursorLightTrail() {
           const life = Math.max(0, 1 - age);
           const trailProgress = i / (points.length - 1); // 0 at tail, 1 near cursor
 
-          // Opacity fades toward tail and with age
-          const auraAlpha = life * 0.45 * (0.4 + 0.6 * trailProgress);
-          const auraWidth = Math.max(1.2, (0.8 + trailProgress * 2.8) * 1.6);
+          // Subtle opacity fading toward tail and with age
+          const auraAlpha = life * 0.18 * (0.3 + 0.7 * trailProgress);
+          const auraWidth = Math.max(1.0, (0.6 + trailProgress * 1.8) * 1.2);
 
           ctx.beginPath();
           ctx.moveTo(p1.x, p1.y);
           ctx.lineTo(p2.x, p2.y);
 
-          ctx.shadowBlur = 9;
+          ctx.shadowBlur = 4;
           ctx.shadowColor = `rgba(${p2.color.r}, ${p2.color.g}, ${p2.color.b}, ${auraAlpha})`;
           ctx.strokeStyle = `rgba(${p2.color.r}, ${p2.color.g}, ${p2.color.b}, ${auraAlpha})`;
           ctx.lineWidth = auraWidth;
           ctx.stroke();
         }
 
-        // PASS 2: Crisp, vivid neon core streak
+        // PASS 2: Crisp, refined neon core streak (subtle and delicate in both light and dark modes)
         for (let i = 0; i < points.length - 1; i++) {
           const p1 = points[i];
           const p2 = points[i + 1];
@@ -277,15 +277,14 @@ export function CursorLightTrail() {
           const life = Math.max(0, 1 - age);
           const trailProgress = i / (points.length - 1);
 
-          // Vivid core alpha (clearly visible on both white and dark backgrounds)
-          const coreAlpha = life * 0.95 * (0.5 + 0.5 * trailProgress);
-          const coreWidth = Math.max(0.8, 0.8 + trailProgress * 2.2);
+          const coreAlpha = life * 0.42 * (0.3 + 0.7 * trailProgress);
+          const coreWidth = Math.max(0.7, 0.6 + trailProgress * 1.3);
 
           ctx.beginPath();
           ctx.moveTo(p1.x, p1.y);
           ctx.lineTo(p2.x, p2.y);
 
-          ctx.shadowBlur = 3;
+          ctx.shadowBlur = 2;
           ctx.shadowColor = `rgba(${p2.color.r}, ${p2.color.g}, ${p2.color.b}, ${coreAlpha})`;
           ctx.strokeStyle = `rgba(${p2.color.r}, ${p2.color.g}, ${p2.color.b}, ${coreAlpha})`;
           ctx.lineWidth = coreWidth;

@@ -15,7 +15,7 @@ export const bn: TranslationSchema = {
   hero: {
     eyebrow: "CYCLE OF CHART • TRADING REALITY",
     title: "Trade করার আগে,\nTrading বুঝুন।",
-    subtitle: "ডিপোজিটের আগে মার্কেট স্ট্রাকচার, ক্যান্ডেলস্টিক অ্যানাটমি এবং ডিসিপ্লিন্ড রিস্ক ম্যানেজমেন্ট শিখুন। কোনো সিগন্যাল হাইপ নয়, রিয়েল এডুকেশন।",
+    subtitle: "Deposit করার আগে,\nTrading বুঝুন।",
     subtext: "আপনার মূলধন সুরক্ষিত রাখুন। পজিশন সাইজের আগে আপনার নলেজ তৈরি হোক। কোনো সিগন্যাল ফাঁদ নয়, কোনো গ্যারান্টিড রিটার্ন নয়।",
     startRoadmap: "রোডম্যাপ শুরু করুন",
     exploreStore: "প্রোডাক্ট দেখুন",
