@@ -109,7 +109,7 @@ export function HomePlansSection({
       {/* ========================================================================= */}
       {/* PLANS FOR EVERY TRADER */}
       {/* ========================================================================= */}
-      <section id="plans" className="content-auto bg-[#f8fafc] dark:bg-slate-900/40 py-10 sm:py-24 border-t border-slate-200/60 dark:border-slate-800/80 transition-colors">
+      <section id="plans" className="content-auto bg-[#f8fafc] dark:bg-[#070e1b] py-10 sm:py-24 transition-colors">
         <div className="mx-auto max-w-7xl px-4 sm:px-5 lg:px-8">
           <div className="flex flex-col items-center text-center max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-bold bg-[#0284c7]/10 text-[#0284c7] dark:bg-sky-500/20 dark:text-sky-400 border border-sky-500/30">

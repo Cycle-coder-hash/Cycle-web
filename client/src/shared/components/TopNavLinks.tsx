@@ -28,6 +28,7 @@ export function TopNavLinks({
 
   const labels = {
     roadmap: copy?.navRoadmap || t("nav.roadmap", selectText({ en: "Roadmap", bn: "রোডম্যাপ", ur: "روড میپ" })),
+    library: t("nav.library", selectText({ en: "Library", bn: "লাইব্রেরি", ur: "لائبریری" })),
     store: copy?.navStore || t("nav.store", selectText({ en: "Store", bn: "স্টোর", ur: "اسٹور" })),
     leaderboard: copy?.navLeaderboard || t("nav.leaderboard", selectText({ en: "Leaderboard", bn: "লিডারবোর্ড", ur: "لیڈر بورڈ" })),
     support: copy?.navSupport || t("nav.support", selectText({ en: "Support", bn: "সাপোর্ট", ur: "سپورٹ" })),
@@ -79,7 +80,9 @@ export function TopNavLinks({
 
   // Determine active states
   const isRoadmapActive = location === "/" && activeSection === "roadmap";
+  const isLibraryActive = location === "/library";
   const isStoreActive = location === "/" && activeSection === "store";
+
   const isLeaderboardActive = location === "/leaderboard";
   const isSupportActive = location === "/support";
 
@@ -125,6 +128,16 @@ export function TopNavLinks({
       >
         <span>{labels.roadmap}</span>
       </a>
+
+      {/* 2. Library */}
+      <Link
+        href="/library"
+        onClick={onItemClick}
+        className={`${pillBase} ${isLibraryActive ? activeSkyStyle : inactiveSkyStyle}`}
+      >
+        <span>{labels.library}</span>
+      </Link>
+
 
       {/* 2. Store */}
       <a

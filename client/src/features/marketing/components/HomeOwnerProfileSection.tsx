@@ -136,7 +136,7 @@ export function HomeOwnerProfileSection({
   return (
     <section
       id="owner-profile"
-      className="relative py-10 sm:py-24 text-slate-900 dark:text-white border-t border-slate-200/70 dark:border-slate-800/80 bg-slate-50/50 dark:bg-[#070e1b] overflow-hidden"
+      className="relative py-10 sm:py-24 text-slate-900 dark:text-white bg-slate-50/50 dark:bg-[#070e1b] overflow-hidden"
     >
       {/* Subtle atmospheric ambient glow */}
       <div className="absolute top-1/2 left-1/4 -translate-y-1/2 -translate-x-1/2 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl pointer-events-none dark:hidden" />

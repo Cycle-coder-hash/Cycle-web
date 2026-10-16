@@ -166,15 +166,50 @@ export const EbookModal: React.FC<EbookModalProps> = ({
             />
           </div>
 
-          {/* Upload PDF File or Custom URL */}
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-950/40">
-            <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
+          {/* PDF Source: Google Drive Link OR File Upload */}
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-950/40 space-y-3">
+            <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300">
               <Upload size={15} className="text-sky-500" />
-              <span>Custom PDF File Attachment (Optional)</span>
+              <span>PDF Resource Attachment (Google Drive or Upload)</span>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-              Upload your own PDF file for students to download. If left empty, the institutional PDF generator will automatically format and generate a clean PDF on-the-fly.
-            </p>
+
+            {/* Option A: Google Drive or External Link */}
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
+                Google Drive URL or Direct PDF Link (Recommended for large PDFs)
+              </label>
+              <input
+                type="url"
+                placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
+                value={ebookForm.fileUrl || ""}
+                onChange={(e) => {
+                  const val = e.target.value.trim();
+                  setEbookForm((prev) => ({
+                    ...prev,
+                    fileUrl: val || null,
+                    fileName: prev.fileName || (val ? `${prev.titleEn || "Institutional_Guide"}.pdf` : null),
+                    fileSize: prev.fileSize || "Google Drive Cloud PDF",
+                  }));
+                }}
+                className="w-full rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-medium outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+              />
+
+              {/* Google Drive Permission Advisory */}
+              {ebookForm.fileUrl && ebookForm.fileUrl.includes("drive.google.com") && (
+                <div className="mt-2 rounded-xl bg-amber-500/10 border border-amber-500/20 p-2.5 text-[11px] text-amber-700 dark:text-amber-300">
+                  <div className="font-bold flex items-center gap-1.5 mb-0.5">
+                    <span>⚠️ Google Drive Permission Requirement</span>
+                  </div>
+                  <span>Make sure this file's General Access in Google Drive is set to <strong>"Anyone with the link can view"</strong> so students can open and download it without permission errors.</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">OR Upload Directly</span>
+              <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+            </div>
 
             {ebookForm.fileUrl ? (
               <div className="flex items-center justify-between rounded-xl bg-white p-3 border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
@@ -182,9 +217,9 @@ export const EbookModal: React.FC<EbookModalProps> = ({
                   <Paperclip size={16} className="text-emerald-500 shrink-0" />
                   <div className="truncate">
                     <div className="font-bold text-slate-900 dark:text-white truncate">
-                      {ebookForm.fileName || "Uploaded PDF Document"}
+                      {ebookForm.fileName || "Attached PDF Resource"}
                     </div>
-                    <div className="text-[10px] text-slate-400">{ebookForm.fileSize || "PDF Attached"}</div>
+                    <div className="text-[10px] text-slate-400 truncate">{ebookForm.fileUrl}</div>
                   </div>
                 </div>
                 <Button
@@ -199,7 +234,7 @@ export const EbookModal: React.FC<EbookModalProps> = ({
                       fileSize: null,
                     }))
                   }
-                  className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs font-bold"
+                  className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 text-xs font-bold shrink-0 ml-2"
                 >
                   <Trash2 size={13} className="mr-1" />
                   Remove
@@ -207,12 +242,12 @@ export const EbookModal: React.FC<EbookModalProps> = ({
               </div>
             ) : (
               <div>
-                <label className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white p-5 cursor-pointer hover:border-sky-500 hover:bg-sky-50/30 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-sky-400">
-                  <Upload size={22} className="text-slate-400 mb-1" />
+                <label className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white p-4 cursor-pointer hover:border-sky-500 hover:bg-sky-50/30 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-sky-400">
+                  <Upload size={20} className="text-slate-400 mb-1" />
                   <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
                     Click to select PDF from your device
                   </span>
-                  <span className="text-[11px] text-slate-400">Accepts .pdf files</span>
+                  <span className="text-[11px] text-slate-400">Uploads to high-speed cloud storage</span>
                   <input
                     type="file"
                     accept="application/pdf,.pdf"
@@ -223,6 +258,7 @@ export const EbookModal: React.FC<EbookModalProps> = ({
               </div>
             )}
           </div>
+
 
           {/* Publish Toggle */}
           <div className="flex items-center gap-2 pt-1">

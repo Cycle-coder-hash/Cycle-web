@@ -84,7 +84,7 @@ export const HomeFaqSection: React.FC = () => {
     <section
       id="faq"
       aria-labelledby="home-faq-heading"
-      className="relative py-12 sm:py-20 lg:py-24 text-slate-900 dark:text-white border-t border-slate-200/70 dark:border-slate-800/80 bg-[#f8fafc] dark:bg-[#070e1b] overflow-hidden transition-colors"
+      className="relative py-12 sm:py-20 lg:py-24 text-slate-900 dark:text-white bg-[#f8fafc] dark:bg-[#070e1b] overflow-hidden transition-colors"
     >
       {/* Subtle atmospheric ambient glow matching Home Page sections */}
       <div className="absolute top-1/3 left-1/4 -translate-x-1/2 w-80 h-80 bg-sky-500/10 rounded-full blur-3xl pointer-events-none dark:bg-sky-500/[0.06]" />

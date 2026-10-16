@@ -53,10 +53,11 @@ export const AdminNavTabs: React.FC<AdminNavTabsProps> = ({
     },
     {
       id: "ebooks",
-      label: "Free eBooks & PDFs",
+      label: "Library Management",
       icon: BookOpen,
       badge: ebooksCount ? `${ebooksCount}` : undefined,
     },
+
     {
       id: "support",
       label: "Support Messages",

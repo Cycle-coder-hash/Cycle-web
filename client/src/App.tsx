@@ -17,7 +17,9 @@ const Support = safeLazy(() => import("./pages/Support"));
 const Admin = safeLazy(() => import("./pages/admin"));
 const Leaderboard = safeLazy(() => import("./pages/Leaderboard"));
 const Settings = safeLazy(() => import("./pages/Settings"));
+const Library = safeLazy(() => import("./pages/Library"));
 const NotFound = safeLazy(() => import("./pages/NotFound"));
+
 
 import { FloatingSupportButton } from "./components/FloatingSupportButton";
 import { StudentTelegramAccessModal } from "./components/StudentTelegramAccessModal";
@@ -53,9 +55,11 @@ function Router() {
         <Route path="/leaderboard" component={Leaderboard} />
         <Route path="/settings" component={Settings} />
         <Route path="/checkout" component={Checkout} />
+        <Route path="/library" component={Library} />
         <Route path="/support" component={Support} />
         <Route path="/admin" component={Admin} />
         <Route component={NotFound} />
+
       </Switch>
     </Suspense>
   );

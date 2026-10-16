@@ -330,7 +330,7 @@ export function JournalAnalyticsShowcase({ isBn: _isBnProp }: Props) {
     <section
       ref={sectionRef}
       id="journal-analytics"
-      className="relative overflow-hidden py-16 sm:py-20 lg:py-28 text-slate-900 dark:text-white border-t border-slate-200/80 dark:border-slate-800/80 bg-slate-50/50 dark:bg-[#070e1b] transition-colors"
+      className="relative overflow-hidden py-16 sm:py-20 lg:py-28 text-slate-900 dark:text-white bg-slate-50/50 dark:bg-gradient-to-b dark:from-[#040913] dark:to-[#070e1b] transition-colors"
     >
       {/* Subtle Ambient Glow Behind Showcase */}
       <div className="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 size-[650px] rounded-full bg-cyan-500/10 blur-[150px] dark:hidden ambient-blur-blob" />

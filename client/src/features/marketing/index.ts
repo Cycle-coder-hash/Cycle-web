@@ -5,5 +5,6 @@ export * from "./components/HomeOwnerProfileSection";
 export * from "./components/HomeRoadmapAndShiftSection";
 export * from "./components/TraderBrainEvolutionSection";
 export * from "./components/TraderBrainCanvas";
+export * from "./components/HomeLeaderboardSection";
 export * from "./components/HomeFaqSection";
 export * from "./lib/homeStaticData";

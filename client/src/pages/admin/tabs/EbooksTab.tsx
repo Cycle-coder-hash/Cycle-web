@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Search,
   Filter,
@@ -12,8 +12,12 @@ import {
   Edit,
   Trash2,
   RefreshCw,
+  Video,
+  Layers,
+  GraduationCap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CourseAlbumManager } from "./CourseAlbumManager";
 
 interface EbooksTabProps {
   ebooks: any[];
@@ -40,6 +44,8 @@ export const EbooksTab: React.FC<EbooksTabProps> = ({
   onTogglePublish,
   onDeleteEbook,
 }) => {
+  const [activeSubTab, setActiveSubTab] = useState<"free-pdfs" | "basic-to-advance" | "cycle-blueprint">("free-pdfs");
+
   const filteredEbooks = (ebooks || []).filter((eb: any) => {
     if (ebookCategoryFilter !== "all" && eb.category !== ebookCategoryFilter) return false;
     if (ebookSearch.trim()) {
@@ -56,22 +62,72 @@ export const EbooksTab: React.FC<EbooksTabProps> = ({
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
-      {/* Header & Add Button */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <h2 className="text-2xl font-black tracking-tight">Free eBooks & PDFs Management</h2>
-          <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Manage the institutional guides and PDFs in the Free eBook Package. Upload custom PDF files, edit content, and toggle publishing.
-          </p>
-        </div>
-        <Button
-          onClick={onOpenAddModal}
-          className="gap-2 bg-[#0284c7] font-bold text-white hover:bg-sky-600 shadow-md self-start sm:self-auto"
+      {/* Library Management Sub-Tabs */}
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 pb-3 dark:border-slate-800">
+        <button
+          onClick={() => setActiveSubTab("free-pdfs")}
+          className={`flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-black transition-all ${
+            activeSubTab === "free-pdfs"
+              ? "bg-[#0284c7] text-white shadow-md shadow-sky-500/20"
+              : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+          }`}
         >
-          <Plus size={16} />
-          <span>Add New eBook / PDF</span>
-        </Button>
+          <BookOpen size={16} />
+          <span>Free PDF Resources ({ebooks?.length || 0})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab("basic-to-advance")}
+          className={`flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-black transition-all ${
+            activeSubTab === "basic-to-advance"
+              ? "bg-[#0284c7] text-white shadow-md shadow-sky-500/20"
+              : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+          }`}
+        >
+          <GraduationCap size={16} />
+          <span>Basic to Advance Course (৳2,499)</span>
+        </button>
+
+        <button
+          onClick={() => setActiveSubTab("cycle-blueprint")}
+          className={`flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-black transition-all ${
+            activeSubTab === "cycle-blueprint"
+              ? "bg-[#0284c7] text-white shadow-md shadow-sky-500/20"
+              : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+          }`}
+        >
+          <Sparkles size={16} />
+          <span>Cycle Blueprint Course (৳4,999)</span>
+        </button>
       </div>
+
+      {activeSubTab === "basic-to-advance" && (
+        <CourseAlbumManager courseId="basic-to-advance" />
+      )}
+
+      {activeSubTab === "cycle-blueprint" && (
+        <CourseAlbumManager courseId="cycle-blueprint" />
+      )}
+
+      {activeSubTab === "free-pdfs" && (
+        <div className="space-y-6">
+          {/* Header & Add Button */}
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+            <div>
+              <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">Free eBooks & PDFs Management</h2>
+              <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                Manage institutional PDF guides and Google Drive links in the Free Resource Package. Edit content, display order, and publish to students.
+              </p>
+            </div>
+            <Button
+              onClick={onOpenAddModal}
+              className="gap-2 bg-[#0284c7] font-bold text-white hover:bg-sky-600 shadow-md self-start sm:self-auto"
+            >
+              <Plus size={16} />
+              <span>Add New eBook / PDF</span>
+            </Button>
+          </div>
+
 
       {/* Metrics Chips */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -292,5 +348,10 @@ export const EbooksTab: React.FC<EbooksTabProps> = ({
         )}
       </div>
     </div>
+  )}
+</div>
   );
 };
+
+
+

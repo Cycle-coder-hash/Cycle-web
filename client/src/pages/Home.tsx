@@ -41,6 +41,7 @@ import {
   HomeRoadmapAndShiftSection,
   HeroHexagonBackground,
   TraderBrainEvolutionSection,
+  HomeLeaderboardSection,
   HomeFaqSection,
 } from "@/features/marketing";
 
@@ -284,21 +285,16 @@ export default function Home() {
   );
 
   const heroHeadlineLines = useMemo(() => {
-    const titleParts = (copy.heroTitle || "")
-      .split("\n")
-      .map((s) => s.trim())
-      .filter(Boolean);
     const subtitleParts = (copy.heroSubtitle || "")
       .split("\n")
       .map((s) => s.trim())
       .filter(Boolean);
 
-    const line1 = titleParts[0] || "BEFORE YOU TRADE,";
     const line2 = subtitleParts[0] || "BEFORE YOU DEPOSIT,";
     const line3 = subtitleParts[1] || "UNDERSTAND TRADING.";
 
-    return { line1, line2, line3 };
-  }, [copy.heroTitle, copy.heroSubtitle]);
+    return { line2, line3 };
+  }, [copy.heroSubtitle]);
 
   return (
     <div
@@ -425,9 +421,6 @@ export default function Home() {
             </div>
 
             <h1>
-              <span className="ln l1">
-                <span>{heroHeadlineLines.line1}</span>
-              </span>
               <span className="ln l2">
                 <span className="grad" data-text={heroHeadlineLines.line2}>
                   {heroHeadlineLines.line2}
@@ -507,6 +500,11 @@ export default function Home() {
           setSelectedStageModal={setSelectedStageModal}
           activeModalData={activeModalData}
         />
+
+        {/* ========================================================================= */}
+        {/* GLOBAL LEADERBOARD & TRADER PROGRESS SHOWCASE */}
+        {/* ========================================================================= */}
+        <HomeLeaderboardSection isBn={isBn} />
 
         {/* ========================================================================= */}
         {/* STORE & PRODUCTS SECTION */}
@@ -755,7 +753,7 @@ export default function Home() {
         {/* ========================================================================= */}
         <section
           id="trading-platforms"
-          className="relative py-10 sm:py-16 text-slate-900 dark:text-white border-t border-slate-200/70 dark:border-slate-800/80 bg-slate-100/50 dark:bg-[#070e1b]"
+          className="relative py-10 sm:py-16 text-slate-900 dark:text-white bg-slate-100/50 dark:bg-[#070e1b]"
         >
           <div className="mx-auto max-w-7xl px-4 sm:px-5 lg:px-8">
             <div className="mb-5 sm:mb-8">
@@ -824,7 +822,7 @@ export default function Home() {
       {/* ========================================================================= */}
       {/* FOOTER */}
       {/* ========================================================================= */}
-      <footer className="bg-[#08111f] py-10 text-white dark:bg-[#070e1b] border-t border-slate-800/60">
+      <footer className="bg-[#08111f] py-10 text-white dark:bg-[#070e1b]">
         <div className="mx-auto flex max-w-7xl flex-col justify-between gap-6 px-5 text-sm text-slate-400 sm:flex-row lg:px-8">
           <div className="flex items-center gap-4">
             <BrandLogo size={50} />

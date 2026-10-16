@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { Link } from "wouter";
+
 import {
   FileText,
   Download,
@@ -234,13 +236,25 @@ export function FreeEbookModal({ isOpen, onClose, isBn: _isBnProp }: FreeEbookMo
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-200 hover:text-slate-800 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/library"
+              onClick={onClose}
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-sky-500/10 px-3 py-1.5 text-xs font-bold text-sky-600 hover:bg-sky-500/20 dark:bg-sky-500/20 dark:text-sky-400 transition-colors"
+            >
+              <span>Open Full Library</span>
+              <ExternalLink size={12} />
+            </Link>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-200 hover:text-slate-800 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+
         </div>
 
         {/* Download Success Notice */}

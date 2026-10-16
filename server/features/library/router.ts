@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { protectedProcedure, adminProcedure, supportProcedure } from "../../_core/trpc";
+import { publicProcedure, protectedProcedure, adminProcedure, supportProcedure } from "../../_core/trpc";
 import { TRPCError } from "@trpc/server";
 import {
   listFreeEbooks,
@@ -9,11 +9,26 @@ import {
   deleteFreeEbook,
   getCustomerLibraryPdfs,
 } from "./repo";
+import {
+  getCourseAlbumData,
+  listCourseClasses,
+  createCourseClass,
+  updateCourseClass,
+  deleteCourseClass,
+  reorderCourseClasses,
+} from "./courseRepo";
+import type { CourseId } from "../../../shared/types/library";
 
 export const libraryCustomerProcedures = {
+  // Existing procedures preserved with exact signatures
   freeEbooks: protectedProcedure.query(async () => {
     return await listFreeEbooks();
   }),
+
+  publicFreeEbooks: publicProcedure.query(async () => {
+    return await listFreeEbooks(false);
+  }),
+
   myLibrary: protectedProcedure.query(async ({ ctx }) => {
     return await getCustomerLibraryPdfs({
       id: ctx.user.id,
@@ -21,6 +36,7 @@ export const libraryCustomerProcedures = {
       email: ctx.user.email || undefined,
     });
   }),
+
   downloadEbook: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
@@ -50,9 +66,21 @@ export const libraryCustomerProcedures = {
         fileName: ebook.fileName || `${ebook.titleEn.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`,
       };
     }),
+
+  courseAlbum: publicProcedure
+    .input(
+      z.object({
+        courseId: z.enum(["basic-to-advance", "cycle-blueprint"]),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const isAdmin = ctx.user?.role === "admin";
+      return await getCourseAlbumData(ctx.user, input.courseId as CourseId, isAdmin);
+    }),
 };
 
 export const libraryAdminProcedures = {
+  // Existing procedures preserved with exact signatures
   freeEbooks: supportProcedure.query(async () => {
     return await listFreeEbooks(true);
   }),
@@ -110,5 +138,75 @@ export const libraryAdminProcedures = {
     .mutation(async ({ input }) => {
       await deleteFreeEbook(input.id);
       return { success: true };
+    }),
+
+  // Course classes admin procedures
+  courseClasses: supportProcedure
+    .input(
+      z.object({
+        courseId: z.enum(["basic-to-advance", "cycle-blueprint"]),
+      })
+    )
+    .query(async ({ input }) => {
+      return await listCourseClasses(input.courseId as CourseId, true);
+    }),
+
+  createCourseClass: adminProcedure
+    .input(
+      z.object({
+        courseId: z.enum(["basic-to-advance", "cycle-blueprint"]),
+        title: z.string().min(1),
+        description: z.string().optional(),
+        videoUrl: z.string().min(1),
+        duration: z.string().optional(),
+        order: z.number().optional(),
+        isPublished: z.boolean().optional(),
+        resourceLink: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      return await createCourseClass(input.courseId as CourseId, input);
+    }),
+
+  updateCourseClass: adminProcedure
+    .input(
+      z.object({
+        courseId: z.enum(["basic-to-advance", "cycle-blueprint"]),
+        id: z.string(),
+        title: z.string().optional(),
+        description: z.string().optional(),
+        videoUrl: z.string().optional(),
+        duration: z.string().optional(),
+        order: z.number().optional(),
+        isPublished: z.boolean().optional(),
+        resourceLink: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { courseId, id, ...data } = input;
+      return await updateCourseClass(courseId as CourseId, id, data);
+    }),
+
+  deleteCourseClass: adminProcedure
+    .input(
+      z.object({
+        courseId: z.enum(["basic-to-advance", "cycle-blueprint"]),
+        id: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      await deleteCourseClass(input.courseId as CourseId, input.id);
+      return { success: true };
+    }),
+
+  reorderCourseClasses: adminProcedure
+    .input(
+      z.object({
+        courseId: z.enum(["basic-to-advance", "cycle-blueprint"]),
+        classIds: z.array(z.string()),
+      })
+    )
+    .mutation(async ({ input }) => {
+      return await reorderCourseClasses(input.courseId as CourseId, input.classIds);
     }),
 };
