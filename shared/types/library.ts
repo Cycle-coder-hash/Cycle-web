@@ -32,6 +32,8 @@ export interface CourseAlbumMeta {
   priceUsd: string;
   badgeText: string;
   features: string[];
+  thumbnailUrl?: string;
+  isPublished?: boolean;
 }
 
 export interface CourseAlbumResponse {

@@ -39,7 +39,6 @@ import {
   HomePlansSection,
   HomeOwnerProfileSection,
   HomeRoadmapAndShiftSection,
-  HeroHexagonBackground,
   TraderBrainEvolutionSection,
   HomeLeaderboardSection,
   HomeFaqSection,
@@ -284,18 +283,6 @@ export default function Home() {
     [t, selectText]
   );
 
-  const heroHeadlineLines = useMemo(() => {
-    const subtitleParts = (copy.heroSubtitle || "")
-      .split("\n")
-      .map((s) => s.trim())
-      .filter(Boolean);
-
-    const line2 = subtitleParts[0] || "BEFORE YOU DEPOSIT,";
-    const line3 = subtitleParts[1] || "UNDERSTAND TRADING.";
-
-    return { line2, line3 };
-  }, [copy.heroSubtitle]);
-
   return (
     <div
       className={`min-h-screen bg-[var(--bg)] text-[var(--fg)] selection:bg-[#38bdf8] selection:text-[#09111f] dark:bg-transparent dark:text-slate-100 transition-colors duration-300 ${
@@ -409,81 +396,9 @@ export default function Home() {
 
       <main>
         {/* ========================================================================= */}
-        {/* HERO PANEL */}
+        {/* MERGED HERO & TRADER BRAIN EVOLUTION JOURNEY                              */}
         {/* ========================================================================= */}
-        <section className="cycle-hero hero play">
-          <HeroHexagonBackground />
-
-          <div className="content">
-            <div className="badge">
-              <i aria-hidden="true" />
-              <span>{copy.heroEyebrow}</span>
-            </div>
-
-            <h1>
-              <span className="ln l2">
-                <span className="grad" data-text={heroHeadlineLines.line2}>
-                  {heroHeadlineLines.line2}
-                </span>
-              </span>
-              <span className="ln l3">
-                <span className="grad" data-text={heroHeadlineLines.line3}>
-                  {heroHeadlineLines.line3}
-                </span>
-              </span>
-            </h1>
-
-            <p className="copy">{copy.heroBnSub}</p>
-
-            <div className="cta">
-              <a href="#roadmap" className="hero-btn-pop-1">
-                <Button
-                  size="lg"
-                  className="hero-btn hero-btn-primary group relative h-11 sm:h-12 rounded-xl px-6 sm:px-8 text-sm sm:text-base font-bold shadow-md"
-                >
-                  <Compass size={17} className="mr-2 text-current" />
-                  <span>{copy.primaryCta}</span>
-                  <ArrowRight
-                    size={16}
-                    className="hero-btn-arrow ml-2 text-current"
-                  />
-                </Button>
-              </a>
-
-              <a href="#store" className="hero-btn-pop-2">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="hero-btn hero-btn-ghost h-11 sm:h-12 rounded-xl px-6 sm:px-8 text-sm sm:text-base font-bold shadow-xs"
-                >
-                  <ShoppingBag size={17} className="mr-2 text-[var(--cyan)]" />
-                  <span>{copy.secondaryCta}</span>
-                </Button>
-              </a>
-            </div>
-
-            {/* Trust chips below buttons */}
-            <div className="hero-trust-chips mt-6 sm:mt-8 flex flex-wrap items-center justify-center gap-2.5 sm:gap-4">
-              <span className="hero-trust-chip">
-                <i aria-hidden="true" />
-                <span>{copy.trust1}</span>
-              </span>
-              <span className="hero-trust-chip">
-                <i aria-hidden="true" />
-                <span>{copy.trust2}</span>
-              </span>
-              <span className="hero-trust-chip">
-                <i aria-hidden="true" />
-                <span>{copy.trust3}</span>
-              </span>
-            </div>
-          </div>
-        </section>
-
-        {/* ========================================================================= */}
-        {/* BEGINNER BRAIN -> PROFESSIONAL TRADER BRAIN EVOLUTION SECTION */}
-        {/* ========================================================================= */}
-        <TraderBrainEvolutionSection />
+        <TraderBrainEvolutionSection copy={copy} />
 
         {/* ========================================================================= */}
         {/* POWERFUL JOURNAL ANALYTICS SHOWCASE */}

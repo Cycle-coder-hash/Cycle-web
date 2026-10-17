@@ -14,7 +14,6 @@ import {
   NotebookPen,
   Receipt,
   RotateCcw,
-  Send,
   Settings as SettingsIcon,
   Sparkles,
   Sun,
@@ -73,20 +72,11 @@ export function DashboardMobileNav({
   theme,
   onToggleTheme,
   onLogout,
-  onOpenTelegramModal,
+  onOpenTelegramModal: _onOpenTelegramModal,
 }: DashboardMobileNavProps) {
   const { language, isRTL, selectText } = useLanguage();
   const isBn = language === "bn";
   const isUr = language === "ur";
-
-  const handleOpenTelegram = () => {
-    onCloseDrawer();
-    if (onOpenTelegramModal) {
-      onOpenTelegramModal();
-    } else if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("open-telegram-modal"));
-    }
-  };
 
   return (
     <>
@@ -435,23 +425,6 @@ export function DashboardMobileNav({
                   </div>
                 </div>
               </button>
-
-              {/* VIP Telegram */}
-              {hasApprovedPurchase && (
-                <button
-                  type="button"
-                  onClick={handleOpenTelegram}
-                  className="flex items-center gap-3 p-3 rounded-2xl border border-sky-500/30 bg-sky-500/10 text-left text-xs font-bold text-sky-400 hover:bg-sky-500/20 transition-all cursor-pointer"
-                >
-                  <div className="size-9 rounded-xl bg-sky-500/20 flex items-center justify-center shrink-0 text-sky-300">
-                    <Send size={18} />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="truncate font-extrabold">{selectText({ en: "Telegram VIP", bn: "টেলিগ্রাম ভিআইপি", ur: "ٹیلیگرام وی آئی پی" })}</div>
-                    <div className="text-[10px] text-sky-400/70 font-normal">Community</div>
-                  </div>
-                </button>
-              )}
 
               {/* Store Browse */}
               <Link

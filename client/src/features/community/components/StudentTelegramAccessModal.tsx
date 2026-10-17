@@ -123,7 +123,8 @@ export function StudentTelegramAccessModal() {
     }
   };
 
-  if (!isOpen || !user || !hasApprovedPurchase) {
+  // Temporarily disabled: VIP Telegram / VIP Group access is not being offered at this time
+  if (true as boolean || !isOpen || !user || !hasApprovedPurchase) {
     return null;
   }
 

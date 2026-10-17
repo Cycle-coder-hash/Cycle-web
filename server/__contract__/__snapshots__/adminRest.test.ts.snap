@@ -2,9 +2,12 @@
 
 exports[`contract: /api/admin REST routes > exposes the frozen set of admin REST routes 1`] = `
 [
+  "DELETE /courses/:courseId/classes/:classId",
   "DELETE /ebooks/:id",
   "GET /audit-logs",
   "GET /course-telegram-settings",
+  "GET /courses/:courseId/classes",
+  "GET /courses/:courseId/meta",
   "GET /ebooks",
   "GET /leaderboard-settings",
   "GET /orders",
@@ -22,8 +25,11 @@ exports[`contract: /api/admin REST routes > exposes the frozen set of admin REST
   "GET /users",
   "POST /approve-order",
   "POST /course-telegram-settings",
+  "POST /courses/:courseId/classes",
+  "POST /courses/:courseId/reorder",
   "POST /delete-order",
   "POST /ebooks",
+  "POST /ebooks/reorder",
   "POST /grant-access",
   "POST /leaderboard-settings",
   "POST /leaderboard/recalculate",
@@ -38,6 +44,8 @@ exports[`contract: /api/admin REST routes > exposes the frozen set of admin REST
   "POST /user-management/account-status",
   "POST /user-management/clear-override",
   "POST /user-management/update-access",
+  "PUT /courses/:courseId/classes/:classId",
+  "PUT /courses/:courseId/meta",
   "PUT /ebooks/:id",
 ]
 `;

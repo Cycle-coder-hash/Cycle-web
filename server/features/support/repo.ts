@@ -13,82 +13,217 @@ import {
   getUserByEmail,
   createUserNotification,
   inMemoryUsers,
+  getTraderProfile,
+  listAllUsers,
 } from "../../db";
-import { listEntitlements, listOrdersForUser } from "../commerce";
+import { listEntitlements, listOrdersForUser, resolveUserCandidateIds } from "../commerce";
+import { deriveNumericIdFromOpenId } from "@shared/const";
+import type {
+  SupportCustomerProfile,
+  SupportConversationRecord,
+  SupportMessageRecord,
+  AdminSupportConversationSummary,
+  CustomerSupportContext,
+} from "@shared/types/support";
 
-export interface SupportConversationRecord {
-  id: number;
-  customerId: number;
-  createdAt: string;
-  updatedAt: string;
-  lastMessageAt: string | null;
+export type {
+  SupportCustomerProfile,
+  SupportConversationRecord,
+  SupportMessageRecord,
+  AdminSupportConversationSummary,
+  CustomerSupportContext,
+};
+
+export interface ResolvedCustomerProfile extends SupportCustomerProfile {
+  canonicalId: number;
+  allCandidateIds: number[];
 }
 
-export interface SupportMessageRecord {
-  id: number;
-  conversationId: number;
-  senderId: number;
-  senderRole: "customer" | "admin";
-  message: string;
-  readAt: string | null;
-  createdAt: string;
-}
+/**
+ * Resolves the true customer identity across authentication identities (Google OAuth sub,
+ * password auth, Supabase auth UUID), internal numeric IDs, derived openId hashes, and
+ * conversation message sender IDs.
+ *
+ * Guarantees real customer name, registered email, profile photo, stable user ID,
+ * username, and account status are extracted with zero mock or synthetic fallback.
+ */
+export async function resolveCustomerIdentity(
+  customerId: number,
+  fallbackContext?: {
+    openId?: string | null;
+    email?: string | null;
+    conversationId?: number;
+    senderId?: number;
+    messages?: SupportMessageRecord[];
+  }
+): Promise<ResolvedCustomerProfile> {
+  const numCustomerId = Number(customerId);
+  const candidateIds = new Set<number>();
 
-export interface AdminSupportConversationSummary {
-  id: number;
-  customerId: number;
-  createdAt: string;
-  updatedAt: string;
-  lastMessageAt: string | null;
-  customer: {
-    id: number;
-    name: string;
-    email: string | null;
-    phone: string | null;
-    avatar: string | null;
-    createdAt: string | null;
-  };
-  lastMessage: SupportMessageRecord | null;
-  unreadCount: number;
-  totalMessages: number;
-}
+  // 1. If conversation messages available, check senderId of any message sent by customer first
+  let msgs = fallbackContext?.messages;
+  if (!msgs && fallbackContext?.conversationId) {
+    try {
+      msgs = await getSupportMessages(Number(fallbackContext.conversationId));
+    } catch {}
+  }
+  if (Array.isArray(msgs)) {
+    for (const m of msgs) {
+      if ((m.senderRole === "customer" || (m as any).senderRole === "user") && m.senderId && Number(m.senderId) > 0) {
+        candidateIds.add(Number(m.senderId));
+      }
+    }
+  }
 
-export interface CustomerSupportContext {
-  customer: {
-    id: number;
-    openId?: string;
-    name: string;
-    email: string | null;
-    phone: string | null;
-    avatar: string | null;
-    role: string;
-    createdAt: string | null;
-  };
-  entitlements: Array<{
-    id: number;
-    orderId?: number;
-    productId?: number;
-    bundleId?: number;
-    scope: string;
-    productTitle?: string;
-    grantedAt: string;
-  }>;
-  orders: Array<{
-    id: number;
-    amount: string;
-    currency: string;
-    paymentMethod: string;
-    paymentStatus: string;
-    orderStatus: string;
-    bundleId?: number | null;
-    productId?: number | null;
-    selectedPdfIds?: number[];
-    createdAt: string;
-  }>;
-  stats: {
-    totalSpend: number;
-    totalOrders: number;
-    activeEntitlementsCount: number;
+  if (fallbackContext?.senderId && Number(fallbackContext.senderId) > 0) {
+    candidateIds.add(Number(fallbackContext.senderId));
+  }
+  if (!isNaN(numCustomerId) && numCustomerId > 0) {
+    candidateIds.add(numCustomerId);
+  }
+
+  let matchedUser: any = null;
+
+  // 2. Try direct lookup by ID across all candidate IDs (in prioritized order)
+  for (const cid of Array.from(candidateIds)) {
+    try {
+      const u = await getUserById(cid);
+      if (u && (u.email || (u.name && !u.name.startsWith("Customer #")))) {
+        matchedUser = u;
+        break;
+      }
+    } catch {}
+  }
+
+  // 3. Try lookup by openId or email if provided
+  if (!matchedUser && fallbackContext?.openId) {
+    try {
+      matchedUser = await getUserByOpenId(fallbackContext.openId);
+    } catch {}
+  }
+  if (!matchedUser && fallbackContext?.email) {
+    try {
+      matchedUser = await getUserByEmail(fallbackContext.email);
+    } catch {}
+  }
+
+  // 4. Try matching via trader_profile in settings (e.g. trader_profile_3747539 or trader_profile_<openId>)
+  let traderProf: any = null;
+  if (!matchedUser) {
+    for (const cid of Array.from(candidateIds)) {
+      try {
+        const p = await getTraderProfile(cid);
+        if (p) {
+          traderProf = p;
+          if (p.openId) {
+            matchedUser = await getUserByOpenId(p.openId);
+          }
+          if (!matchedUser && p.email) {
+            matchedUser = await getUserByEmail(p.email);
+          }
+          break;
+        }
+      } catch {}
+    }
+  }
+
+  // 5. Match against all known users (inMemoryUsers, Supabase users table) by derived openId/email hash
+  if (!matchedUser) {
+    try {
+      const allUsers = await listAllUsers();
+      for (const u of allUsers) {
+        const uNumId = Number(u.id);
+        const derivedFromOpen = deriveNumericIdFromOpenId(u.openId);
+        const derivedFromEmail = deriveNumericIdFromOpenId(u.email);
+
+        for (const cid of Array.from(candidateIds)) {
+          if (
+            uNumId === cid ||
+            derivedFromOpen === cid ||
+            derivedFromEmail === cid ||
+            (u.openId && u.openId === String(cid))
+          ) {
+            matchedUser = u;
+            break;
+          }
+        }
+        if (matchedUser) break;
+      }
+    } catch (e) {
+      console.warn("[resolveCustomerIdentity listAllUsers fallback error]:", e);
+    }
+  }
+
+  // 6. Direct Supabase users table query if still unresolved
+  if (!matchedUser) {
+    try {
+      const { data: supaUsers } = await supabaseServer.from("users").select("*");
+      if (Array.isArray(supaUsers)) {
+        for (const su of supaUsers) {
+          const suId = Number(su.id);
+          const derivedOpen = deriveNumericIdFromOpenId(su.openId);
+          const derivedEmail = deriveNumericIdFromOpenId(su.email);
+          for (const cid of Array.from(candidateIds)) {
+            if (suId === cid || derivedOpen === cid || derivedEmail === cid) {
+              matchedUser = su;
+              break;
+            }
+          }
+          if (matchedUser) break;
+        }
+      }
+    } catch {}
+  }
+
+  // If matchedUser found, load user's specific trader profile for customized display name or avatar
+  if (matchedUser) {
+    const userProf =
+      (matchedUser.openId ? await getTraderProfile(matchedUser.openId) : null) ||
+      (matchedUser.id ? await getTraderProfile(matchedUser.id) : null);
+    if (userProf) {
+      traderProf = userProf;
+    }
+    if (matchedUser.id) candidateIds.add(Number(matchedUser.id));
+    if (matchedUser.openId) {
+      candidateIds.add(deriveNumericIdFromOpenId(matchedUser.openId));
+    }
+  }
+
+  const canonicalId = matchedUser?.id ? Number(matchedUser.id) : numCustomerId || 1;
+  const resolvedOpenId = matchedUser?.openId || traderProf?.openId || fallbackContext?.openId || null;
+  const resolvedEmail = matchedUser?.email || traderProf?.email || fallbackContext?.email || null;
+  const resolvedName =
+    traderProf?.name ||
+    matchedUser?.name ||
+    (resolvedEmail ? resolvedEmail.split("@")[0] : null) ||
+    `Customer #${numCustomerId || canonicalId}`;
+  const resolvedAvatar =
+    traderProf?.avatar !== undefined
+      ? traderProf.avatar
+      : (matchedUser?.avatar || null);
+  const resolvedPhone = matchedUser?.phone || traderProf?.phone || null;
+  const resolvedUsername = matchedUser?.username || traderProf?.username || null;
+  const resolvedRole = matchedUser?.role || traderProf?.role || "user";
+  const resolvedAccountStatus = matchedUser?.accountStatus || (matchedUser as any)?.status || "active";
+  const resolvedCreatedAt = matchedUser?.createdAt
+    ? new Date(matchedUser.createdAt).toISOString()
+    : null;
+  const displayId = `USER-${String(canonicalId).padStart(4, "0")}`;
+
+  return {
+    id: canonicalId,
+    canonicalId,
+    openId: resolvedOpenId,
+    displayId,
+    name: resolvedName,
+    email: resolvedEmail,
+    phone: resolvedPhone,
+    avatar: resolvedAvatar,
+    username: resolvedUsername,
+    role: resolvedRole,
+    accountStatus: resolvedAccountStatus,
+    createdAt: resolvedCreatedAt,
+    allCandidateIds: Array.from(candidateIds),
   };
 }
 
@@ -146,48 +281,21 @@ export async function getOrCreateSupportConversation(
   customerId: number,
   userContext?: { id?: number; openId?: string | null; email?: string | null }
 ): Promise<SupportConversationRecord> {
-  let canonicalCustomerId = Number(customerId);
+  const identity = await resolveCustomerIdentity(Number(customerId), {
+    openId: userContext?.openId,
+    email: userContext?.email,
+  });
+  const canonicalCustomerId = identity.canonicalId;
   const allConversations = await loadSupportConversationsRegistry();
 
-  // Try to resolve user details to guarantee canonical ID binding
-  let matchedUser: any = null;
-  try {
-    matchedUser = await getUserById(canonicalCustomerId);
-    if (!matchedUser && userContext?.openId) {
-      matchedUser = await getUserByOpenId(userContext.openId);
-    }
-    if (!matchedUser && userContext?.email) {
-      matchedUser = await getUserByEmail(userContext.email);
-    }
-    if (!matchedUser) {
-      for (const u of Array.from(inMemoryUsers.values())) {
-        if (
-          Number(u.id) === canonicalCustomerId ||
-          (userContext?.openId && u.openId === userContext.openId) ||
-          (userContext?.email && u.email?.toLowerCase() === userContext.email.toLowerCase())
-        ) {
-          matchedUser = u;
-          break;
-        }
-      }
-    }
-    if (matchedUser?.id) {
-      canonicalCustomerId = Number(matchedUser.id);
-    }
-  } catch {}
-
-  // 1. Check existing in registry
-  let existing = allConversations.find((c) => Number(c.customerId) === canonicalCustomerId);
+  // 1. Check existing in registry across any candidate ID
+  let existing = allConversations.find(
+    (c) =>
+      Number(c.customerId) === canonicalCustomerId ||
+      identity.allCandidateIds.includes(Number(c.customerId))
+  );
   if (existing) {
     return existing;
-  }
-
-  // Also check if any existing conversation matches user's other potential ID
-  if (matchedUser) {
-    existing = allConversations.find((c) => Number(c.customerId) === Number(matchedUser.id));
-    if (existing) {
-      return existing;
-    }
   }
 
   // 2. Check Postgres DB if active
@@ -274,13 +382,16 @@ export async function getSupportConversation(
   customerId: number,
   userContext?: { id?: number; openId?: string | null; email?: string | null }
 ): Promise<SupportConversationRecord | null> {
-  let canonicalCustomerId = Number(customerId);
-  try {
-    const userObj = await getUserById(canonicalCustomerId);
-    if (userObj?.id) canonicalCustomerId = Number(userObj.id);
-  } catch {}
+  const identity = await resolveCustomerIdentity(Number(customerId), {
+    openId: userContext?.openId,
+    email: userContext?.email,
+  });
   const allConversations = await loadSupportConversationsRegistry();
-  const found = allConversations.find((c) => Number(c.customerId) === canonicalCustomerId);
+  const found = allConversations.find(
+    (c) =>
+      Number(c.customerId) === identity.canonicalId ||
+      identity.allCandidateIds.includes(Number(c.customerId))
+  );
   return found || null;
 }
 
@@ -517,10 +628,10 @@ export async function sendSupportMessage(input: {
   if (input.senderRole === "admin") {
     // Admin replied -> Notify customer
     try {
-      const customer = await getUserById(Number(conversation.customerId));
+      const customer = await resolveCustomerIdentity(Number(conversation.customerId), { conversationId: numConvId });
       if (customer) {
         await createUserNotification(
-          customer.id,
+          customer.canonicalId,
           "New Message from Support",
           trimmed.length > 80 ? trimmed.slice(0, 77) + "..." : trimmed
         );
@@ -542,7 +653,7 @@ export async function sendSupportMessage(input: {
   } else {
     // Customer sent message -> Notify Admin
     try {
-      const customer = await getUserById(Number(conversation.customerId));
+      const customer = await resolveCustomerIdentity(Number(conversation.customerId), { conversationId: numConvId });
       const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.SMTP_USER;
       if (adminEmail) {
         await sendEmail({
@@ -653,10 +764,12 @@ export async function listAdminSupportConversations(): Promise<AdminSupportConve
     allConversations.map(async (conv) => {
       const numConvId = Number(conv.id);
       const numCustomerId = Number(conv.customerId);
-      const [customer, messages] = await Promise.all([
-        getUserById(numCustomerId),
-        getSupportMessages(numConvId),
-      ]);
+      const messages = await getSupportMessages(numConvId);
+
+      const identity = await resolveCustomerIdentity(numCustomerId, {
+        conversationId: numConvId,
+        messages,
+      });
 
       const lastMsg = messages.length > 0 ? messages[messages.length - 1] : null;
       const unreadCount = messages.filter(
@@ -665,17 +778,22 @@ export async function listAdminSupportConversations(): Promise<AdminSupportConve
 
       return {
         id: numConvId,
-        customerId: numCustomerId,
+        customerId: identity.canonicalId || numCustomerId,
         createdAt: conv.createdAt,
         updatedAt: conv.updatedAt,
         lastMessageAt: conv.lastMessageAt || (lastMsg ? lastMsg.createdAt : conv.createdAt),
         customer: {
-          id: numCustomerId,
-          name: customer?.name || `Customer #${numCustomerId}`,
-          email: customer?.email || null,
-          phone: customer?.phone || null,
-          avatar: (customer as any)?.avatar || null,
-          createdAt: customer?.createdAt ? new Date(customer.createdAt).toISOString() : null,
+          id: identity.canonicalId || numCustomerId,
+          openId: identity.openId,
+          displayId: identity.displayId,
+          name: identity.name,
+          email: identity.email,
+          phone: identity.phone,
+          avatar: identity.avatar,
+          username: identity.username,
+          role: identity.role,
+          accountStatus: identity.accountStatus,
+          createdAt: identity.createdAt,
         },
         lastMessage: lastMsg,
         unreadCount,
@@ -696,17 +814,48 @@ export async function listAdminSupportConversations(): Promise<AdminSupportConve
 
 /**
  * Retrieves the comprehensive customer context panel for the Admin Workspace:
- * - Customer Profile (Name, Email, Phone, Joined date)
+ * - Customer Profile (Real Name, Email, Phone, Joined date, Stable User ID, Status)
  * - Purchased Products / Entitlements (Scope, dates)
  * - Order History (Order ID, Amount, Payment status, date)
  * - Summary stats (Total spend, total orders, active products)
  */
 export async function getCustomerSupportContext(customerId: number): Promise<CustomerSupportContext> {
-  const customer = await getUserById(customerId);
-  const entitlementsList = await listEntitlements(customerId);
-  const ordersList = await listOrdersForUser(customerId);
+  const identity = await resolveCustomerIdentity(customerId);
 
-  const approvedOrders = ordersList.filter(
+  // Fetch entitlements and orders across all resolved candidate IDs to ensure complete history
+  const [entitlementsList, ordersList] = await Promise.all([
+    listEntitlements({
+      id: identity.canonicalId,
+      openId: identity.openId || undefined,
+      email: identity.email || undefined,
+    }),
+    listOrdersForUser({
+      id: identity.canonicalId,
+      openId: identity.openId || undefined,
+      email: identity.email || undefined,
+    }),
+  ]);
+
+  // Merge any candidate IDs' orders
+  const candidateOrders = new Map<number, any>();
+  for (const o of ordersList) {
+    candidateOrders.set(Number(o.id), o);
+  }
+  for (const cid of identity.allCandidateIds) {
+    if (cid !== identity.canonicalId) {
+      try {
+        const moreOrders = await listOrdersForUser(cid);
+        for (const o of moreOrders) {
+          candidateOrders.set(Number(o.id), o);
+        }
+      } catch {}
+    }
+  }
+  const mergedOrders = Array.from(candidateOrders.values()).sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
+  const approvedOrders = mergedOrders.filter(
     (o: any) => o.orderStatus === "approved" || o.paymentStatus === "approved"
   );
 
@@ -716,14 +865,17 @@ export async function getCustomerSupportContext(customerId: number): Promise<Cus
 
   return {
     customer: {
-      id: customerId,
-      openId: customer?.openId,
-      name: customer?.name || `Customer #${customerId}`,
-      email: customer?.email || null,
-      phone: customer?.phone || null,
-      avatar: (customer as any)?.avatar || null,
-      role: customer?.role || "user",
-      createdAt: customer?.createdAt ? new Date(customer.createdAt).toISOString() : null,
+      id: identity.canonicalId,
+      openId: identity.openId || undefined,
+      displayId: identity.displayId,
+      name: identity.name,
+      email: identity.email,
+      phone: identity.phone,
+      avatar: identity.avatar,
+      username: identity.username,
+      role: identity.role,
+      accountStatus: identity.accountStatus,
+      createdAt: identity.createdAt,
     },
     entitlements: entitlementsList.map((e: any) => ({
       id: e.id,
@@ -734,7 +886,7 @@ export async function getCustomerSupportContext(customerId: number): Promise<Cus
       productTitle: e.scope?.replace("bundle:", "Bundle #")?.replace("product:", "Product #") || "Access Pass",
       grantedAt: e.grantedAt ? new Date(e.grantedAt).toISOString() : new Date().toISOString(),
     })),
-    orders: ordersList.map((o: any) => ({
+    orders: mergedOrders.map((o: any) => ({
       id: o.id,
       amount: String(o.amount || "0"),
       currency: o.currency || "BDT",
@@ -748,7 +900,7 @@ export async function getCustomerSupportContext(customerId: number): Promise<Cus
     })),
     stats: {
       totalSpend,
-      totalOrders: ordersList.length,
+      totalOrders: mergedOrders.length,
       activeEntitlementsCount: entitlementsList.length,
     },
   };

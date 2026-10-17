@@ -13,7 +13,6 @@ import {
   Globe,
   NotebookPen,
   Receipt,
-  Send,
   Settings as SettingsIcon,
   ShieldCheck,
   Sparkles,
@@ -121,7 +120,7 @@ export interface DashboardOverviewTabProps {
   today: string;
   subUsage: DashboardOverviewSubUsage | null | undefined;
   hasApprovedPurchase: boolean;
-  telegramUrl: string;
+  telegramUrl?: string;
   currentTimezone: TimezoneOption;
   liveMarketTime: { time: string; date: string };
   journalStats: { total: number; wins: number; losses: number; winRate: number; bestSetup: string };
@@ -140,7 +139,7 @@ export function DashboardOverviewTab({
   today,
   subUsage,
   hasApprovedPurchase,
-  telegramUrl,
+  telegramUrl: _telegramUrl,
   currentTimezone,
   liveMarketTime,
   journalStats,
@@ -450,60 +449,6 @@ export function DashboardOverviewTab({
                   ? selectText({ en: "Locked", bn: "লকড", ur: "مقفل" })
                   : selectText({ en: "Active", bn: "সক্রিয়", ur: "فعাল" })}
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Verified Student VIP Telegram Banner */}
-      {hasApprovedPurchase && (
-        <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-sky-500/40 bg-gradient-to-r from-[#081f3d] via-[#09172c] to-[#071324] p-4 sm:p-7 shadow-xl shadow-sky-950/40 backdrop-blur-sm">
-          <div className="absolute top-0 right-0 w-80 h-40 bg-sky-500/10 blur-3xl pointer-events-none" />
-          <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-3.5 sm:gap-5">
-            <div className="flex items-start gap-3 sm:gap-4">
-              <div className="flex size-10 sm:size-14 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-tr from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/30">
-                <Send size={18} className="sm:size-6 translate-x-0.5 -translate-y-0.5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/20 px-2 sm:px-2.5 py-0.5 text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider text-emerald-400 border border-emerald-500/30">
-                    ✓ {selectText({ en: "Enrollment Approved", bn: "এনরোলমেন্ট অ্যাপ্রুভড", ur: "اندراج منظور شدہ" })}
-                  </span>
-                  <span className="text-[10px] sm:text-[11px] font-bold text-sky-400">
-                    {selectText({ en: "VIP Student Community", bn: "প্রাতিষ্ঠানিক ভিআইপি এক্সেস", ur: "وی آئی پی اسٹوڈنٹ کمیونٹی" })}
-                  </span>
-                </div>
-                <h3 className="text-sm sm:text-lg font-black text-white tracking-tight">
-                  {selectText({
-                    en: "Access Live Classes, Video Lectures & Daily Trade Breakdown on Telegram",
-                    bn: "লাইভ ক্লাস লিংক ও রেকর্ডেড ড্রাইভের জন্য অফিশিয়াল টেলিগ্রাম গ্রুপে যুক্ত থাকুন",
-                    ur: "ٹیلیگرام پر لائیو کلاسز، ویڈیو لیکچرز اور روزانہ ٹریڈ بریک ڈاؤن تک رسائی حاصل کریں",
-                  })}
-                </h3>
-                <p className="mt-1 text-[11px] sm:text-xs text-slate-300 max-w-2xl leading-relaxed">
-                  {selectText({
-                    en: "Your payment verification has been cleared. All live class streaming links, PDF updates, and private mentor Q&A take place inside our official Telegram room.",
-                    bn: "আপনার পেমেন্ট ভেরিফাই হয়েছে। সমস্ত লাইভ জুম সেশনের লিংক, শিডিউল ও প্রাইভেট সাপোর্ট টেলিগ্রাম চ্যানেলে প্রদান করা হয়।",
-                    ur: "آپ کی ادائیگی کی تصدیق ہو چکی ہے۔ تمام لائیو کلاس لنکس، پی ڈی ایف اپ ڈیٹس اور نجی سوال و جواب ہمارے آفیشل ٹیلیگرام روم میں ہوتے ہیں۔",
-                  })}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 w-full sm:w-auto">
-              <Button
-                onClick={() => window.open(telegramUrl, "_blank")}
-                className="flex-1 sm:flex-none h-9 sm:h-11 px-3.5 sm:px-5 rounded-xl bg-gradient-to-r from-sky-400 to-blue-500 hover:from-sky-300 hover:to-blue-400 text-slate-950 font-black text-xs shadow-lg shadow-sky-500/20 gap-1.5"
-              >
-                <Send size={14} />
-                <span>{selectText({ en: "Open VIP Telegram", bn: "টেলিগ্রামে প্রবেশ করুন", ur: "وی آئی پی ٹیلیگرام کھولیں" })}</span>
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => window.dispatchEvent(new CustomEvent("open-telegram-modal"))}
-                className="h-9 sm:h-11 px-3 sm:px-4 rounded-xl border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-200 font-bold text-xs"
-              >
-                <span>{selectText({ en: "Instructions", bn: "নির্দেশিকা", ur: "ہدایات" })}</span>
-              </Button>
             </div>
           </div>
         </div>

@@ -8,6 +8,7 @@ import {
   updateFreeEbook,
   deleteFreeEbook,
   getCustomerLibraryPdfs,
+  reorderFreeEbooks,
 } from "./repo";
 import {
   getCourseAlbumData,
@@ -208,5 +209,50 @@ export const libraryAdminProcedures = {
     )
     .mutation(async ({ input }) => {
       return await reorderCourseClasses(input.courseId as CourseId, input.classIds);
+    }),
+
+  reorderFreeEbooks: adminProcedure
+    .input(
+      z.object({
+        orderedIds: z.array(z.number()),
+      })
+    )
+    .mutation(async ({ input }) => {
+      return await reorderFreeEbooks(input.orderedIds);
+    }),
+
+  courseAlbumMeta: supportProcedure
+    .input(
+      z.object({
+        courseId: z.enum(["basic-to-advance", "cycle-blueprint"]),
+      })
+    )
+    .query(async ({ input }) => {
+      const { getAlbumMetadata } = await import("./courseRepo");
+      return await getAlbumMetadata(input.courseId as CourseId);
+    }),
+
+  updateCourseAlbumMeta: adminProcedure
+    .input(
+      z.object({
+        courseId: z.enum(["basic-to-advance", "cycle-blueprint"]),
+        data: z.object({
+          title: z.string().optional(),
+          titleBn: z.string().optional(),
+          subtitle: z.string().optional(),
+          subtitleBn: z.string().optional(),
+          description: z.string().optional(),
+          priceBdt: z.string().optional(),
+          priceUsd: z.string().optional(),
+          badgeText: z.string().optional(),
+          features: z.array(z.string()).optional(),
+          thumbnailUrl: z.string().optional(),
+          isPublished: z.boolean().optional(),
+        }),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const { updateAlbumMetadata } = await import("./courseRepo");
+      return await updateAlbumMetadata(input.courseId as CourseId, input.data);
     }),
 };

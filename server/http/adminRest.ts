@@ -48,6 +48,17 @@ import {
   getUserAuditLogs,
 } from "../features/subscription/userManagement";
 import { setAccountStatus } from "../features/subscription/subscription";
+import {
+  reorderFreeEbooks,
+  getAlbumMetadata,
+  updateAlbumMetadata,
+  listCourseClasses,
+  createCourseClass,
+  updateCourseClass,
+  deleteCourseClass,
+  reorderCourseClasses,
+} from "../features/library";
+import type { CourseId } from "../../shared/types/library";
 
 export const adminRouter = Router();
 
@@ -405,6 +416,113 @@ adminRouter.delete("/ebooks/:id", async (req, res) => {
     const id = parseInt(req.params.id, 10);
     await deleteFreeEbook(id);
     return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/admin/ebooks/reorder
+adminRouter.post("/ebooks/reorder", async (req, res) => {
+  try {
+    const orderedIds = (req.body?.orderedIds || []).map((id: any) => Number(id));
+    const reordered = await reorderFreeEbooks(orderedIds);
+    return res.json({ success: true, ebooks: reordered });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ============================================================================
+// COURSE ALBUMS & CLASSES MANAGEMENT ENDPOINTS
+// ============================================================================
+
+// GET /api/admin/courses/:courseId/meta
+adminRouter.get("/courses/:courseId/meta", async (req, res) => {
+  try {
+    const courseId = req.params.courseId as CourseId;
+    const meta = await getAlbumMetadata(courseId);
+    return res.json({ success: true, meta });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// PUT /api/admin/courses/:courseId/meta
+adminRouter.put("/courses/:courseId/meta", async (req, res) => {
+  try {
+    const courseId = req.params.courseId as CourseId;
+    const updated = await updateAlbumMetadata(courseId, req.body || {});
+    return res.json({ success: true, meta: updated });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/admin/courses/:courseId/classes
+adminRouter.get("/courses/:courseId/classes", async (req, res) => {
+  try {
+    const courseId = req.params.courseId as CourseId;
+    const classes = await listCourseClasses(courseId, true);
+    return res.json({ success: true, classes });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/admin/courses/:courseId/classes
+adminRouter.post("/courses/:courseId/classes", async (req, res) => {
+  try {
+    const courseId = req.params.courseId as CourseId;
+    const { title, description, videoUrl, duration, order, isPublished, resourceLink } = req.body || {};
+    if (!title || !videoUrl) {
+      return res.status(400).json({ success: false, error: "Title and Video URL are required" });
+    }
+    const created = await createCourseClass(courseId, {
+      title,
+      description,
+      videoUrl,
+      duration,
+      order: order ? Number(order) : undefined,
+      isPublished,
+      resourceLink,
+    });
+    return res.json({ success: true, class: created });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// PUT /api/admin/courses/:courseId/classes/:classId
+adminRouter.put("/courses/:courseId/classes/:classId", async (req, res) => {
+  try {
+    const courseId = req.params.courseId as CourseId;
+    const classId = req.params.classId;
+    const updated = await updateCourseClass(courseId, classId, req.body || {});
+    return res.json({ success: true, class: updated });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /api/admin/courses/:courseId/classes/:classId
+adminRouter.delete("/courses/:courseId/classes/:classId", async (req, res) => {
+  try {
+    const courseId = req.params.courseId as CourseId;
+    const classId = req.params.classId;
+    await deleteCourseClass(courseId, classId);
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/admin/courses/:courseId/reorder
+adminRouter.post("/courses/:courseId/reorder", async (req, res) => {
+  try {
+    const courseId = req.params.courseId as CourseId;
+    const orderedClassIds = (req.body?.orderedClassIds || []).map((id: any) => String(id));
+    const reordered = await reorderCourseClasses(courseId, orderedClassIds);
+    return res.json({ success: true, classes: reordered });
   } catch (err: any) {
     return res.status(500).json({ success: false, error: err.message });
   }

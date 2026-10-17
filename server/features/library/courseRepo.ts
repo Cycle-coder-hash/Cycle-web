@@ -113,47 +113,109 @@ function getSettingKey(courseId: CourseId): string {
     : "course_classes_cycle_blueprint";
 }
 
+const inMemoryAlbumMeta: Record<string, CourseAlbumMeta> = {};
+
+function getAlbumMetaSettingKey(courseId: CourseId): string {
+  return `course_album_meta_${courseId}`;
+}
+
 export async function getAlbumMetadata(courseId: CourseId): Promise<CourseAlbumMeta> {
   const pricing = await getPricingConfig();
-  if (courseId === "basic-to-advance") {
+  const defaultMeta: CourseAlbumMeta =
+    courseId === "basic-to-advance"
+      ? {
+          id: "basic-to-advance",
+          title: "Cycle of Chart Basic to Advance Course",
+          titleBn: "সাইকেল অফ চার্ট বেসিক টু অ্যাডভান্স কোর্স",
+          subtitle: "Complete Institutional Trading Curriculum from zero to master",
+          subtitleBn: "শূন্য থেকে মাস্টার লেভেল পর্যন্ত সম্পূর্ণ প্রাতিষ্ঠানিক ট্রেডিং কোর্স",
+          description:
+            "A complete professional video curriculum covering Market Structure, Candlestick Anatomy, Candle Range Theory (CRT), Institutional Order Flow, Liquidity Sweeps, and Risk Execution.",
+          bundleId: 2,
+          priceBdt: pricing.courses.basicToAdvance.priceBdt || "2499",
+          priceUsd: pricing.courses.basicToAdvance.priceUsd || "19.99",
+          badgeText: "Most Popular",
+          features: [
+            "Full Candle Range Theory (CRT) Anatomy",
+            "Liquidity Sweeps & FVG Mechanics",
+            "Order Flow & Execution Psychology",
+            "Lifetime Class Replay & Study Material",
+          ],
+          thumbnailUrl: "",
+          isPublished: true,
+        }
+      : {
+          id: "cycle-blueprint",
+          title: "Cycle of Chart — Professional Trading Blueprint",
+          titleBn: "সাইকেল অফ চার্ট — প্রফেশনাল ট্রেডিং ব্লুপ্রিন্ট",
+          subtitle: "Elite Algorithmic Models, Macro Session Timing & High-RR Execution",
+          subtitleBn: "এলিট অ্যালগরিদমিক মডেল, ম্যাক্রো টাইমিং ও হাই-আরআর এক্সিকিউশন",
+          description:
+            "An advanced professional trading blueprint covering Algorithmic Cycles, Power of 3 (AMD), Macro Timing, HTF to LTF Fractal Confirmation, and Live Market Execution Case Studies.",
+          bundleId: 4,
+          priceBdt: pricing.courses.proBlueprint.priceBdt || "4999",
+          priceUsd: pricing.courses.proBlueprint.priceUsd || "39.99",
+          badgeText: "Elite Masterclass",
+          features: [
+            "Algorithmic Cycle & AMD Mechanics",
+            "Macro Timing & Session Killzones",
+            "High-Probability Entry Frameworks (1:5+ RR)",
+            "Exclusive Institutional Case Studies",
+          ],
+          thumbnailUrl: "",
+          isPublished: true,
+        };
+
+  // Check saved persistent settings
+  try {
+    const raw = await getSetting(getAlbumMetaSettingKey(courseId));
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") {
+        return {
+          ...defaultMeta,
+          ...parsed,
+          id: courseId, // immutable
+          bundleId: defaultMeta.bundleId, // immutable
+        };
+      }
+    }
+  } catch (err) {
+    console.warn(`[getAlbumMetadata getSetting error for ${courseId}]:`, err);
+  }
+
+  if (inMemoryAlbumMeta[courseId]) {
     return {
-      id: "basic-to-advance",
-      title: "Cycle of Chart Basic to Advance Course",
-      titleBn: "সাইকেল অফ চার্ট বেসিক টু অ্যাডভান্স কোর্স",
-      subtitle: "Complete Institutional Trading Curriculum from zero to master",
-      subtitleBn: "শূন্য থেকে মাস্টার লেভেল পর্যন্ত সম্পূর্ণ প্রাতিষ্ঠানিক ট্রেডিং কোর্স",
-      description: "A complete professional video curriculum covering Market Structure, Candlestick Anatomy, Candle Range Theory (CRT), Institutional Order Flow, Liquidity Sweeps, and Risk Execution.",
-      bundleId: 2,
-      priceBdt: pricing.courses.basicToAdvance.priceBdt || "2499",
-      priceUsd: pricing.courses.basicToAdvance.priceUsd || "19.99",
-      badgeText: "Most Popular",
-      features: [
-        "Full Candle Range Theory (CRT) Anatomy",
-        "Liquidity Sweeps & FVG Mechanics",
-        "Order Flow & Execution Psychology",
-        "Lifetime Class Replay & Study Material",
-      ],
+      ...defaultMeta,
+      ...inMemoryAlbumMeta[courseId],
+      id: courseId,
+      bundleId: defaultMeta.bundleId,
     };
   }
 
-  return {
-    id: "cycle-blueprint",
-    title: "Cycle of Chart — Professional Trading Blueprint",
-    titleBn: "সাইকেল অফ চার্ট — প্রফেশনাল ট্রেডিং ব্লুপ্রিন্ট",
-    subtitle: "Elite Algorithmic Models, Macro Session Timing & High-RR Execution",
-    subtitleBn: "এলিট অ্যালগরিদমিক মডেল, ম্যাক্রো টাইমিং ও হাই-আরআর এক্সিকিউশন",
-    description: "An advanced professional trading blueprint covering Algorithmic Cycles, Power of 3 (AMD), Macro Timing, HTF to LTF Fractal Confirmation, and Live Market Execution Case Studies.",
-    bundleId: 4,
-    priceBdt: pricing.courses.proBlueprint.priceBdt || "4999",
-    priceUsd: pricing.courses.proBlueprint.priceUsd || "39.99",
-    badgeText: "Elite Masterclass",
-    features: [
-      "Algorithmic Cycle & AMD Mechanics",
-      "Macro Timing & Session Killzones",
-      "High-Probability Entry Frameworks (1:5+ RR)",
-      "Exclusive Institutional Case Studies",
-    ],
+  return defaultMeta;
+}
+
+export async function updateAlbumMetadata(
+  courseId: CourseId,
+  data: Partial<CourseAlbumMeta>
+): Promise<CourseAlbumMeta> {
+  const current = await getAlbumMetadata(courseId);
+  const updated: CourseAlbumMeta = {
+    ...current,
+    ...data,
+    id: courseId,
+    bundleId: current.bundleId,
   };
+
+  try {
+    await setSetting(getAlbumMetaSettingKey(courseId), JSON.stringify(updated));
+  } catch (err) {
+    console.warn(`[updateAlbumMetadata setSetting error for ${courseId}]:`, err);
+  }
+
+  inMemoryAlbumMeta[courseId] = updated;
+  return updated;
 }
 
 export async function listCourseClasses(

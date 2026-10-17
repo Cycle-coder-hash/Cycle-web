@@ -402,3 +402,31 @@ export async function getCustomerLibraryPdfs(
     return false;
   });
 }
+
+export async function reorderFreeEbooks(orderedIds: number[]): Promise<any[]> {
+  const existing = await listFreeEbooks(true);
+  const map = new Map<number, any>(existing.map((b: any) => [Number(b.id), b]));
+  const reordered: any[] = [];
+
+  for (let i = 0; i < orderedIds.length; i++) {
+    const id = Number(orderedIds[i]);
+    const item = map.get(id);
+    if (item) {
+      reordered.push({ ...(item as any), position: i + 1, updatedAt: new Date().toISOString() });
+      map.delete(id);
+    }
+  }
+
+  let nextPos = reordered.length + 1;
+  Array.from(map.values()).forEach((remaining: any) => {
+    reordered.push({ ...remaining, position: nextPos++, updatedAt: new Date().toISOString() });
+  });
+
+  try {
+    await setSetting("free_ebooks", JSON.stringify(reordered));
+  } catch (err) {
+    console.warn("[reorderFreeEbooks setSetting error]:", err);
+  }
+
+  return reordered;
+}

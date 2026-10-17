@@ -39,7 +39,8 @@ export const CourseTelegramModal: React.FC<CourseTelegramModalProps> = ({
   const isBn = lang === "bn";
   const isUr = lang === "ur";
 
-  if (!isOpen || !config.enabled) return null;
+  // Temporarily disabled: VIP Telegram / VIP Group access is not being offered at this time
+  if (true as boolean || !isOpen || !config.enabled) return null;
 
   const title = isUr
     ? config.titleUr || "وی آئی پی ٹیلیگرام کمیونٹی میں شامل ہوں"

@@ -36,7 +36,6 @@ import {
   Trash2,
   TrendingUp,
   Trophy,
-  Send,
   Settings as SettingsIcon,
   Calculator,
   PanelLeftClose,
@@ -64,7 +63,6 @@ import { DailyDisciplineAnalytics } from "@/features/discipline";
 import { PositionSizeCalculator } from "@/components/calculator/PositionSizeCalculator";
 import { MarketSessionsPage } from "@/features/market-sessions";
 import { uploadImage } from "@/lib/mediaUpload";
-import { CourseTelegramModal } from "@/components/CourseTelegramModal";
 import { NewUserOnboardingModal } from "@/components/NewUserOnboardingModal";
 import { DashboardOverviewTab } from "./dashboard/DashboardOverviewTab";
 import { DashboardRoadmapTab } from "./dashboard/DashboardRoadmapTab";
@@ -1508,18 +1506,6 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-3">
-            {hasApprovedPurchase && (
-              <Button
-                onClick={() => window.dispatchEvent(new CustomEvent("open-telegram-modal"))}
-                size="sm"
-                className="gap-1.5 text-xs font-black bg-gradient-to-r from-sky-500 to-blue-600 text-white hover:from-sky-400 hover:to-blue-500 shadow-md shadow-sky-500/20 px-2 sm:px-3 h-8 sm:h-9"
-                title={selectText({ en: "VIP Telegram Community", bn: "ভিআইপি টেলিগ্রাম গ্রুপ", ur: "وی آئی پی ٹیلیگرام کمیونٹی" })}
-              >
-                <Send size={13} className="translate-x-0.5 -translate-y-0.5" />
-                <span className="hidden sm:inline">{selectText({ en: "VIP Telegram", bn: "ভিআইপি টেলিগ্রাম", ur: "وی آئی پی ٹیلیگرام" })}</span>
-              </Button>
-            )}
-
             <Link href="/leaderboard" className="hidden sm:inline-flex">
               <Button size="sm" className="gap-1.5 text-xs font-extrabold bg-amber-500/15 text-amber-600 hover:bg-amber-500/25 dark:bg-amber-500/20 dark:text-amber-400 dark:hover:bg-amber-500/30 border border-amber-500/30 h-8 sm:h-9">
                 <Trophy size={13} className="text-amber-500 shrink-0" />
@@ -1693,7 +1679,6 @@ export default function Dashboard() {
         theme={theme}
         onToggleTheme={toggleTheme}
         onLogout={handleLogout}
-        onOpenTelegramModal={() => window.dispatchEvent(new CustomEvent("open-telegram-modal"))}
       />
 
       {/* ========================================================================= */}
@@ -2017,38 +2002,6 @@ export default function Dashboard() {
             </form>
           </div>
         </div>
-      )}
-
-      {/* Course Access Telegram Community Popup Modal */}
-      {telegramPopupData && !isTelegramModalDismissedLocally && (
-        <CourseTelegramModal
-          isOpen={true}
-          config={telegramPopupData.config}
-          lang={language}
-          onClose={() => setIsTelegramModalDismissedLocally(true)}
-          onJoin={async () => {
-            try {
-              await recordTelegramActionMutation.mutateAsync({
-                eventId: telegramPopupData.event.id,
-                action: "joined",
-              });
-            } catch (e) {
-              console.warn("[Telegram action record notice]:", e);
-            }
-            setIsTelegramModalDismissedLocally(true);
-          }}
-          onDismiss={async () => {
-            try {
-              await recordTelegramActionMutation.mutateAsync({
-                eventId: telegramPopupData.event.id,
-                action: "dismissed",
-              });
-            } catch (e) {
-              console.warn("[Telegram action dismiss notice]:", e);
-            }
-            setIsTelegramModalDismissedLocally(true);
-          }}
-        />
       )}
 
       {/* New User One-Time Onboarding Modal */}

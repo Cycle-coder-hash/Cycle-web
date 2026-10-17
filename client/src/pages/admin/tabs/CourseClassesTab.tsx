@@ -15,6 +15,7 @@ import {
   Layers,
   CheckCircle2,
   Link2,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { extractYouTubeVideoId, getYouTubeThumbnailUrl } from "@shared/mediaLinks";
@@ -29,6 +30,7 @@ interface CourseClassesTabProps {
   classes: CourseClass[];
   isLoading?: boolean;
   onOpenAddModal: () => void;
+  onOpenEditAlbumModal?: () => void;
   onOpenEditModal: (cls: CourseClass) => void;
   onTogglePublish: (cls: CourseClass) => void;
   onDeleteClass: (cls: CourseClass) => void;
@@ -43,6 +45,7 @@ export const CourseClassesTab: React.FC<CourseClassesTabProps> = ({
   classes,
   isLoading,
   onOpenAddModal,
+  onOpenEditAlbumModal,
   onOpenEditModal,
   onTogglePublish,
   onDeleteClass,
@@ -77,13 +80,26 @@ export const CourseClassesTab: React.FC<CourseClassesTabProps> = ({
           </p>
         </div>
 
-        <Button
-          onClick={onOpenAddModal}
-          className="gap-2 bg-[#0284c7] font-bold text-white hover:bg-sky-600 shadow-md self-start sm:self-auto shrink-0"
-        >
-          <Plus size={16} />
-          <span>Add New Class</span>
-        </Button>
+        <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto shrink-0">
+          {onOpenEditAlbumModal && (
+            <Button
+              onClick={onOpenEditAlbumModal}
+              variant="outline"
+              className="gap-2 border-slate-300 dark:border-slate-700 font-bold"
+            >
+              <Settings size={15} />
+              <span>Edit Album Details</span>
+            </Button>
+          )}
+
+          <Button
+            onClick={onOpenAddModal}
+            className="gap-2 bg-[#0284c7] font-bold text-white hover:bg-sky-600 shadow-md"
+          >
+            <Plus size={16} />
+            <span>Add New Class</span>
+          </Button>
+        </div>
       </div>
 
       {/* Metrics Row */}
