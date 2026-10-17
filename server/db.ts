@@ -21,7 +21,7 @@
 
 // Infrastructure & Core Database
 export { getDb } from "./infra/db/client";
-export { getSetting, setSetting } from "./infra/db/settings";
+export { getSetting, setSetting, primeUserSettingsCache } from "./infra/db/settings";
 
 // Feature Repositories
 export * from "./features/auth";

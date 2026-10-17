@@ -297,6 +297,45 @@ adminRouter.post("/support/mark-read", async (req, res) => {
   }
 });
 
+// POST /api/admin/support/delete-message
+adminRouter.post("/support/delete-message", async (req, res) => {
+  try {
+    const { conversationId, messageId } = req.body;
+    if (!conversationId || !messageId) {
+      return res.status(400).json({ success: false, error: "conversationId and messageId are required" });
+    }
+    const { getSetting, setSetting } = await import("../db");
+    const key = `support_messages_${Number(conversationId)}`;
+    const raw = await getSetting(key);
+    const msgs = raw ? JSON.parse(raw) : [];
+    const filtered = Array.isArray(msgs) ? msgs.filter((m: any) => Number(m.id) !== Number(messageId)) : [];
+    await setSetting(key, JSON.stringify(filtered));
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/admin/support/delete-conversation
+adminRouter.post("/support/delete-conversation", async (req, res) => {
+  try {
+    const { conversationId } = req.body;
+    if (!conversationId) {
+      return res.status(400).json({ success: false, error: "conversationId is required" });
+    }
+    const { getSetting, setSetting } = await import("../db");
+    const numId = Number(conversationId);
+    await setSetting(`support_messages_${numId}`, JSON.stringify([]));
+    const regRaw = await getSetting("support_conversations_registry");
+    const list = regRaw ? JSON.parse(regRaw) : [];
+    const filtered = Array.isArray(list) ? list.filter((c: any) => Number(c.id) !== numId) : [];
+    await setSetting("support_conversations_registry", JSON.stringify(filtered));
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // GET /api/admin/support/customer-context/:customerId
 adminRouter.get("/support/customer-context/:customerId", async (req, res) => {
   try {

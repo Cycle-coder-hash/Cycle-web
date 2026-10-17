@@ -569,6 +569,8 @@ export async function listUsersForManagement(filters?: {
   premiumAccess?: string;
 }): Promise<UserManagementSummary[]> {
   const usersList = await listAllUsers();
+  const { primeUserSettingsCache } = await import("../../db");
+  await primeUserSettingsCache(usersList.map((u: any) => Number(u.id)).filter((n) => !isNaN(n)));
 
   const results: UserManagementSummary[] = await Promise.all(
     usersList.map(async (u: any) => {
@@ -579,7 +581,8 @@ export async function listUsersForManagement(filters?: {
       const email = u.email || null;
       const isGoogleAuth =
         (u.loginMethod && u.loginMethod.toLowerCase().includes("google")) ||
-        (email && email.toLowerCase().endsWith("@gmail.com"));
+        (email && email.toLowerCase().endsWith("@gmail.com")) ||
+        Boolean(u.avatar && String(u.avatar).includes("googleusercontent.com"));
 
       const createdAtStr = u.createdAt ? new Date(u.createdAt).toISOString() : new Date().toISOString();
       const lastSignedInStr = u.lastSignedIn ? new Date(u.lastSignedIn).toISOString() : createdAtStr;

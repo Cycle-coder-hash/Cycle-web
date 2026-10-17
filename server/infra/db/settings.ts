@@ -53,3 +53,34 @@ export async function setSetting(key: string, value: string): Promise<boolean> {
   }
   return true;
 }
+
+export async function primeUserSettingsCache(userIds: number[]): Promise<void> {
+  if (process.env.NODE_ENV === "test" || userIds.length === 0) return;
+  try {
+    const { data } = await supabaseServer
+      .from("settings")
+      .select("key,value")
+      .or("key.like.manual_access_%,key.like.user_subscription_%,key.like.user_account_status_%");
+    if (Array.isArray(data)) {
+      for (const row of data) {
+        if (row?.key && row?.value !== undefined && row?.value !== null) {
+          inMemorySettings.set(row.key, row.value);
+        }
+      }
+    }
+    for (const uid of userIds) {
+      const candidateKeys = [
+        `manual_access_${uid}:course`,
+        `manual_access_${uid}:pro`,
+        `manual_access_${uid}:premium`,
+        `user_subscription_${uid}`,
+        `user_account_status_${uid}`,
+      ];
+      for (const k of candidateKeys) {
+        if (!inMemorySettings.has(k)) {
+          inMemorySettings.set(k, "");
+        }
+      }
+    }
+  } catch {}
+}

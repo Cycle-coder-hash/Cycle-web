@@ -25,6 +25,7 @@ export interface TraderProfileData {
   userId: number;
   openId: string;
   name: string;
+  email?: string | null;
   avatar: string | null;
   username?: string | null;
   bio?: string | null;
@@ -128,6 +129,7 @@ export async function updateUserProfile(
     userId,
     openId: resolvedOpenId,
     name: updates.name || existingProf?.name || "Trader",
+    email: existingProf?.email || null,
     avatar: updates.avatar !== undefined ? updates.avatar : (existingProf?.avatar ?? null),
     phone: updates.phone !== undefined ? updates.phone : (existingProf?.phone || null),
     language: updates.language || existingProf?.language || "en",
@@ -145,8 +147,6 @@ export async function updateUserProfile(
       if (updates.name) supaUpdate.name = updates.name;
       if (updates.phone !== undefined) supaUpdate.phone = updates.phone;
       if (updates.language) supaUpdate.language = updates.language;
-      if (updates.avatar !== undefined) supaUpdate.avatar = updates.avatar;
-      if (updates.bio !== undefined) supaUpdate.bio = updates.bio;
       await supabaseServer.from("users").update(supaUpdate).eq("openId", resolvedOpenId);
     }
   } catch (supaErr) {
@@ -199,9 +199,12 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     resolvedAvatar = user.avatar !== undefined ? user.avatar : (existingProf?.avatar || existingUser?.avatar || null);
   }
 
+  const resolvedEmail = user.email || existingProf?.email || existingUser?.email || null;
+
   const userRecord = {
     id: numericId,
     ...user,
+    email: resolvedEmail,
     name: resolvedName,
     avatar: resolvedAvatar,
     username: existingProf?.username || (existingUser as any)?.username || null,
@@ -222,6 +225,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     userId: numericId,
     openId: user.openId,
     name: resolvedName,
+    email: resolvedEmail,
     avatar: resolvedAvatar,
     username: userRecord.username,
     bio: userRecord.bio,
@@ -233,25 +237,27 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     updatedAt: new Date().toISOString(),
   });
 
-  try {
-    const { data: supaUser } = await supabaseServer.from("users").upsert({
-      openId: user.openId,
-      name: resolvedName,
-      avatar: resolvedAvatar,
-      email: user.email || null,
-      phone: user.phone || null,
-      passwordHash: user.passwordHash || null,
-      role: userRecord.role,
-      language: userRecord.language,
-      lastSignedIn: new Date().toISOString(),
-    }, { onConflict: "openId" }).select("id").maybeSingle();
+  if (process.env.NODE_ENV !== "test") {
+    try {
+      const { data: supaUser } = await supabaseServer.from("users").upsert({
+        openId: user.openId,
+        name: resolvedName,
+        email: resolvedEmail,
+        phone: user.phone || null,
+        passwordHash: user.passwordHash || null,
+        loginMethod: user.loginMethod || "google",
+        role: userRecord.role,
+        language: userRecord.language,
+        lastSignedIn: new Date().toISOString(),
+      }, { onConflict: "openId" }).select("id").maybeSingle();
 
-    if (supaUser?.id) {
-      userRecord.id = supaUser.id;
-      inMemoryUsers.set(user.openId, userRecord);
+      if (supaUser?.id) {
+        userRecord.id = supaUser.id;
+        inMemoryUsers.set(user.openId, userRecord);
+      }
+    } catch (supaErr) {
+      console.warn("[upsertUser Supabase error]:", supaErr);
     }
-  } catch (supaErr) {
-    console.warn("[upsertUser Supabase error]:", supaErr);
   }
 
   const db = await getDb();
@@ -659,17 +665,51 @@ export async function updateUserPassword(email: string, passwordHash: string): P
   }
 }
 
+function isAutomatedTestUserRecord(u: { openId?: string | null; email?: string | null }): boolean {
+  const email = (u.email || "").toLowerCase();
+  const openId = u.openId || "";
+  if (email.endsWith("@test.com") || email.endsWith("@example.com") || email.endsWith("@admin.com")) {
+    return true;
+  }
+  if (
+    openId.startsWith("usr_1790") ||
+    openId.startsWith("usr_settings_") ||
+    openId.startsWith("usr_another_") ||
+    openId.startsWith("test_")
+  ) {
+    return true;
+  }
+  return false;
+}
+
 export async function listAllUsers() {
   initInstitutionalSeedData();
 
-  // 1. Sync any users from Supabase users table (bypassed in test environment for instant execution)
+  // 1. Batch-warm trader_profile_* and users from Supabase in parallel (bypassed in test environment)
   if (process.env.NODE_ENV !== "test") {
     try {
-      const { data: supaUsers } = await supabaseServer.from("users").select("*");
+      const [{ data: profRows }, { data: supaUsers }] = await Promise.all([
+        supabaseServer.from("settings").select("key,value").like("key", "trader_profile_%"),
+        supabaseServer.from("users").select("*"),
+      ]);
+
+      if (Array.isArray(profRows)) {
+        for (const row of profRows) {
+          if (row?.key && row?.value) {
+            try {
+              const parsed = typeof row.value === "string" ? JSON.parse(row.value) : row.value;
+              inMemoryTraderProfiles.set(row.key, parsed);
+            } catch {}
+          }
+        }
+      }
+
       if (supaUsers && supaUsers.length > 0) {
         for (const su of supaUsers) {
-          if (su.openId) {
-            const prof = await getTraderProfile(su.openId);
+          if (su.openId && !isAutomatedTestUserRecord(su)) {
+            const prof =
+              inMemoryTraderProfiles.get(`trader_profile_${su.openId}`) ||
+              (su.id ? inMemoryTraderProfiles.get(`trader_profile_${su.id}`) : null);
             const existing = inMemoryUsers.get(su.openId);
             if (existing) {
               if (prof?.name) existing.name = prof.name;
@@ -679,12 +719,12 @@ export async function listAllUsers() {
                 id: su.id || deriveNumericIdFromOpenId(su.openId),
                 openId: su.openId,
                 name: prof?.name || su.name || "Trader",
-                email: su.email || null,
+                email: su.email || prof?.email || null,
                 phone: su.phone || null,
                 avatar: prof?.avatar || null,
                 role: su.role || "user",
                 language: su.language || "en",
-                loginMethod: "supabase",
+                loginMethod: su.loginMethod || "supabase",
                 createdAt: su.createdAt ? new Date(su.createdAt) : new Date(),
                 updatedAt: su.updatedAt ? new Date(su.updatedAt) : new Date(),
                 lastSignedIn: su.lastSignedIn ? new Date(su.lastSignedIn) : new Date(),
@@ -706,22 +746,23 @@ export async function listAllUsers() {
       for (const oid of regOpenIds) {
         if (oid) {
           const prof = await getTraderProfile(oid);
-          if (prof) {
+          if (prof && (process.env.NODE_ENV === "test" || !isAutomatedTestUserRecord({ openId: oid, email: prof.email }))) {
             const existing = inMemoryUsers.get(oid);
             if (existing) {
               if (prof.name) existing.name = prof.name;
               if (prof.avatar !== undefined) existing.avatar = prof.avatar;
+              if (!existing.email && prof.email) existing.email = prof.email;
             } else {
               inMemoryUsers.set(oid, {
                 id: prof.userId || deriveNumericIdFromOpenId(oid),
                 openId: oid,
                 name: prof.name || "Trader",
-                email: null,
+                email: prof.email || null,
                 phone: prof.phone || null,
                 avatar: prof.avatar || null,
                 role: prof.role || "user",
                 language: prof.language || "en",
-                loginMethod: "supabase",
+                loginMethod: "google",
                 createdAt: new Date(),
                 updatedAt: new Date(),
                 lastSignedIn: new Date(),
@@ -750,7 +791,9 @@ export async function listAllUsers() {
     }
   }
 
-  const allUsersList = Array.from(inMemoryUsers.values());
+  const allUsersList = Array.from(inMemoryUsers.values()).filter((u) =>
+    process.env.NODE_ENV === "test" ? true : !isAutomatedTestUserRecord(u)
+  );
   for (const u of allUsersList) {
     try {
       const prof = (u.openId ? await getTraderProfile(u.openId) : null) || (u.id ? await getTraderProfile(u.id) : null);
@@ -758,6 +801,7 @@ export async function listAllUsers() {
       if (prof?.avatar !== undefined) u.avatar = prof.avatar;
       if (prof?.username) (u as any).username = prof.username;
       if (prof?.bio !== undefined) (u as any).bio = prof.bio;
+      if (!u.email && prof?.email) u.email = prof.email;
     } catch {}
   }
 
