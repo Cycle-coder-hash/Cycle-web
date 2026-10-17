@@ -257,7 +257,7 @@ export const StudentsTab: React.FC<StudentsTabProps> = ({
           >
             <option value="all">All Plans</option>
             <option value="pro">Pro Plan (৳599 / $5)</option>
-            <option value="premium">Premium Plan (৳999 / $10)</option>
+            <option value="premium">Premium Plan (৳1199 / $9.99)</option>
             <option value="free_trial">30-Day Free Trial</option>
             <option value="free_after_trial">Free-After-Trial</option>
           </select>

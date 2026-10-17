@@ -63,7 +63,7 @@ export const DEFAULT_PRICING_FORM: PricingFormState = {
   subscriptions: {
     freeTrial: { priceBdt: "0", priceUsd: "0", billingPeriod: "30 days" },
     pro: { priceBdt: "599", priceUsd: "4.99", billingPeriod: "month" },
-    premium: { priceBdt: "999", priceUsd: "9.99", billingPeriod: "month" },
+    premium: { priceBdt: "1199", priceUsd: "9.99", billingPeriod: "month" },
   },
 };
 
@@ -819,7 +819,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       <span className="text-[10px] bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded font-black">ALL ACCESS</span>
                     </div>
                     <span className="rounded-md bg-emerald-500/20 px-2 py-0.5 text-[11px] font-mono font-bold text-emerald-700 dark:text-emerald-300">
-                      Live Card: ৳{paymentConfig.pricing?.subscriptions?.premium?.priceBdt ?? "999"} / ${paymentConfig.pricing?.subscriptions?.premium?.priceUsd ?? "9.99"} per {paymentConfig.pricing?.subscriptions?.premium?.billingPeriod ?? "month"}
+                      Live Card: ৳{paymentConfig.pricing?.subscriptions?.premium?.priceBdt ?? "1199"} / ${paymentConfig.pricing?.subscriptions?.premium?.priceUsd ?? "9.99"} per {paymentConfig.pricing?.subscriptions?.premium?.billingPeriod ?? "month"}
                     </span>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -829,7 +829,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       </label>
                       <input
                         type="text"
-                        value={paymentConfig.pricing?.subscriptions?.premium?.priceBdt ?? "999"}
+                        value={paymentConfig.pricing?.subscriptions?.premium?.priceBdt ?? "1199"}
                         onChange={(e) => updateSubscriptionPricing("premium", "priceBdt", e.target.value)}
                         className="w-full rounded-xl border border-slate-200 bg-white p-2.5 font-mono text-xs font-bold text-slate-900 outline-none focus:border-sky-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
                       />
@@ -918,7 +918,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               </div>
               <div className="flex justify-between items-center py-1">
                 <span className="text-slate-600 dark:text-slate-400 text-[11px]">Premium Plan</span>
-                <span className="font-bold font-mono text-emerald-600 dark:text-emerald-400">৳{paymentConfig.pricing?.subscriptions?.premium?.priceBdt ?? "999"} / ${paymentConfig.pricing?.subscriptions?.premium?.priceUsd ?? "9.99"}/mo</span>
+                <span className="font-bold font-mono text-emerald-600 dark:text-emerald-400">৳{paymentConfig.pricing?.subscriptions?.premium?.priceBdt ?? "1199"} / ${paymentConfig.pricing?.subscriptions?.premium?.priceUsd ?? "9.99"}/mo</span>
               </div>
             </div>
           </div>

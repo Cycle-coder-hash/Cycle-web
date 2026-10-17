@@ -59,7 +59,7 @@ export const DEFAULT_PRICING_CONFIG: PricingConfig = {
   subscriptions: {
     freeTrial: { priceBdt: "0", priceUsd: "0", billingPeriod: "30 days" },
     pro: { priceBdt: "599", priceUsd: "4.99", billingPeriod: "month" },
-    premium: { priceBdt: "999", priceUsd: "9.99", billingPeriod: "month" },
+    premium: { priceBdt: "1199", priceUsd: "9.99", billingPeriod: "month" },
   },
 };
 
@@ -68,6 +68,9 @@ export async function getPricingConfig(): Promise<PricingConfig> {
     const raw = await getSetting("pricing_config");
     if (raw) {
       const parsed = JSON.parse(raw);
+      if (parsed?.subscriptions?.premium?.priceBdt === "999") {
+        parsed.subscriptions.premium.priceBdt = "1199";
+      }
       return {
         courses: {
           freeEbook: { ...DEFAULT_PRICING_CONFIG.courses.freeEbook, ...(parsed?.courses?.freeEbook || {}) },
@@ -259,6 +262,20 @@ export async function listBundles() {
               originalPrice: pricing.courses.proBlueprint.originalPriceBdt || "5550",
             };
           }
+          if (b.id === 101 || b.slug === "pro-plan") {
+            return {
+              ...b,
+              price: pricing.subscriptions.pro.priceBdt,
+              priceUsd: pricing.subscriptions.pro.priceUsd,
+            };
+          }
+          if (b.id === 102 || b.slug === "premium-plan") {
+            return {
+              ...b,
+              price: pricing.subscriptions.premium.priceBdt,
+              priceUsd: pricing.subscriptions.premium.priceUsd,
+            };
+          }
           return b;
         });
       }
@@ -303,6 +320,30 @@ export async function listBundles() {
       includesPdfPackage: true,
       includesEbook: true,
       includesCourse: true,
+    },
+    {
+      id: 101,
+      slug: "pro-plan",
+      titleEn: "CYCLE OF CHART \u2014 PRO PLAN (MONTHLY)",
+      titleBn: "CYCLE OF CHART \u2014 PRO PLAN (MONTHLY)",
+      price: pricing.subscriptions.pro.priceBdt,
+      priceUsd: pricing.subscriptions.pro.priceUsd,
+      currency: "BDT",
+      includesPdfPackage: false,
+      includesEbook: false,
+      includesCourse: false,
+    },
+    {
+      id: 102,
+      slug: "premium-plan",
+      titleEn: "CYCLE OF CHART \u2014 PREMIUM PLAN (MONTHLY)",
+      titleBn: "CYCLE OF CHART \u2014 PREMIUM PLAN (MONTHLY)",
+      price: pricing.subscriptions.premium.priceBdt,
+      priceUsd: pricing.subscriptions.premium.priceUsd,
+      currency: "BDT",
+      includesPdfPackage: false,
+      includesEbook: false,
+      includesCourse: false,
     },
   ];
 }

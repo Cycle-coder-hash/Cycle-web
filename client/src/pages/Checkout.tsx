@@ -76,11 +76,11 @@ export default function Checkout() {
   });
 
   const baseBundles = [
-    { id: 101, titleEn: "CYCLE OF CHART — PRO PLAN (MONTHLY)", descriptionEn: "Unlimited trades · 5 books · 30 videos · Workout · Community", price: "599", priceUsd: "4.99" },
-    { id: 102, titleEn: "CYCLE OF CHART — PREMIUM PLAN (MONTHLY)", descriptionEn: "Unlimited institutional access · Mentor support · Owner chat · Leaderboard", price: "999", priceUsd: "9.99" },
+    { id: 101, titleEn: "CYCLE OF CHART — PRO PLAN (MONTHLY)", descriptionEn: "Unlimited trades · 5 books · 30 videos · Workout · Community", price: settings?.pricing?.subscriptions?.pro?.priceBdt || "599", priceUsd: settings?.pricing?.subscriptions?.pro?.priceUsd || "4.99" },
+    { id: 102, titleEn: "CYCLE OF CHART — PREMIUM PLAN (MONTHLY)", descriptionEn: "Unlimited institutional access · Mentor support · Owner chat · Leaderboard", price: settings?.pricing?.subscriptions?.premium?.priceBdt || "1199", priceUsd: settings?.pricing?.subscriptions?.premium?.priceUsd || "9.99" },
     { id: 1, titleEn: "Free eBook Package", descriptionEn: "15 PDFs · fixed package price", price: "00", priceUsd: "0" },
-    { id: 2, titleEn: "CYCLE OF CHART BASIC TO ADVANCE COURSE", descriptionEn: "Structured course · eBook included", price: "2499", priceUsd: "19.99" },
-    { id: 4, titleEn: "CYCLE OF CHART — PROFESSIONAL TRADING BLUEPRINT", descriptionEn: "Complete A–Z Trading Blueprint", originalPrice: "5550", price: "4999", priceUsd: "39.99" },
+    { id: 2, titleEn: "CYCLE OF CHART BASIC TO ADVANCE COURSE", descriptionEn: "Structured course · eBook included", price: settings?.pricing?.courses?.basicToAdvance?.priceBdt || "2499", priceUsd: settings?.pricing?.courses?.basicToAdvance?.priceUsd || "19.99" },
+    { id: 4, titleEn: "CYCLE OF CHART — PROFESSIONAL TRADING BLUEPRINT", descriptionEn: "Complete A–Z Trading Blueprint", originalPrice: settings?.pricing?.courses?.proBlueprint?.originalPriceBdt || "5550", price: settings?.pricing?.courses?.proBlueprint?.priceBdt || "4999", priceUsd: settings?.pricing?.courses?.proBlueprint?.priceUsd || "39.99" },
   ];
   const bundlesList = baseBundles.map((b) => {
     const match = bundles?.find((apiB: any) => apiB.id === b.id);
@@ -90,7 +90,7 @@ export default function Checkout() {
   });
 
   const chosen = bundlesList.find((b: any) => b.id === selected);
-  const price = chosen?.price || (selected === 1 ? "00" : selected === 101 ? "599" : selected === 102 ? "999" : selected === 2 ? "2499" : "4999");
+  const price = chosen?.price || (selected === 1 ? "00" : selected === 101 ? (settings?.pricing?.subscriptions?.pro?.priceBdt || "599") : selected === 102 ? (settings?.pricing?.subscriptions?.premium?.priceBdt || "1199") : selected === 2 ? (settings?.pricing?.courses?.basicToAdvance?.priceBdt || "2499") : (settings?.pricing?.courses?.proBlueprint?.priceBdt || "4999"));
   const isFree = Number(price) === 0 || price === "00" || price === "0" || selected === 1;
   const isAlreadyClaimed = Boolean(
     isFree && entitlements?.some((e: any) => e.bundleId === selected || e.scope === `bundle:${selected}`)

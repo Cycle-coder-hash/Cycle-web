@@ -265,9 +265,9 @@ export function UpgradeModal({
                   </span>
                 </div>
                 <div className="text-2xl font-black text-white flex items-baseline gap-1.5 flex-wrap">
-                  <span>{formatPrice({ bdt: 999, usd: 10 })}</span>
+                  <span>{formatPrice({ bdt: 1199, usd: 9.99 })}</span>
                   {currency !== "USD" && (
-                    <span className="text-lg font-bold text-amber-400">/ $10</span>
+                    <span className="text-lg font-bold text-amber-400">/ $9.99</span>
                   )}
                   <span className="text-xs text-gray-400 font-normal"> / month</span>
                 </div>
@@ -287,7 +287,7 @@ export function UpgradeModal({
                   window.location.href = "/checkout?plan=premium";
                 }}
               >
-                Get Premium — {formatPrice({ bdt: 999, usd: 10 })}{currency !== "USD" ? " / $10" : ""}/mo
+                Get Premium — {formatPrice({ bdt: 1199, usd: 9.99 })}{currency !== "USD" ? " / $9.99" : ""}/mo
               </Button>
             </div>
           </div>

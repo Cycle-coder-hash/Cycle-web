@@ -30,6 +30,8 @@ exports[`contract: /api/admin REST routes > exposes the frozen set of admin REST
   "POST /owner-profile",
   "POST /payment-settings",
   "POST /reject-order",
+  "POST /support/delete-conversation",
+  "POST /support/delete-message",
   "POST /support/mark-read",
   "POST /support/reply",
   "POST /update-role",

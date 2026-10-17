@@ -47,6 +47,24 @@ interface BrainMeshData {
   vis: Float32Array;
 }
 
+interface ProMesh {
+  ppts: BrainPoint[];
+  pedges: BrainEdge[];
+  padj: number[][];
+  pvis: Float32Array;
+  flash: Float32Array;
+  px: Float32Array;
+  py: Float32Array;
+  pd: Float32Array;
+}
+
+interface StrandPoint {
+  x: number;
+  y: number;
+  bx: number;
+  by: number;
+}
+
 interface BrainTransform {
   x: number;
   y: number;
@@ -69,6 +87,7 @@ interface Pulse {
 }
 
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 /* ========================================================================= */
 /* DETERMINISTIC BRAIN MESH GENERATOR (reused by both brains)                */
@@ -110,46 +129,34 @@ function quad(
   return a;
 }
 
-let cachedMesh: BrainMeshData | null = null;
+const BRAIN_SHAPES_ELL = [
+  [190, 115, 150, 88],
+  [100, 140, 62, 55],
+  [175, 178, 80, 30],
+  [285, 192, 50, 30],
+];
 
-function getBrainMesh(): BrainMeshData {
-  if (cachedMesh) return cachedMesh;
-  if (typeof document === 'undefined') {
-    return { pts: [], edges: [], vis: new Float32Array(0) };
-  }
+const BRAIN_FISS = quad([95, 168], [170, 138], [262, 152], 30, 5).concat(
+  quad([205, 28], [222, 78], [188, 142], 20, 3.6)
+);
 
-  const canvas = document.createElement('canvas');
-  const g = canvas.getContext('2d');
-  if (!g) return { pts: [], edges: [], vis: new Float32Array(0) };
-
-  const shapes = [
-    ell(190, 115, 150, 88),
-    ell(100, 140, 62, 55),
-    ell(175, 178, 80, 30),
-    ell(285, 192, 50, 30),
-  ];
-  const stem = new Path2D();
-  stem.moveTo(232, 195);
-  stem.lineTo(264, 195);
-  stem.lineTo(274, 276);
-  stem.lineTo(247, 282);
-  stem.closePath();
-  shapes.push(stem);
-
+function buildProMesh(
+  g: CanvasRenderingContext2D,
+  shapes: Path2D[],
+  pmin: number,
+  maxN: number,
+  edgeDist: number
+): ProMesh {
   function inside(x: number, y: number) {
     for (let i = 0; i < shapes.length; i++) {
-      if (g!.isPointInPath(shapes[i], x, y)) return true;
+      if (g.isPointInPath(shapes[i], x, y)) return true;
     }
     return false;
   }
 
-  const fiss = quad([95, 168], [170, 138], [262, 152], 30, 5).concat(
-    quad([205, 28], [222, 78], [188, 142], 20, 3.6)
-  );
-
   function nearFiss(x: number, y: number) {
-    for (let i = 0; i < fiss.length; i++) {
-      const f = fiss[i];
+    for (let i = 0; i < BRAIN_FISS.length; i++) {
+      const f = BRAIN_FISS[i];
       const dx = x - f[0];
       const dy = y - f[1];
       if (dx * dx + dy * dy < f[2] * f[2]) return true;
@@ -159,9 +166,8 @@ function getBrainMesh(): BrainMeshData {
 
   const rnd = mulberry(11);
   const pts: BrainPoint[] = [];
-  const MIN = 12;
 
-  for (let k = 0; k < 9000 && pts.length < 340; k++) {
+  for (let k = 0; k < 9000 && pts.length < maxN; k++) {
     const x = 40 + rnd() * 300;
     const y = 26 + rnd() * 260;
     if (!inside(x, y) || nearFiss(x, y)) continue;
@@ -169,7 +175,7 @@ function getBrainMesh(): BrainMeshData {
     for (let q = 0; q < pts.length; q++) {
       const dx = pts[q].x - x;
       const dy = pts[q].y - y;
-      if (dx * dx + dy * dy < MIN * MIN) {
+      if (dx * dx + dy * dy < pmin * pmin) {
         ok = false;
         break;
       }
@@ -211,7 +217,7 @@ function getBrainMesh(): BrainMeshData {
       const dx = pts[i].x - pts[j].x;
       const dy = pts[i].y - pts[j].y;
       if (
-        dx * dx + dy * dy < 22 * 22 &&
+        dx * dx + dy * dy < edgeDist * edgeDist &&
         !nearFiss((pts[i].x + pts[j].x) / 2, (pts[i].y + pts[j].y) / 2)
       ) {
         edges.push({
@@ -224,9 +230,76 @@ function getBrainMesh(): BrainMeshData {
     }
   }
 
-  const vis = new Float32Array(pts.length);
-  cachedMesh = { pts, edges, vis };
-  return cachedMesh;
+  const padj: number[][] = pts.map(() => []);
+  edges.forEach((e, i) => {
+    padj[e.a].push(i);
+    padj[e.b].push(i);
+  });
+
+  const n = pts.length;
+  return {
+    ppts: pts,
+    pedges: edges,
+    padj,
+    pvis: new Float32Array(n),
+    flash: new Float32Array(n),
+    px: new Float32Array(n),
+    py: new Float32Array(n),
+    pd: new Float32Array(n),
+  };
+}
+
+let cachedMesh: BrainMeshData | null = null;
+let cachedProMeshes: { full: ProMesh; lite: ProMesh } | null = null;
+
+function ensureBrainMeshes(): { beginner: BrainMeshData; full: ProMesh; lite: ProMesh } {
+  if (cachedMesh && cachedProMeshes) {
+    return { beginner: cachedMesh, full: cachedProMeshes.full, lite: cachedProMeshes.lite };
+  }
+  const emptyPro: ProMesh = {
+    ppts: [],
+    pedges: [],
+    padj: [],
+    pvis: new Float32Array(0),
+    flash: new Float32Array(0),
+    px: new Float32Array(0),
+    py: new Float32Array(0),
+    pd: new Float32Array(0),
+  };
+  if (typeof document === 'undefined') {
+    return {
+      beginner: { pts: [], edges: [], vis: new Float32Array(0) },
+      full: emptyPro,
+      lite: emptyPro,
+    };
+  }
+
+  const canvas = document.createElement('canvas');
+  const g = canvas.getContext('2d');
+  if (!g) {
+    return {
+      beginner: { pts: [], edges: [], vis: new Float32Array(0) },
+      full: emptyPro,
+      lite: emptyPro,
+    };
+  }
+
+  const shapes = BRAIN_SHAPES_ELL.map((e) => ell(e[0], e[1], e[2], e[3]));
+  const stem = new Path2D();
+  stem.moveTo(232, 195);
+  stem.lineTo(264, 195);
+  stem.lineTo(274, 276);
+  stem.lineTo(247, 282);
+  stem.closePath();
+  shapes.push(stem);
+
+  const full = buildProMesh(g, shapes, 12, 340, 22);
+  const lite = buildProMesh(g, shapes, 30, 85, 51);
+
+  cachedProMeshes = { full, lite };
+  cachedMesh = { pts: full.ppts, edges: full.pedges, vis: full.pvis };
+
+  return { beginner: cachedMesh, full, lite };
 }
 
 /* ========================================================================= */
@@ -328,6 +401,21 @@ function strokePart(
   ctx.stroke();
 }
 
+function smooth(t: number) {
+  t = clamp(t, 0, 1);
+  return t * t * (3 - 2 * t);
+}
+
+function pickEven<T>(list: T[], n: number): T[] {
+  const out: T[] = [];
+  if (!list.length) return out;
+  for (let k = 0; k < n; k++) {
+    const idx = clamp(Math.round(((k + 0.5) / n) * list.length - 0.5), 0, list.length - 1);
+    out.push(list[idx]);
+  }
+  return out;
+}
+
 /* ========================================================================= */
 /* MAIN COMPONENT: TraderBrainEvolutionSection                               */
 /* ========================================================================= */
@@ -342,6 +430,7 @@ export const TraderBrainEvolutionSection: React.FC = () => {
   const lbRef = useRef<HTMLDivElement>(null);
   const lpRef = useRef<HTMLDivElement>(null);
   const bpmRef = useRef<HTMLDivElement>(null);
+  const proHitRef = useRef<HTMLDivElement>(null);
 
   // Translations
   const beginnerLabel = t('brainEvolution.beginner', 'BEGINNER');
@@ -388,21 +477,36 @@ export const TraderBrainEvolutionSection: React.FC = () => {
     const ctx = cv.getContext('2d');
     if (!ctx) return;
 
-    const mesh = getBrainMesh();
-    const ppts = mesh.pts;
-    const pedges = mesh.edges;
-    const padj: number[][] = ppts.map(() => []);
-    pedges.forEach((e, i) => {
-      padj[e.a].push(i);
-      padj[e.b].push(i);
-    });
+    const { beginner: mesh, full: PRO_FULL, lite: PRO_LITE } = ensureBrainMeshes();
+    const pts = mesh.pts;
 
-    const flash = new Float32Array(ppts.length);
-    const px = new Float32Array(ppts.length);
-    const py = new Float32Array(ppts.length);
-    const pd = new Float32Array(ppts.length);
-    const pvis = new Float32Array(ppts.length);
-    const pulses: Pulse[] = [];
+    let curMesh: ProMesh | null = null;
+    let ppts: BrainPoint[] = [];
+    let pedges: BrainEdge[] = [];
+    let padj: number[][] = [];
+    let pvis: Float32Array = new Float32Array(0);
+    let flash: Float32Array = new Float32Array(0);
+    let px: Float32Array = new Float32Array(0);
+    let py: Float32Array = new Float32Array(0);
+    let pd: Float32Array = new Float32Array(0);
+    let pulses: Pulse[] = [];
+    let endIdx: number[] = [];
+
+    function useMesh(m: ProMesh) {
+      if (m === curMesh) return;
+      curMesh = m;
+      ppts = m.ppts;
+      pedges = m.pedges;
+      padj = m.padj;
+      pvis = m.pvis;
+      flash = m.flash;
+      px = m.px;
+      py = m.py;
+      pd = m.pd;
+      pulses = [];
+    }
+
+    useMesh(PRO_FULL);
 
     const SEG = 26;
     const th: number[] = [];
@@ -416,12 +520,29 @@ export const TraderBrainEvolutionSection: React.FC = () => {
     let cum: number[] = [];
     let total = 1;
     let cf: number[] = [];
-    let strands: { x: number; y: number }[][] = [];
+    let strands: StrandPoint[][] = [];
     let parts: Particle[] = [];
     let brainB: BrainTransform = { x: 0, y: 0, s: 1 };
     let brainP: BrainTransform = { x: 0, y: 0, s: 1 };
     let cw = 120;
     let ch = 68;
+    let m = 16;
+    let t1 = 1;
+    let proCenterX = 0;
+    let G = 58;
+
+    let isHovered = false;
+    let isToggled = false;
+    const oeRef = { current: 0 };
+
+    const clampLabelX = (el: HTMLElement | null, targetX: number) => {
+      if (!el) return targetX;
+      const halfW = (el.offsetWidth || 0) / 2;
+      if (halfW <= 0) return targetX;
+      const minX = m + halfW;
+      const maxX = W - m - halfW;
+      return minX <= maxX ? clamp(targetX, minX, maxX) : W / 2;
+    };
 
     const reduce =
       typeof window !== 'undefined' &&
@@ -431,7 +552,7 @@ export const TraderBrainEvolutionSection: React.FC = () => {
     function spawnPulse() {
       for (let tries = 0; tries < 14; tries++) {
         const i = (Math.random() * ppts.length) | 0;
-        if (pvis[i] < 0.85 || !padj[i].length) continue;
+        if (pvis[i] < 0.85 || !padj[i]?.length) continue;
         const ei = padj[i][(Math.random() * padj[i].length) | 0];
         const e = pedges[ei];
         if (Math.min(pvis[e.a], pvis[e.b]) < 0.85) continue;
@@ -446,14 +567,82 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       }
     }
 
+    function attachStrands(ns: number) {
+      const E = SEG;
+      const bs = brainB.s;
+      let maxx = 0;
+      let w1 = 60;
+      let cand: BrainPoint[] = [];
+      pts.forEach((p) => {
+        if (p.keep && p.x > maxx) maxx = p.x;
+      });
+      do {
+        cand = pts.filter((p) => p.keep && p.x > maxx - w1).sort((a, b) => a.y - b.y);
+        w1 += 30;
+      } while (cand.length < ns && w1 < 300);
+
+      const st = pickEven(cand, ns).map((p) => ({
+        x: brainB.x + (brainB.flipX ? 400 - p.x : p.x) * bs,
+        y: brainB.y + p.y * bs,
+      }));
+
+      for (let k = 0; k < ns; k++) {
+        const arr = strands[k];
+        if (!arr || !st[k]) continue;
+        const dx = st[k].x - arr[0].bx;
+        const dy = st[k].y - arr[0].by;
+        for (let i = 0; i < E; i++) {
+          const w = 1 - smooth(i / E);
+          arr[i].x = arr[i].bx + dx * w;
+          arr[i].y = arr[i].by + dy * w;
+        }
+      }
+
+      let minx = 1e9;
+      let w2 = 45;
+      let ci: number[] = [];
+      ppts.forEach((p) => {
+        if (p.x < minx) minx = p.x;
+      });
+      do {
+        ci = [];
+        ppts.forEach((p, i) => {
+          if (p.x <= minx + w2) ci.push(i);
+        });
+        w2 += 25;
+      } while (ci.length < ns && w2 < 300);
+
+      ci.sort((a, b) => ppts[a].y - ppts[b].y);
+      endIdx = pickEven(ci, ns);
+    }
+
+    function updateStrandEnds() {
+      const E = SEG;
+      for (let k = 0; k < strands.length; k++) {
+        const arr = strands[k];
+        const e = endIdx[k];
+        if (e === undefined) continue;
+        const dx = px[e] - arr[N - 1].bx;
+        const dy = py[e] - arr[N - 1].by;
+        for (let i = N - E; i < N; i++) {
+          const w = smooth((i - (N - E)) / (E - 1));
+          arr[i].x = arr[i].bx + dx * w;
+          arr[i].y = arr[i].by + dy * w;
+        }
+      }
+    }
+
     function drawPro(
       b: BrainTransform,
       bp: number,
       t: number,
-      dt: number
+      dt: number,
+      oe: number,
+      gapG: number
     ) {
       if (!ctx) return;
       const s = b.s;
+      const lite = s * 400 < 140;
       let i: number;
       for (i = 0; i < ppts.length; i++) {
         pvis[i] = clamp((bp * 1.3 - ppts[i].ord) / 0.3, 0, 1);
@@ -473,7 +662,10 @@ export const TraderBrainEvolutionSection: React.FC = () => {
         const xr = dx * ca + pz * sa;
         const f = 1 / (1 - zr / 520);
         px[i] = b.x + (190 + xr * f) * s;
-        py[i] = b.y + (150 + (p.y - 150) * f + bob) * s;
+        py[i] =
+          b.y +
+          (150 + (p.y - 150) * f + bob) * s +
+          (p.top ? -0.65 : 0.35) * gapG * oe;
         pd[i] = clamp(0.5 + zr / 170, 0, 1);
         flash[i] = Math.max(0, flash[i] - dt * 2.2);
       }
@@ -482,18 +674,35 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       const gx = b.x + 190 * s;
       const gy = b.y + 140 * s;
       const gr = ctx.createRadialGradient(gx, gy, 10 * s, gx, gy, 230 * s);
-      gr.addColorStop(0, 'rgba(40,226,220,' + (0.07 + 0.07 * bp).toFixed(3) + ')');
+      gr.addColorStop(
+        0,
+        'rgba(40,226,220,' + (lite ? 0.05 + 0.05 * bp : 0.07 + 0.07 * bp).toFixed(3) + ')'
+      );
       gr.addColorStop(1, 'rgba(34,211,238,0)');
       ctx.fillStyle = gr;
       ctx.fillRect(b.x - 60 * s, b.y - 60 * s, 520 * s, 420 * s);
 
-      ctx.lineWidth = 1.15;
+      if (oe > 0.01) {
+        const ocy = b.y + 150 * s - 0.15 * gapG * oe;
+        const g2 = ctx.createRadialGradient(gx, ocy, 4, gx, ocy, 170 * s);
+        g2.addColorStop(0, 'rgba(34,211,238,' + (0.16 * oe).toFixed(3) + ')');
+        g2.addColorStop(1, 'rgba(34,211,238,0)');
+        ctx.fillStyle = g2;
+        ctx.fillRect(gx - 200 * s, ocy - 130 * s, 400 * s, 260 * s);
+      }
+
+      ctx.lineWidth = lite ? 0.75 : 1.15;
       for (i = 0; i < pedges.length; i++) {
         const e = pedges[i];
         const a = Math.min(pvis[e.a], pvis[e.b]);
         const d = (pd[e.a] + pd[e.b]) / 2;
         const pulse = 0.8 + 0.2 * Math.sin(t * 1.6 - (ppts[e.a].x + ppts[e.b].x) * 0.015);
-        const al = (0.045 + 0.8 * a * pulse) * (0.45 + 0.55 * d);
+        const crossSplit = ppts[e.a].top !== ppts[e.b].top;
+        const al =
+          (0.045 + 0.8 * a * pulse) *
+          (0.45 + 0.55 * d) *
+          (1 - 0.5 * oe) *
+          (crossSplit ? 1 - oe : 1);
         ctx.strokeStyle =
           a > 0.02 ? 'rgba(40,226,220,' + al.toFixed(3) + ')' : 'rgba(60,110,170,.06)';
         ctx.beginPath();
@@ -502,8 +711,8 @@ export const TraderBrainEvolutionSection: React.FC = () => {
         ctx.stroke();
       }
 
-      const r = Math.max(1.8, 2.7 * s);
-      ctx.globalAlpha = 1;
+      const r = lite ? Math.max(0.8, 2.4 * s) : Math.max(1.8, 2.7 * s);
+      ctx.globalAlpha = 1 - 0.5 * oe;
       for (i = 0; i < ppts.length; i++) {
         const av = pvis[i];
         const pl = 0.8 + 0.2 * Math.sin(t * 1.6 - ppts[i].x * 0.03);
@@ -522,18 +731,27 @@ export const TraderBrainEvolutionSection: React.FC = () => {
           ? 'rgba(210,250,255,' + (0.9 * av).toFixed(3) + ')'
           : 'rgba(100,245,232,' + ((0.55 + 0.4 * pd[i]) * pl).toFixed(3) + ')';
         ctx.beginPath();
-        ctx.arc(X, Y, edge ? rr * 1.9 : rr, 0, 6.283);
+        ctx.arc(X, Y, edge ? rr * (lite ? 1.5 : 1.9) : rr, 0, 6.283);
         ctx.fill();
 
-        ctx.fillStyle = 'rgba(40,226,220,' + (0.14 * av * pl * (0.5 + 0.5 * pd[i])).toFixed(3) + ')';
+        ctx.fillStyle =
+          'rgba(40,226,220,' +
+          ((lite ? 0.09 : 0.14) * av * pl * (0.5 + 0.5 * pd[i])).toFixed(3) +
+          ')';
         ctx.beginPath();
-        ctx.arc(X, Y, rr * (edge ? 5.2 : 3.4), 0, 6.283);
+        ctx.arc(X, Y, rr * (lite ? (edge ? 3 : 2.2) : (edge ? 5.2 : 3.4)), 0, 6.283);
         ctx.fill();
 
         if (flash[i] > 0.02) {
           ctx.fillStyle = 'rgba(190,250,255,' + (0.2 * flash[i]).toFixed(3) + ')';
           ctx.beginPath();
-          ctx.arc(X, Y, rr * (2.4 + 2.6 * flash[i]), 0, 6.283);
+          ctx.arc(
+            X,
+            Y,
+            rr * (lite ? 1.8 + 1.2 * flash[i] : 2.4 + 2.6 * flash[i]),
+            0,
+            6.283
+          );
           ctx.fill();
         }
       }
@@ -541,11 +759,19 @@ export const TraderBrainEvolutionSection: React.FC = () => {
 
       /* neuron signals: small glowing lights hop from neuron to neuron along the links */
       const mobile = isMobileRef.current;
-      const want = Math.round((mobile ? 9 : 14) * clamp((bp - 0.12) / 0.6, 0, 1));
+      const want = Math.round((lite ? 4 : (mobile ? 7 : 14)) * clamp((bp - 0.12) / 0.6, 0, 1));
       if (!reduce && dt > 0 && pulses.length < want && Math.random() < dt * 12) spawnPulse();
       for (i = pulses.length - 1; i >= 0; i--) {
         const q = pulses[i];
         let pe = pedges[q.e];
+        if (!pe) {
+          pulses.splice(i, 1);
+          continue;
+        }
+        if (oe > 0.05 && ppts[pe.a].top !== ppts[pe.b].top) {
+          pulses.splice(i, 1);
+          continue;
+        }
         q.u += q.sp * dt;
         if (q.u >= 1) {
           const to = pe.a === q.from ? pe.b : pe.a;
@@ -580,7 +806,7 @@ export const TraderBrainEvolutionSection: React.FC = () => {
         const ty = py[A] + (py[B] - py[A]) * u0;
         const fa = Math.min(1, q.hops / 2 + 0.2);
 
-        ctx.lineWidth = 1.6;
+        ctx.lineWidth = lite ? 1.1 : 1.6;
         ctx.strokeStyle = 'rgba(200,250,255,' + (0.6 * fa).toFixed(3) + ')';
         ctx.beginPath();
         ctx.moveTo(tx, ty);
@@ -589,12 +815,12 @@ export const TraderBrainEvolutionSection: React.FC = () => {
 
         ctx.fillStyle = 'rgba(40,226,220,' + (0.3 * fa).toFixed(3) + ')';
         ctx.beginPath();
-        ctx.arc(ux, uy, Math.max(4, 5.5 * s), 0, 6.283);
+        ctx.arc(ux, uy, lite ? 3 : Math.max(4, 5.5 * s), 0, 6.283);
         ctx.fill();
 
         ctx.fillStyle = 'rgba(235,253,255,' + fa.toFixed(3) + ')';
         ctx.beginPath();
-        ctx.arc(ux, uy, Math.max(1.4, 2 * s), 0, 6.283);
+        ctx.arc(ux, uy, lite ? 1.1 : Math.max(1.4, 2 * s), 0, 6.283);
         ctx.fill();
       }
     }
@@ -614,13 +840,12 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       W = stage.clientWidth || vw;
       H = stage.clientHeight || vh;
 
-      const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
       // Smooth continuous scaling across 360px -> 390px -> 1000px+ (no visual jump at 760px)
       const t0 = clamp((W - 360) / (390 - 360), 0, 1);
-      const t1 = clamp((W - 390) / (1000 - 390), 0, 1);
+      t1 = clamp((W - 390) / (1000 - 390), 0, 1);
 
       // Side margin: ~6px at 360, 8px at 390, smoothly scaling to desktop 3%
-      const m =
+      m =
         W >= 1000
           ? Math.max(16, W * 0.03)
           : W >= 390
@@ -635,6 +860,9 @@ export const TraderBrainEvolutionSection: React.FC = () => {
             ? lerp(62, 200, t1)
             : lerp(52, 62, t0);
       const bh = bw * 0.75;
+
+      useMesh(bw < 140 ? PRO_LITE : PRO_FULL);
+      G = bw < 140 ? 30 : 58;
 
       // Card zone [xs, xe]: at W=390 -> m=8, bw=62, gapX=12 => xs=82, xe=308
       const gapX =
@@ -693,40 +921,16 @@ export const TraderBrainEvolutionSection: React.FC = () => {
         P.push({ x: W - (W - m - bw * 0.9), y: by + bh * 0.56 });
       }
 
-      // Position and scale "Bulletproof Mindset" and BEGINNER / PROFESSIONAL labels
-      // keeping them clear of the brains, clear of the lower-row cards, and inside [m, W - m]
+      // Position BEGINNER and PROFESSIONAL labels cleanly below their respective brains
       const begCenterX = !isRTL ? m + bw / 2 : W - (m + bw / 2);
-      const proCenterX = !isRTL ? W - m - bw / 2 : m + bw / 2;
+      proCenterX = !isRTL ? W - m - bw / 2 : m + bw / 2;
       const brainBottom = by + 303 * brainP.s;
-      const lowerCardBottom = cy + amp + ch / 2;
+      const labelY = brainBottom + lerp(12, 20, t1);
 
-      const bpmY =
-        W >= 1000
-          ? brainBottom + 26
-          : Math.max(
-              brainBottom + lerp(14, 26, t1),
-              lowerCardBottom + lerp(12, 18, t1)
-            );
-      const labelY = bpmY + lerp(18, 28, t1);
-
-      const bpmFontSize = lerp(11.5, 17, t1);
       const lblFontSize = lerp(10, 11, t1);
       const isLatinLabel = /^[A-Za-z\s]+$/.test(beginnerLabel);
       const lblSpacing = isLatinLabel ? `${lerp(0.18, 0.34, t1).toFixed(2)}em` : 'normal';
 
-      const clampLabelX = (el: HTMLElement, targetX: number) => {
-        const halfW = (el.offsetWidth || 0) / 2;
-        if (halfW <= 0) return targetX;
-        const minX = m + halfW;
-        const maxX = W - m - halfW;
-        return minX <= maxX ? clamp(targetX, minX, maxX) : W / 2;
-      };
-
-      if (bpmRef.current) {
-        bpmRef.current.style.fontSize = `${bpmFontSize.toFixed(1)}px`;
-        bpmRef.current.style.top = `${bpmY}px`;
-        bpmRef.current.style.left = `${clampLabelX(bpmRef.current, proCenterX)}px`;
-      }
       if (lbRef.current) {
         lbRef.current.style.fontSize = `${lblFontSize.toFixed(1)}px`;
         lbRef.current.style.letterSpacing = lblSpacing;
@@ -738,6 +942,12 @@ export const TraderBrainEvolutionSection: React.FC = () => {
         lpRef.current.style.letterSpacing = lblSpacing;
         lpRef.current.style.top = `${labelY}px`;
         lpRef.current.style.left = `${clampLabelX(lpRef.current, proCenterX)}px`;
+      }
+      if (proHitRef.current) {
+        proHitRef.current.style.left = `${brainP.x}px`;
+        proHitRef.current.style.top = `${brainP.y}px`;
+        proHitRef.current.style.width = `${bw}px`;
+        proHitRef.current.style.height = `${bh}px`;
       }
 
       cv.width = Math.round(W * dpr);
@@ -778,7 +988,7 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       const ns = mobile ? 3 : 5;
       strands = [];
       for (let k = 0; k < ns; k++) {
-        const arr: { x: number; y: number }[] = [];
+        const arr: StrandPoint[] = [];
         for (let i = 0; i < N; i++) {
           const a = path[Math.max(0, i - 1)];
           const b = path[Math.min(N - 1, i + 1)];
@@ -792,10 +1002,13 @@ export const TraderBrainEvolutionSection: React.FC = () => {
           const o =
             ((k - (ns - 1) / 2) * 5.2) * fan +
             Math.sin(i * 0.11 + k * 1.7) * 1.5 * fan;
-          arr.push({ x: path[i].x + nx * o, y: path[i].y + ny * o });
+          const sx = path[i].x + nx * o;
+          const sy = path[i].y + ny * o;
+          arr.push({ x: sx, y: sy, bx: sx, by: sy });
         }
         strands.push(arr);
       }
+      attachStrands(ns);
 
       const np = mobile ? 16 : 44;
       parts = [];
@@ -925,8 +1138,27 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       const bp = clamp((pS - 0.04) / 0.88, 0, 1);
 
       const proBuilt = pS >= th[6] - 0.004;
+      if (!proBuilt) {
+        isToggled = false;
+        isHovered = false;
+      }
+      if (proHitRef.current) {
+        proHitRef.current.style.pointerEvents = proBuilt ? 'auto' : 'none';
+        proHitRef.current.style.cursor = proBuilt ? 'pointer' : 'default';
+      }
+
+      const targetOe = (isHovered || isToggled) && proBuilt ? 1 : 0;
+      oeRef.current +=
+        (targetOe - oeRef.current) * (1 - Math.exp(-dt * (reduce ? 60 : 6)));
+      const oe = reduce ? 0 : oeRef.current;
+
       if (bpmRef.current) {
-        bpmRef.current.classList.toggle('on', reduce || proBuilt);
+        const ocy = brainP.y + 150 * brainP.s - 0.15 * G * oe;
+        bpmRef.current.style.top = `${ocy}px`;
+        bpmRef.current.style.left = `${clampLabelX(bpmRef.current, proCenterX)}px`;
+        bpmRef.current.style.fontSize = `${lerp(11, 19, t1).toFixed(1)}px`;
+        const textOpacity = reduce ? targetOe : oeRef.current;
+        bpmRef.current.style.opacity = textOpacity > 0.01 ? textOpacity.toFixed(3) : '0';
       }
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -936,7 +1168,8 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       ctx.lineJoin = 'round';
 
       drawBeginner(ctx, mesh, brainB, T);
-      drawPro(brainP, bp, T, reduce ? 0 : dt);
+      drawPro(brainP, bp, T, reduce ? 0 : dt, oe, G);
+      updateStrandEnds();
 
       const litIdx = Math.floor(litF * (N - 1));
 
@@ -1004,6 +1237,32 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       ctx.globalCompositeOperation = 'source-over';
     }
 
+    const proHitEl = proHitRef.current;
+    const onProPointerEnter = (e: PointerEvent) => {
+      if (e.pointerType !== 'touch') {
+        isHovered = true;
+      }
+    };
+    const onProPointerLeave = () => {
+      isHovered = false;
+    };
+    const onProClick = (e: MouseEvent) => {
+      e.stopPropagation();
+      isToggled = !isToggled;
+    };
+    const onWindowPointerDown = (e: PointerEvent) => {
+      if (proHitRef.current && !proHitRef.current.contains(e.target as Node)) {
+        isToggled = false;
+      }
+    };
+
+    if (proHitEl) {
+      proHitEl.addEventListener('pointerenter', onProPointerEnter);
+      proHitEl.addEventListener('pointerleave', onProPointerLeave);
+      proHitEl.addEventListener('click', onProClick);
+    }
+    window.addEventListener('pointerdown', onWindowPointerDown);
+
     animId = requestAnimationFrame(frame);
 
     return () => {
@@ -1013,6 +1272,12 @@ export const TraderBrainEvolutionSection: React.FC = () => {
       if (!reduce) {
         window.removeEventListener('pointermove', onPointerMove);
       }
+      if (proHitEl) {
+        proHitEl.removeEventListener('pointerenter', onProPointerEnter);
+        proHitEl.removeEventListener('pointerleave', onProPointerLeave);
+        proHitEl.removeEventListener('click', onProClick);
+      }
+      window.removeEventListener('pointerdown', onWindowPointerDown);
       ro?.disconnect();
       io?.disconnect();
     };
@@ -1157,27 +1422,31 @@ export const TraderBrainEvolutionSection: React.FC = () => {
           font-family: inherit;
           letter-spacing: normal;
         }
+        #journey .pro-brain-hit {
+          position: absolute;
+          z-index: 12;
+          background: transparent;
+          touch-action: manipulation;
+          pointer-events: none;
+          border-radius: 50%;
+        }
         #journey .bpm {
           position: absolute;
-          transform: translateX(-50%);
+          transform: translate(-50%, -50%);
           white-space: nowrap;
           font-family: inherit;
           font-weight: 600;
-          font-size: 17px;
+          font-size: 19px;
           line-height: 1.2;
-          letter-spacing: 0.06em;
-          color: #e6f1ff;
-          text-shadow: 0 0 12px rgba(34, 211, 238, 0.45), 0 0 2px rgba(34, 211, 238, 0.8);
+          letter-spacing: 0.04em;
+          color: #ffffff;
+          text-shadow: 0 0 14px rgba(34, 211, 238, 0.65), 0 0 2px rgba(34, 211, 238, 0.9);
           opacity: 0;
-          transition: opacity 0.5s ease;
           pointer-events: none;
           z-index: 10;
         }
         #journey .bpm[dir="rtl"] {
           letter-spacing: normal;
-        }
-        #journey .bpm.on {
-          opacity: 1;
         }
         @media (max-width: 759px) {
           #journey {
@@ -1193,7 +1462,6 @@ export const TraderBrainEvolutionSection: React.FC = () => {
           }
           #journey .bpm {
             transition: none;
-            opacity: 1;
           }
         }
       `}</style>
@@ -1243,6 +1511,16 @@ export const TraderBrainEvolutionSection: React.FC = () => {
             {proLabel}
           </div>
 
+          {/* Interactive Hit Target over Professional Brain */}
+          <div
+            ref={proHitRef}
+            id="pro-brain-hit"
+            className="pro-brain-hit"
+            aria-label="Professional Brain interactive element"
+            role="button"
+            tabIndex={-1}
+          />
+
           {/* Bulletproof Mindset */}
           <div
             ref={bpmRef}
@@ -1250,7 +1528,7 @@ export const TraderBrainEvolutionSection: React.FC = () => {
             id="bpm"
             dir={isRTL ? 'rtl' : 'ltr'}
           >
-            {t('brainEvolution.bulletproofMindset', 'Bulletproof Mindset')}
+            {bpmLabel}
           </div>
         </div>
       </section>

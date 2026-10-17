@@ -309,14 +309,14 @@ export function DashboardOverviewTab({
                     <Crown size={13} className="sm:size-3.5" />
                     {subUsage.plan === "pro"
                       ? selectText({
-                          en: `Upgrade to Premium (${formatPrice({ bdt: 999, usd: 10 })})`,
-                          bn: `প্রিমিয়ামে আপগ্রেড করুন (${formatPrice({ bdt: 999, usd: 10 })})`,
-                          ur: `پریمیم پر اپ گریڈ کریں (${formatPrice({ bdt: 999, usd: 10 })})`,
+                          en: `Upgrade to Premium (${formatPrice({ bdt: 1199, usd: 9.99 })})`,
+                          bn: `প্রিমিয়ামে আপগ্রেড করুন (${formatPrice({ bdt: 1199, usd: 9.99 })})`,
+                          ur: `پریمیم پر اپ گریڈ کریں (${formatPrice({ bdt: 1199, usd: 9.99 })})`,
                         })
                       : selectText({
-                          en: `Get Premium (${formatPrice({ bdt: 999, usd: 10 })})`,
-                          bn: `প্রিমিয়াম নিন (${formatPrice({ bdt: 999, usd: 10 })})`,
-                          ur: `پریمیم حاصل کریں (${formatPrice({ bdt: 999, usd: 10 })})`,
+                          en: `Get Premium (${formatPrice({ bdt: 1199, usd: 9.99 })})`,
+                          bn: `প্রিমিয়াম নিন (${formatPrice({ bdt: 1199, usd: 9.99 })})`,
+                          ur: `پریمیم حاصل کریں (${formatPrice({ bdt: 1199, usd: 9.99 })})`,
                         })}
                   </Button>
                 </Link>

@@ -98,8 +98,8 @@ export function mapPaymentSettingsToForm(paymentSettingsData: any): PaymentSetti
           billingPeriod: p?.subscriptions?.pro?.billingPeriod ?? "month",
         },
         premium: {
-          priceBdt: p?.subscriptions?.premium?.priceBdt ?? "999",
-          priceUsd: p?.subscriptions?.premium?.priceUsd ?? "10",
+          priceBdt: p?.subscriptions?.premium?.priceBdt ?? "1199",
+          priceUsd: p?.subscriptions?.premium?.priceUsd ?? "9.99",
           billingPeriod: p?.subscriptions?.premium?.billingPeriod ?? "month",
         },
       },

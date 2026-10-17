@@ -23,6 +23,7 @@ import {
   deleteOrder,
   listEntitlements,
   grantManualEntitlement,
+  getPricingConfig,
   getPaymentGateways,
   updatePaymentGateways,
 } from "./repo";
@@ -82,6 +83,25 @@ export const commerceCustomerProcedures = {
         throw new Error("Select a product or bundle");
       }
       assertCheckoutAcknowledgement(input.noRefundAcknowledged);
+
+      const pricing = await getPricingConfig();
+      if (input.bundleId === 102) {
+        const expectedPrice = parseFloat(pricing.subscriptions.premium.priceBdt || "1199");
+        if (input.amount < expectedPrice) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Invalid amount for Premium Plan. Expected ৳${expectedPrice} BDT.`,
+          });
+        }
+      } else if (input.bundleId === 101) {
+        const expectedPrice = parseFloat(pricing.subscriptions.pro.priceBdt || "599");
+        if (input.amount < expectedPrice) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Invalid amount for Pro Plan. Expected ৳${expectedPrice} BDT.`,
+          });
+        }
+      }
 
       const newOrder = await createOrder({
         customerId: ctx.user.id,
